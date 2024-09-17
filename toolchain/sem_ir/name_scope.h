@@ -18,6 +18,29 @@ enum class AccessKind : int8_t {
   Private,
 };
 
+}  // namespace Carbon::SemIR
+
+template <>
+struct llvm::format_provider<Carbon::SemIR::AccessKind> {
+  using AccessKind = Carbon::SemIR::AccessKind;
+  static void format(const AccessKind& loc, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (loc) {
+      case AccessKind::Private:
+        out << "private";
+        break;
+      case AccessKind::Protected:
+        out << "protected";
+        break;
+      case AccessKind::Public:
+        out << "public";
+        break;
+    }
+  }
+};
+
+namespace Carbon::SemIR {
+
 struct NameScope : Printable<NameScope> {
   struct Entry {
     NameId name_id;

@@ -299,7 +299,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
 }
 
 auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
-                                    SemIR::NameId name_id) -> LookupResult {
+                                    SemIR::NameId name_id, bool required)
+    -> LookupResult {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from ancestor lexical scopes. These will be combined with
@@ -328,7 +329,10 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   // We didn't find anything at all.
-  DiagnoseNameNotFound(node_id, name_id);
+  if (required) {
+    DiagnoseNameNotFound(node_id, name_id);
+  }
+
   return {.specific_id = SemIR::SpecificId::Invalid,
           .inst_id = SemIR::InstId::BuiltinError};
 }
@@ -368,18 +372,14 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   // TODO: Support scoped entities other than just classes.
   auto class_info = context.classes().Get(class_type->class_id);
 
-  // TODO: Support passing AccessKind to diagnostics.
   CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
                     "Cannot access {0} member `{1}` of type `{2}`.",
-                    llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
+                    SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
-                    "The {0} member `{1}` is defined here.",
-                    llvm::StringLiteral, SemIR::NameId);
+                    "The {0} member `{1}` is defined here.", SemIR::AccessKind,
+                    SemIR::NameId);
 
   auto parent_type_id = class_info.self_type_id;
-  auto access_desc = access_kind == SemIR::AccessKind::Private
-                         ? llvm::StringLiteral("private")
-                         : llvm::StringLiteral("protected");
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
     if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
@@ -395,9 +395,9 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   }
 
   context.emitter()
-      .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
+      .Build(loc, ClassInvalidMemberAccess, access_kind, name_id,
              parent_type_id)
-      .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
+      .Note(scope_result_id, ClassMemberDefinition, access_kind, name_id)
       .Emit();
 }
 

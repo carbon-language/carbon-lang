@@ -128,35 +128,21 @@ class A {
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: ERROR: Cannot access private member `y` of type `A`.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: ERROR: Cannot access private member `y` of type `A`.
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: The private member `y` is defined here.
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
-// CHECK:STDERR:
 let y: i32 = A.y;
 
-// --- fail_todo_global_self_access.carbon
+// --- self_access.carbon
 
 library "[[@TEST_NAME]]";
 
 class A {
-  private let internal: i32 = 10;
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE+13]]:16: ERROR: Member access into incomplete class `A`.
-  // CHECK:STDERR:   let y: i32 = Self.internal;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE-5]]:1: Class is incomplete within its definition.
-  // CHECK:STDERR: class A {
-  // CHECK:STDERR: ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE+6]]:16: ERROR: Cannot access private member `internal` of type `A`.
-  // CHECK:STDERR:   let y: i32 = Self.internal;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_global_self_access.carbon:[[@LINE-11]]:15: The private member `internal` is defined here.
-  // CHECK:STDERR:   private let internal: i32 = 10;
-  // CHECK:STDERR:               ^~~~~~~~
-  let y: i32 = Self.internal;
+  private fn F() {}
+  private fn G() { Self.F(); }
 }
 
 // CHECK:STDOUT: --- fail_private_field_access.carbon
@@ -554,9 +540,9 @@ class A {
 // CHECK:STDOUT:   %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_8.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:   %.loc16_8.2: type = converted %int.make_type_32.loc16, %.loc16_8.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc24: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc24_8.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
-// CHECK:STDOUT:   %.loc24_8.2: type = converted %int.make_type_32.loc24, %.loc24_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
+// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32.loc23, %.loc23_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -584,26 +570,27 @@ class A {
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %x: i32 = bind_name x, <error>
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc23: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [template = <error>]
 // CHECK:STDOUT:   %y: i32 = bind_name y, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_global_self_access.carbon
+// CHECK:STDOUT: --- self_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 10 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -613,7 +600,6 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -626,23 +612,25 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_25.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
-// CHECK:STDOUT:   %.loc5_25.2: type = converted %int.make_type_32.loc5, %.loc5_25.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_31: i32 = int_literal 10 [template = constants.%.2]
-// CHECK:STDOUT:   %internal: i32 = bind_name internal, %.loc5_31
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc19_10.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_10.2: type = converted %int.make_type_32.loc19, %.loc19_10.1 [template = i32]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
-// CHECK:STDOUT:   %internal.ref: <error> = name_ref internal, <error> [template = <error>]
-// CHECK:STDOUT:   %y: i32 = bind_name y, <error>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .internal [private] = %internal
-// CHECK:STDOUT:   .y = %y
+// CHECK:STDOUT:   .F [private] = %F.decl
+// CHECK:STDOUT:   .G [private] = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @A.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
