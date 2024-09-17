@@ -99,17 +99,6 @@ struct AnyAggregateAccess {
   ElementIndex index;
 };
 
-// Common representation for aggregate index nodes, which access an element
-// determined by evaluating an expression.
-struct AnyAggregateIndex {
-  static constexpr InstKind Kinds[] = {InstKind::ArrayIndex};
-
-  InstKind kind;
-  TypeId type_id;
-  InstId aggregate_id;
-  InstId index_id;
-};
-
 // Common representation for all kinds of aggregate initialization.
 struct AnyAggregateInit {
   static constexpr InstKind Kinds[] = {InstKind::ArrayInit, InstKind::ClassInit,
