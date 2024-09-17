@@ -509,11 +509,9 @@ static auto AddNamespaceFromOtherPackage(Context& context,
     -> SemIR::InstId {
   auto namespace_type_id =
       context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType);
-  NamespaceResult result =
-      CopySingleNameScopeFromImportIR(
-          context, namespace_type_id, /*copied_namespaces=*/nullptr,
-          import_ir_id, import_inst_id, import_ns.name_scope_id,
-          parent_scope_id, name_id);
+  NamespaceResult result = CopySingleNameScopeFromImportIR(
+      context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
+      import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);
   auto& scope = context.name_scopes().Get(result.name_scope_id);
   scope.is_closed_import = !result.is_duplicate_of_namespace_in_current_package;
   scope.import_ir_scopes.push_back({import_ir_id, import_ns.name_scope_id});
