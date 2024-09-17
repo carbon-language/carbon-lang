@@ -128,28 +128,21 @@ class A {
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: ERROR: Cannot access private member `y` of type `A`.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: ERROR: Cannot access private member `y` of type `A`.
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: The private member `y` is defined here.
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
-// CHECK:STDERR:
 let y: i32 = A.y;
 
-// --- fail_global_self_access.carbon
+// --- self_access.carbon
 
 library "[[@TEST_NAME]]";
 
 class A {
   private fn F() {}
-  // CHECK:STDERR: fail_global_self_access.carbon:[[@LINE+6]]:20: ERROR: No return expression should be provided in this context.
-  // CHECK:STDERR:   private fn G() { return Self.F(); }
-  // CHECK:STDERR:                    ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_global_self_access.carbon:[[@LINE+3]]:3: There was no return type provided.
-  // CHECK:STDERR:   private fn G() { return Self.F(); }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  private fn G() { return Self.F(); }
+  private fn G() { Self.F(); }
 }
 
 // CHECK:STDOUT: --- fail_private_field_access.carbon
@@ -583,7 +576,7 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_global_self_access.carbon
+// CHECK:STDOUT: --- self_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
@@ -638,6 +631,6 @@ class A {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @A.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

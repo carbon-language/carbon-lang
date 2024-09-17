@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
 #include "common/map.h"
-#include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
