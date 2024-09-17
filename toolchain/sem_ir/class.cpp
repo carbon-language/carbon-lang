@@ -10,7 +10,8 @@
 
 namespace Carbon::SemIR {
 
-auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId {
+auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
+    -> TypeId {
   if (!complete_type_witness_id.is_valid()) {
     return TypeId::Invalid;
   }

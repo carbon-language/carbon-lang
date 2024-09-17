@@ -583,8 +583,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
   if (!context.inst_blocks().Get(fields_id).empty()) {
     auto first_field_id = context.inst_blocks().Get(fields_id).front();
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
-    CARBON_DIAGNOSTIC(AdaptFieldHere, Note,
-                      "First field declaration is here.");
+    CARBON_DIAGNOSTIC(AdaptFieldHere, Note, "First field declaration is here.");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(first_field_id, AdaptFieldHere)
@@ -599,12 +598,11 @@ static auto CheckCompleteAdapterClassType(Context& context,
   // TODO: The object representation of `const T` should also be the object
   // representation of `T`.
   auto adapted_type_id = context.insts()
-                              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-                              .adapted_type_id;
+                             .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+                             .adapted_type_id;
   if (auto adapted_class =
           context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
-    auto& adapted_class_info =
-        context.classes().Get(adapted_class->class_id);
+    auto& adapted_class_info = context.classes().Get(adapted_class->class_id);
     if (adapted_class_info.adapt_id.is_valid()) {
       return adapted_class_info.complete_type_witness_id;
     }
@@ -630,7 +628,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
-        .object_repr_id = context.GetStructType(fields_id)});
+       .object_repr_id = context.GetStructType(fields_id)});
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
