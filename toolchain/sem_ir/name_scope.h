@@ -6,47 +6,41 @@
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_SCOPE_H_
 
 #include "common/map.h"
-#include "common/ostream.h"
+#include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
 
 // Access control for an entity.
-class AccessKind : public Printable<AccessKind> {
- public:
-  enum RawEnumType : int8_t {
-    Public,
-    Protected,
-    Private,
-  };
+enum class AccessKind : int8_t {
+  Public,
+  Protected,
+  Private,
+};
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  AccessKind(RawEnumType value) : value_(value) {}
+}  // namespace Carbon::SemIR
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    switch (value_) {
-      case RawEnumType::Public:
-        out << "public";
+template <>
+struct llvm::format_provider<Carbon::SemIR::AccessKind> {
+  using AccessKind = Carbon::SemIR::AccessKind;
+  static void format(const AccessKind& loc, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (loc) {
+      case AccessKind::Private:
+        out << "private";
         break;
-      case RawEnumType::Protected:
+      case AccessKind::Protected:
         out << "protected";
         break;
-      case RawEnumType::Private:
-        out << "private";
+      case AccessKind::Public:
+        out << "public";
         break;
     }
   }
-
-  auto value() -> RawEnumType { return value_; }
-
-  auto operator==(const AccessKind& other) const -> bool {
-    return other.value_ == value_;
-  }
-
- private:
-  RawEnumType value_;
 };
+
+namespace Carbon::SemIR {
 
 struct NameScope : Printable<NameScope> {
   struct Entry {

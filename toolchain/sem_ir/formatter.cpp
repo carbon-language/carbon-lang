@@ -519,7 +519,7 @@ class FormatterImpl {
       Indent();
       out_ << ".";
       FormatName(name_id);
-      switch (access_kind.value()) {
+      switch (access_kind) {
         case SemIR::AccessKind::Public:
           break;
         case SemIR::AccessKind::Protected:

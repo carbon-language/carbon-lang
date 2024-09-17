@@ -328,8 +328,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
             .inst_id = lexical_result};
   }
 
+  // We didn't find anything at all.
   if (required) {
-    // We didn't find anything at all.
     DiagnoseNameNotFound(node_id, name_id);
   }
 
@@ -409,7 +409,7 @@ static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
     return false;
   }
 
-  switch (access_kind.value()) {
+  switch (access_kind) {
     case SemIR::AccessKind::Public:
       return false;
     case SemIR::AccessKind::Protected:
