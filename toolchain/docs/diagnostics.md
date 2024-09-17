@@ -158,19 +158,26 @@ different kinds of diagnostic.
 
 ## Diagnostic parameter types
 
-Here are some types you might consider for the parameters to a diagnostic:
+Diagnostic parameters should have informative types. We rely on three different
+methods for formatting arguments:
 
--   `llvm::StringLiteral`. Note that we don't use `llvm::StringRef` to avoid
-    lifetime issues.
--   `std::string`
--   Carbon types `T` that implement `llvm::format_provider<T>` like:
-    -   `Lex::TokenKind`
-    -   `Lex::NumericLiteral::Radix`
-    -   `Parse::RelativeLocation`
--   integer types: `int`, `uint64_t`, `int64_t`, `size_t`
--   `char`
--   Other
-    [types supported by llvm::formatv](https://llvm.org/doxygen/FormatVariadic_8h_source.html)
+-   Builtin
+    [llvm::formatv](https://llvm.org/doxygen/FormatVariadic_8h_source.html)
+    support.
+    -   This includes `char` and integer types (`int`, `int32_t`, and so on).
+    -   String types also use this and can be added as needed, but are
+        discouraged in favor of other types.
+        -   `llvm::StringLiteral` should be used when working with literals; use
+            `std::string` when allocations are required.
+        -   `llvm::StringRef` is disallowed due to lifetime issues.
+-   `llvm::format_provider<...>` specializations.
+    -   This can be used when formatting the parameter doesn't require
+        additional context.
+    -   For example, `Lex::TokenKind` and `Parse::RelativeLoc` provide
+        diagnostic formatting this way.
+-   `DiagnosticConverter::ConvertArg` overrides.
+    -   This can provide additional context to a formatter.
+    -   For example, formatting `SemIR::NameId` accesses the IR's name list.
 
 ## Diagnostic message style guide
 
@@ -213,11 +220,9 @@ written in the following style:
         `` "`extern library` cannot specify the current library"``.
 
 -   Try to structure diagnostics such that inputs can be extracted without
-    string parsing. We would like to keep a path for diagnostics to be an API.
-    There can be exceptions where this is particularly difficult.
-
-    -   We pass enums and IDs into diagnostics, and stringify those for
-        printing.
+    string parsing; prefer [typed parameters](#diagnostic-parameter-types). We
+    would like to keep a path for diagnostics to be an API. There can be
+    exceptions where this is particularly difficult.
 
 -   TODO: Should diagnostics be atemporal and non-sequential ("multiple
     declarations of X", "additional declaration here"), present tense but
