@@ -540,9 +540,9 @@ class A {
 // CHECK:STDOUT:   %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_8.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:   %.loc16_8.2: type = converted %int.make_type_32.loc16, %.loc16_8.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc24: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc24_8.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
-// CHECK:STDOUT:   %.loc24_8.2: type = converted %int.make_type_32.loc24, %.loc24_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
+// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32.loc23, %.loc23_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -570,7 +570,7 @@ class A {
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %x: i32 = bind_name x, <error>
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc23: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [template = <error>]
 // CHECK:STDOUT:   %y: i32 = bind_name y, <error>
 // CHECK:STDOUT:   return
