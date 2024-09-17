@@ -165,10 +165,10 @@ methods for formatting arguments:
     [llvm::formatv](https://llvm.org/doxygen/FormatVariadic_8h_source.html)
     support.
     -   This includes `char` and integer types (`int`, `int32_t`, and so on).
-    -   String types also use this and can be added as needed, but are
-        discouraged in favor of other types.
-        -   `llvm::StringLiteral` should be used when working with literals; use
-            `std::string` when allocations are required.
+    -   String types can be added as needed, but are discouraged in favor of
+        other types.
+        -   Use `llvm::StringLiteral` where appropriate; use `std::string` when
+            allocations are required.
         -   `llvm::StringRef` is disallowed due to lifetime issues.
 -   `llvm::format_provider<...>` specializations.
     -   This can be used when formatting the parameter doesn't require
