@@ -167,12 +167,8 @@ static auto CacheCopiedNamespace(
 
 // Copies a namespace from the import IR, returning its ID. This may diagnose
 // name conflicts, but that won't change the result because namespaces supersede
-// other names in conflicts. copied_namespaces is optional.
-//
-// Adds a namespace to the IR. The bool on return is true if there was a name
-// conflict. diagnose_duplicate_namespace is used when handling a cross-package
-// import, where an existing namespace is in the current package and the new
-// namespace is a different package.
+// other names in conflicts. The bool on return is true if there was a name
+// conflict. copied_namespaces is optional.
 static auto CopySingleNameScopeFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
     Map<SemIR::NameScopeId, SemIR::NameScopeId>* copied_namespaces,
