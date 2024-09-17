@@ -248,16 +248,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                                        inst.type_id, "tuple.elem"));
 }
 
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::TupleIndex inst) -> void {
-  auto index_inst =
-      context.sem_ir().insts().GetAs<SemIR::IntLiteral>(inst.index_id);
-  auto index = context.sem_ir().ints().Get(index_inst.int_id).getZExtValue();
-  context.SetLocal(inst_id, GetAggregateElement(context, inst.tuple_id,
-                                                SemIR::ElementIndex(index),
-                                                inst.type_id, "tuple.index"));
-}
-
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::TupleLiteral /*inst*/) -> void {
   // A TupleLiteral should always be converted to a TupleInit or TupleValue if

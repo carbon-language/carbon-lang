@@ -462,7 +462,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Temporary::Kind:
       case TemporaryStorage::Kind:
       case TupleAccess::Kind:
-      case TupleIndex::Kind:
       case TupleLiteral::Kind:
       case TupleInit::Kind:
       case TupleValue::Kind:
@@ -627,11 +626,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(TupleAccess inst): {
-        inst_id = inst.tuple_id;
-        continue;
-      }
-
-      case CARBON_KIND(TupleIndex inst): {
         inst_id = inst.tuple_id;
         continue;
       }

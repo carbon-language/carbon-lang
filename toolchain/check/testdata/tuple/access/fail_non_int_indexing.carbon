@@ -141,7 +141,6 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   %.loc18_17.3: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.13]
 // CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc18_17.3 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc18_17.4: i32 = converted %.loc18_17.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

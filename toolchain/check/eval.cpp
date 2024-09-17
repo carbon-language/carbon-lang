@@ -480,9 +480,9 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
 // element.
-static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
+static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto index_inst = inst.As<SemIR::AnyAggregateIndex>();
+  auto index_inst = inst.As<SemIR::ArrayIndex>();
   Phase phase = Phase::Template;
   auto index_id = GetConstantValue(eval_context, index_inst.index_id, &phase);
 
@@ -500,7 +500,7 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetConstantValueAsType(
-      eval_context.insts().Get(index_inst.aggregate_id).type_id());
+      eval_context.insts().Get(index_inst.array_id).type_id());
   if (auto array_type =
           eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntLiteral>(
@@ -523,7 +523,7 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
 
   auto aggregate_id =
-      GetConstantValue(eval_context, index_inst.aggregate_id, &phase);
+      GetConstantValue(eval_context, index_inst.array_id, &phase);
   if (!aggregate_id.is_valid()) {
     return MakeNonConstantResult(phase);
   }
@@ -536,9 +536,6 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
 
   auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
-  // We checked this for the array case above.
-  CARBON_CHECK(index_val.ult(elements.size()),
-               "Index out of bounds in tuple indexing");
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
@@ -1336,8 +1333,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
     case SemIR::ArrayIndex::Kind:
-    case SemIR::TupleIndex::Kind:
-      return PerformAggregateIndex(eval_context, inst);
+      return PerformArrayIndex(eval_context, inst);
 
     case CARBON_KIND(SemIR::Call call): {
       return MakeConstantForCall(eval_context, inst_id, call);

@@ -38,9 +38,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   store i32 %.loc19_11.5, ptr %tuple2, align 4, !dbg !7
 // CHECK:STDOUT:   %tuple3 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 2, !dbg !7
 // CHECK:STDOUT:   store i32 %.loc19_11.7, ptr %tuple3, align 4, !dbg !7
-// CHECK:STDOUT:   %.loc19_13.tuple.index = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   %.loc19_13.tuple.index.load = load i32, ptr %.loc19_13.tuple.index, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc19_13.tuple.index.load, !dbg !8
+// CHECK:STDOUT:   %.loc19_13.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %.loc19_13.tuple.elem.load = load i32, ptr %.loc19_13.tuple.elem, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc19_13.tuple.elem.load, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

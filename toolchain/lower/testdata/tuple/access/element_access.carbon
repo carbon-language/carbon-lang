@@ -28,12 +28,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc12_36.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.loc12_37, i64 12, i1 false), !dbg !9
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_17.1.tuple.index = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.tuple.index, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc13_17.1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc13_17.2, ptr %b.var, align 4, !dbg !12
 // CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc14_17.1.tuple.index = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !14
-// CHECK:STDOUT:   %.loc14_17.2 = load i32, ptr %.loc14_17.1.tuple.index, align 4, !dbg !14
+// CHECK:STDOUT:   %.loc14_17.1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !14
+// CHECK:STDOUT:   %.loc14_17.2 = load i32, ptr %.loc14_17.1.tuple.elem, align 4, !dbg !14
 // CHECK:STDOUT:   store i32 %.loc14_17.2, ptr %c.var, align 4, !dbg !15
 // CHECK:STDOUT:   ret i32 0, !dbg !16
 // CHECK:STDOUT: }
