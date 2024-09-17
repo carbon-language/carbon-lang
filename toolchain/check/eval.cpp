@@ -536,9 +536,6 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
 
   auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
-  // We checked this for the array case above.
-  CARBON_CHECK(index_val.ult(elements.size()),
-               "Index out of bounds in tuple indexing");
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
