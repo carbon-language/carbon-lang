@@ -552,7 +552,6 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   tuple_inst_id = ConvertToValueOrRefExpr(context, tuple_inst_id);
   auto tuple_inst = context.insts().Get(tuple_inst_id);
   auto tuple_type_id = tuple_inst.type_id();
-  auto tuple_index = SemIR::ElementIndex::Invalid;
 
   auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
   if (!tuple_type) {
@@ -591,7 +590,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
 
   // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.
   element_type_id = type_block[index_val->getZExtValue()];
-  tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
+  auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 
   return context.AddInst<SemIR::TupleAccess>(loc_id,
                                              {.type_id = element_type_id,
