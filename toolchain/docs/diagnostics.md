@@ -177,33 +177,47 @@ Here are some types you might consider for the parameters to a diagnostic:
 In order to provide a consistent experience, Carbon diagnostics should be
 written in the following style:
 
--   Start diagnostics with a capital letter or quoted code, and end them with a
-    period.
+-   Start diagnostics with a lower case letter or quoted code, and omit trailing
+    periods.
 
--   Quoted code should be enclosed in backticks, for example:
-    ``"`{0}` is bad."``
+-   Quoted code should be enclosed in backticks, for example: ``"`{0}` is bad"``
 
 -   Phrase diagnostics as bullet points rather than full sentences. Leave out
     articles unless they're necessary for clarity.
 
--   Diagnostics should describe the situation the toolchain observed and the
-    language rule that was violated, although either can be omitted if it's
-    clear from the other. For example:
+-   Diagnostics should describe the situation the toolchain observed. The
+    language rule violated can be mentioned if it wouldn't otherwise be clear.
+    For example:
 
-    -   `"Redeclaration of X."` describes the situation and implies that
+    -   `"redeclaration of X"` describes the situation and implies that
         redeclarations are not permitted.
 
-    -   ``"`self` can only be declared in an implicit parameter list."``
-        describes the language rule and implies that you declared `self`
-        somewhere else.
+    -   ``"`self` declared in invalid context; can only be declared in implicit parameter list"``
+        describes the language rule.
 
     -   It's OK for a diagnostic to guess at the developer's intent and provide
         a hint after explaining the situation and the rule, but not as a
         substitute for that. For example,
-        ``"Add an `as String` cast to format this integer as a string."`` is not
-        sufficient as an error message, but
-        ``"Cannot add i32 to String. Add an `as String` cast to format this integer as a string."``
+        ``"add `as String` to convert `i32` to `String`"`` is not sufficient as
+        an error message, but
+        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
         could be acceptable.
+
+-   Use "cannot" if needed, but try to use phrasing that doesn't require it.
+    Avoid "allowed", "legal", "permitted", "valid", and related wording. For
+    example:
+
+    -   ``"`export` in `impl` file"`` rather than
+        ``"`export` is only allowed in API files"``.
+    -   ``"`extern library` specifies current library"`` rather than
+        `` "`extern library` cannot specify the current library"``.
+
+-   Try to structure diagnostics such that inputs can be extracted without
+    string parsing. We would like to keep a path for diagnostics to be an API.
+    There can be exceptions where this is particularly difficult.
+
+    -   We pass enums and IDs into diagnostics, and stringify those for
+        printing.
 
 -   TODO: Should diagnostics be atemporal and non-sequential ("multiple
     declarations of X", "additional declaration here"), present tense but
@@ -211,17 +225,6 @@ written in the following style:
     temporal ("redeclaration of X", "previous declaration was here")? We could
     try to sidestep difference between the latter two by avoiding verbs with
     tense ("previously declared here", "Y declared here", with no is/was).
-
--   TODO: Word choices:
-
-    -   For disallowed constructs, do we say they're not permitted / not allowed
-        / not valid / not legal / illegal / ill-formed / disallowed? Do we say
-        "X cannot be Y" or "X may not be Y" or "X must not be Y" or "X shall not
-        be Y"?
-
--   TODO: Is structuring diagnostics such that inputs can be parsed without
-    string parsing important? that is, when is passing strings in as part of the
-    message templating okay?
 
 -   TODO: When do we put identifiers or expressions in diagnostics, versus
     requiring notes pointing at relevant code? Is it only avoided for values, or
