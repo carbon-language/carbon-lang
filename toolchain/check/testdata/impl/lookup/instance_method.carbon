@@ -72,7 +72,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
-// CHECK:STDOUT:     %.loc23_6: %C = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc11 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc23_6.1: %C = param c
@@ -87,7 +87,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %.loc14_8: %Self = binding_pattern self
+// CHECK:STDOUT:     %self.patt: @F.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @F.1.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
@@ -109,7 +109,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc19_10: %C = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc19_10.1: %C = param self

@@ -65,7 +65,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+5':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: Param, arg0: name2, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+7':          {kind: BindName, arg0: entity_name1, arg1: inst+6, type: type(symbolicConstant2)}
-// CHECK:STDOUT:     'inst+8':          {kind: BindingPattern, arg0: entity_name1, type: type(symbolicConstant0)}
+// CHECK:STDOUT:     'inst+8':          {kind: BindingPattern, arg0: entity_name1, type: type(symbolicConstant2)}
 // CHECK:STDOUT:     'inst+9':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+10':         {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: TupleLiteral, arg0: empty, type: type(inst+10)}

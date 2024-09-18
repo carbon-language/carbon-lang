@@ -112,7 +112,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     @Constant.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [template = constants.%PartiallyConstant] {
-// CHECK:STDOUT:     %.loc28_22: type = binding_pattern t
+// CHECK:STDOUT:     %t.patt: type = binding_pattern t
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.loc28_22.1: type = param t
 // CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_name t, %t.loc28_22.1

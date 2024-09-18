@@ -72,7 +72,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, %HasF.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc23: %C = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc23_6.1: %C = param c

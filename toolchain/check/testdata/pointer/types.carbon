@@ -53,7 +53,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Ptr.decl: %Ptr.type = fn_decl @Ptr [template = constants.%Ptr] {
-// CHECK:STDOUT:     %.loc11_8: %.2 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc11: %.2 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
@@ -68,7 +68,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     @Ptr.%return: ref %.2 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [template = constants.%ConstPtr] {
-// CHECK:STDOUT:     %.loc15_13: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc15: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]

@@ -55,7 +55,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %VarScope.decl: %VarScope.type = fn_decl @VarScope [template = constants.%VarScope] {
-// CHECK:STDOUT:     %.loc11_13: bool = binding_pattern b
+// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]

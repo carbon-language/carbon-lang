@@ -65,7 +65,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc17_6: %Inner = binding_pattern oi
+// CHECK:STDOUT:     %oi.patt: %Inner = binding_pattern oi
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
@@ -77,7 +77,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc21: %Outer = binding_pattern o
+// CHECK:STDOUT:     %o.patt: %Outer = binding_pattern o
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref.loc21: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %o.loc21_6.1: %Outer = param o

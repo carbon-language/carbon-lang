@@ -86,7 +86,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.ref: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %A: %WithSelf.type = bind_alias A, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc18: %Class = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc18_6.1: %Class = param c
@@ -97,7 +97,7 @@ fn F(c: Class) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %NoSelf.decl: %NoSelf.type = fn_decl @NoSelf [template = constants.%NoSelf] {} {}
 // CHECK:STDOUT:   %WithSelf.decl: %WithSelf.type = fn_decl @WithSelf [template = constants.%WithSelf] {
-// CHECK:STDOUT:     %.loc13: %Class = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_15.1: %Class = param self

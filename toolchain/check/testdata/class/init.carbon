@@ -64,8 +64,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
-// CHECK:STDOUT:     %.loc16_9: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc16_17: %.3 = binding_pattern next
+// CHECK:STDOUT:     %n.patt.loc16: i32 = binding_pattern n
+// CHECK:STDOUT:     %next.patt.loc16: %.3 = binding_pattern next
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
@@ -80,8 +80,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     @Make.%return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
-// CHECK:STDOUT:     %.loc20_16: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc20_24: %.3 = binding_pattern next
+// CHECK:STDOUT:     %n.patt.loc20: i32 = binding_pattern n
+// CHECK:STDOUT:     %next.patt.loc20: %.3 = binding_pattern next
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]

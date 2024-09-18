@@ -73,7 +73,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
-// CHECK:STDOUT:     %.loc24_11: %.8 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.8 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_21: type = ptr_type %Derived [template = constants.%.8]

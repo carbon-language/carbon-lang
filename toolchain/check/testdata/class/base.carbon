@@ -87,7 +87,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     @Make.%return: ref %Derived = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
-// CHECK:STDOUT:     %.loc25_11: %Derived = binding_pattern d
+// CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc25_11.1: %Derived = param d

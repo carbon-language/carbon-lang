@@ -93,7 +93,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [template = constants.%A2] {} {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {} {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [template = constants.%ConvertUnrelated] {
-// CHECK:STDOUT:     %.loc28_21: %.9 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc28: %.9 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
 // CHECK:STDOUT:     %.loc28_26: type = ptr_type %B2 [template = constants.%.9]
@@ -105,7 +105,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
-// CHECK:STDOUT:     %.loc35_22: %.14 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc35: %.14 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc35_35: type = ptr_type %Incomplete [template = constants.%.14]

@@ -51,9 +51,9 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc11_6: bool = binding_pattern a
-// CHECK:STDOUT:     %.loc11_15: bool = binding_pattern b
-// CHECK:STDOUT:     %.loc11_24: bool = binding_pattern c
+// CHECK:STDOUT:     %a.patt: bool = binding_pattern a
+// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %c.patt: bool = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_9: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type.loc11_9 [template = bool]

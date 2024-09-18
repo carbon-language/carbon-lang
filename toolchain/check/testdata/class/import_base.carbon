@@ -82,14 +82,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc5: %Base = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc5: %Base = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc5_8.1: %Base = param self
 // CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
-// CHECK:STDOUT:     %.loc6: %Base = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc6: %Base = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc6_13.1: %Base = param self

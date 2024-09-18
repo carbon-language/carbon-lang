@@ -129,7 +129,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b_ref.var: ref %.7 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.7 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %.loc8_9: %.11 = symbolic_binding_pattern S 0
+// CHECK:STDOUT:     %S.patt: %.11 = symbolic_binding_pattern S 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_18.1: type = value_of_initializer %int.make_type_32.loc8_18 [template = i32]

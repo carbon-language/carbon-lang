@@ -138,14 +138,14 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [template = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl.loc15: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %TestStaticMemberFunction.decl: %TestStaticMemberFunction.type = fn_decl @TestStaticMemberFunction [template = constants.%TestStaticMemberFunction] {
-// CHECK:STDOUT:     %.loc19: %SomeClassAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc19: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref.loc19: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.loc19_29.1: %SomeClassAdapter = param a
 // CHECK:STDOUT:     @TestStaticMemberFunction.%a: %SomeClassAdapter = bind_name a, %a.loc19_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [template = constants.%TestAdapterMethod] {
-// CHECK:STDOUT:     %.loc23: %SomeClassAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc23: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref.loc23: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.loc23_22.1: %SomeClassAdapter = param a
@@ -173,7 +173,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %.loc8_8: %.2 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
-// CHECK:STDOUT:     %.loc12: %SomeClassAdapter = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %self.loc12_20.1: %SomeClassAdapter = param self
@@ -248,7 +248,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [template = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc12: %SomeClassAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.loc12_6.1: %SomeClassAdapter = param a
@@ -258,7 +258,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %.loc5: %SomeClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %SomeClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
 // CHECK:STDOUT:     %self.loc5_8.1: %SomeClass = param self
@@ -330,7 +330,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [template = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13_6: %SomeClassAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.loc13_6.1: %SomeClassAdapter = param a

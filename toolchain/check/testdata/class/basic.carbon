@@ -68,7 +68,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc21_12: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_15.1: type = value_of_initializer %int.make_type_32.loc21_15 [template = i32]
@@ -90,7 +90,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc12_8: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt.loc12: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %int.make_type_32.loc12_11 [template = i32]
@@ -103,7 +103,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc16_8: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt.loc16: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32.loc16_11 [template = i32]

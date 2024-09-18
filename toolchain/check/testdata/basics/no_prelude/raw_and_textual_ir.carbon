@@ -169,7 +169,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %.loc15_8: %.1 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]

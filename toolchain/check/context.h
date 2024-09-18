@@ -16,7 +16,6 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
-#include "toolchain/check/pattern_block_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -405,9 +404,7 @@ class Context {
   auto node_stack() -> NodeStack& { return node_stack_; }
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
-  auto pattern_block_stack() -> PatternBlockStack& {
-    return pattern_block_stack_;
-  }
+  auto pattern_block_stack() -> InstBlockStack& { return pattern_block_stack_; }
 
   auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
     return param_and_arg_refs_stack_;
@@ -546,7 +543,7 @@ class Context {
   InstBlockStack inst_block_stack_;
 
   // The stack of instruction blocks that contain pattern instructions.
-  PatternBlockStack pattern_block_stack_;
+  InstBlockStack pattern_block_stack_;
 
   // The stack of instruction blocks being used for param and arg ref blocks.
   ParamAndArgRefsStack param_and_arg_refs_stack_;

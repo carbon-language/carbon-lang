@@ -109,7 +109,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
-// CHECK:STDOUT:     %.loc2_11: f64 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc2: f64 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_14: init type = call constants.%Float(%.loc2_14.1) [template = f64]
@@ -124,8 +124,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @Negate.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
-// CHECK:STDOUT:     %.loc4_16: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc4_24: f64 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc4: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_19: init type = call constants.%Float(%.loc4_19.1) [template = f64]
@@ -237,8 +237,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @TooFew.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooMany.decl: %TooMany.type = fn_decl @TooMany [template = constants.%TooMany] {
-// CHECK:STDOUT:     %.loc13_12: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc13_20: f64 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc13: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc13: f64 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_15.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_15: init type = call constants.%Float(%.loc13_15.1) [template = f64]
@@ -259,7 +259,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @TooMany.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.decl: %BadReturnType.type = fn_decl @BadReturnType [template = constants.%BadReturnType] {
-// CHECK:STDOUT:     %.loc18_18: f64 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc18: f64 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_21.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc18: init type = call constants.%Float(%.loc18_21.1) [template = f64]
@@ -273,7 +273,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @BadReturnType.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %JustRight.decl: %JustRight.type = fn_decl @JustRight [template = constants.%JustRight] {
-// CHECK:STDOUT:     %.loc19_14: f64 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc19: f64 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_17.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc19_17: init type = call constants.%Float(%.loc19_17.1) [template = f64]
@@ -288,7 +288,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @JustRight.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: %RuntimeCallTooFew.type = fn_decl @RuntimeCallTooFew [template = constants.%RuntimeCallTooFew] {
-// CHECK:STDOUT:     %.loc21_22: f64 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc21: f64 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_25.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc21_25: init type = call constants.%Float(%.loc21_25.1) [template = f64]
@@ -303,9 +303,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @RuntimeCallTooFew.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallTooMany.decl: %RuntimeCallTooMany.type = fn_decl @RuntimeCallTooMany [template = constants.%RuntimeCallTooMany] {
-// CHECK:STDOUT:     %.loc32_23: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc32_31: f64 = binding_pattern b
-// CHECK:STDOUT:     %.loc32_39: f64 = binding_pattern c
+// CHECK:STDOUT:     %a.patt.loc32: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc32: f64 = binding_pattern b
+// CHECK:STDOUT:     %c.patt: f64 = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc32_26.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc32_26: init type = call constants.%Float(%.loc32_26.1) [template = f64]
@@ -332,8 +332,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @RuntimeCallTooMany.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallBadReturnType.decl: %RuntimeCallBadReturnType.type = fn_decl @RuntimeCallBadReturnType [template = constants.%RuntimeCallBadReturnType] {
-// CHECK:STDOUT:     %.loc43_29: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc43_37: f64 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc43: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc43: f64 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc43_32.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc43_32: init type = call constants.%Float(%.loc43_32.1) [template = f64]

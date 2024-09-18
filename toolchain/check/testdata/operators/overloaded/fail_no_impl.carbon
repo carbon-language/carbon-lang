@@ -130,7 +130,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [template = constants.%TestUnary] {
-// CHECK:STDOUT:     %.loc15: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc15: %C = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_14.1: %C = param a
@@ -139,8 +139,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     @TestUnary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
-// CHECK:STDOUT:     %.loc23_15: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc23_21: %C = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc23: %C = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc23: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_15.1: %C = param a
@@ -152,7 +152,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
-// CHECK:STDOUT:     %.loc31: %C = binding_pattern b
+// CHECK:STDOUT:     %b.patt.loc31: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc31_12.1: %C = param b

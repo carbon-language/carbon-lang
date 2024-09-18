@@ -94,7 +94,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [template = constants.%AccessDerived] {
-// CHECK:STDOUT:     %.loc24_18: %Derived = binding_pattern d
+// CHECK:STDOUT:     %d.patt.loc24: %Derived = binding_pattern d
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc24_18.1: %Derived = param d
@@ -105,7 +105,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     @AccessDerived.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [template = constants.%AccessBase] {
-// CHECK:STDOUT:     %.loc28_15: %Derived = binding_pattern d
+// CHECK:STDOUT:     %d.patt.loc28: %Derived = binding_pattern d
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc28_15.1: %Derived = param d
@@ -116,7 +116,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     @AccessBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [template = constants.%AccessDerivedIndirect] {
-// CHECK:STDOUT:     %.loc32_26: %.11 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc32: %.11 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.11]
@@ -129,7 +129,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     @AccessDerivedIndirect.%return: ref %.12 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [template = constants.%AccessBaseIndirect] {
-// CHECK:STDOUT:     %.loc36_23: %.11 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc36: %.11 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc36: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.11]

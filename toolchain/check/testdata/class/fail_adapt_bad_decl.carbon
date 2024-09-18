@@ -127,7 +127,7 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %.loc16: %Bad = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b
@@ -181,7 +181,7 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %.loc13: %Bad = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %b.loc13_8.1: %Bad = param b

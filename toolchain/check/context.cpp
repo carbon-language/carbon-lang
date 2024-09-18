@@ -48,7 +48,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      pattern_block_stack_(this),
+      pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
@@ -150,8 +150,8 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
 
 auto Context::AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  pattern_block_stack_.AddInst(inst_id);
+  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+  pattern_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 

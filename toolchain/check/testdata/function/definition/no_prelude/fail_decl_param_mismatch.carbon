@@ -108,7 +108,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = fn_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %.loc19_6: %.1 = binding_pattern x
+// CHECK:STDOUT:     %x.patt.loc19: %.1 = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_10.2: type = converted %.loc19_10.1, constants.%.1 [template = constants.%.1]
@@ -116,7 +116,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     @.1.%x: %.1 = bind_name x, %x.loc19_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc21_6: %.1 = binding_pattern x
+// CHECK:STDOUT:     %x.patt.loc21: %.1 = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc21_10.2: type = converted %.loc21_10.1, constants.%.1 [template = constants.%.1]
@@ -125,7 +125,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
-// CHECK:STDOUT:     %.loc31_6: %.1 = binding_pattern x
+// CHECK:STDOUT:     %x.patt.loc31: %.1 = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc31_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc31_10.2: type = converted %.loc31_10.1, constants.%.1 [template = constants.%.1]
@@ -133,7 +133,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     @H.%x: %.1 = bind_name x, %x.loc31_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc36: %.type.3 = fn_decl @.3 [template = constants.%.4] {
-// CHECK:STDOUT:     %.loc36: <error> = binding_pattern x
+// CHECK:STDOUT:     %x.patt.loc36: <error> = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.loc36_6.1: <error> = param x
 // CHECK:STDOUT:     @.3.%x: <error> = bind_name x, %x.loc36_6.1

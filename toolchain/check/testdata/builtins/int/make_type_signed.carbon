@@ -100,7 +100,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
-// CHECK:STDOUT:     %.loc4_8: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -163,7 +163,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc6_6: %.3 = binding_pattern n
+// CHECK:STDOUT:     %n.patt.loc6: %.3 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc6_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc6_13: i32 = int_literal 64 [template = constants.%.2]
@@ -180,7 +180,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     @F.%return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc10_6: %.5 = binding_pattern n
+// CHECK:STDOUT:     %n.patt.loc10: %.5 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc10_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc10_13: i32 = int_literal 13 [template = constants.%.4]
@@ -197,8 +197,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     @G.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
-// CHECK:STDOUT:     %.loc14_13: i32 = symbolic_binding_pattern N 0
-// CHECK:STDOUT:     %.loc14_22: %.6 = binding_pattern x
+// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0
+// CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -335,7 +335,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
-// CHECK:STDOUT:     %.loc6_11: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]

@@ -64,7 +64,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [template = constants.%If] {
-// CHECK:STDOUT:     %.loc15_7: bool = binding_pattern b
+// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]

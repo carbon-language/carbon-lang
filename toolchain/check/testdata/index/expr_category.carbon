@@ -83,7 +83,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     @F.%return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc13_6: %.3 = binding_pattern b
+// CHECK:STDOUT:     %b.patt.loc13: %.3 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
@@ -94,7 +94,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     @G.%b: %.3 = bind_name b, %b.loc13_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ValueBinding.decl: %ValueBinding.type = fn_decl @ValueBinding [template = constants.%ValueBinding] {
-// CHECK:STDOUT:     %.loc21_17: %.3 = binding_pattern b
+// CHECK:STDOUT:     %b.patt.loc21: %.3 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_26: i32 = int_literal 3 [template = constants.%.2]

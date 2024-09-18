@@ -48,7 +48,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc12_6: i32 = symbolic_binding_pattern N 0
+// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]

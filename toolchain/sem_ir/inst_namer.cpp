@@ -421,7 +421,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         auto inst = untyped_inst.As<AnyBindingPattern>();
         add_inst_name_id(
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id, ".patt");
-        break;
+        continue;
       }
       case CARBON_KIND(Call inst): {
         auto callee_function =

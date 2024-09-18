@@ -81,14 +81,14 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc16_6: %Class = binding_pattern c
-// CHECK:STDOUT:     %.loc16_16: %.1 = binding_pattern p
+// CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
+// CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc16_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc16_6.1: %Class = param c
 // CHECK:STDOUT:     @F.2.%c: %Class = bind_name c, %c.loc16_6.1
 // CHECK:STDOUT:     %Class.ref.loc16_19: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16_24: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %p.loc16_16.1: %.1 = param p
 // CHECK:STDOUT:     @F.2.%p: %.1 = bind_name p, %p.loc16_16.1
 // CHECK:STDOUT:   }
@@ -96,7 +96,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %.loc12_13: %.1 = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc12: %.1 = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_24: type = ptr_type %Class [template = constants.%.1]
@@ -105,12 +105,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc13_13: %Class = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc13: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_13.1: %Class = param self
 // CHECK:STDOUT:     %self.loc13_13.3: %Class = bind_name self, %self.loc13_13.1
-// CHECK:STDOUT:     %.loc13_8: %Class = addr_pattern %self.loc13_13.3
+// CHECK:STDOUT:     %.loc13: %Class = addr_pattern %self.loc13_13.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

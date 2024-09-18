@@ -55,7 +55,7 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %.loc11_6: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc11: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_15 [template = i32]
@@ -74,7 +74,7 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     @A.%return: ref %.4 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %.loc15_6: %.6 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc15: %.6 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_19.1: type = value_of_initializer %int.make_type_32.loc15_16 [template = i32]

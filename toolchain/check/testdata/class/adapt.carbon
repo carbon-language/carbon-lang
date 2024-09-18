@@ -163,7 +163,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %Adapted.decl: type = class_decl @Adapted [template = constants.%Adapted] {} {}
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [template = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc12: %AdaptNotExtend = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, %AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
 // CHECK:STDOUT:     %a.loc12_6.1: %AdaptNotExtend = param a

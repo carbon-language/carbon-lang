@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
-// CHECK:STDOUT:     %.loc11_9: %.1 = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]

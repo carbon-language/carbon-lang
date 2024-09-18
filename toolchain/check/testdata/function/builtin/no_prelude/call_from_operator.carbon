@@ -58,8 +58,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
-// CHECK:STDOUT:     %.loc7_9: %Self = binding_pattern self
-// CHECK:STDOUT:     %.loc7_21: %Self = binding_pattern other
+// CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %.2 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = @Op.%Self (constants.%Self)]
@@ -174,8 +174,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
-// CHECK:STDOUT:     %.loc7_9: i32 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_21: i32 = binding_pattern other
+// CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
+// CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self

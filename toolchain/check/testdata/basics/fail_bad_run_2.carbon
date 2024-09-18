@@ -44,7 +44,7 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
-// CHECK:STDOUT:     %.loc14_8: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]

@@ -54,7 +54,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [template = constants.%If] {
-// CHECK:STDOUT:     %.loc11_7: bool = binding_pattern b
+// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]

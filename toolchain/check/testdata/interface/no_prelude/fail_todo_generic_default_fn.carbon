@@ -43,14 +43,14 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
-// CHECK:STDOUT:     %.loc11: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @I.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.5] {
-// CHECK:STDOUT:     %.loc22_6: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %.loc22_18: %Self = binding_pattern self
+// CHECK:STDOUT:     %T.patt.loc22: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %self.patt: @.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc22_6.1: type = param T
 // CHECK:STDOUT:     %T.loc22_6.2: type = bind_symbolic_name T 0, %T.loc22_6.1 [symbolic = @.1.%T (constants.%T)]
@@ -82,7 +82,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
-// CHECK:STDOUT:       %.loc13_8: %Self = binding_pattern self
+// CHECK:STDOUT:       %self.patt: @F.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_14.1: @F.%.1 (%.2) = specific_constant %Self.1, @I(constants.%T) [symbolic = @F.%Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_14: @F.%.1 (%.2) = name_ref Self, %.loc13_14.1 [symbolic = @F.%Self (constants.%Self)]

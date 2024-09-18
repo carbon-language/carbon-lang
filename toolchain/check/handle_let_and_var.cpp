@@ -149,7 +149,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
 
   // TODO: update binding-pattern handling to use the pattern block even in
   // a let/var context, and then consume it here.
-  (void)context.pattern_block_stack().Pop();
+  context.pattern_block_stack().PopAndDiscard();
 
   // Handle the optional initializer.
   if (context.node_stack().PeekNextIs<InitializerNodeKind>()) {
