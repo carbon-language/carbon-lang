@@ -10,12 +10,9 @@
 
 #include "common/command_line.h"
 #include "common/version.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Path.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/driver/clang_subcommand.h"
+#include "toolchain/driver/compile_subcommand.h"
+#include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
 
@@ -27,6 +24,7 @@ struct Options {
 
   bool verbose;
 
+  ClangSubcommand clang;
   CompileSubcommand compile;
   LinkSubcommand link;
 
@@ -62,6 +60,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
           .help = "Enable verbose logging to the stderr stream.",
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
+
+  b.AddSubcommand(ClangOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
+    clang.BuildOptions(sub_b);
+    sub_b.Do([&] { subcommand = &clang; });
+  });
 
   b.AddSubcommand(CompileOptions::Info,
                   [&](CommandLine::CommandBuilder& sub_b) {

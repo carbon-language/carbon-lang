@@ -23,10 +23,20 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/LLVMDriver.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
+
+// Defined in:
+// https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
+//
+// While not in a header, this is the API used by llvm-driver.cpp for
+// busyboxing.
+//
+// NOLINTNEXTLINE
+int clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext);
 
 namespace Carbon {
 
@@ -113,9 +123,15 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   driver.Dir = installation_->llvm_install_bin();
   CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
 
-  // TODO: Directly run in-process rather than using a subprocess. This is both
-  // more efficient and makes debugging (much) easier. Needs code like:
-  // driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) {};
+  // When there's only one command being run, this will run it in-process.
+  // However, a `clang` invocation may cause multiple `cc1` invocations, which
+  // still subprocess.
+  driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) -> int {
+    llvm::ToolContext tool_context;
+    return clang_main(argv.size(), const_cast<char**>(argv.data()),
+                      tool_context);
+  };
+
   std::unique_ptr<clang::driver::Compilation> compilation(
       driver.BuildCompilation(cstr_args));
   CARBON_CHECK(compilation, "Should always successfully allocate!");
