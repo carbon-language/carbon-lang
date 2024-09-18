@@ -89,7 +89,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         CARBON_FATAL("Attempting to mangle unsupported SemIR.");
         break;
     }
-    if (!name_scope.is_closed_import) {
+    if (!name_scope.is_closed_import ||
+        name_scope.parent_scope_id != SemIR::NameScopeId::Package) {
       names_to_render.push_back(
           {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
     }
