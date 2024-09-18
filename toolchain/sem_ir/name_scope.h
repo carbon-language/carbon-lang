@@ -82,7 +82,7 @@ struct NameScope : Printable<NameScope> {
   }
 
   // Returns true if this name scope describes an imported package.
-  auto IsImportedPackage() const -> bool {
+  auto is_imported_package() const -> bool {
     return is_closed_import && parent_scope_id == NameScopeId::Package;
   }
 
