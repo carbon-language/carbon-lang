@@ -35,8 +35,9 @@
 // While not in a header, this is the API used by llvm-driver.cpp for
 // busyboxing.
 //
-// NOLINTNEXTLINE
-int clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext);
+// NOLINTNEXTLINE(readability-identifier-naming)
+auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
+    -> int;
 
 namespace Carbon {
 
