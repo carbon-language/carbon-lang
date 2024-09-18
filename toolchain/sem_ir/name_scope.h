@@ -81,6 +81,11 @@ struct NameScope : Printable<NameScope> {
                  name_entry.name_id);
   }
 
+  // Returns true if this name scope describes an imported package.
+  auto is_imported_package() const -> bool {
+    return is_closed_import && parent_scope_id == NameScopeId::Package;
+  }
+
   // Names in the scope. We store both an insertion-ordered vector for iterating
   // and a map from `NameId` to the index of that vector for name lookup.
   //
