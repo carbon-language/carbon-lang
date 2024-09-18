@@ -60,7 +60,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+8, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: Converted, arg0: inst+10, arg1: inst+9, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: VarStorage, arg0: nameReturnSlot, type: type(inst+9)}
-// CHECK:STDOUT:     'inst+15':         {kind: FunctionDecl, arg0: function0, arg1: decl0, type: type(inst+16)}
+// CHECK:STDOUT:     'inst+15':         {kind: FunctionDecl, arg0: function0, arg1: block7, type: type(inst+16)}
 // CHECK:STDOUT:     'inst+16':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+17':         {kind: StructValue, arg0: empty, type: type(inst+16)}
 // CHECK:STDOUT:     'inst+18':         {kind: PointerType, arg0: type(inst+9), type: typeTypeType}

@@ -78,7 +78,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %a.loc2_9.2: i32 = bind_symbolic_name a 0, %a.loc2_9.1 [symbolic = @C.%a (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc3: %D.type = class_decl @D [template = constants.%D.1] {
-// CHECK:STDOUT:     %b.patt.loc3: %C.3 = symbolic_binding_pattern b 0
+// CHECK:STDOUT:     %b.patt.loc4_9.2: %C.3 = symbolic_binding_pattern b 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %.loc3_15: i32 = int_literal 1000 [template = constants.%.3]
@@ -89,7 +89,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.loc3_9.2: %C.3 = bind_symbolic_name b 0, %b.loc3_9.1 [symbolic = @D.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc4: %D.type = class_decl @D [template = constants.%D.1] {
-// CHECK:STDOUT:     %b.patt.loc4: %C.3 = symbolic_binding_pattern b 0
+// CHECK:STDOUT:     %b.patt.loc4_9.2: %C.3 = symbolic_binding_pattern b 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc4: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %.loc4_15: i32 = int_literal 1000 [template = constants.%.3]

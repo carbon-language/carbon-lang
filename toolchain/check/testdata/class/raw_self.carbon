@@ -64,8 +64,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc17_17: %.1 = binding_pattern self
-// CHECK:STDOUT:     %self.patt.loc17_30: i32 = binding_pattern r#self
+// CHECK:STDOUT:     @Class.%self.patt.loc17_17: %.1 = binding_pattern self
+// CHECK:STDOUT:     @Class.%self.patt.loc17_30: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc17_27: type = ptr_type %Class [template = constants.%.1]
@@ -79,8 +79,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     @F.%self.loc17_30: i32 = bind_name r#self, %self.loc17_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt.loc21_12: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.patt.loc21_24: i32 = binding_pattern r#self
+// CHECK:STDOUT:     @Class.%self.patt.loc21_12: %Class = binding_pattern self
+// CHECK:STDOUT:     @Class.%self.patt.loc21_24: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc21_12.1: %Class = param self
@@ -104,8 +104,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc12_13: %.1 = binding_pattern self
-// CHECK:STDOUT:     %self.patt.loc12_26: i32 = binding_pattern r#self
+// CHECK:STDOUT:     %self.patt.loc17_17: %.1 = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc17_30: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %Class [template = constants.%.1]
@@ -119,8 +119,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc12_26.2: i32 = bind_name r#self, %self.loc12_26.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt.loc13_8: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.patt.loc13_20: i32 = binding_pattern r#self
+// CHECK:STDOUT:     %self.patt.loc21_12: %Class = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc21_24: i32 = binding_pattern r#self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_8.1: %Class = param self

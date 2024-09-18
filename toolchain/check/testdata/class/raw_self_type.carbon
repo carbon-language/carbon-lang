@@ -61,8 +61,8 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
-// CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
+// CHECK:STDOUT:     @MemberNamedSelf.%x.patt: %MemberNamedSelf = binding_pattern x
+// CHECK:STDOUT:     @MemberNamedSelf.%y.patt: %Self = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc24_22.1: %MemberNamedSelf = param x

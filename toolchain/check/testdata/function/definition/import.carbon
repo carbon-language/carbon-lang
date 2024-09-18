@@ -361,9 +361,7 @@ fn D() {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc27_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]
 // CHECK:STDOUT:     %.loc27_9.2: type = converted %int.make_type_32.loc27_9, %.loc27_9.1 [template = i32]

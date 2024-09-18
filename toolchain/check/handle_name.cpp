@@ -165,6 +165,7 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
 auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
     -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
+  context.pattern_block_stack().Push();
   return true;
 }
 

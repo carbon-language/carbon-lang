@@ -52,8 +52,8 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:   %Class.decl.loc11: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.decl.loc13: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     @Class.%self.patt: %Class = binding_pattern self
+// CHECK:STDOUT:     @Class.%b.patt: bool = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc17_12.1: %Class = param self

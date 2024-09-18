@@ -33,6 +33,9 @@ struct NameComponent {
   // The explicit parameter list.
   Parse::NodeId params_loc_id;
   SemIR::InstBlockId params_id;
+
+  // The pattern block.
+  SemIR::InstBlockId pattern_block_id;
 };
 
 // Pop a name component from the node stack.

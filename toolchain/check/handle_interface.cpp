@@ -47,14 +47,11 @@ static auto BuildInterfaceDecl(Context& context,
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
 
-  SemIR::InstBlockId pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
-  SemIR::DeclId decl_id = context.sem_ir().decls().Add(
-      {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id});
 
   // Add the interface declaration.
   auto interface_decl = SemIR::InterfaceDecl{
-      SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_id};
+      SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
 

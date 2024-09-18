@@ -82,6 +82,7 @@ auto Context::VerifyOnFinish() -> void {
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
+  pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
@@ -1137,6 +1138,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
   node_stack_.PrintForStackDump(formatter, Indent, output);
   inst_block_stack_.PrintForStackDump(formatter, Indent, output);
+  pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
   param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
   args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
 }

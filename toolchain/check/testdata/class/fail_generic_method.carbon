@@ -77,7 +77,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
-// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
 // CHECK:STDOUT:   } {

@@ -304,7 +304,7 @@ struct BindValue {
 
 // Common representation for various `*binding_pattern` nodes.
 struct AnyBindingPattern {
-  // TODO: Also handle BindTemplateName once it exists.
+  // TODO: Also handle TemplateBindingPattern once it exists.
   static constexpr InstKind Kinds[] = {InstKind::BindingPattern,
                                        InstKind::SymbolicBindingPattern};
 
@@ -454,7 +454,9 @@ struct ClassDecl {
   // TODO: For a generic class declaration, the name of the class declaration
   // should become a parameterized entity name value.
   ClassId class_id;
-  DeclId decl_id;
+  // The declaration block, containing the class name's qualifiers and the
+  // class's generic parameters.
+  InstBlockId decl_block_id;
 };
 
 // Access to a member of a class, such as `base.index`. This provides a
@@ -591,7 +593,9 @@ struct FunctionDecl {
 
   TypeId type_id;
   FunctionId function_id;
-  DeclId decl_id;
+  // The declaration block, containing the function declaration's parameters and
+  // their types.
+  InstBlockId decl_block_id;
 };
 
 // The type of a function.
@@ -642,7 +646,9 @@ struct ImplDecl {
 
   // No type: an impl declaration is not a value.
   ImplId impl_id;
-  DeclId decl_id;
+  // The declaration block, containing the impl's deduced parameters and its
+  // self type and interface type.
+  InstBlockId decl_block_id;
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
@@ -714,7 +720,9 @@ struct InterfaceDecl {
   // TODO: For a generic interface declaration, the name of the interface
   // declaration should become a parameterized entity name value.
   InterfaceId interface_id;
-  DeclId decl_id;
+  // The declaration block, containing the interface name's qualifiers and the
+  // interface's generic parameters.
+  InstBlockId decl_block_id;
 };
 
 // The type for an interface, either non-generic or specific.

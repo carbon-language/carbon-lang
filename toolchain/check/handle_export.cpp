@@ -25,10 +25,6 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
-  // Discard the pattern block, because patterns after `export` are disallowed,
-  // and diagnosed elsewhere.
-  context.pattern_block_stack().PopAndDiscard();
-
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();

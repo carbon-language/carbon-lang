@@ -20,11 +20,8 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::AliasInitializerId /*node_id*/)
-    -> bool {
-  // TODO: when/if parameterized aliases are supported, this must be
-  // attached to the `BindAlias` inst.
-  context.pattern_block_stack().PopAndDiscard();
+auto HandleParseNode(Context& /*context*/,
+                     Parse::AliasInitializerId /*node_id*/) -> bool {
   return true;
 }
 
