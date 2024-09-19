@@ -134,7 +134,7 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
       CARBON_DIAGNOSTIC(ImportTooLate, Error,
                         "`import` declarations must come after the `package` "
                         "declaration (if present) and before any other "
-                        "entities in the file.");
+                        "entities in the file");
       CARBON_DIAGNOSTIC(FirstDecl, Note, "first declaration is here");
       context.emitter()
           .Build(intro_token, ImportTooLate)
