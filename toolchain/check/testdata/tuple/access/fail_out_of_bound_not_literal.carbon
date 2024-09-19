@@ -90,7 +90,6 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc15_27) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_28.2: %.8 = converted %.loc15_28.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_29: i32 = struct_access %.loc15_28.2, element0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_15: ref <error> = tuple_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

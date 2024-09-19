@@ -18,6 +18,29 @@ enum class AccessKind : int8_t {
   Private,
 };
 
+}  // namespace Carbon::SemIR
+
+template <>
+struct llvm::format_provider<Carbon::SemIR::AccessKind> {
+  using AccessKind = Carbon::SemIR::AccessKind;
+  static void format(const AccessKind& loc, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (loc) {
+      case AccessKind::Private:
+        out << "private";
+        break;
+      case AccessKind::Protected:
+        out << "protected";
+        break;
+      case AccessKind::Public:
+        out << "public";
+        break;
+    }
+  }
+};
+
+namespace Carbon::SemIR {
+
 struct NameScope : Printable<NameScope> {
   struct Entry {
     NameId name_id;
@@ -56,6 +79,11 @@ struct NameScope : Printable<NameScope> {
     auto result = name_map.Insert(name_entry.name_id, add_name);
     CARBON_CHECK(result.is_inserted(), "Failed to add required name: {0}",
                  name_entry.name_id);
+  }
+
+  // Returns true if this name scope describes an imported package.
+  auto is_imported_package() const -> bool {
+    return is_closed_import && parent_scope_id == NameScopeId::Package;
   }
 
   // Names in the scope. We store both an insertion-ordered vector for iterating

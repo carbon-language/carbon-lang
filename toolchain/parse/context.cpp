@@ -66,16 +66,6 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
                tokens_->GetKind(*end_));
 }
 
-auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
-    -> void {
-  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-}
-
-auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
-    -> void {
-  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-}
-
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
                                      Lex::TokenIndex token, bool has_error)
     -> void {
@@ -140,13 +130,6 @@ auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
 auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
   CARBON_CHECK(PositionIs(kind), "Required {0}, found {1}", kind,
                PositionKind());
-  return Consume();
-}
-
-auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
-  if (!PositionIs(kind)) {
-    return std::nullopt;
-  }
   return Consume();
 }
 

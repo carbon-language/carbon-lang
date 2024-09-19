@@ -299,7 +299,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
 }
 
 auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
-                                    SemIR::NameId name_id) -> LookupResult {
+                                    SemIR::NameId name_id, bool required)
+    -> LookupResult {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from ancestor lexical scopes. These will be combined with
@@ -328,7 +329,10 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   // We didn't find anything at all.
-  DiagnoseNameNotFound(node_id, name_id);
+  if (required) {
+    DiagnoseNameNotFound(node_id, name_id);
+  }
+
   return {.specific_id = SemIR::SpecificId::Invalid,
           .inst_id = SemIR::InstId::BuiltinError};
 }
@@ -357,9 +361,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                                                SemIR::AccessKind access_kind,
                                                bool is_parent_access,
                                                AccessInfo access_info) -> void {
-  auto access_desc = access_kind == SemIR::AccessKind::Private
-                         ? llvm::StringLiteral("private")
-                         : llvm::StringLiteral("protected");
 
   auto inst = context.insts().Get(
       context.constant_values().GetInstId(access_info.constant_id));
@@ -370,13 +371,12 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
 
       auto class_info = context.classes().Get(class_type.class_id);
 
-      // TODO: Support passing AccessKind to diagnostics.
       CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
                         "Cannot access {0} member `{1}` of type `{2}`.",
-                        llvm::StringLiteral, SemIR::NameId, SemIR::TypeId);
+                        SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
       CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
                         "The {0} member `{1}` is defined here.",
-                        llvm::StringLiteral, SemIR::NameId);
+                        SemIR::AccessKind, SemIR::NameId);
 
       auto parent_type_id = class_info.self_type_id;
 
@@ -394,9 +394,9 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
       }
 
       context.emitter()
-          .Build(loc, ClassInvalidMemberAccess, access_desc, name_id,
+          .Build(loc, ClassInvalidMemberAccess, access_kind, name_id,
                  parent_type_id)
-          .Note(scope_result_id, ClassMemberDefinition, access_desc, name_id)
+          .Note(scope_result_id, ClassMemberDefinition, access_kind, name_id)
           .Emit();
 
       break;
@@ -413,13 +413,13 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                         llvm::StringLiteral, SemIR::NameId, SemIR::NameId);
 
       context.emitter()
-          .Build(loc, NamespaceInvalidAccess, access_desc, name_id,
+          .Build(loc, NamespaceInvalidAccess, access_kind, name_id,
                  namespace_name_id)
           .Emit();
       break;
     }
     default: {
-      context.TODO(loc, llvm::formatv("Enforce {0} access for {1}", access_desc,
+      context.TODO(loc, llvm::formatv("Enforce {0} access for {1}", access_kind,
                                       inst.kind()));
     }
   }

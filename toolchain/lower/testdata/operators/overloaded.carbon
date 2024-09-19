@@ -31,7 +31,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; ModuleID = 'overloaded.carbon'
 // CHECK:STDOUT: source_filename = "overloaded.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core.Main"(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
+// CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1, !dbg !7
@@ -41,7 +41,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_COp.Number.Main:Mul.Core.Main"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
+// CHECK:STDOUT: define void @"_COp.Number.Main:Mul.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1, !dbg !12
@@ -83,8 +83,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc28_10.3.temp = alloca { i1 }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core.Main"(ptr %.loc28_10.3.temp, ptr %a), !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core.Main"(ptr %return, ptr %.loc28_10.3.temp, ptr %b), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.3.temp, ptr %a), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core"(ptr %return, ptr %.loc28_10.3.temp, ptr %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,14 +98,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 17, column: 32, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 28, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 12, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Mul.Core.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Mul.Core", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 29, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 50, scope: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 28, scope: !11)

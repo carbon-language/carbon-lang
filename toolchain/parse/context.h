@@ -97,10 +97,14 @@ class Context {
 
   // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error = false)
-      -> void;
+      -> void {
+    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+  }
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void;
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void {
+    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+  }
 
   // Replaces the placeholder node at the indicated position with a leaf node.
   //
@@ -154,7 +158,12 @@ class Context {
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex>;
+  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
+    if (!PositionIs(kind)) {
+      return std::nullopt;
+    }
+    return Consume();
+  }
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.

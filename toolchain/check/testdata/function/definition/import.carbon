@@ -209,7 +209,7 @@ fn D() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_46: i32 = tuple_index %c.ref, %.loc6_47
+// CHECK:STDOUT:   %.loc6_46: i32 = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc6_48: %.4 = struct_literal (%.loc6_46)
 // CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc6_46)
 // CHECK:STDOUT:   %.loc6_49: %.4 = converted %.loc6_48, %struct

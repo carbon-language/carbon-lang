@@ -147,7 +147,7 @@ fn F() {
 // CHECK:STDOUT:   %t0: ref %.6 = bind_name t0, %t0.var
 // CHECK:STDOUT:   %t.ref.loc19: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 0 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc19_20: ref i32 = tuple_index %t.ref.loc19, %.loc19_21
+// CHECK:STDOUT:   %.loc19_20: ref i32 = tuple_access %t.ref.loc19, element0
 // CHECK:STDOUT:   %.loc19_18: %.6 = addr_of %.loc19_20
 // CHECK:STDOUT:   assign %t0.var, %.loc19_18
 // CHECK:STDOUT:   %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
@@ -158,7 +158,7 @@ fn F() {
 // CHECK:STDOUT:   %t1: ref %.6 = bind_name t1, %t1.var
 // CHECK:STDOUT:   %t.ref.loc20: ref %.8 = name_ref t, %t
 // CHECK:STDOUT:   %.loc20_21: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_20: ref i32 = tuple_index %t.ref.loc20, %.loc20_21
+// CHECK:STDOUT:   %.loc20_20: ref i32 = tuple_access %t.ref.loc20, element1
 // CHECK:STDOUT:   %.loc20_18: %.6 = addr_of %.loc20_20
 // CHECK:STDOUT:   assign %t1.var, %.loc20_18
 // CHECK:STDOUT:   return

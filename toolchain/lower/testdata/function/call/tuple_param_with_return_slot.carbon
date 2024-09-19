@@ -23,17 +23,17 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.tuple.index = extractvalue { i32 } %b, 0, !dbg !7
-// CHECK:STDOUT:   %.loc12_17.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc12_17.tuple.index.load = load i32, ptr %.loc12_17.tuple.index, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc12_22.tuple.index = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   %.loc12_22.tuple.index.load = load i32, ptr %.loc12_22.tuple.index, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
+// CHECK:STDOUT:   %.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc12_17.tuple.elem.load = load i32, ptr %.loc12_17.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc12_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc12_22.tuple.elem.load = load i32, ptr %.loc12_22.tuple.elem, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc12_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_12.tuple.index, ptr %.loc12_24.2.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_12.tuple.elem, ptr %.loc12_24.2.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc12_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_17.tuple.index.load, ptr %.loc12_24.4.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_17.tuple.elem.load, ptr %.loc12_24.4.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc12_24.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_22.tuple.index.load, ptr %.loc12_24.6.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc12_22.tuple.elem.load, ptr %.loc12_24.6.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
