@@ -20,6 +20,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -45,7 +46,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0
+// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic = @F.%N.patt (constants.%N.patt)]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_10: init type = call constants.%Int32() [template = i32]
@@ -68,11 +69,13 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc14: i32) {
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.loc14: i32, %a: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

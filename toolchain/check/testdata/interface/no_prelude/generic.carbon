@@ -62,6 +62,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %Simple.type: type = generic_interface_type @Simple [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Simple: %Simple.type = struct_value () [template]
@@ -91,9 +92,11 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %.13: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %struct: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N 1 [symbolic]
+// CHECK:STDOUT:   %N.patt: %T.1 = symbolic_binding_pattern N 1 [symbolic]
 // CHECK:STDOUT:   %WithImplicitArgs.type: type = generic_interface_type @WithImplicitArgs [template]
 // CHECK:STDOUT:   %WithImplicitArgs: %WithImplicitArgs.type = struct_value () [template]
 // CHECK:STDOUT:   %T.2: %.7 = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.2: %.7 = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %Receive.type: type = fn_type @Receive [template]
 // CHECK:STDOUT:   %Receive: %Receive.type = struct_value () [template]
 // CHECK:STDOUT:   %Pass.type: type = fn_type @Pass [template]
@@ -111,22 +114,22 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     .Pass = %Pass.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.decl: %Simple.type = interface_decl @Simple [template = constants.%Simple] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = @Simple.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @Simple.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %WithAssocFn.decl: %WithAssocFn.type = interface_decl @WithAssocFn [template = constants.%WithAssocFn] {
-// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = @WithAssocFn.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc8: type = param
 // CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8 [symbolic = @WithAssocFn.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %WithImplicitArgs.decl: %WithImplicitArgs.type = interface_decl @WithImplicitArgs [template = constants.%WithImplicitArgs] {
-// CHECK:STDOUT:     %T.patt.loc22: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %N.patt: @WithImplicitArgs.%T (%T.1) = symbolic_binding_pattern N 1
+// CHECK:STDOUT:     %T.patt.loc22: type = symbolic_binding_pattern T 0 [symbolic = @WithImplicitArgs.%T.patt (constants.%T.patt.1)]
+// CHECK:STDOUT:     %N.patt: @WithImplicitArgs.%T (%T.1) = symbolic_binding_pattern N 1 [symbolic = @WithImplicitArgs.%N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc22_28: type = param
 // CHECK:STDOUT:     %T.loc22: type = bind_symbolic_name T 0, %param.loc22_28 [symbolic = @WithImplicitArgs.%T (constants.%T.1)]
@@ -135,7 +138,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %N: @WithImplicitArgs.%T (%T.1) = bind_symbolic_name N 1, %param.loc22_38 [symbolic = @WithImplicitArgs.%N (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Receive.decl: %Receive.type = fn_decl @Receive [template = constants.%Receive] {
-// CHECK:STDOUT:     %T.patt.loc24: %.7 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc24: %.7 = symbolic_binding_pattern T 0 [symbolic = @Receive.%T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Simple.ref.loc24: %Simple.type = name_ref Simple, %Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, %C.decl [template = constants.%C]
@@ -146,7 +149,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     @Receive.%T.loc24: %.7 = bind_symbolic_name T 0, %param.loc24 [symbolic = @Receive.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Pass.decl: %Pass.type = fn_decl @Pass [template = constants.%Pass] {
-// CHECK:STDOUT:     %T.patt.loc25: %.7 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc25: %.7 = symbolic_binding_pattern T 0 [symbolic = @Pass.%T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Simple.ref.loc25: %Simple.type = name_ref Simple, %Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
@@ -160,6 +163,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Simple(file.%T.loc4: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Simple, @Simple(%T) [symbolic = %.1 (constants.%.2)]
@@ -176,6 +180,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @WithAssocFn(file.%T.loc8: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @WithAssocFn, @WithAssocFn(%T) [symbolic = %.1 (constants.%.4)]
@@ -202,7 +207,9 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @WithImplicitArgs(file.%T.loc22: type, file.%N: @WithImplicitArgs.%T (%T.1)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N 1 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %N.patt: %T.1 = symbolic_binding_pattern N 1 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
@@ -266,12 +273,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Receive(%T.loc24: %.7) {
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:   %T.patt: %.7 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc24: %.7);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Pass(%T.loc25: %.7) {
 // CHECK:STDOUT:   %T.1: %.7 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:   %T.patt: %.7 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -286,24 +295,29 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.1) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(@Simple.%T) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.1) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1 => constants.%.7
@@ -312,6 +326,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1 => constants.%.9
@@ -326,21 +341,26 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.2) {
 // CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.patt => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.2) {
 // CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.patt => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic: %Generic.type = struct_value () [template]
@@ -351,10 +371,12 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Generic, @Generic(%A) [template]
 // CHECK:STDOUT:   %T.2: %.4 = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.2: %.4 = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = interface_type @Generic, @Generic(%B) [template]
 // CHECK:STDOUT:   %T.3: %.5 = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.3: %.5 = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -368,7 +390,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = @Generic.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @Generic.%T (constants.%T.1)]
@@ -376,7 +398,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc9: %.4 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc9: %.4 = symbolic_binding_pattern T 0 [symbolic = @F.%T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Generic.ref.loc9: %Generic.type = name_ref Generic, %Generic.decl [template = constants.%Generic]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
@@ -387,7 +409,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     @F.%T.loc9: %.4 = bind_symbolic_name T 0, %param.loc9 [symbolic = @F.%T.1 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %T.patt.loc10: %.5 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc10: %.5 = symbolic_binding_pattern T 0 [symbolic = @G.%T.patt (constants.%T.patt.3)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Generic.ref.loc10: %Generic.type = name_ref Generic, %Generic.decl [template = constants.%Generic]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
@@ -401,6 +423,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Generic(file.%T.loc4: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @Generic, @Generic(%T) [symbolic = %.1 (constants.%.2)]
@@ -427,12 +450,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc9: %.4) {
 // CHECK:STDOUT:   %T.1: %.4 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:   %T.patt: %.4 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc9: %.4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc10: %.5) {
 // CHECK:STDOUT:   %T.1: %.5 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT:   %T.patt: %.5 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -447,29 +472,36 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.1) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@Generic.%T) {
 // CHECK:STDOUT:   %T => constants.%T.1
+// CHECK:STDOUT:   %T.patt => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T => constants.%A
+// CHECK:STDOUT:   %T.patt => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.2) {
 // CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.patt => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
 // CHECK:STDOUT:   %T => constants.%B
+// CHECK:STDOUT:   %T.patt => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.3) {
 // CHECK:STDOUT:   %T.1 => constants.%T.3
+// CHECK:STDOUT:   %T.patt => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.3) {
 // CHECK:STDOUT:   %T.1 => constants.%T.3
+// CHECK:STDOUT:   %T.patt => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

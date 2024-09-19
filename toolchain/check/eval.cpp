@@ -1380,6 +1380,26 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ValueAsRef::Kind:
       break;
 
+    case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
+      // FIXME address code duplication
+      const auto& bind_name =
+          eval_context.entity_names().Get(bind.entity_name_id);
+
+      // If we know which specific we're evaluating within and this is an
+      // argument of that specific, its constant value is the corresponding
+      // argument value.
+      if (auto value =
+              eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+          value.is_valid()) {
+        return value;
+      }
+
+      // The constant form of a symbolic binding is an idealized form of the
+      // original, with no equivalent value.
+      bind.entity_name_id =
+          eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+    }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
@@ -1480,7 +1500,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
-    case SemIR::SymbolicBindingPattern::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;

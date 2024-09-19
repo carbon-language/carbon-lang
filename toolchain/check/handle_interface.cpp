@@ -72,7 +72,8 @@ static auto BuildInterfaceDecl(Context& context,
               context,
               DeclParams(interface_decl_id, name.first_param_node_id,
                          name.last_param_node_id, name.implicit_params_id,
-                         name.params_id),
+                         name.implicit_param_patterns_id, name.params_id,
+                         name.param_patterns_id),
               DeclParams(existing_interface))) {
         // TODO: This should be refactored a little, particularly for
         // prev_import_ir_id. See similar logic for classes and functions, which

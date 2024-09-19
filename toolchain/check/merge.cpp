@@ -133,7 +133,9 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // previously been diagnosed.
 static auto EntityHasParamError(Context& context, const DeclParams& info)
     -> bool {
-  for (auto param_refs_id : {info.implicit_param_refs_id, info.param_refs_id}) {
+  for (auto param_refs_id :
+       {info.implicit_param_refs_id, info.implicit_param_patterns_id,
+        info.param_refs_id, info.param_patterns_id}) {
     if (param_refs_id.is_valid() &&
         param_refs_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_refs_id)) {
@@ -193,10 +195,33 @@ static auto CheckRedeclParam(Context& context,
     }
   }
 
+  if (new_param_ref.Is<SemIR::AnyBindName>()) {
+    auto new_entity_name = context.entity_names().Get(
+        new_param_ref.As<SemIR::AnyBindName>().entity_name_id);
+    auto prev_entity_name = context.entity_names().Get(
+        prev_param_ref.As<SemIR::AnyBindName>().entity_name_id);
+    if (new_entity_name.name_id != prev_entity_name.name_id) {
+      diagnose();
+      return false;
+    }
+    return true;
+  }
+
+  if (new_param_ref.Is<SemIR::AddrPattern>()) {
+    new_param_ref =
+        context.insts().Get(new_param_ref.As<SemIR::AddrPattern>().inner_id);
+    prev_param_ref =
+        context.insts().Get(prev_param_ref.As<SemIR::AddrPattern>().inner_id);
+    if (new_param_ref.kind() != prev_param_ref.kind()) {
+      diagnose();
+      return false;
+    }
+  }
+
   auto new_entity_name = context.entity_names().Get(
-      new_param_ref.As<SemIR::AnyBindName>().entity_name_id);
+      new_param_ref.As<SemIR::AnyBindingPattern>().entity_name_id);
   auto prev_entity_name = context.entity_names().Get(
-      prev_param_ref.As<SemIR::AnyBindName>().entity_name_id);
+      prev_param_ref.As<SemIR::AnyBindingPattern>().entity_name_id);
   if (new_entity_name.name_id != prev_entity_name.name_id) {
     diagnose();
     return false;
@@ -341,15 +366,29 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.loc,
-                         new_entity.implicit_param_refs_id, prev_entity.loc,
-                         prev_entity.implicit_param_refs_id, "implicit ",
-                         prev_specific_id)) {
+  // FIXME check only the patterns (and remove support for params from
+  // CheckRedeclParams)
+  bool implicit_params_check = CheckRedeclParams(
+      context, new_entity.loc, new_entity.implicit_param_refs_id,
+      prev_entity.loc, prev_entity.implicit_param_refs_id, "implicit ",
+      prev_specific_id);
+  bool implicit_patterns_check = CheckRedeclParams(
+      context, new_entity.loc, new_entity.implicit_param_patterns_id,
+      prev_entity.loc, prev_entity.implicit_param_patterns_id, "implicit ",
+      prev_specific_id);
+  CARBON_CHECK(implicit_params_check == implicit_patterns_check)
+      << implicit_params_check << " " << implicit_patterns_check;
+  if (!implicit_params_check || !implicit_patterns_check) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
-                         prev_entity.loc, prev_entity.param_refs_id, "",
-                         prev_specific_id)) {
+  bool params_check = CheckRedeclParams(
+      context, new_entity.loc, new_entity.param_refs_id, prev_entity.loc,
+      prev_entity.param_refs_id, "", prev_specific_id);
+  bool patterns_check = CheckRedeclParams(
+      context, new_entity.loc, new_entity.param_patterns_id, prev_entity.loc,
+      prev_entity.param_patterns_id, "", prev_specific_id);
+  CARBON_CHECK(params_check == patterns_check);
+  if (!params_check || !patterns_check) {
     return false;
   }
   if (check_syntax &&

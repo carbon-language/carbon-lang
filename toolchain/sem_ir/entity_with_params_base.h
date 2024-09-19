@@ -46,7 +46,9 @@ struct EntityWithParamsBase {
     last_param_node_id = definition.last_param_node_id;
     pattern_block_id = definition.pattern_block_id;
     implicit_param_refs_id = definition.implicit_param_refs_id;
+    implicit_param_patterns_id = definition.implicit_param_patterns_id;
     param_refs_id = definition.param_refs_id;
+    param_patterns_id = definition.param_patterns_id;
     definition_id = definition.definition_id;
   }
 
@@ -84,8 +86,10 @@ struct EntityWithParamsBase {
   InstBlockId pattern_block_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
+  InstBlockId implicit_param_patterns_id;
   // A block containing a single reference instruction per parameter.
   InstBlockId param_refs_id;
+  InstBlockId param_patterns_id;
   // True if declarations are `extern`.
   bool is_extern;
   // For an `extern library` declaration, the library name.

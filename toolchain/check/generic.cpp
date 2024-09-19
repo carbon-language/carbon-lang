@@ -105,6 +105,12 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       return true;
     }
 
+    // FIXME code duplication
+    if (auto pattern =
+            context_.insts().TryGetAs<SemIR::SymbolicBindingPattern>(inst_id)) {
+      inst_id = Rebuild(inst_id, *pattern);
+    }
+
     return false;
   }
 

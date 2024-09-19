@@ -666,6 +666,38 @@ class ImportRefResolver {
     return param_data;
   }
 
+  // FIXME code duplication
+  auto GetLocalPatternConstantIds(SemIR::InstBlockId param_patterns_id)
+      -> llvm::SmallVector<ParamData> {
+    llvm::SmallVector<ParamData> param_data;
+    if (!param_patterns_id.is_valid() ||
+        param_patterns_id == SemIR::InstBlockId::Empty) {
+      return param_data;
+    }
+
+    const auto& param_patterns =
+        import_ir_.inst_blocks().Get(param_patterns_id);
+    param_data.reserve(param_patterns.size());
+    for (auto pattern_id : param_patterns) {
+      auto type_const_id =
+          GetLocalConstantId(import_ir_.insts().Get(pattern_id).type_id());
+      // If the parameter is a symbolic binding, build the
+      // SymbolicBindingPattern constant.
+      auto binding_id = pattern_id;
+      auto binding_inst = import_ir_.insts().Get(binding_id);
+      if (auto addr = binding_inst.TryAs<SemIR::AddrPattern>()) {
+        binding_id = addr->inner_id;
+        binding_inst = import_ir_.insts().Get(binding_id);
+      }
+      auto binding_const_id = binding_inst.Is<SemIR::SymbolicBindingPattern>()
+                                  ? GetLocalConstantId(binding_id)
+                                  : SemIR::ConstantId::Invalid;
+      param_data.push_back(
+          {.type_const_id = type_const_id, .bind_const_id = binding_const_id});
+    }
+    return param_data;
+  }
+
   // Given a param_refs_id and const_ids from GetLocalParamConstantIds, returns
   // a version of param_refs_id localized to the current IR.
   auto GetLocalParamRefsId(SemIR::InstBlockId param_refs_id,
@@ -743,6 +775,81 @@ class ImportRefResolver {
       new_param_refs.push_back(new_param_id);
     }
     return context_.inst_blocks().Add(new_param_refs);
+  }
+
+  // FIXME comment
+  // FIXME code duplication
+  auto GetLocalParamPatternsId(SemIR::InstBlockId param_patterns_id,
+                               const llvm::SmallVector<ParamData>& params_data)
+      -> SemIR::InstBlockId {
+    if (!param_patterns_id.is_valid() ||
+        param_patterns_id == SemIR::InstBlockId::Empty) {
+      return param_patterns_id;
+    }
+    const auto& param_patterns =
+        import_ir_.inst_blocks().Get(param_patterns_id);
+    llvm::SmallVector<SemIR::InstId> new_patterns;
+    for (auto [pattern_id, param_data] :
+         llvm::zip(param_patterns, params_data)) {
+      // Figure out the param structure. This echoes
+      // Function::GetParamFromParamRefId.
+      // TODO: Consider a different parameter handling to simplify import logic.
+      auto inst = import_ir_.insts().Get(pattern_id);
+      auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
+
+      auto binding_id = pattern_id;
+
+      if (addr_inst) {
+        binding_id = addr_inst->inner_id;
+        inst = import_ir_.insts().Get(binding_id);
+      }
+
+      auto binding = inst.As<SemIR::AnyBindingPattern>();
+
+      // Rebuild the param instruction.
+      auto entity_name = import_ir_.entity_names().Get(binding.entity_name_id);
+      auto name_id = GetLocalNameId(entity_name.name_id);
+      auto type_id =
+          context_.GetTypeIdForTypeConstant(param_data.type_const_id);
+
+      auto new_param_id = SemIR::InstId::Invalid;
+      switch (binding.kind) {
+        case SemIR::BindingPattern::Kind: {
+          auto entity_name_id = context_.entity_names().Add(
+              {.name_id = name_id,
+               .parent_scope_id = SemIR::NameScopeId::Invalid,
+               .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+          new_param_id = context_.AddInstInNoBlock<SemIR::BindingPattern>(
+              AddImportIRInst(binding_id),
+              {.type_id = type_id, .entity_name_id = entity_name_id});
+          break;
+        }
+        case SemIR::SymbolicBindingPattern::Kind: {
+          // We already imported a constant value for this symbolic binding.
+          // We can reuse most of it, but update the value to point to our
+          // specific parameter, and preserve the constant value.
+          auto new_binding_inst =
+              context_.insts().GetAs<SemIR::SymbolicBindingPattern>(
+                  context_.constant_values().GetInstId(
+                      param_data.bind_const_id));
+          new_param_id = context_.AddInstInNoBlock(AddImportIRInst(binding_id),
+                                                   new_binding_inst);
+          context_.constant_values().Set(new_param_id,
+                                         param_data.bind_const_id);
+          break;
+        }
+        default: {
+          CARBON_FATAL() << "Unexpected kind: " << binding.kind;
+        }
+      }
+      if (addr_inst) {
+        new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
+            AddImportIRInst(pattern_id),
+            {.type_id = type_id, .inner_id = new_param_id});
+      }
+      new_patterns.push_back(new_param_id);
+    }
+    return context_.inst_blocks().Add(new_patterns);
   }
 
   // Translates a NameId from the import IR to a local NameId.
@@ -849,9 +956,16 @@ class ImportRefResolver {
         .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty
                                       : SemIR::InstBlockId::Invalid,
+        .implicit_param_patterns_id =
+            import_base.implicit_param_patterns_id.is_valid()
+                ? SemIR::InstBlockId::Empty
+                : SemIR::InstBlockId::Invalid,
         .param_refs_id = import_base.param_refs_id.is_valid()
                              ? SemIR::InstBlockId::Empty
                              : SemIR::InstBlockId::Invalid,
+        .param_patterns_id = import_base.param_patterns_id.is_valid()
+                                 ? SemIR::InstBlockId::Empty
+                                 : SemIR::InstBlockId::Invalid,
         .is_extern = import_base.is_extern,
         .extern_library_id = StringLiteralValueId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
@@ -973,6 +1087,10 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::BindAlias inst): {
         return TryResolveTypedInst(inst);
       }
+      case SemIR::BindingPattern::Kind: {
+        // TODO: Should we be resolving BindingPatterns at all?
+        return ResolveAsConstant(SemIR::ConstantId::NotConstant);
+      }
       case SemIR::BindName::Kind: {
         // TODO: Should we be resolving BindNames at all?
         return ResolveAsConstant(SemIR::ConstantId::NotConstant);
@@ -1023,6 +1141,9 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::PointerType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::StructType inst): {
@@ -1168,6 +1289,25 @@ class ImportRefResolver {
          .value_id = SemIR::InstId::Invalid});
   }
 
+  auto TryResolveTypedInst(SemIR::SymbolicBindingPattern inst)
+      -> ResolveResult {
+    auto type_id = GetLocalConstantId(inst.type_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    const auto& import_entity_name =
+        import_ir_.entity_names().Get(inst.entity_name_id);
+    auto name_id = GetLocalNameId(import_entity_name.name_id);
+    auto entity_name_id = context_.entity_names().Add(
+        {.name_id = name_id,
+         .parent_scope_id = SemIR::NameScopeId::Invalid,
+         .bind_index = import_entity_name.bind_index});
+    return ResolveAs<SemIR::SymbolicBindingPattern>(
+        {.type_id = context_.GetTypeIdForTypeConstant(type_id),
+         .entity_name_id = entity_name_id});
+  }
+
   // Makes an incomplete class. This is necessary even with classes with a
   // complete declaration, because things such as `Self` may refer back to the
   // type.
@@ -1269,7 +1409,11 @@ class ImportRefResolver {
     auto parent_scope_id = GetLocalNameScopeId(import_class.parent_scope_id);
     auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
+    auto implicit_param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_class.implicit_param_patterns_id);
     auto param_const_ids = GetLocalParamConstantIds(import_class.param_refs_id);
+    auto param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_class.param_patterns_id);
     auto generic_data = GetLocalGenericData(import_class.generic_id);
     auto self_const_id = GetLocalConstantId(import_class.self_type_id);
     auto object_repr_const_id =
@@ -1288,8 +1432,13 @@ class ImportRefResolver {
     new_class.parent_scope_id = parent_scope_id;
     new_class.implicit_param_refs_id = GetLocalParamRefsId(
         import_class.implicit_param_refs_id, implicit_param_const_ids);
+    new_class.implicit_param_patterns_id =
+        GetLocalParamPatternsId(import_class.implicit_param_patterns_id,
+                                implicit_param_pattern_const_ids);
     new_class.param_refs_id =
         GetLocalParamRefsId(import_class.param_refs_id, param_const_ids);
+    new_class.param_patterns_id = GetLocalParamPatternsId(
+        import_class.param_patterns_id, param_pattern_const_ids);
     SetGenericData(import_class.generic_id, new_class.generic_id, generic_data);
     new_class.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
@@ -1427,8 +1576,12 @@ class ImportRefResolver {
     auto parent_scope_id = GetLocalNameScopeId(import_function.parent_scope_id);
     auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_function.implicit_param_refs_id);
+    auto implicit_param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_function.implicit_param_patterns_id);
     auto param_const_ids =
         GetLocalParamConstantIds(import_function.param_refs_id);
+    auto param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_function.param_patterns_id);
     auto generic_data = GetLocalGenericData(import_function.generic_id);
 
     if (HasNewWork()) {
@@ -1440,8 +1593,13 @@ class ImportRefResolver {
     new_function.parent_scope_id = parent_scope_id;
     new_function.implicit_param_refs_id = GetLocalParamRefsId(
         import_function.implicit_param_refs_id, implicit_param_const_ids);
+    new_function.implicit_param_patterns_id =
+        GetLocalParamPatternsId(import_function.implicit_param_patterns_id,
+                                implicit_param_pattern_const_ids);
     new_function.param_refs_id =
         GetLocalParamRefsId(import_function.param_refs_id, param_const_ids);
+    new_function.param_patterns_id = GetLocalParamPatternsId(
+        import_function.param_patterns_id, param_pattern_const_ids);
     SetGenericData(import_function.generic_id, new_function.generic_id,
                    generic_data);
 
@@ -1617,8 +1775,12 @@ class ImportRefResolver {
         GetLocalNameScopeId(import_interface.parent_scope_id);
     auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_interface.implicit_param_refs_id);
+    auto implicit_param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_interface.implicit_param_patterns_id);
     auto param_const_ids =
         GetLocalParamConstantIds(import_interface.param_refs_id);
+    auto param_pattern_const_ids =
+        GetLocalPatternConstantIds(import_interface.param_patterns_id);
     auto generic_data = GetLocalGenericData(import_interface.generic_id);
 
     std::optional<SemIR::InstId> self_param_id;
@@ -1634,8 +1796,13 @@ class ImportRefResolver {
     new_interface.parent_scope_id = parent_scope_id;
     new_interface.implicit_param_refs_id = GetLocalParamRefsId(
         import_interface.implicit_param_refs_id, implicit_param_const_ids);
+    new_interface.implicit_param_patterns_id =
+        GetLocalParamPatternsId(import_interface.implicit_param_patterns_id,
+                                implicit_param_pattern_const_ids);
     new_interface.param_refs_id =
         GetLocalParamRefsId(import_interface.param_refs_id, param_const_ids);
+    new_interface.param_patterns_id = GetLocalParamPatternsId(
+        import_interface.param_patterns_id, param_pattern_const_ids);
     SetGenericData(import_interface.generic_id, new_interface.generic_id,
                    generic_data);
 

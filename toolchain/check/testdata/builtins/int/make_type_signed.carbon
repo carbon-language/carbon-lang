@@ -132,6 +132,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
 // CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
@@ -197,7 +198,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     @G.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
-// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0
+// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic = @Symbolic.%N.patt (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -239,6 +240,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Symbolic(%N.loc14: i32) {
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N.1 [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -252,6 +254,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Symbolic(constants.%N) {
 // CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

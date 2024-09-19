@@ -21,7 +21,9 @@ interface I {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U [symbolic]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

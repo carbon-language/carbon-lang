@@ -105,7 +105,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
   if (callable.generic_id.is_valid()) {
     specific_id = DeduceGenericCallArguments(
         context, node_id, callable.generic_id, callee_function.specific_id,
-        callable.implicit_param_refs_id, callable.param_refs_id,
+        callable.implicit_param_patterns_id, callable.param_patterns_id,
         callee_function.self_id, arg_ids);
     if (!specific_id.is_valid()) {
       return SemIR::InstId::BuiltinError;
