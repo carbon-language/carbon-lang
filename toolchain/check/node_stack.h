@@ -444,6 +444,7 @@ class NodeStack {
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::SelfValueName:
+        case Parse::NodeKind::SelfTypeName:
           return Id::KindFor<SemIR::NameId>();
         case Parse::NodeKind::DefaultLibrary:
         case Parse::NodeKind::LibraryName:
@@ -625,7 +626,6 @@ class NodeStack {
         case Parse::NodeKind::RequirementEqualEqual:
         case Parse::NodeKind::RequirementImpls:
         case Parse::NodeKind::ReturnStatement:
-        case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfTypeNameExpr:
         case Parse::NodeKind::SelfValueNameExpr:
         case Parse::NodeKind::ShortCircuitOperatorAnd:

@@ -21,11 +21,14 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId /*node_id*/)
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
+  // FIXME: is there a declaration that should be used as the InstId here?
+  auto scope_id =
+      context.name_scopes().Add(SemIR::InstId::Invalid, SemIR::NameId::Invalid,
+                                context.decl_name_stack().PeekParentScopeId());
   // FIXME: specify any of the arguments instead of using defaults?
-  context.scope_stack().Push();
-  // FIXME: no idea if this is right
-  // auto scope_id = context.scope_stack().PeekNameScopeId();
-  auto scope_id = context.decl_name_stack().PeekParentScopeId();
+  // Where would I get scope_inst_id or specific_id?
+  context.scope_stack().Push(/*scope_inst_id=*/SemIR::InstId::Invalid,
+                             scope_id);
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   // Because there is no equivalent non-symbolic value, we use `Invalid` as
