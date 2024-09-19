@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value
   // CHECK:STDERR:   A->foo;
   // CHECK:STDERR:   ^
   A->foo;

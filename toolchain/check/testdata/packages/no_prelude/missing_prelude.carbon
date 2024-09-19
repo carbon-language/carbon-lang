@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: ERROR: Package `Core` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: var n: i32;
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 
 import Core library "prelude_empty";
 
-// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: ERROR: Name `Core.Int32` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: error: name `Core.Int32` implicitly referenced here, but not found
 // CHECK:STDERR: var n: i32;
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -80,7 +80,7 @@ class Core {
   fn Int32() -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: ERROR: Package `Core` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: var n: {} = i32;
 // CHECK:STDERR:             ^~~
 var n: {} = i32;

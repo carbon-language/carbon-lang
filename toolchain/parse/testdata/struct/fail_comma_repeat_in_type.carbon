@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_comma_repeat_in_type.carbon
 
-// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: ERROR: Expected `.field: field_type`.
+// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: error: expected `.field: field_type`
 // CHECK:STDERR: var x: {.a: i32,,} = {};
 // CHECK:STDERR:                 ^
 var x: {.a: i32,,} = {};

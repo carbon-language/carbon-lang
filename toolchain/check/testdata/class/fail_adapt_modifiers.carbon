@@ -11,7 +11,7 @@
 class B {}
 
 class C1 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `private` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `private` not allowed on `adapt` declaration
   // CHECK:STDERR:   private adapt B;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -19,7 +19,7 @@ class C1 {
 }
 
 class C2 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `abstract` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `abstract` not allowed on `adapt` declaration
   // CHECK:STDERR:   abstract adapt B;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -27,7 +27,7 @@ class C2 {
 }
 
 class C3 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `adapt` declaration
   // CHECK:STDERR:   default adapt B;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -35,10 +35,10 @@ class C3 {
 }
 
 class C4 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: ERROR: `extend` repeated on declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -46,10 +46,10 @@ class C4 {
 }
 
 class C5 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: ERROR: `base` not allowed on declaration with `extend`.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:   ^~~~~~
   extend base adapt B;

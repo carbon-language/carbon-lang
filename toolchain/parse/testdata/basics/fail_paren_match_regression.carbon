@@ -8,17 +8,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_paren_match_regression.carbon
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+8]]:5: ERROR: Expected name in binding pattern.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+8]]:5: error: expected name in binding pattern
 // CHECK:STDERR: var = (foo {})
 // CHECK:STDERR:     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+4]]:12: ERROR: Expected `,` or `)`.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+4]]:12: error: expected `,` or `)`
 // CHECK:STDERR: var = (foo {})
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+16]]:21: ERROR: `var` declarations must end with a `;`.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+16]]:21: error: `var` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_paren_match_regression.carbon

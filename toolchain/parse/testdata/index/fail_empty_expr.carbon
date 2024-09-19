@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/index/fail_empty_expr.carbon
 
-// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: ERROR: Expected expression.
+// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: error: expected expression
 // CHECK:STDERR: var v: i32 = t[];
 // CHECK:STDERR:                ^
 var v: i32 = t[];

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_use_in_init.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:16: ERROR: Name `a` not found.
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:16: error: name `a` not found
   // CHECK:STDERR:   let a: i32 = a;
   // CHECK:STDERR:                ^
   let a: i32 = a;

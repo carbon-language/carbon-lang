@@ -58,10 +58,10 @@ var b: () = a_alias;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: in import
 // CHECK:STDERR: import library "var2";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: var2.carbon:8:5: ERROR: Semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`.
+// CHECK:STDERR: var2.carbon:8:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`
 // CHECK:STDERR: var b: () = a_alias;
 // CHECK:STDERR:     ^
 import library "var2";

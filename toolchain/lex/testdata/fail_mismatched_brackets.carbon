@@ -11,14 +11,14 @@
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind:  'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
 
-// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:1: ERROR: Closing symbol without a corresponding opening symbol.
+// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:1: error: closing symbol without a corresponding opening symbol
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 }
 // CHECK:STDOUT:     { index: 1, kind:      'Error', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '}', has_leading_space: true },
 
-// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:3: ERROR: Closing symbol without a corresponding opening symbol.
+// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:3: error: closing symbol without a corresponding opening symbol
 // CHECK:STDERR: ( } )
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
@@ -27,7 +27,7 @@
 // CHECK:STDOUT:     { index: 3, kind:      'Error', line: {{ *}}[[@LINE-2]], column:  3, indent: 1, spelling: '}', has_leading_space: true },
 // CHECK:STDOUT:     { index: 4, kind: 'CloseParen', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: ')', opening_token: 2, has_leading_space: true },
 
-// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+3]]:1: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+3]]:1: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: [
 // CHECK:STDERR: ^
 [

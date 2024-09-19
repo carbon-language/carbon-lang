@@ -13,10 +13,10 @@ interface I(T:! type) {
   fn F[self: Self]() -> Self;
 }
 
-// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE-6]]:3: Name is previously declared here.
+// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE-6]]:3: name is previously declared here
 // CHECK:STDERR:   fn F[self: Self]() -> Self;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn I(T:! type).F[self: Self]() -> Self { return self; }

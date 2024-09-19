@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_out_of_bound_access.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
+// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+3]]:14: error: tuple element index `2` is past the end of type `(i32, i32)`
 // CHECK:STDERR: var b: i32 = a.2;
 // CHECK:STDERR:              ^~~
 var b: i32 = a.2;

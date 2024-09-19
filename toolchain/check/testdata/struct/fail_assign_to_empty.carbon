@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_to_empty.carbon
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: ERROR: Cannot initialize struct with 0 field(s) from struct with 1 field(s).
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: error: cannot initialize struct with 0 field(s) from struct with 1 field(s).
 // CHECK:STDERR: var x: {} = {.a = 1};
 // CHECK:STDERR:             ^~~~~~~~
 var x: {} = {.a = 1};

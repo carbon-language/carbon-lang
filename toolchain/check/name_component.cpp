@@ -58,7 +58,7 @@ auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
   NameComponent name = PopNameComponent(context);
   if (name.implicit_params_id.is_valid() || name.params_id.is_valid()) {
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
-                      "`{0}` declaration cannot have parameters.",
+                      "`{0}` declaration cannot have parameters",
                       Lex::TokenKind);
     // Point to the lexically first parameter list in the diagnostic.
     context.emitter().Emit(name.implicit_params_id.is_valid()

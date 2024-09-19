@@ -12,7 +12,7 @@
 
 package A;
 
-// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ import B;
 
 package B;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
 // CHECK:STDERR: import C;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ import C;
 
 package C;
 
-// CHECK:STDERR: fail_c.carbon:[[@LINE+4]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: fail_c.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
 // CHECK:STDERR: import A;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -40,7 +40,7 @@ import A;
 
 // --- fail_c.impl.carbon
 
-// CHECK:STDERR: fail_c.impl.carbon:[[@LINE+4]]:6: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: fail_c.impl.carbon:[[@LINE+4]]:6: error: import cannot be used due to a cycle; cycle must be fixed to import
 // CHECK:STDERR: impl package C;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -50,7 +50,7 @@ impl package C;
 
 package CycleChild;
 
-// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+3]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 import B;

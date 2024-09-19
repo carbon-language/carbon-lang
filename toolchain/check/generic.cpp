@@ -426,7 +426,7 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
   for (auto& inst_id : context.inst_blocks().Get(block_id)) {
     if (!context.constant_values().Get(inst_id).is_constant()) {
       CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
-                        "Parameters of generic types must be constant.");
+                        "parameters of generic types must be constant");
       context.emitter().Emit(inst_id, GenericParamMustBeConstant);
 
       // Replace the parameter with an invalid instruction so that we don't try

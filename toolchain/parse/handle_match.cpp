@@ -12,7 +12,7 @@ namespace Carbon::Parse {
 // have a larger look at this code and how it produces parse errors. This may be
 // good to re-examine when someone is working on implementing match checking.
 static auto DiagnoseMatchParseTODO(Context& context) -> void {
-  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "TODO: Improve match parsing.");
+  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "TODO: improve match parsing");
   context.emitter().Emit(*context.position(), MatchParseTODO);
 }
 
@@ -24,7 +24,7 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
   if (!context.PositionIs(Lex::TokenKind::EqualGreater)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCaseArrow, Error,
-                        "Expected `=>` introducing statement block.");
+                        "expected `=>` introducing statement block");
       context.emitter().Emit(*context.position(), ExpectedMatchCaseArrow);
     }
 
@@ -40,7 +40,7 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCaseBlock, Error,
-                        "Expected `{{` after `=>`.");
+                        "expected `{{` after `=>`");
       context.emitter().Emit(*context.position(), ExpectedMatchCaseBlock);
     }
 
@@ -57,7 +57,7 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
 
 static auto EmitUnexpectedTokenAndRecover(Context& context) -> void {
   CARBON_DIAGNOSTIC(UnexpectedTokenInMatchCasesBlock, Error,
-                    "Unexpected `{0}`; expected `case`, `default` or `}`.",
+                    "unexpected `{0}`; expected `case`, `default` or `}`",
                     Lex::TokenKind);
   context.emitter().Emit(*context.position(), UnexpectedTokenInMatchCasesBlock,
                          context.PositionKind());
@@ -81,7 +81,7 @@ auto HandleMatchConditionFinish(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCasesBlock, Error,
-                        "Expected `{{` starting block with cases.");
+                        "expected `{{` starting block with cases");
       context.emitter().Emit(*context.position(), ExpectedMatchCasesBlock);
     }
 
@@ -98,7 +98,7 @@ auto HandleMatchConditionFinish(Context& context) -> void {
 
   state.has_error = false;
   if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
-    CARBON_DIAGNOSTIC(ExpectedMatchCases, Error, "Expected cases.");
+    CARBON_DIAGNOSTIC(ExpectedMatchCases, Error, "expected cases");
     context.emitter().Emit(*context.position(), ExpectedMatchCases);
     state.has_error = true;
   }
@@ -127,10 +127,10 @@ auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
 
   Lex::TokenKind kind = context.PositionKind();
   if (kind == Lex::TokenKind::Case or kind == Lex::TokenKind::Default) {
-    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error, "Unreachable case; `{0}{1}",
-                      Lex::TokenKind, std::string);
-    context.emitter().Emit(*context.position(), UnreachableMatchCase, kind,
-                           "` occurs after the `default`");
+    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error,
+                      "unreachable case; `{0}` occurs after the `default`",
+                      Lex::TokenKind);
+    context.emitter().Emit(*context.position(), UnreachableMatchCase, kind);
 
     context.ReturnErrorOnState();
     context.PushState(State::MatchCaseLoopAfterDefault);

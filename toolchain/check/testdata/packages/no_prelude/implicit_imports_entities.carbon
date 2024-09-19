@@ -131,16 +131,16 @@ import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+13]]:6: In import.
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+13]]:6: in import
 // CHECK:STDERR: impl library "import_conflict";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: import_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: In import.
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: in import
 // CHECK:STDERR: impl library "import_conflict";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -158,16 +158,16 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "import_conflict_reverse";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: import_conflict_reverse.carbon:4:1: In import.
+// CHECK:STDERR: import_conflict_reverse.carbon:4:1: in import
 // CHECK:STDERR: import library "local_other";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 import Other library "o1";

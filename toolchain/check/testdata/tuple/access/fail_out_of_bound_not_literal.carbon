@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_out_of_bound_not_literal.carbon
 
 var a: (i32, i32) = (12, 34);
-// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2` is past the end of type `(i32, i32)`.
+// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+3]]:14: error: tuple element index `2` is past the end of type `(i32, i32)`
 // CHECK:STDERR: var b: i32 = a.({.index = 2}.index);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
 var b: i32 = a.({.index = 2}.index);

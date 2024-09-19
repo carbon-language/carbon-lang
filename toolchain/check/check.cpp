@@ -789,7 +789,7 @@ static auto DiagnoseMissingDefinitions(Context& context,
                                        Context::DiagnosticEmitter& emitter)
     -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
-                    "No definition found for declaration in impl file");
+                    "no definition found for declaration in impl file");
   for (SemIR::InstId decl_inst_id : context.definitions_required()) {
     SemIR::Inst decl_inst = context.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context.insts().Get(decl_inst_id)) {
@@ -983,8 +983,8 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
             explicit_import_map->Insert(import_key, import.node_id);
         !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
-                        "Library imported more than once.");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
+                        "library imported more than once");
+      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
           .Note(insert_result.value(), FirstImported)
           .Emit();
@@ -1014,9 +1014,9 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     // `impl`.
     if (is_same_library) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
-                        "Explicit import of `api` from `impl` file is "
-                        "redundant with implicit import.");
-      CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
+                        "explicit import of `api` from `impl` file is "
+                        "redundant with implicit import");
+      CARBON_DIAGNOSTIC(ImportSelf, Error, "file cannot import itself");
       bool is_impl = !packaging || packaging->is_impl;
       unit_info.emitter.Emit(import.node_id,
                              is_impl ? ExplicitImportApi : ImportSelf);
@@ -1028,7 +1028,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     if (is_file_implicit_main && is_import_implicit_current_package &&
         is_import_default_library) {
       CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
-                        "Cannot import `Main//default`.");
+                        "cannot import `Main//default`");
       unit_info.emitter.Emit(import.node_id, ImportMainDefaultLibrary);
 
       return;
@@ -1040,7 +1040,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
       if (is_same_package || (is_file_implicit_main && is_explicit_main)) {
         CARBON_DIAGNOSTIC(
             ImportCurrentPackageByName, Error,
-            "Imports from the current package must omit the package name.");
+            "imports from the current package must omit the package name");
         unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
         return;
       }
@@ -1048,7 +1048,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
       // Diagnose explicit imports from `Main`.
       if (is_explicit_main) {
         CARBON_DIAGNOSTIC(ImportMainPackage, Error,
-                          "Cannot import `Main` from other packages.");
+                          "cannot import `Main` from other packages");
         unit_info.emitter.Emit(import.node_id, ImportMainPackage);
         return;
       }
@@ -1088,8 +1088,8 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     // The imported api is missing.
     package_imports.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
-                      "Corresponding API for '{0}' not found.", std::string);
-    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API '{0}' not found.",
+                      "corresponding API for '{0}' not found", std::string);
+    CARBON_DIAGNOSTIC(ImportNotFound, Error, "imported API '{0}' not found",
                       std::string);
     unit_info.emitter.Emit(
         import.node_id,
@@ -1117,10 +1117,10 @@ static auto BuildApiMapAndDiagnosePackaging(
     // APIs.
     if (import_key.first == ExplicitMainName) {
       CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                        "`Main//default` must omit `package` declaration.");
+                        "`Main//default` must omit `package` declaration");
       CARBON_DIAGNOSTIC(
           ExplicitMainLibrary, Error,
-          "Use `library` declaration in `Main` package libraries.");
+          "use `library` declaration in `Main` package libraries");
       unit_info.emitter.Emit(packaging->names.node_id,
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
@@ -1140,13 +1140,13 @@ static auto BuildApiMapAndDiagnosePackaging(
             insert_result.value()->unit->tokens->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                            "Library's API previously provided by `{0}`.",
+                            "library's API previously provided by `{0}`",
                             std::string);
           unit_info.emitter.Emit(packaging->names.node_id, DuplicateLibraryApi,
                                  prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
-                            "Main//default previously provided by `{0}`.",
+                            "`Main//default` previously provided by `{0}`",
                             std::string);
           // Use the invalid node because there's no node to associate with.
           unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
@@ -1166,7 +1166,7 @@ static auto BuildApiMapAndDiagnosePackaging(
       auto want_ext = is_impl ? ImplExt : ApiExt;
       if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
         CARBON_DIAGNOSTIC(IncorrectExtension, Error,
-                          "File extension of `{0}` required for `{1}`.",
+                          "file extension of `{0}` required for `{1}`",
                           llvm::StringLiteral, Lex::TokenKind);
         auto diag = unit_info.emitter.Build(
             packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
@@ -1174,7 +1174,7 @@ static auto BuildApiMapAndDiagnosePackaging(
             is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
         if (is_api_with_impl_ext) {
           CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
-                            "File extension of `{0}` only allowed for `{1}`.",
+                            "file extension of `{0}` only allowed for `{1}`",
                             llvm::StringLiteral, Lex::TokenKind);
           diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote, ImplExt,
                     Lex::TokenKind::Impl);
@@ -1270,8 +1270,8 @@ auto CheckParseTrees(
             } else {
               // The import hasn't been checked, indicating a cycle.
               CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
-                                "Import cannot be used due to a cycle. Cycle "
-                                "must be fixed to import.");
+                                "import cannot be used due to a cycle; cycle "
+                                "must be fixed to import");
               unit_info.emitter.Emit(import_it->names.node_id,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.

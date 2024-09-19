@@ -21,13 +21,13 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:10: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: Type `D` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:3: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -36,13 +36,13 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:3: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: Type `D` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:3: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   a += b;

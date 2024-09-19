@@ -8,14 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: ERROR: Expected `=`; `let` declaration must have an initializer.
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: error: expected `=`; `let` declaration must have an initializer
 // CHECK:STDERR: let n: i32;
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: ERROR: Expected `=`; `let` declaration must have an initializer.
+  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: error: expected `=`; `let` declaration must have an initializer
   // CHECK:STDERR:   let n: i32;
   // CHECK:STDERR:             ^
   let n: i32;

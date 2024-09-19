@@ -28,7 +28,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for builtin function "int.eq".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "int.eq"
 // CHECK:STDERR: fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";

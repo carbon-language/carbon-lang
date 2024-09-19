@@ -8,31 +8,31 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_numeric_literal_overflow.carbon
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: ERROR: Integer literal with value 39999999999999999993 does not fit in i32.
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer literal with value 39999999999999999993 does not fit in i32
 // CHECK:STDERR: let a: i32 = 39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let a: i32 = 39999999999999999993;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: ERROR: Integer literal with value 2147483648 does not fit in i32.
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer literal with value 2147483648 does not fit in i32
 // CHECK:STDERR: let b: i32 = 2_147_483_648;
 // CHECK:STDERR:              ^~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = 2_147_483_648;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: ERROR: Integer literal with value 2147483648 does not fit in i32.
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: integer literal with value 2147483648 does not fit in i32
 // CHECK:STDERR: let c: i32 = 0x8000_0000;
 // CHECK:STDERR:              ^~~~~~~~~~~
 // CHECK:STDERR:
 let c: i32 = 0x8000_0000;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: ERROR: Real mantissa with value 399999999999999999930 does not fit in i64.
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: real mantissa with value 399999999999999999930 does not fit in i64
 // CHECK:STDERR: let d: f64 = 39999999999999999993.0e3;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let d: f64 = 39999999999999999993.0e3;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+3]]:14: ERROR: Real exponent with value 39999999999999999992 does not fit in i64.
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+3]]:14: error: real exponent with value 39999999999999999992 does not fit in i64
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 let e: f64 = 5.0e39999999999999999993;

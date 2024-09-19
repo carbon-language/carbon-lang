@@ -76,7 +76,7 @@ let b_value: B = ({.x = 1, .y = 2} as A) as B;
 // a copy to perform initialization. It's not clear whether that is the right
 // behavior.
 
-// CHECK:STDERR: fail_init_class.carbon:[[@LINE+4]]:17: ERROR: Cannot copy value of type `B`.
+// CHECK:STDERR: fail_init_class.carbon:[[@LINE+4]]:17: error: cannot copy value of type `B`
 // CHECK:STDERR: var b_init: B = ({.x = 1, .y = 2} as A) as B;
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+6]]:12: ERROR: Cannot convert from `{.x: i32}` to `B` with `as`.
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+6]]:12: error: cannot convert from `{.x: i32}` to `B` with `as`
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: Type `{.x: i32}` does not implement interface `As`.
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: type `{.x: i32}` does not implement interface `As`
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
 var b: B = {.x = 1} as B;

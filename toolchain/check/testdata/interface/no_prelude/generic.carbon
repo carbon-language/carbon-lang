@@ -49,10 +49,10 @@ class B {}
 fn F(T:! Generic(A));
 fn G(T:! Generic(B)) {
   // TODO: Include generic arguments in the type name.
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: ERROR: Package `Core` implicitly referenced here, but not found.
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: error: package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:6: Initializing generic parameter `T` declared here.
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:6: initializing generic parameter `T` declared here
   // CHECK:STDERR: fn F(T:! Generic(A));
   // CHECK:STDERR:      ^
   F(T);

@@ -34,11 +34,11 @@ auto CheckFunctionTypeMatches(Context& context,
                                                   prev_return_type_id)) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
-        "Function redeclaration differs because return type is `{0}`.",
+        "function redeclaration differs because return type is `{0}`",
         SemIR::TypeId);
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
-        "Function redeclaration differs because no return type is provided.");
+        "function redeclaration differs because no return type is provided");
     auto diag =
         new_return_type_id.is_valid()
             ? context.emitter().Build(new_function.latest_decl_id(),
@@ -48,13 +48,13 @@ auto CheckFunctionTypeMatches(Context& context,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
-                        "Previously declared with return type `{0}`.",
+                        "previously declared with return type `{0}`",
                         SemIR::TypeId);
       diag.Note(prev_function.latest_decl_id(),
                 FunctionRedeclReturnTypePrevious, prev_return_type_id);
     } else {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
-                        "Previously declared with no return type.");
+                        "previously declared with no return type");
       diag.Note(prev_function.latest_decl_id(),
                 FunctionRedeclReturnTypePreviousNoReturn);
     }
@@ -77,7 +77,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
   if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "Function returns incomplete type `{0}`.",
+                        "function returns incomplete type `{0}`",
                         SemIR::TypeId);
       return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                      return_info.type_id);

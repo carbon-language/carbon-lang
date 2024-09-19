@@ -8,15 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_control_flow.carbon
 
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+11]]:11: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
+// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+11]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.`
 // CHECK:STDERR: alias a = true or false;
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+7]]:11: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
+// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+7]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.`
 // CHECK:STDERR: alias a = true or false;
 // CHECK:STDERR:           ^~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+3]]:11: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference
 // CHECK:STDERR: alias a = true or false;
 // CHECK:STDERR:           ^~~~~~~~~~~~~
 alias a = true or false;

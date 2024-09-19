@@ -10,7 +10,7 @@
 
 fn foo() -> i32 {
   // TODO: Should we allow this?
-  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+3]]:8: ERROR: Expected `var` declaration.
+  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+3]]:8: error: expected `var` declaration
   // CHECK:STDERR:   for (returned var x: i32 in y) {
   // CHECK:STDERR:        ^~~~~~~~
   for (returned var x: i32 in y) {

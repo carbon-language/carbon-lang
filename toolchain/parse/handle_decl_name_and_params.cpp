@@ -20,11 +20,11 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     }
     if (state.token == *context.position()) {
       CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
-                        "`.` should be followed by a name.");
+                        "`.` should be followed by a name");
       context.emitter().Emit(token, ExpectedDeclNameAfterPeriod);
     } else {
       CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
-                        "`{0}` introducer should be followed by a name.",
+                        "`{0}` introducer should be followed by a name",
                         Lex::TokenKind);
       context.emitter().Emit(token, ExpectedDeclName,
                              context.tokens().GetKind(state.token));
@@ -68,7 +68,7 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
     CARBON_DIAGNOSTIC(
         ParamsRequiredAfterImplicit, Error,
-        "A `(` for parameters is required after implicit parameters.");
+        "a `(` for parameters is required after implicit parameters");
     context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
     context.ReturnErrorOnState();
     return;

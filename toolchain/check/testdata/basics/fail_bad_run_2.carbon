@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_bad_run_2.carbon
 
-// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
+// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32`
 // CHECK:STDERR: fn Run(n: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 fn Run(n: i32) {}

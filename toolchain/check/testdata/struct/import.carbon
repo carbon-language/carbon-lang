@@ -30,13 +30,13 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+10]]:14: ERROR: Missing value for field `a` in struct initialization.
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+10]]:14: error: missing value for field `a` in struct initialization
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:6: In import.
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:6: in import
 // CHECK:STDERR: impl package Implicit;
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: implicit.carbon:8:9: Initializing generic parameter `S` declared here.
+// CHECK:STDERR: implicit.carbon:8:9: initializing generic parameter `S` declared here
 // CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
@@ -45,10 +45,10 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `C` to `C`.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C` to `C`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: Type `C` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();

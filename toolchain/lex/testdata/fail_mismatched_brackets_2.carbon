@@ -18,7 +18,7 @@ fn F() {
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lex/testdata/fail_mismatched_brackets_2.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/fail_mismatched_brackets_2.carbon
-// CHECK:STDERR: fail_mismatched_brackets_2.carbon:[[@LINE-9]]:1: ERROR: Closing symbol without a corresponding opening symbol.
+// CHECK:STDERR: fail_mismatched_brackets_2.carbon:[[@LINE-9]]:1: error: closing symbol without a corresponding opening symbol
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDOUT: - filename: fail_mismatched_brackets_2.carbon

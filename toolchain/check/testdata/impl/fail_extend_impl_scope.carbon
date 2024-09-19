@@ -10,7 +10,7 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: ERROR: `extend impl` can only be used in a class.
+// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: error: `extend impl` can only be used in a class
 // CHECK:STDERR: extend impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 extend impl i32 as I {}

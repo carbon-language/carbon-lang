@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_skip_to_newline_without_semi.carbon
 
-// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+3]]:4: error: `fn` introducer should be followed by a name
 // CHECK:STDERR: fn ()
 // CHECK:STDERR:    ^
 fn ()

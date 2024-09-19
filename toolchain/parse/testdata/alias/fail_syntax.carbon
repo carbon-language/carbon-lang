@@ -8,63 +8,63 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/alias/fail_syntax.carbon
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: ERROR: `alias` introducer should be followed by a name.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name
 // CHECK:STDERR: alias = b;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 alias = b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: ERROR: `alias` requires a `=` for the source.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source
 // CHECK:STDERR: alias a b;
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 alias a b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:10: ERROR: Expected expression.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:10: error: expected expression
 // CHECK:STDERR: alias a =;
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
 alias a =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: ERROR: `alias` requires a `=` for the source.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` requires a `=` for the source
 // CHECK:STDERR: alias a;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 alias a;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: ERROR: `alias` introducer should be followed by a name.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name
 // CHECK:STDERR: alias =;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 alias =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: ERROR: `alias` requires a `=` for the source.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source
 // CHECK:STDERR: alias a b c = d;
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 alias a b c = d;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:13: ERROR: `alias` declarations must end with a `;`.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:13: error: `alias` declarations must end with a `;`
 // CHECK:STDERR: alias a = b c d;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 alias a = b c d;
 
 fn F() {
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: ERROR: `alias` introducer should be followed by a name.
+  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` introducer should be followed by a name
   // CHECK:STDERR:   alias;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   alias;
 
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:12: ERROR: Expected expression.
+  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:12: error: expected expression
   // CHECK:STDERR:   alias a =;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
   alias a =;
 
   alias a =
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:1: ERROR: Expected expression.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:1: error: expected expression
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
@@ -72,7 +72,7 @@ fn F() {
 
 alias a = b
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: ERROR: `alias` declarations must end with a `;`.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: error: `alias` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_syntax.carbon

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_assign_nested.carbon
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:36: ERROR: Cannot initialize tuple of 2 element(s) from tuple with 3 element(s).
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:36: error: cannot initialize tuple of 2 element(s) from tuple with 3 element(s).
 // CHECK:STDERR: var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDERR:                                    ^~~~~~~~~
 var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
