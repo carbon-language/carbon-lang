@@ -10,7 +10,7 @@
 
 base class B {}
 
-// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: error: `base` declaration can only be used in a class
+// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: error: `base` declaration can only be used in a class.
 // CHECK:STDERR: extend base: B;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

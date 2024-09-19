@@ -15,11 +15,11 @@ library "[[@TEST_NAME]]";
 base class Base {}
 
 class AdaptWithBase {
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: error: adapter cannot have a base class
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: error: Adapter cannot have a base class.
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: `base` declaration is here
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: `base` declaration is here.
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,11 +31,11 @@ class AdaptWithBase {
 library "[[@TEST_NAME]]";
 
 class AdaptWithField {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter cannot have fields
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: Adapter cannot have fields.
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: First field declaration is here.
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -43,11 +43,11 @@ class AdaptWithField {
 }
 
 class AdaptWithFields {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter cannot have fields
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: Adapter cannot have fields.
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: First field declaration is here.
   // CHECK:STDERR:   var a: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -65,10 +65,10 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter cannot have a base class
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: Adapter cannot have a base class.
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here.
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   adapt {};

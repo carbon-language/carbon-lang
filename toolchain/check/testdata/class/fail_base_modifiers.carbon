@@ -23,7 +23,7 @@ class C2 {
   // CHECK:STDERR:   abstract base: B;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: missing `extend` before `base` declaration in class
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: Missing `extend` before `base` declaration in class.
   // CHECK:STDERR:   abstract base: B;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

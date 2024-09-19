@@ -13,10 +13,10 @@
 library "[[@TEST_NAME]]";
 
 class A;
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: base class A {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -27,10 +27,10 @@ base class A {}
 library "[[@TEST_NAME]]";
 
 class B;
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: abstract class B {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -41,10 +41,10 @@ abstract class B {}
 library "[[@TEST_NAME]]";
 
 base class C;
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: base class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -55,10 +55,10 @@ class C {}
 library "[[@TEST_NAME]]";
 
 base class D;
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: abstract class D {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: base class D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -69,10 +69,10 @@ abstract class D {}
 library "[[@TEST_NAME]]";
 
 abstract class E;
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: class E {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: abstract class E;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -83,10 +83,10 @@ class E {}
 library "[[@TEST_NAME]]";
 
 abstract class F;
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: class redeclared with different inheritance kind
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: Class redeclared with different inheritance kind.
 // CHECK:STDERR: base class F {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: abstract class F;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 base class F {}

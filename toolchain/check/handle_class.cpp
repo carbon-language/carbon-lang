@@ -79,9 +79,9 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   // TODO: The rule here is not yet decided. See #3384.
   if (prev_class.inheritance_kind != new_class.inheritance_kind) {
     CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "class redeclared with different inheritance kind");
+                      "Class redeclared with different inheritance kind.");
     CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "previously declared here");
+                      "Previously declared here.");
     context.emitter()
         .Build(new_loc, ClassRedeclarationDifferentIntroducer)
         .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
@@ -322,7 +322,7 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
                                                   SemIRLoc loc,
                                                   Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
-                    "`{0}` declaration can only be used in a class",
+                    "`{0}` declaration can only be used in a class.",
                     Lex::TokenKind);
   context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
 }
@@ -346,13 +346,13 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                                               SemIRLoc prev_loc,
                                               Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclRepeated, Error,
-                    "multiple `{0}` declarations in class.{1}", Lex::TokenKind,
+                    "Multiple `{0}` declarations in class.{1}", Lex::TokenKind,
                     std::string);
   const llvm::StringRef extra = tok == Lex::TokenKind::Base
                                     ? " Multiple inheritance is not permitted."
                                     : "";
   CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
-                    "previous `{0}` declaration is here", Lex::TokenKind);
+                    "Previous `{0}` declaration is here.", Lex::TokenKind);
   context.emitter()
       .Build(new_loc, ClassSpecificDeclRepeated, tok, extra.str())
       .Note(prev_loc, ClassSpecificDeclPrevious, tok)
@@ -390,7 +390,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   auto adapted_type_id = ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "adapted type `{0}` is an incomplete type",
+                      "Adapted type `{0}` is an incomplete type.",
                       SemIR::TypeId);
     return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
                                    adapted_type_id);
@@ -454,8 +454,8 @@ constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
                                 SemIR::TypeId base_type_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
-                    "deriving from final type `{0}`. Base type must be an "
-                    "`abstract` or `base` class",
+                    "Deriving from final type `{0}`. Base type must be an "
+                    "`abstract` or `base` class.",
                     SemIR::TypeId);
   context.emitter().Emit(node_id, BaseIsFinal, base_type_id);
 }
@@ -466,7 +466,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
   auto base_type_id = ExprAsType(context, node_id, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "base `{0}` is an incomplete type", SemIR::TypeId);
+                      "Base `{0}` is an incomplete type.", SemIR::TypeId);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
                                    base_type_id);
   });
@@ -505,7 +505,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
   if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
-                      "missing `extend` before `base` declaration in class");
+                      "Missing `extend` before `base` declaration in class.");
     context.emitter().Emit(node_id, BaseMissingExtend);
   }
 
@@ -571,8 +571,8 @@ static auto CheckCompleteAdapterClassType(Context& context,
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.is_valid()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error,
-                      "adapter cannot have a base class");
-    CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here");
+                      "Adapter cannot have a base class.");
+    CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here.");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptBaseHere)
@@ -582,8 +582,8 @@ static auto CheckCompleteAdapterClassType(Context& context,
 
   if (!context.inst_blocks().Get(fields_id).empty()) {
     auto first_field_id = context.inst_blocks().Get(fields_id).front();
-    CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter cannot have fields");
-    CARBON_DIAGNOSTIC(AdaptFieldHere, Note, "first field declaration is here");
+    CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
+    CARBON_DIAGNOSTIC(AdaptFieldHere, Note, "First field declaration is here.");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(first_field_id, AdaptFieldHere)
