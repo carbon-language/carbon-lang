@@ -352,6 +352,7 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                     Lex::TokenKind);
   CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
                     "previous `{0}` declaration is here", Lex::TokenKind);
+  CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
       .Build(new_loc,
              tok == Lex::TokenKind::Base ? BaseDeclRepeated
