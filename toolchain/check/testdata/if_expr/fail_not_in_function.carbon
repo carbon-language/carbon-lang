@@ -52,6 +52,7 @@ class C {
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %C, i32 [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

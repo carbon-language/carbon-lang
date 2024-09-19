@@ -448,6 +448,26 @@ struct ClassType {
   SpecificId specific_id;
 };
 
+// A witness that a type is complete. For now, this only tracks the object
+// representation corresponding to the type, and this instruction is currently
+// only created for class types, because all other types are their own object
+// representation.
+//
+// TODO: Eventually this should be replaced by a witness for an interface that
+// models type completeness, and should track other information such as the
+// value representation.
+struct CompleteTypeWitness {
+  static constexpr auto Kind =
+      InstKind::CompleteTypeWitness.Define<Parse::NodeId>(
+          {.ir_name = "complete_type_witness",
+           .is_type = InstIsType::Never,
+           .constant_kind = InstConstantKind::Always});
+  // Always the builtin witness type.
+  TypeId type_id;
+  // The type that is used as the object representation of this type.
+  TypeId object_repr_id;
+};
+
 // Indicates `const` on a type, such as `var x: const i32`.
 struct ConstType {
   static constexpr auto Kind =

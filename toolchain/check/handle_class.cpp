@@ -94,7 +94,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.body_block_id = new_class.body_block_id;
     prev_class.adapt_id = new_class.adapt_id;
     prev_class.base_id = new_class.base_id;
-    prev_class.object_repr_id = new_class.object_repr_id;
+    prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
@@ -561,55 +561,89 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ClassDefinitionId /*node_id*/)
+// Checks that the specified finished adapter definition is valid and builds and
+// returns a corresponding complete type witness instruction.
+static auto CheckCompleteAdapterClassType(Context& context,
+                                          Parse::NodeId node_id,
+                                          SemIR::ClassId class_id,
+                                          SemIR::InstBlockId fields_id)
+    -> SemIR::InstId {
+  const auto& class_info = context.classes().Get(class_id);
+  if (class_info.base_id.is_valid()) {
+    CARBON_DIAGNOSTIC(AdaptWithBase, Error,
+                      "Adapter cannot have a base class.");
+    CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here.");
+    context.emitter()
+        .Build(class_info.adapt_id, AdaptWithBase)
+        .Note(class_info.base_id, AdaptBaseHere)
+        .Emit();
+    return SemIR::InstId::BuiltinError;
+  }
+
+  if (!context.inst_blocks().Get(fields_id).empty()) {
+    auto first_field_id = context.inst_blocks().Get(fields_id).front();
+    CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
+    CARBON_DIAGNOSTIC(AdaptFieldHere, Note, "First field declaration is here.");
+    context.emitter()
+        .Build(class_info.adapt_id, AdaptWithFields)
+        .Note(first_field_id, AdaptFieldHere)
+        .Emit();
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // The object representation of the adapter is the object representation
+  // of the adapted type. This is the adapted type itself unless it's a class
+  // type.
+  //
+  // TODO: The object representation of `const T` should also be the object
+  // representation of `T`.
+  auto adapted_type_id = context.insts()
+                             .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+                             .adapted_type_id;
+  if (auto adapted_class =
+          context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
+    auto& adapted_class_info = context.classes().Get(adapted_class->class_id);
+    if (adapted_class_info.adapt_id.is_valid()) {
+      return adapted_class_info.complete_type_witness_id;
+    }
+  }
+
+  return context.AddInst<SemIR::CompleteTypeWitness>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
+       .object_repr_id = adapted_type_id});
+}
+
+// Checks that the specified finished class definition is valid and builds and
+// returns a corresponding complete type witness instruction.
+static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
+                                   SemIR::ClassId class_id,
+                                   SemIR::InstBlockId fields_id)
+    -> SemIR::InstId {
+  auto& class_info = context.classes().Get(class_id);
+  if (class_info.adapt_id.is_valid()) {
+    return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
+  }
+
+  return context.AddInst<SemIR::CompleteTypeWitness>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
+       .object_repr_id = context.GetStructType(fields_id)});
+}
+
+auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-  context.inst_block_stack().Pop();
 
   // The class type is now fully defined. Compute its object representation.
+  auto complete_type_witness_id =
+      CheckCompleteClassType(context, node_id, class_id, fields_id);
   auto& class_info = context.classes().Get(class_id);
-  if (class_info.adapt_id.is_valid()) {
-    class_info.object_repr_id = SemIR::TypeId::Error;
-    if (class_info.base_id.is_valid()) {
-      CARBON_DIAGNOSTIC(AdaptWithBase, Error,
-                        "Adapter cannot have a base class.");
-      CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here.");
-      context.emitter()
-          .Build(class_info.adapt_id, AdaptWithBase)
-          .Note(class_info.base_id, AdaptBaseHere)
-          .Emit();
-    } else if (!context.inst_blocks().Get(fields_id).empty()) {
-      auto first_field_id = context.inst_blocks().Get(fields_id).front();
-      CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
-      CARBON_DIAGNOSTIC(AdaptFieldHere, Note,
-                        "First field declaration is here.");
-      context.emitter()
-          .Build(class_info.adapt_id, AdaptWithFields)
-          .Note(first_field_id, AdaptFieldHere)
-          .Emit();
-    } else {
-      // The object representation of the adapter is the object representation
-      // of the adapted type.
-      auto adapted_type_id = context.insts()
-                                 .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-                                 .adapted_type_id;
-      // If we adapt an adapter, directly track the non-adapter type we're
-      // adapting so that we have constant-time access to it.
-      if (auto adapted_class =
-              context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
-        auto& adapted_class_info =
-            context.classes().Get(adapted_class->class_id);
-        if (adapted_class_info.adapt_id.is_valid()) {
-          adapted_type_id = adapted_class_info.object_repr_id;
-        }
-      }
-      class_info.object_repr_id = adapted_type_id;
-    }
-  } else {
-    class_info.object_repr_id = context.GetStructType(fields_id);
-  }
+  class_info.complete_type_witness_id = complete_type_witness_id;
+
+  context.inst_block_stack().Pop();
 
   FinishGenericDefinition(context, class_info.generic_id);
 

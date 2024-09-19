@@ -75,6 +75,7 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template]
 // CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
@@ -116,6 +117,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAccess {
+// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TwoAccess
 // CHECK:STDOUT: }
@@ -123,6 +126,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
+// CHECK:STDOUT:   %.loc53: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Virtual
 // CHECK:STDOUT: }
@@ -130,6 +135,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
+// CHECK:STDOUT:   %.loc70: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
 // CHECK:STDOUT: }

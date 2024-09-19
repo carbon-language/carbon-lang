@@ -32,6 +32,7 @@ class Access {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Access, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.k: i32, .l: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,6 +70,7 @@ class Access {
 // CHECK:STDOUT:   %.loc19_20.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:   %.loc19_20.2: type = converted %int.make_type_32.loc19, %.loc19_20.1 [template = i32]
 // CHECK:STDOUT:   %.loc19_18: %.2 = field_decl l, element1 [template]
+// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access

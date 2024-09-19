@@ -27,6 +27,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -873,7 +874,7 @@ class TypeCompleter {
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
-        Push(class_info.object_repr_id);
+        Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
         break;
       }
       case CARBON_KIND(SemIR::ConstType inst): {
@@ -1051,14 +1052,19 @@ class TypeCompleter {
     // The value representation of an adapter is the value representation of
     // its adapted type.
     if (class_info.adapt_id.is_valid()) {
-      return GetNestedValueRepr(class_info.object_repr_id);
+      return GetNestedValueRepr(SemIR::GetTypeInSpecific(
+          context_.sem_ir(), inst.specific_id,
+          context_.insts()
+              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+              .adapted_type_id));
     }
     // Otherwise, the value representation for a class is a pointer to the
     // object representation.
     // TODO: Support customized value representations for classes.
     // TODO: Pick a better value representation when possible.
-    return MakePointerValueRepr(class_info.object_repr_id,
-                                SemIR::ValueRepr::ObjectAggregate);
+    return MakePointerValueRepr(
+        class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id),
+        SemIR::ValueRepr::ObjectAggregate);
   }
 
   template <typename InstT>

@@ -36,7 +36,8 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.2: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class, %.2 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.p: %.2} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,6 +90,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc18_14: type = ptr_type %Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc18_8: %.3 = field_decl p, element0 [template]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

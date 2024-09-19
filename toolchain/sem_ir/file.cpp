@@ -434,6 +434,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ClassDecl::Kind:
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
+      case CompleteTypeWitness::Kind:
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
@@ -568,6 +569,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoundMethod::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
+      case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
