@@ -12,7 +12,7 @@ namespace Carbon::Parse {
 // have a larger look at this code and how it produces parse errors. This may be
 // good to re-examine when someone is working on implementing match checking.
 static auto DiagnoseMatchParseTODO(Context& context) -> void {
-  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "tODO: Improve match parsing");
+  CARBON_DIAGNOSTIC(MatchParseTODO, Error, "TODO: improve match parsing");
   context.emitter().Emit(*context.position(), MatchParseTODO);
 }
 
