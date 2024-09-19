@@ -10,10 +10,10 @@
 
 fn F() -> i32 {
   returned var v: i32 = 0;
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: ERROR: Can only `return var;` in the scope of a `returned var`.
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error: can only `return var;` in the scope of a `returned var`
   // CHECK:STDERR:   return 1;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here.
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here
   // CHECK:STDERR:   returned var v: i32 = 0;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -23,10 +23,10 @@ fn F() -> i32 {
 class C { var a: i32; var b: i32; }
 fn G() -> C {
   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: ERROR: Can only `return var;` in the scope of a `returned var`.
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: error: can only `return var;` in the scope of a `returned var`
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here.
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here
   // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
   // CHECK:STDERR:                ^
   return c;
@@ -45,11 +45,12 @@ fn G() -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, i32 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%.3, %.7) [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %struct: %C = struct_value (%.3, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -97,6 +98,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc23_30.1: type = value_of_initializer %int.make_type_32.loc23_30 [template = i32]
 // CHECK:STDOUT:   %.loc23_30.2: type = converted %int.make_type_32.loc23_30, %.loc23_30.1 [template = i32]
 // CHECK:STDOUT:   %.loc23_28: %.4 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc23_35: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -124,12 +126,12 @@ fn G() -> C {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %return
 // CHECK:STDOUT:   %.loc25_29: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc25_37: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_37: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc25_38.1: %.5 = struct_literal (%.loc25_29, %.loc25_37)
 // CHECK:STDOUT:   %.loc25_38.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc25_38.3: init i32 = initialize_from %.loc25_29 to %.loc25_38.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_38.4: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc25_38.5: init i32 = initialize_from %.loc25_37 to %.loc25_38.4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_38.5: init i32 = initialize_from %.loc25_37 to %.loc25_38.4 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc25_38.6: init %C = class_init (%.loc25_38.3, %.loc25_38.5), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc25_39: init %C = converted %.loc25_38.1, %.loc25_38.6 [template = constants.%struct]
 // CHECK:STDOUT:   assign %return, %.loc25_39

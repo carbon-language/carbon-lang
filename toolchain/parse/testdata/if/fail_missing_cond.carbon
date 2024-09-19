@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_missing_cond.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:6: ERROR: Expected `(` after `if`.
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:6: error: expected `(` after `if`
   // CHECK:STDERR:   if {
   // CHECK:STDERR:      ^
   if {

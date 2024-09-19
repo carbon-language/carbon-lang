@@ -26,12 +26,13 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %struct: %Class = struct_value (%.5, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,6 +75,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_8: %.2 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -85,15 +87,15 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_17: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_25: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_17: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_25: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_26.1: %.3 = struct_literal (%.loc17_17, %.loc17_25)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc17_26.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc17_26.3: ref i32 = class_element_access %.loc17_26.2, element0
-// CHECK:STDOUT:   %.loc17_26.4: init i32 = initialize_from %.loc17_17 to %.loc17_26.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17_26.4: init i32 = initialize_from %.loc17_17 to %.loc17_26.3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_26.5: ref i32 = class_element_access %.loc17_26.2, element1
-// CHECK:STDOUT:   %.loc17_26.6: init i32 = initialize_from %.loc17_25 to %.loc17_26.5 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_26.6: init i32 = initialize_from %.loc17_25 to %.loc17_26.5 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_26.7: init %Class = class_init (%.loc17_26.4, %.loc17_26.6), %.loc17_26.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc17_26.8: ref %Class = temporary %.loc17_26.2, %.loc17_26.7
 // CHECK:STDOUT:   %.loc17_28: ref %Class = converted %.loc17_26.1, %.loc17_26.8

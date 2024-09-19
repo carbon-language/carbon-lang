@@ -38,8 +38,9 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,6 +134,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_32.loc14, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_8: %.5 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

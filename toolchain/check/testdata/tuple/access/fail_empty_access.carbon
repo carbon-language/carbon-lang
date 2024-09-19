@@ -11,7 +11,7 @@
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: ERROR: Tuple element index `0` is past the end of type `()`.
+  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: error: tuple element index `0` is past the end of type `()`
   // CHECK:STDERR:   F().0;
   // CHECK:STDERR:   ^~~~~
   F().0;

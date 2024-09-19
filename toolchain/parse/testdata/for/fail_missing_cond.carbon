@@ -9,21 +9,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_missing_cond.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+8]]:7: ERROR: Expected `(` after `for`.
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+8]]:7: error: expected `(` after `for`
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:7: ERROR: Expected `var` declaration.
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:7: error: expected `var` declaration
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   for {
   }
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+7]]:1: ERROR: Expected braced code block.
+// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+7]]:1: error: expected braced code block
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:1: ERROR: Expected expression.
+// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:1: error: expected expression
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

@@ -70,8 +70,8 @@ static auto BuildAssociatedConstantDecl(Context& context,
   auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
   if (!binding_pattern) {
     CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                      "Pattern in associated constant declaration must be a "
-                      "single `:!` binding.");
+                      "pattern in associated constant declaration must be a "
+                      "single `:!` binding");
     context.emitter().Emit(pattern.loc_id,
                            ExpectedSymbolicBindingInAssociatedConstant);
     context.name_scopes().Get(interface_info.scope_id).has_error = true;
@@ -229,7 +229,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   if (!decl_info->init_id) {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
-        "Expected `=`; `let` declaration must have an initializer.");
+        "expected `=`; `let` declaration must have an initializer");
     context.emitter().Emit(TokenOnly(node_id), ExpectedInitializerAfterLet);
   }
 

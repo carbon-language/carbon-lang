@@ -10,19 +10,19 @@
 
 class FinalClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: ERROR: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: containing definition here
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   abstract fn Abstract[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: ERROR: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition
   // CHECK:STDERR:   virtual fn Virtual[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: containing definition here
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,13 +31,13 @@ class FinalClass {
 
 abstract class AbstractClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `fn` declaration outside of an interface.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `fn` declaration outside of an interface
   // CHECK:STDERR:   default fn Default[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn Default[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: ERROR: `final` not allowed on `fn` declaration outside of an interface.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `fn` declaration outside of an interface
   // CHECK:STDERR:   final fn Final[self: Self]();
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
@@ -46,10 +46,10 @@ abstract class AbstractClass {
 
 base class BaseClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: ERROR: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: containing definition here
   // CHECK:STDERR: base class BaseClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   abstract fn Abstract[self: Self]();
@@ -65,6 +65,7 @@ base class BaseClass {
 // CHECK:STDOUT:   %Virtual.type: type = fn_type @Virtual [template]
 // CHECK:STDOUT:   %Virtual: %Virtual.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [template]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [template]
@@ -112,6 +113,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.loc29_22.1: %FinalClass = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc29_22.2: %FinalClass = bind_name self, %self.loc29_22.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%FinalClass
@@ -130,6 +132,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.loc44_18.1: %AbstractClass = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc44_18.2: %AbstractClass = bind_name self, %self.loc44_18.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc45: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractClass
@@ -143,6 +146,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.loc55_24.1: %BaseClass = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc55_24.2: %BaseClass = bind_name self, %self.loc55_24.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%BaseClass

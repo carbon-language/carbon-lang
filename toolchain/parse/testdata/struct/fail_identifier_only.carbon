@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_identifier_only.carbon
 
-// CHECK:STDERR: fail_identifier_only.carbon:[[@LINE+3]]:9: ERROR: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_identifier_only.carbon:[[@LINE+3]]:9: error: expected `.field: field_type` or `.field = value`
 // CHECK:STDERR: var x: {a} = {};
 // CHECK:STDERR:         ^
 var x: {a} = {};

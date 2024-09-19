@@ -19,7 +19,7 @@ fn F() {
   // TODO: This case should presumably work: `{...} as Class` should be an
   // initializing expression, not a value expression.
   //
-  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:18: ERROR: Cannot copy value of type `Class`.
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:18: error: cannot copy value of type `Class`
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
   // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~
   var c: Class = {.a = 1, .b = 2} as Class;
@@ -35,15 +35,16 @@ fn F() {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%.6, %.7) [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %struct: %Class = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,9 +73,9 @@ fn F() {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc16_6.1: %.4 = param p, runtime_param0
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc16_6.1
+// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.5]
+// CHECK:STDOUT:     %p.loc16_6.1: %.5 = param p, runtime_param0
+// CHECK:STDOUT:     @G.%p: %.5 = bind_name p, %p.loc16_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT: }
@@ -88,6 +89,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_8: %.2 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -97,22 +99,22 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p: %.4);
+// CHECK:STDOUT: fn @G(%p: %.5);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc25_10: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc25_24: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc25_32: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_24: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_32: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc25_33.1: %.3 = struct_literal (%.loc25_24, %.loc25_32)
 // CHECK:STDOUT:   %Class.ref.loc25_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc25_33.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_33.3: ref i32 = class_element_access %.loc25_33.2, element0
-// CHECK:STDOUT:   %.loc25_33.4: init i32 = initialize_from %.loc25_24 to %.loc25_33.3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc25_33.4: init i32 = initialize_from %.loc25_24 to %.loc25_33.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc25_33.5: ref i32 = class_element_access %.loc25_33.2, element1
-// CHECK:STDOUT:   %.loc25_33.6: init i32 = initialize_from %.loc25_32 to %.loc25_33.5 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_33.6: init i32 = initialize_from %.loc25_32 to %.loc25_33.5 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc25_33.7: init %Class = class_init (%.loc25_33.4, %.loc25_33.6), %.loc25_33.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc25_33.8: ref %Class = temporary %.loc25_33.2, %.loc25_33.7
 // CHECK:STDOUT:   %.loc25_35.1: ref %Class = converted %.loc25_33.1, %.loc25_33.8
@@ -120,7 +122,7 @@ fn F() {
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc26: %.4 = addr_of %c.ref
+// CHECK:STDOUT:   %.loc26: %.5 = addr_of %c.ref
 // CHECK:STDOUT:   %G.call: init %.1 = call %G.ref(%.loc26)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

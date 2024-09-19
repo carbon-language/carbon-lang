@@ -36,7 +36,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     return;
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
-                      "Expected identifier after `{0}`.", llvm::StringLiteral);
+                      "expected identifier after `{0}`", llvm::StringLiteral);
     context.emitter().Emit(
         *context.position(), ExpectedIdentifierAfterPeriodOrArrow,
         is_arrow ? llvm::StringLiteral("->") : llvm::StringLiteral("."));

@@ -9,23 +9,23 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_variety.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+19]]:21: ERROR: Operator `=` can only be used as a complete statement.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+19]]:21: error: operator `=` can only be used as a complete statement
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                     ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+15]]:29: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+15]]:29: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                             ^~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+11]]:34: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+11]]:34: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+7]]:38: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+7]]:38: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                      ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+3]]:40: ERROR: Parentheses are required around this unary `not` operator.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+3]]:40: error: parentheses are required around this unary `not` operator
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                        ^~~
   n = a * b + c * d = d * d << e & f - not g;

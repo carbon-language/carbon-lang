@@ -72,15 +72,16 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
 // CHECK:STDOUT:   %CallAlias.type: type = fn_type @CallAlias [template]
 // CHECK:STDOUT:   %CallAlias: %CallAlias.type = struct_value () [template]
 // CHECK:STDOUT:   %CallOnConstBoundMethod.type: type = fn_type @CallOnConstBoundMethod [template]
 // CHECK:STDOUT:   %CallOnConstBoundMethod: %CallOnConstBoundMethod.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%.6) [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %struct: %Class = struct_value (%.7) [template]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [template]
 // CHECK:STDOUT:   %CallWithAddr: %CallWithAddr.type = struct_value () [template]
 // CHECK:STDOUT:   %CallFThroughPointer.type: type = fn_type @CallFThroughPointer [template]
@@ -230,6 +231,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_32.loc17, %.loc17_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc17_8: %.3 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -276,12 +278,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc35_17: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc35_17: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc35_18.1: %.4 = struct_literal (%.loc35_17)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc35_18.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc35_18.3: ref i32 = class_element_access %.loc35_18.2, element0
-// CHECK:STDOUT:   %.loc35_18.4: init i32 = initialize_from %.loc35_17 to %.loc35_18.3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc35_18.4: init i32 = initialize_from %.loc35_17 to %.loc35_18.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc35_18.5: init %Class = class_init (%.loc35_18.4), %.loc35_18.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc35_18.6: ref %Class = temporary %.loc35_18.2, %.loc35_18.5
 // CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.6

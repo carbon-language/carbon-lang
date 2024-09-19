@@ -131,16 +131,16 @@ import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+13]]:6: In import.
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+13]]:6: in import
 // CHECK:STDERR: impl library "import_conflict";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: import_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: In import.
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: in import
 // CHECK:STDERR: impl library "import_conflict";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -158,16 +158,16 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "import_conflict_reverse";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: import_conflict_reverse.carbon:4:1: In import.
+// CHECK:STDERR: import_conflict_reverse.carbon:4:1: in import
 // CHECK:STDERR: import library "local_other";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 import Other library "o1";
@@ -177,6 +177,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -187,6 +188,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
@@ -196,6 +199,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -206,6 +210,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
@@ -215,6 +221,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -228,6 +235,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
@@ -237,6 +246,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O1: type = class_type @O1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -247,6 +257,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O1
 // CHECK:STDOUT: }
@@ -256,6 +268,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O2: type = class_type @O2 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,6 +279,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O2
 // CHECK:STDOUT: }
@@ -275,6 +290,7 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Other: type = class_type @Other [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -285,6 +301,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Other {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Other
 // CHECK:STDOUT: }
@@ -307,8 +325,9 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct.1: %C1 = struct_value () [template]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
 // CHECK:STDOUT:   %struct.2: %C2 = struct_value () [template]
@@ -379,8 +398,9 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -437,8 +457,9 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -498,8 +519,9 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O1: type = class_type @O1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct.1: %O1 = struct_value () [template]
 // CHECK:STDOUT:   %O2: type = class_type @O2 [template]
 // CHECK:STDOUT:   %struct.2: %O2 = struct_value () [template]
@@ -580,8 +602,9 @@ import Other library "o1";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O1: type = class_type @O1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %O1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

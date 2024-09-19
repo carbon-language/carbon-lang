@@ -79,7 +79,7 @@ class DeductionWorklist {
 static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
                             Context::DiagnosticBuilder& diag) -> void {
   CARBON_DIAGNOSTIC(DeductionGenericHere, Note,
-                    "While deducing parameters of generic declared here.");
+                    "while deducing parameters of generic declared here");
   diag.Note(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
 }
 
@@ -141,7 +141,7 @@ auto DeduceGenericCallArguments(
                     param_id)) {
               CARBON_DIAGNOSTIC(
                   InitializingGenericParam, Note,
-                  "Initializing generic parameter `{0}` declared here.",
+                  "initializing generic parameter `{0}` declared here",
                   SemIR::NameId);
               builder.Note(
                   param_id, InitializingGenericParam,
@@ -188,8 +188,8 @@ auto DeduceGenericCallArguments(
                 result_arg_ids[index.index] != arg_const_inst_id) {
               // TODO: Include the two different deduced values.
               CARBON_DIAGNOSTIC(DeductionInconsistent, Error,
-                                "Inconsistent deductions for value of generic "
-                                "parameter `{0}`.",
+                                "inconsistent deductions for value of generic "
+                                "parameter `{0}`",
                                 SemIR::NameId);
               auto diag = context.emitter().Build(loc_id, DeductionInconsistent,
                                                   entity_name.name_id);
@@ -221,7 +221,7 @@ auto DeduceGenericCallArguments(
       auto entity_name_id =
           context.insts().GetAs<SemIR::AnyBindName>(binding_id).entity_name_id;
       CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
-                        "Cannot deduce value for generic parameter `{0}`.",
+                        "cannot deduce value for generic parameter `{0}`",
                         SemIR::NameId);
       auto diag = context.emitter().Build(
           loc_id, DeductionIncomplete,

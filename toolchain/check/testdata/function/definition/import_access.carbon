@@ -48,7 +48,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:13: ERROR: Name `Def` not found.
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:13: error: name `Def` not found
 // CHECK:STDERR: var f: () = Def();
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: ERROR: Name `Def` not found.
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: name `Def` not found
 // CHECK:STDERR: var f: () = Test.Def();
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
@@ -78,7 +78,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:13: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found
 // CHECK:STDERR: var f: () = ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found
 // CHECK:STDERR: var f: () = Test.ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:13: ERROR: Name `Forward` not found.
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:13: error: name `Forward` not found
 // CHECK:STDERR: var f: () = Forward();
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: ERROR: Name `Forward` not found.
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: name `Forward` not found
 // CHECK:STDERR: var f: () = Test.Forward();
 // CHECK:STDERR:             ^~~~~~~~~~~~
 var f: () = Test.Forward();

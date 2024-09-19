@@ -9,11 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_missing_implicit_close.carbon
 
 // Fix and uncomment this to test error handling.
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+7]]:7: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+7]]:7: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:7: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:7: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
 fn Div[();

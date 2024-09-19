@@ -27,35 +27,35 @@ class Circle {
 
 fn Run() {
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: ERROR: Cannot access private member `radius` of type `Circle`.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle`
   // CHECK:STDERR:   let radius: i32 = circle.radius;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: The private member `radius` is defined here.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: the private member `radius` is defined here
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   let radius: i32 = circle.radius;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: ERROR: Cannot access private member `radius` of type `Circle`.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle`
   // CHECK:STDERR:   circle.radius = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: The private member `radius` is defined here.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: the private member `radius` is defined here
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   circle.radius = 5;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: ERROR: Cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle`.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle`
   // CHECK:STDERR:   circle.SOME_INTERNAL_CONSTANT;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: The private member `SOME_INTERNAL_CONSTANT` is defined here.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: the private member `SOME_INTERNAL_CONSTANT` is defined here
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
   // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: ERROR: Cannot access private member `SomeInternalFunction` of type `Circle`.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle`
   // CHECK:STDERR:   circle.SomeInternalFunction();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: The private member `SomeInternalFunction` is defined here.
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: the private member `SomeInternalFunction` is defined here
   // CHECK:STDERR:   private fn SomeInternalFunction() -> i32 {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -71,10 +71,10 @@ class A {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: ERROR: Cannot access protected member `x` of type `A`.
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A`
   // CHECK:STDERR:   let x: i32 = A.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: The protected member `x` is defined here.
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: the protected member `x` is defined here
   // CHECK:STDERR:   protected var x: i32;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
@@ -120,18 +120,18 @@ class A {
   private let y: i32 = 5;
 }
 
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: ERROR: Cannot access protected member `x` of type `A`.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A`
 // CHECK:STDERR: let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: The protected member `x` is defined here.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: the protected member `x` is defined here
 // CHECK:STDERR:   protected let x: i32 = 5;
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: ERROR: Cannot access private member `y` of type `A`.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A`
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: The private member `y` is defined here.
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: the private member `y` is defined here
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
 let y: i32 = A.y;
@@ -159,8 +159,9 @@ class A {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.radius: i32} [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %struct: %Circle = struct_value (%.3) [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
@@ -212,6 +213,7 @@ class A {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
 // CHECK:STDOUT:     %return.var.loc12: ref %Circle = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
@@ -225,7 +227,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,9 +278,10 @@ class A {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -312,6 +315,7 @@ class A {
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_32, %.loc5_20.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_18: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -346,8 +350,9 @@ class A {
 // CHECK:STDOUT:   %Compute.type: type = fn_type @Compute [template]
 // CHECK:STDOUT:   %Compute: %Compute.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.radius: i32} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -403,6 +408,7 @@ class A {
 // CHECK:STDOUT:     %.loc15_31.2: type = converted %int.make_type_32.loc15, %.loc15_31.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
@@ -425,7 +431,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,7 +454,8 @@ class A {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -485,6 +492,7 @@ class A {
 // CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_32, %.loc5_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_16: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc5_16
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -510,7 +518,8 @@ class A {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -556,6 +565,7 @@ class A {
 // CHECK:STDOUT:   %.loc6_18.2: type = converted %int.make_type_32.loc6, %.loc6_18.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_24: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   %y: i32 = bind_name y, %.loc6_24
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -586,7 +596,8 @@ class A {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -614,6 +625,7 @@ class A {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A

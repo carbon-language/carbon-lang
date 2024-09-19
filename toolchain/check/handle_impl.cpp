@@ -88,7 +88,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   auto self_type_id = GetDefaultSelfType(context);
   if (!self_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
-                      "`impl as` can only be used in a class.");
+                      "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::TypeId::Error;
   }
@@ -112,14 +112,14 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   // TODO: This is also valid in a mixin.
   if (!TryAsClassScope(context, parent_scope_id)) {
     CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                      "`extend impl` can only be used in a class.");
+                      "`extend impl` can only be used in a class");
     context.emitter().Emit(node_id, ExtendImplOutsideClass);
     return;
   }
 
   if (params_node.is_valid()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
-                      "Cannot `extend` a parameterized `impl`.");
+                      "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
     parent_scope.has_error = true;
     return;
@@ -128,7 +128,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   if (context.parse_tree().node_kind(self_type_node) ==
       Parse::NodeKind::TypeImplAs) {
     CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
-                      "Cannot `extend` an `impl` with an explicit self type.");
+                      "cannot `extend` an `impl` with an explicit self type");
     auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
 
     // If the explicit self type is not the default, just bail out.
@@ -144,7 +144,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
             context.parse_tree_and_subtrees().ExtractAs<Parse::TypeImplAs>(
                 self_type_node)) {
       CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
-                        "Remove the explicit `Self` type here.");
+                        "remove the explicit `Self` type here");
       diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);
     }
     diag.Emit();
@@ -160,10 +160,9 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
   auto& interface = context.interfaces().Get(interface_type->interface_id);
   if (!interface.is_defined()) {
-    CARBON_DIAGNOSTIC(
-        ExtendUndefinedInterface, Error,
-        "`extend impl` requires a definition for interface `{0}`.",
-        SemIR::TypeId);
+    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
+                      "`extend impl` requires a definition for interface `{0}`",
+                      SemIR::TypeId);
     auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
                                         constraint_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
@@ -246,10 +245,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
 
   if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "Redefinition of `impl {0} as {1}`.", SemIR::TypeId,
+                      "redefinition of `impl {0} as {1}`", SemIR::TypeId,
                       SemIR::TypeId);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
-                      "Previous definition was here.");
+                      "previous definition was here");
     context.emitter()
         .Build(node_id, ImplRedefinition, impl_info.self_id,
                impl_info.constraint_id)

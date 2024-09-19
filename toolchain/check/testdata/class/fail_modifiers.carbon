@@ -8,63 +8,63 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: ERROR: `private` repeated on declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: error: `private` repeated on declaration
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR:                  ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private abstract private class DuplicatePrivate;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:14: ERROR: `protected` not allowed on declaration with `private`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:14: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private base protected class TwoAccess {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: ERROR: `abstract` repeated on declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `abstract` repeated on declaration
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract abstract class TwoAbstract;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: ERROR: `protected` not allowed on `class` declaration at file scope, `protected` is only allowed on class members.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error: `protected` not allowed on `class` declaration at file scope, `protected` is only allowed on class members
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: ERROR: `virtual` not allowed on `class` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `virtual` not allowed on `class` declaration
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: ERROR: `base` not allowed on declaration with `virtual`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error: `base` not allowed on declaration with `virtual`
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: `virtual` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: `virtual` previously appeared here
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
 protected virtual base class Virtual {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: ERROR: `protected` must appear before `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `protected` must appear before `abstract`
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract protected class WrongOrder;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: `base` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
 abstract base class AbstractAndBase {}
@@ -75,6 +75,7 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template]
 // CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
@@ -116,6 +117,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAccess {
+// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TwoAccess
 // CHECK:STDOUT: }
@@ -123,6 +126,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
+// CHECK:STDOUT:   %.loc53: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Virtual
 // CHECK:STDOUT: }
@@ -130,6 +135,8 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
+// CHECK:STDOUT:   %.loc70: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
 // CHECK:STDOUT: }

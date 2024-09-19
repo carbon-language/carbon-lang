@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/package_expr/fail_not_found.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:16: ERROR: Name `x` not found.
+  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:16: error: name `x` not found
   // CHECK:STDERR:   var y: i32 = package.x;
   // CHECK:STDERR:                ^~~~~~~~~
   var y: i32 = package.x;

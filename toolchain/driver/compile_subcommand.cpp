@@ -270,27 +270,27 @@ auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
         driver_env.error_stream
-            << "ERROR: Requested dumping the parse tree but compile "
+            << "error: requested dumping the parse tree but compile "
                "phase is limited to '"
-            << options_.phase << "'.\n";
+            << options_.phase << "'\n";
         return false;
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
         driver_env.error_stream
-            << "ERROR: Requested dumping the SemIR but compile phase "
+            << "error: requested dumping the SemIR but compile phase "
                "is limited to '"
-            << options_.phase << "'.\n";
+            << options_.phase << "'\n";
         return false;
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
         driver_env.error_stream
-            << "ERROR: Requested dumping the LLVM IR but compile "
+            << "error: requested dumping the LLVM IR but compile "
                "phase is limited to '"
-            << options_.phase << "'.\n";
+            << options_.phase << "'\n";
         return false;
       }
       [[fallthrough]];
@@ -521,8 +521,8 @@ class CompilationUnit {
         if (!source_->is_regular_file()) {
           // Don't invent file names like `-.o` or `/dev/stdin.o`.
           driver_env_->error_stream
-              << "ERROR: Output file name must be specified for input '"
-              << input_filename_ << "' that is not a regular file.\n";
+              << "error: output file name must be specified for input '"
+              << input_filename_ << "' that is not a regular file\n";
           return false;
         }
         output_filename = input_filename_;
@@ -541,7 +541,7 @@ class CompilationUnit {
       llvm::raw_fd_ostream output_file(output_filename, ec,
                                        llvm::sys::fs::OF_None);
       if (ec) {
-        driver_env_->error_stream << "ERROR: Could not open output file '"
+        driver_env_->error_stream << "error: could not open output file '"
                                   << output_filename << "': " << ec.message()
                                   << "\n";
         return false;
@@ -628,7 +628,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      driver_env.error_stream << "ERROR: " << find.error() << "\n";
+      driver_env.error_stream << "error: " << find.error() << "\n";
       return {.success = false};
     }
   }

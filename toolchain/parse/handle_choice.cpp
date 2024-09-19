@@ -19,7 +19,7 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceDefinition, Error,
-                        "Choice definition expected.");
+                        "choice definition expected");
       context.emitter().Emit(*context.position(), ExpectedChoiceDefinition);
     }
 
@@ -54,7 +54,7 @@ auto HandleChoiceAlternative(Context& context) -> void {
                                        NodeKind::IdentifierName)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceAlternativeName, Error,
-                        "Expected choice alternative name.");
+                        "expected choice alternative name");
       context.emitter().Emit(*context.position(),
                              ExpectedChoiceAlternativeName);
     }

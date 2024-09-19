@@ -10,10 +10,10 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: ERROR: Variable has incomplete type `{.a: Incomplete}`.
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: error: Variable has incomplete type `{.a: Incomplete}`
 // CHECK:STDERR: var s: {.a: Incomplete};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: class was forward declared here
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var s: {.a: Incomplete};

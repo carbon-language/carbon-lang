@@ -13,7 +13,7 @@ var s: String = '''
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lex/testdata/fail_block_string_second_line.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/fail_block_string_second_line.carbon
-// CHECK:STDERR: fail_block_string_second_line.carbon:[[@LINE-10]]:3: ERROR: Only whitespace is permitted before the closing `'''` of a multi-line string.
+// CHECK:STDERR: fail_block_string_second_line.carbon:[[@LINE-10]]:3: error: only whitespace is permitted before the closing `'''` of a multi-line string
 // CHECK:STDERR:   error here: '''
 // CHECK:STDERR:   ^
 // CHECK:STDOUT: - filename: fail_block_string_second_line.carbon

@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: ERROR: Package `Core` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: var n: i32;
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 
 import Core library "prelude_empty";
 
-// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: ERROR: Name `Core.Int32` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: error: name `Core.Int32` implicitly referenced here, but not found
 // CHECK:STDERR: var n: i32;
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -80,7 +80,7 @@ class Core {
   fn Int32() -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: ERROR: Package `Core` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: var n: {} = i32;
 // CHECK:STDERR:             ^~~
 var n: {} = i32;
@@ -278,6 +278,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -299,6 +300,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc6_18.2: type = converted %.loc6_18.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Core

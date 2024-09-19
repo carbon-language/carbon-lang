@@ -718,7 +718,7 @@ if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
 } else {
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
-                      "Expected `as` in `impl` declaration.");
+                      "expected `as` in `impl` declaration");
     context.emitter().Emit(*context.position(), ImplExpectedAs);
   }
   context.ReturnErrorOnState();

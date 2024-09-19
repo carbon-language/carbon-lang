@@ -79,10 +79,10 @@ class Square {
   extend base: Shape;
 
   fn GetPosition[self: Self]() -> i32 {
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: ERROR: Cannot access private member `y` of type `Shape`.
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: error: cannot access private member `y` of type `Shape`
     // CHECK:STDERR:     return self.y;
     // CHECK:STDERR:            ^~~~~~
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: The private member `y` is defined here.
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: the private member `y` is defined here
     // CHECK:STDERR:   private var y: i32;
     // CHECK:STDERR:               ^~~~~~
     // CHECK:STDERR:
@@ -118,10 +118,10 @@ base class B {
 
 class C {
   extend base: B;
-  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE+7]]:12: ERROR: Cannot access private member `F` of type `B`.
+  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B`
   // CHECK:STDERR:   fn G() { Self.F(); }
   // CHECK:STDERR:            ^~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE-8]]:3: The private member `F` is defined here.
+  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE-8]]:3: the private member `F` is defined here
   // CHECK:STDERR:   private fn F() {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -158,19 +158,19 @@ class B {
   private var internal: Internal;
 
   fn G() -> i32 {
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:5: ERROR: Cannot access private member `SOME_PRIVATE_CONSTANT` of type `A`.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:5: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A`
     // CHECK:STDERR:     A.SOME_PRIVATE_CONSTANT;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: The private member `SOME_PRIVATE_CONSTANT` is defined here.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: the private member `SOME_PRIVATE_CONSTANT` is defined here
     // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 5;
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     A.SOME_PRIVATE_CONSTANT;
 
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: ERROR: Cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A`.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A`
     // CHECK:STDERR:     return A.SOME_PROTECTED_CONSTANT;
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: The protected member `SOME_PROTECTED_CONSTANT` is defined here.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: the protected member `SOME_PROTECTED_CONSTANT` is defined here
     // CHECK:STDERR:   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
     // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -178,10 +178,10 @@ class B {
   }
 
   fn SomeFunc[self: Self]() -> i32{
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: ERROR: Cannot access protected member `INTERNAL_CONSTANT` of type `Internal`.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal`
     // CHECK:STDERR:     return self.internal.INTERNAL_CONSTANT;
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: The protected member `INTERNAL_CONSTANT` is defined here.
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: the protected member `INTERNAL_CONSTANT` is defined here
     // CHECK:STDERR:   protected let INTERNAL_CONSTANT: i32 = 5;
     // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -200,10 +200,10 @@ base class A {
 class B {
   extend base: A;
   fn F[self: Self]() {
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+6]]:11: ERROR: Cannot access private member `x` of type `A`.
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+6]]:11: error: cannot access private member `x` of type `A`
     // CHECK:STDERR:     self.(A.x);
     // CHECK:STDERR:           ^~~
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: The private member `x` is defined here.
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: the private member `x` is defined here
     // CHECK:STDERR:   private var x: i32;
     // CHECK:STDERR:               ^~~~~~
     self.(A.x);
@@ -235,17 +235,19 @@ class B {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Shape, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32, .y: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %Circle: type = class_type @Circle [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Circle, %Shape [template]
-// CHECK:STDOUT:   %.6: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.7: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %Circle, %Shape [template]
+// CHECK:STDOUT:   %.7: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.8: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %GetPosition.type: type = fn_type @GetPosition [template]
 // CHECK:STDOUT:   %GetPosition: %GetPosition.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %Shape} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.7 [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.base: %.4} [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %Shape} [template]
+// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.12: type = struct_type {.base: %.5} [template]
+// CHECK:STDOUT:   %.13: type = ptr_type %.9 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -283,6 +285,7 @@ class B {
 // CHECK:STDOUT:   %.loc6_20.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_20.2: type = converted %int.make_type_32.loc6, %.loc6_20.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_18: %.2 = field_decl y, element1 [template]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Shape
@@ -292,21 +295,22 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Circle {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc10: %.5 = base_decl %Shape, element0 [template]
+// CHECK:STDOUT:   %.loc10: %.6 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
 // CHECK:STDOUT:     %self.loc12_18.1: %Circle = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc12_18.2: %Circle = bind_name self, %self.loc12_18.1
 // CHECK:STDOUT:     %int.make_type_32.loc12_36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_41: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc12_44.1: %.6 = tuple_literal (%int.make_type_32.loc12_36, %int.make_type_32.loc12_41)
+// CHECK:STDOUT:     %.loc12_44.1: %.7 = tuple_literal (%int.make_type_32.loc12_36, %int.make_type_32.loc12_41)
 // CHECK:STDOUT:     %.loc12_44.2: type = value_of_initializer %int.make_type_32.loc12_36 [template = i32]
 // CHECK:STDOUT:     %.loc12_44.3: type = converted %int.make_type_32.loc12_36, %.loc12_44.2 [template = i32]
 // CHECK:STDOUT:     %.loc12_44.4: type = value_of_initializer %int.make_type_32.loc12_41 [template = i32]
 // CHECK:STDOUT:     %.loc12_44.5: type = converted %int.make_type_32.loc12_41, %.loc12_44.4 [template = i32]
-// CHECK:STDOUT:     %.loc12_44.6: type = converted %.loc12_44.1, constants.%.7 [template = constants.%.7]
-// CHECK:STDOUT:     %return.var: ref %.7 = var <return slot>
+// CHECK:STDOUT:     %.loc12_44.6: type = converted %.loc12_44.1, constants.%.8 [template = constants.%.8]
+// CHECK:STDOUT:     %return.var: ref %.8 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
@@ -317,7 +321,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetPosition[@Circle.%self.loc12_18.2: %Circle]() -> @Circle.%return.var: %.7 {
+// CHECK:STDOUT: fn @GetPosition[@Circle.%self.loc12_18.2: %Circle]() -> @Circle.%return.var: %.8 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, @Circle.%self.loc12_18.2
 // CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @Shape.%.loc5_18 [template = @Shape.%.loc5_18]
@@ -329,15 +333,15 @@ class B {
 // CHECK:STDOUT:   %.loc13_25.1: ref %Shape = class_element_access %self.ref.loc13_21, element0
 // CHECK:STDOUT:   %.loc13_25.2: ref %Shape = converted %self.ref.loc13_21, %.loc13_25.1
 // CHECK:STDOUT:   %.loc13_25.3: ref i32 = class_element_access %.loc13_25.2, element1
-// CHECK:STDOUT:   %.loc13_27.1: %.7 = tuple_literal (%.loc13_17.3, %.loc13_25.3)
+// CHECK:STDOUT:   %.loc13_27.1: %.8 = tuple_literal (%.loc13_17.3, %.loc13_25.3)
 // CHECK:STDOUT:   %.loc13_17.4: i32 = bind_value %.loc13_17.3
 // CHECK:STDOUT:   %.loc13_27.2: ref i32 = tuple_access @Circle.%return.var, element0
 // CHECK:STDOUT:   %.loc13_27.3: init i32 = initialize_from %.loc13_17.4 to %.loc13_27.2
 // CHECK:STDOUT:   %.loc13_25.4: i32 = bind_value %.loc13_25.3
 // CHECK:STDOUT:   %.loc13_27.4: ref i32 = tuple_access @Circle.%return.var, element1
 // CHECK:STDOUT:   %.loc13_27.5: init i32 = initialize_from %.loc13_25.4 to %.loc13_27.4
-// CHECK:STDOUT:   %.loc13_27.6: init %.7 = tuple_init (%.loc13_27.3, %.loc13_27.5) to @Circle.%return.var
-// CHECK:STDOUT:   %.loc13_28: init %.7 = converted %.loc13_27.1, %.loc13_27.6
+// CHECK:STDOUT:   %.loc13_27.6: init %.8 = tuple_init (%.loc13_27.3, %.loc13_27.5) to @Circle.%return.var
+// CHECK:STDOUT:   %.loc13_28: init %.8 = converted %.loc13_27.1, %.loc13_27.6
 // CHECK:STDOUT:   return %.loc13_28 to @Circle.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,23 +353,26 @@ class B {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.8: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.10: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.base: %.7} [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.9 [template]
+// CHECK:STDOUT:   %.11: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: %.9} [template]
+// CHECK:STDOUT:   %.14: type = ptr_type %.11 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,6 +406,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -407,13 +415,14 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc10_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc10_21.2: type = converted %int.make_type_32, %.loc10_21.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -424,7 +433,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: %.8 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.10 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.loc15_8.1: %C = param self, runtime_param0
@@ -433,6 +442,7 @@ class B {
 // CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.11 [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -470,14 +480,16 @@ class B {
 // CHECK:STDOUT:   %SomeProtectedFunction.type: type = fn_type @SomeProtectedFunction [template]
 // CHECK:STDOUT:   %SomeProtectedFunction: %SomeProtectedFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -518,6 +530,7 @@ class B {
 // CHECK:STDOUT:     %.loc6_43.2: type = converted %int.make_type_32.loc6, %.loc6_43.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -527,7 +540,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: %.5 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc12: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
@@ -540,6 +553,7 @@ class B {
 // CHECK:STDOUT:     %.loc18_13.2: type = converted %int.make_type_32.loc18, %.loc18_13.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -583,14 +597,16 @@ class B {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Shape, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.y: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %Square: type = class_type @Square [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Square, %Shape [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %Square, %Shape [template]
 // CHECK:STDOUT:   %GetPosition.type: type = fn_type @GetPosition [template]
 // CHECK:STDOUT:   %GetPosition: %GetPosition.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %Shape} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: %Shape} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %.5} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -624,6 +640,7 @@ class B {
 // CHECK:STDOUT:   %.loc5_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %int.make_type_32, %.loc5_18.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_16: %.2 = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Shape
@@ -632,7 +649,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Square {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %Shape, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
 // CHECK:STDOUT:     %self.loc11_18.1: %Square = param self, runtime_param0
@@ -642,6 +659,7 @@ class B {
 // CHECK:STDOUT:     %.loc11_35.2: type = converted %int.make_type_32, %.loc11_35.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Square
@@ -669,7 +687,8 @@ class B {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -697,6 +716,7 @@ class B {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -727,7 +747,8 @@ class B {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -755,6 +776,7 @@ class B {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -783,14 +805,16 @@ class B {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -819,6 +843,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -827,8 +852,9 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.5 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -857,14 +883,16 @@ class B {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -893,6 +921,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -901,8 +930,9 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.5 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -933,17 +963,19 @@ class B {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %Internal: type = class_type @Internal [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %Internal [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %B, %Internal [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %SomeFunc.type: type = fn_type @SomeFunc [template]
 // CHECK:STDOUT:   %SomeFunc: %SomeFunc.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.internal: %Internal} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.internal: %.4} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.internal: %Internal} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.internal: %.5} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -985,6 +1017,7 @@ class B {
 // CHECK:STDOUT:   %.loc6_38.2: type = converted %int.make_type_32.loc6, %.loc6_38.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_44: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: i32 = bind_name SOME_PRIVATE_CONSTANT, %.loc6_44
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -998,6 +1031,7 @@ class B {
 // CHECK:STDOUT:   %.loc10_36.2: type = converted %int.make_type_32, %.loc10_36.1 [template = i32]
 // CHECK:STDOUT:   %.loc10_42: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   %INTERNAL_CONSTANT: i32 = bind_name INTERNAL_CONSTANT, %.loc10_42
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Internal
@@ -1006,7 +1040,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %Internal.ref: type = name_ref Internal, file.%Internal.decl [template = constants.%Internal]
-// CHECK:STDOUT:   %.loc14: %.5 = field_decl internal, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.6 = field_decl internal, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
@@ -1022,6 +1056,7 @@ class B {
 // CHECK:STDOUT:     %.loc36_32.2: type = converted %int.make_type_32.loc36, %.loc36_32.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc36: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc46: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -1044,7 +1079,7 @@ class B {
 // CHECK:STDOUT: fn @SomeFunc[@B.%self.loc36_15.2: %B]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, @B.%self.loc36_15.2
-// CHECK:STDOUT:   %internal.ref: %.5 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
+// CHECK:STDOUT:   %internal.ref: %.6 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [template = <error>]
@@ -1060,14 +1095,16 @@ class B {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %.5} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1101,6 +1138,7 @@ class B {
 // CHECK:STDOUT:   %.loc5_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %int.make_type_32, %.loc5_18.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_16: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -1109,12 +1147,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self.loc10_8.1: %B = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc10_8.2: %B = bind_name self, %self.loc10_8.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -1142,14 +1181,16 @@ class B {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: %A} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %.5} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1183,6 +1224,7 @@ class B {
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_32, %.loc5_20.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_18: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -1191,12 +1233,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self.loc11_8.1: %B = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc11_8.2: %B = bind_name self, %self.loc11_8.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B

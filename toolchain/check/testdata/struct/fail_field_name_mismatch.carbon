@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: ERROR: Missing value for field `a` in struct initialization.
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: missing value for field `a` in struct initialization
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: ERROR: Cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type.
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
 var y: {.b: i32} = x;

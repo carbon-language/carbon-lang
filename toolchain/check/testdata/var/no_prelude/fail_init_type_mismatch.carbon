@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_init_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Package `Core` implicitly referenced here, but not found.
+  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: error: package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   var x: {} = ();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   var x: {} = ();

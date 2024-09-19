@@ -30,12 +30,12 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = LeftShift(1, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: ERROR: Shift distance not in range [0, 32) in 1 << 32.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 32
 // CHECK:STDERR: let size_2: i32 = LeftShift(1, 32);
 // CHECK:STDERR:                   ^~~~~~~~~~
 // CHECK:STDERR:
 let size_2: i32 = LeftShift(1, 32);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: ERROR: Shift distance not in range [0, 32) in 1 << 33.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 33
 // CHECK:STDERR: let size_3: i32 = LeftShift(1, 33);
 // CHECK:STDERR:                   ^~~~~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ let size_3: i32 = LeftShift(1, 33);
 
 // Overflow is allowed if the shift distance is in bounds.
 let overflow_1: i32 = LeftShift(1000, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:23: ERROR: Shift distance not in range [0, 32) in 1000 << 32.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:23: error: shift distance not in range [0, 32) in 1000 << 32
 // CHECK:STDERR: let overflow_2: i32 = LeftShift(1000, 32);
 // CHECK:STDERR:                       ^~~~~~~~~~
 // CHECK:STDERR:
@@ -51,14 +51,14 @@ let overflow_2: i32 = LeftShift(1000, 32);
 
 // Oversize shifts aren't allowed even if there's no overflow.
 let no_overflow_1: i32 = LeftShift(0, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:26: ERROR: Shift distance not in range [0, 32) in 0 << 32.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:26: error: shift distance not in range [0, 32) in 0 << 32
 // CHECK:STDERR: let no_overflow_2: i32 = LeftShift(0, 32);
 // CHECK:STDERR:                          ^~~~~~~~~~
 // CHECK:STDERR:
 let no_overflow_2: i32 = LeftShift(0, 32);
 
 // Negative shifts aren't allowed either.
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: ERROR: Shift distance not in range [0, 32) in 1 << -1.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error: shift distance not in range [0, 32) in 1 << -1
 // CHECK:STDERR: let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~
 let negative: i32 = LeftShift(1, Negate(1));

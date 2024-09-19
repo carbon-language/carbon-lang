@@ -10,11 +10,11 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:21: ERROR: TODO: Improve match parsing.
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:21: error: TODO: improve match parsing
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+3]]:26: ERROR: Closing symbol without a corresponding opening symbol.
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+3]]:26: error: closing symbol without a corresponding opening symbol
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                          ^
     case x: bool if false) => { return 1; }

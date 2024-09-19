@@ -32,7 +32,7 @@ impl X as C(X).GenericAndParams(X) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: ERROR: Parameters of generic types must be constant.
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: error: parameters of generic types must be constant
 // CHECK:STDERR: interface A[T: type]() {}
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ interface A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: ERROR: Parameters of generic types must be constant.
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: error: parameters of generic types must be constant
 // CHECK:STDERR: interface A(T: type) {}
 // CHECK:STDERR:             ^
 interface A(T: type) {}
@@ -74,14 +74,15 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %.7: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Self.5: %.7 = bind_symbolic_name Self 2 [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {} [template]
+// CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %.10: type = interface_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.11: type = interface_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.type.3: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
-// CHECK:STDOUT:   %.12: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %X) [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.13: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %X) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -116,7 +117,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref.loc16: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.1]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc16: type = interface_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%.10]
+// CHECK:STDOUT:     %.loc16: type = interface_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%.11]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, %X.decl [template = constants.%X]
@@ -133,7 +134,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %.loc18_15: %GenericAndParams.type.3 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.3]
 // CHECK:STDOUT:     %GenericAndParams.ref.loc18: %GenericAndParams.type.3 = name_ref GenericAndParams, %.loc18_15 [template = constants.%GenericAndParams.3]
 // CHECK:STDOUT:     %X.ref.loc18_33: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc18_32: type = interface_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%.12]
+// CHECK:STDOUT:     %.loc18_32: type = interface_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%.13]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -202,35 +203,35 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %X as %.1 {
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %X as %.3 {
-// CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %X as %.10 {
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT: impl @impl.3: %X as %.11 {
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4: %X as %.5 {
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: %X as %.12 {
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness () [template = constants.%.9]
+// CHECK:STDOUT: impl @impl.5: %X as %.13 {
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc18
@@ -249,6 +250,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:       %U.loc10_30.1: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10_30.2: type = bind_symbolic_name U 1, %U.loc10_30.1 [symbolic = @GenericAndParams.2.%U (constants.%U)]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
@@ -258,6 +260,8 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.8 [template = constants.%.9]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
@@ -294,7 +298,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %.1 => constants.%.11
 // CHECK:STDOUT:   %Self.2 => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,7 +315,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %.1 => constants.%.12
+// CHECK:STDOUT:   %.1 => constants.%.13
 // CHECK:STDOUT:   %Self.2 => constants.%Self.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -10,40 +10,40 @@
 
 class Class {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:1: ERROR: `abstract` not allowed on `alias` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:1: error: `abstract` not allowed on `alias` declaration
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:10: ERROR: `base` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:15: ERROR: `default` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:15: error: `default` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:23: ERROR: `final` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:23: error: `final` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:                       ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract base default final alias A = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `impl` not allowed on `alias` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `alias` declaration
 // CHECK:STDERR: impl alias B = Class;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 impl alias B = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `extern` not allowed on `alias` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `alias` declaration
 // CHECK:STDERR: extern alias C = Class;
 // CHECK:STDERR: ^~~~~~
 extern alias C = Class;
@@ -53,6 +53,7 @@ extern alias C = Class;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,6 +73,8 @@ extern alias C = Class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT: }

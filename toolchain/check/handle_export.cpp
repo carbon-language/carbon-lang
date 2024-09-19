@@ -45,8 +45,8 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
 
   if (inst.Is<SemIR::ExportDecl>()) {
     CARBON_DIAGNOSTIC(ExportRedundant, Warning,
-                      "`export` matches previous `export`.");
-    CARBON_DIAGNOSTIC(ExportPrevious, Note, "Previous `export` here.");
+                      "`export` matches previous `export`");
+    CARBON_DIAGNOSTIC(ExportPrevious, Note, "previous `export` here");
     context.emitter()
         .Build(node_id, ExportRedundant)
         // Use the location of the export itself, not the exported instruction.
@@ -58,9 +58,9 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   auto import_ref = context.insts().TryGetAs<SemIR::ImportRefLoaded>(inst_id);
   if (!import_ref) {
     CARBON_DIAGNOSTIC(ExportNotImportedEntity, Error,
-                      "Only imported entities are valid for `export`.");
+                      "only imported entities are valid for `export`");
     CARBON_DIAGNOSTIC(ExportNotImportedEntitySource, Note,
-                      "Name is declared here.");
+                      "name is declared here");
     context.emitter()
         .Build(node_id, ExportNotImportedEntity)
         .Note(inst_id, ExportNotImportedEntitySource)

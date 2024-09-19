@@ -10,25 +10,25 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `var` declaration.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `var` declaration
   // CHECK:STDERR:   default var j: i32;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `final` not allowed on `var` declaration.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `var` declaration
   // CHECK:STDERR:   final var k: i32;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `let` declaration outside of an interface.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `let` declaration outside of an interface
   // CHECK:STDERR:   default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: ERROR: `final` not allowed on `let` declaration outside of an interface.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed on `let` declaration outside of an interface
   // CHECK:STDERR:   final let m: i32 = 1;
   // CHECK:STDERR:   ^~~~~
   final let m: i32 = 1;
@@ -45,6 +45,7 @@ class Class {
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,6 +91,7 @@ class Class {
 // CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
 // CHECK:STDOUT:   %.loc34_22: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
+// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

@@ -30,7 +30,7 @@ library "fail_member_inline.carbon";
 
 class C(T:! type) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: ERROR: Expression cannot be used as a value.
+    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: error: expression cannot be used as a value
     // CHECK:STDERR:     data;
     // CHECK:STDERR:     ^~~~
     data;
@@ -52,7 +52,8 @@ class C(T:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: %T} [symbolic]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [symbolic]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,6 +91,8 @@ class C(T:! type) {
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: @Class.%T (%T)} [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Class.%.2 (%.3) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
@@ -109,6 +112,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc4_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %.loc13: @Class.%.1 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc14: <witness> = complete_type_witness %.3 [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
@@ -157,6 +161,8 @@ class C(T:! type) {
 // CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -189,6 +195,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %C.2, %.2 [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {.data: %.2} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -230,6 +237,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     %.loc11_14.1: %.2 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_11: @C.%.1 (%.3) = field_decl data, element0 [template]
+// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2

@@ -301,7 +301,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
         CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
-                          "Misplaced digit separator in numeric literal.");
+                          "misplaced digit separator in numeric literal");
         emitter_.Emit(text.begin() + 1, InvalidDigitSeparator);
       }
       ++num_digit_separators;
@@ -309,7 +309,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
     }
 
     CARBON_DIAGNOSTIC(InvalidDigit, Error,
-                      "Invalid digit '{0}' in {1} numeric literal.", char,
+                      "invalid digit '{0}' in {1} numeric literal", char,
                       NumericLiteral::Radix);
     emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
     return {.ok = false};
@@ -317,7 +317,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
 
   if (num_digit_separators == static_cast<int>(text.size())) {
     CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
-                      "Empty digit sequence in numeric literal.");
+                      "empty digit sequence in numeric literal");
     emitter_.Emit(text.begin(), EmptyDigitSequence);
     return {.ok = false};
   }
@@ -334,7 +334,7 @@ auto NumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix_ == Radix::Decimal && int_part_.starts_with("0") &&
       int_part_ != "0") {
     CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
-                      "Unknown base specifier in numeric literal.");
+                      "unknown base specifier in numeric literal");
     emitter_.Emit(int_part_.begin(), UnknownBaseSpecifier);
     return false;
   }
@@ -357,7 +357,7 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
 
   if (radix_ == Radix::Binary) {
     CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
-                      "Binary real number literals are not supported.");
+                      "binary real number literals are not supported");
     emitter_.Emit(literal_.text_.begin() + literal_.radix_point_,
                   BinaryRealLiteral);
     // Carry on and parse the binary real literal anyway.
@@ -380,7 +380,7 @@ auto NumericLiteral::Parser::CheckExponentPart() -> bool {
   char expected_exponent_kind = (radix_ == Radix::Decimal ? 'e' : 'p');
   if (literal_.text_[literal_.exponent_] != expected_exponent_kind) {
     CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
-                      "Expected '{0}' to introduce exponent.", char);
+                      "expected '{0}' to introduce exponent", char);
     emitter_.Emit(literal_.text_.begin() + literal_.exponent_,
                   WrongRealLiteralExponent, expected_exponent_kind);
     return false;

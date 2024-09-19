@@ -10,7 +10,7 @@
 
 fn foo
 
-// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+10]]:21: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+10]]:21: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_sig_or_semi.carbon

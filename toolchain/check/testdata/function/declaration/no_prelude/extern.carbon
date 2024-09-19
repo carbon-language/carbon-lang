@@ -25,10 +25,10 @@ var x: () = F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -39,10 +39,10 @@ extern fn F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -53,12 +53,12 @@ fn F();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `fn` declaration that is a member
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: error: `extern` not allowed on `fn` declaration that is a member
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
   extern fn G[self: Self]();
@@ -161,6 +161,7 @@ class C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,6 +178,7 @@ class C {
 // CHECK:STDOUT:     %self.loc13_15.1: %C = param self, runtime_param0
 // CHECK:STDOUT:     %self.loc13_15.2: %C = bind_name self, %self.loc13_15.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

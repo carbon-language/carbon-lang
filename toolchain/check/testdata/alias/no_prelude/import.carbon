@@ -58,10 +58,10 @@ var b: () = a_alias;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: in import
 // CHECK:STDERR: import library "var2";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: var2.carbon:8:5: ERROR: Semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`.
+// CHECK:STDERR: var2.carbon:8:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`
 // CHECK:STDERR: var b: () = a_alias;
 // CHECK:STDERR:     ^
 import library "var2";
@@ -73,7 +73,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -86,12 +87,14 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c_alias: type = bind_alias c_alias, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.3]
+// CHECK:STDOUT:   %a.var: ref %.3 = var a
+// CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
@@ -101,13 +104,14 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//class1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//class1, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class1, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//class1, inst+7, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class1, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//class1, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,9 +127,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias.ref.loc8: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:   %b.var: ref %.2 = var b
-// CHECK:STDOUT:   %b: ref %.2 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.3]
+// CHECK:STDOUT:   %b.var: ref %.3 = var b
+// CHECK:STDOUT:   %b: ref %.3 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -138,13 +142,14 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//class2, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//class2, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class2, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//class2, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//class2, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class2, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,9 +160,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %.loc6: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:   %c.var: ref %.2 = var c
-// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc6: type = ptr_type %C [template = constants.%.3]
+// CHECK:STDOUT:   %c.var: ref %.3 = var c
+// CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

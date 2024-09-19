@@ -14,10 +14,10 @@ library "[[@TEST_NAME]]";
 
 interface Interface { }
 
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `interface Interface`.
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: previously defined here
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -31,10 +31,10 @@ library "[[@TEST_NAME]]";
 
 interface Interface {}
 
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `interface Interface`.
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: previously defined here
 // CHECK:STDERR: interface Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -48,10 +48,10 @@ library "[[@TEST_NAME]]";
 
 fn Function();
 
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: name is previously declared here
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -61,10 +61,10 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: name is previously declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface Class { }

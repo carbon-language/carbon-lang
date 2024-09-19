@@ -10,7 +10,7 @@
 
 var a: (i32, i32) = (2, 3);
 var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:14: ERROR: Tuple index must be a constant.
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:14: error: tuple index must be a constant
 // CHECK:STDERR: var c: i32 = a.(b);
 // CHECK:STDERR:              ^~~~~
 var c: i32 = a.(b);

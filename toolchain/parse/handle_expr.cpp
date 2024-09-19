@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 
 static auto DiagnoseStatementOperatorAsSubExpr(Context& context) -> void {
   CARBON_DIAGNOSTIC(StatementOperatorAsSubExpr, Error,
-                    "Operator `{0}` can only be used as a complete statement.",
+                    "operator `{0}` can only be used as a complete statement",
                     Lex::TokenKind);
   context.emitter().Emit(*context.position(), StatementOperatorAsSubExpr,
                          context.PositionKind());
@@ -32,7 +32,7 @@ auto HandleExpr(Context& context) -> void {
           OperatorPriority::RightFirst) {
         CARBON_DIAGNOSTIC(
             UnaryOperatorRequiresParentheses, Error,
-            "Parentheses are required around this unary `{0}` operator.",
+            "parentheses are required around this unary `{0}` operator",
             Lex::TokenKind);
         context.emitter().Emit(*context.position(),
                                UnaryOperatorRequiresParentheses,
@@ -182,7 +182,7 @@ auto HandleExprInPostfix(Context& context) -> void {
         // OK, `.Self`.
       } else {
         CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
-                          "Expected identifier or `Self` after `.`.");
+                          "expected identifier or `Self` after `.`");
         context.emitter().Emit(*context.position(),
                                ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
@@ -211,7 +211,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       // Add a node to keep the parse tree balanced.
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                           /*has_error=*/true);
-      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "Expected expression.");
+      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
       context.emitter().Emit(*context.position(), ExpectedExpr);
       context.ReturnErrorOnState();
       break;
@@ -292,7 +292,7 @@ auto HandleExprLoop(Context& context) -> void {
         OperatorPriority::RightFirst) {
       CARBON_DIAGNOSTIC(
           OperatorRequiresParentheses, Error,
-          "Parentheses are required to disambiguate operator precedence.");
+          "parentheses are required to disambiguate operator precedence");
       context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
     } else {
       // This operator wouldn't be allowed even if parenthesized.
@@ -424,7 +424,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
 
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedExprSemi, Error,
-                      "Expected `;` after expression statement.");
+                      "expected `;` after expression statement");
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 

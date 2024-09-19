@@ -32,7 +32,7 @@ static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
 static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
-                    "There was no return type provided.");
+                    "there was no return type provided");
   diag.Note(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
 
@@ -41,14 +41,14 @@ static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function,
                            SemIR::TypeId return_type_id) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
-                    "Return type of function is `{0}`.", SemIR::TypeId);
+                    "return type of function is `{0}`", SemIR::TypeId);
   diag.Note(function.return_storage_id, ReturnTypeHereNote, return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
 static auto NoteReturnedVar(Context::DiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
-  CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here.");
+  CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here");
   diag.Note(returned_var_id, ReturnedVarHere);
 }
 
@@ -69,7 +69,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   // A `returned var` requires an explicit return type.
   if (!return_info.type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
-                      "Cannot declare a `returned var` in this function.");
+                      "cannot declare a `returned var` in this function");
     auto diag =
         context.emitter().Build(returned_node, ReturnedVarWithNoReturnType);
     NoteNoReturnTypeProvided(diag, function);
@@ -80,8 +80,8 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   // The declared type of the var must match the return type of the function.
   if (return_info.type_id != type_id) {
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
-                      "Type `{0}` of `returned var` does not match "
-                      "return type of enclosing function.",
+                      "type `{0}` of `returned var` does not match "
+                      "return type of enclosing function",
                       SemIR::TypeId);
     auto diag =
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
@@ -103,8 +103,8 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
   auto existing_id = context.scope_stack().SetReturnedVarOrGetExisting(bind_id);
   if (existing_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
-                      "Cannot declare a `returned var` in the scope of "
-                      "another `returned var`.");
+                      "cannot declare a `returned var` in the scope of "
+                      "another `returned var`");
     auto diag = context.emitter().Build(bind_id, ReturnedVarShadowed);
     NoteReturnedVar(diag, existing_id);
     diag.Emit();
@@ -118,7 +118,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
 
   if (return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
-                      "Missing return value.");
+                      "missing return value");
     auto diag = context.emitter().Build(node_id, ReturnStatementMissingExpr);
     NoteReturnType(diag, function, return_type_id);
     diag.Emit();
@@ -138,7 +138,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   if (!return_info.type_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
-        "No return expression should be provided in this context.");
+        "no return expression should be provided in this context");
     auto diag = context.emitter().Build(node_id, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
@@ -146,7 +146,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
   } else if (returned_var_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         ReturnExprWithReturnedVar, Error,
-        "Can only `return var;` in the scope of a `returned var`.");
+        "can only `return var;` in the scope of a `returned var`");
     auto diag = context.emitter().Build(node_id, ReturnExprWithReturnedVar);
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
@@ -174,7 +174,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
 
   if (!returned_var_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
-                      "`return var;` with no `returned var` in scope.");
+                      "`return var;` with no `returned var` in scope");
     context.emitter().Emit(node_id, ReturnVarWithNoReturnedVar);
     returned_var_id = SemIR::InstId::BuiltinError;
   }

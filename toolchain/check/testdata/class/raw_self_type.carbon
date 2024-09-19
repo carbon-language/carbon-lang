@@ -31,8 +31,9 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
 // CHECK:STDOUT:   %Self: type = class_type @Self [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -73,6 +74,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -89,6 +91,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.loc21_17.1: %Self = param y, runtime_param1
 // CHECK:STDOUT:     %y.loc21_17.2: %Self = bind_name y, %y.loc21_17.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MemberNamedSelf
@@ -97,6 +100,8 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Self {
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Self
 // CHECK:STDOUT: }
@@ -104,15 +109,15 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc13: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:   %Self.var: ref %.3 = var r#Self
-// CHECK:STDOUT:   %Self: ref %.3 = bind_name r#Self, %Self.var
+// CHECK:STDOUT:   %.loc13: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:   %Self.var: ref %.4 = var r#Self
+// CHECK:STDOUT:   %Self: ref %.4 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   %Self.ref.loc14_12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc14_16: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:   %p.var: ref %.3 = var p
-// CHECK:STDOUT:   %p: ref %.3 = bind_name p, %p.var
-// CHECK:STDOUT:   %Self.ref.loc14_20: ref %.3 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc14_20: %.3 = bind_value %Self.ref.loc14_20
+// CHECK:STDOUT:   %.loc14_16: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:   %p.var: ref %.4 = var p
+// CHECK:STDOUT:   %p: ref %.4 = bind_name p, %p.var
+// CHECK:STDOUT:   %Self.ref.loc14_20: ref %.4 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc14_20: %.4 = bind_value %Self.ref.loc14_20
 // CHECK:STDOUT:   assign %p.var, %.loc14_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

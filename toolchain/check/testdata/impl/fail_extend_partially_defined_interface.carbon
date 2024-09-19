@@ -10,10 +10,10 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: ERROR: `extend impl` requires a definition for interface `I`.
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: error: `extend impl` requires a definition for interface `I`
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: Interface is currently being defined.
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: interface is currently being defined
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
     extend impl as I;
@@ -28,6 +28,7 @@ interface I {
 // CHECK:STDOUT:   %C.1: type = class_type @C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -71,6 +72,7 @@ interface I {
 // CHECK:STDOUT:     impl_decl @impl {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_undefined_bound.carbon
 
-// CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:8: ERROR: Semantics TODO: `HandleArrayExprWithoutBounds`.
+// CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:8: error: semantics TODO: `HandleArrayExprWithoutBounds`
 // CHECK:STDERR: var a: [i32; ];
 // CHECK:STDERR:        ^~~~~~~
 var a: [i32; ];
