@@ -72,7 +72,7 @@ var c: C = {.x = ()};
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: `export` is only allowed in API files.
+// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files
 // CHECK:STDERR: export import library "base";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -144,7 +144,7 @@ library "[[@TEST_NAME]]";
 
 import library "non_export";
 
-// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+3]]:15: ERROR: Name `C` not found.
+// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+3]]:15: error: name `C` not found
 // CHECK:STDERR: alias Local = C;
 // CHECK:STDERR:               ^
 alias Local = C;

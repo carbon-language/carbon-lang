@@ -30,7 +30,7 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenInCompoundMemberAccess, Error,
-                        "Expected `)`.");
+                        "expected `)`");
       context.emitter().Emit(*context.position(),
                              UnexpectedTokenInCompoundMemberAccess);
       state.has_error = true;

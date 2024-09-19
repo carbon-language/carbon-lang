@@ -13,14 +13,13 @@ static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
                                llvm::StringRef context_string,
                                SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
-                    "`{0}` not allowed on `{1}` declaration{2}.",
-                    Lex::TokenKind, Lex::TokenKind, std::string);
+                    "`{0}` not allowed on `{1}` declaration{2}", Lex::TokenKind,
+                    Lex::TokenKind, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
                                       context.token_kind(modifier_node),
                                       decl_kind, context_string.str());
   if (context_loc_id.is_valid()) {
-    CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
-                      "Containing definition here.");
+    CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
     diag.Note(context_loc_id, ModifierNotInContext);
   }
   diag.Emit();
@@ -136,7 +135,7 @@ auto RestrictExternModifierOnDecl(Context& context,
     // This prints an error for `extern library`, but doesn't drop it because we
     // assume there is some other, correct value that we just don't know here.
     CARBON_DIAGNOSTIC(ExternLibraryIsCurrentLibrary, Error,
-                      "`extern library` cannot specify the current library.");
+                      "`extern library` cannot specify the current library");
     context.emitter().Emit(introducer.modifier_node_id(ModifierOrder::Extern),
                            ExternLibraryIsCurrentLibrary);
     introducer.extern_library = SemIR::LibraryNameId::Error;
@@ -145,8 +144,8 @@ auto RestrictExternModifierOnDecl(Context& context,
 
   if (is_definition && introducer.extern_library.is_valid()) {
     CARBON_DIAGNOSTIC(ExternLibraryOnDefinition, Error,
-                      "A library cannot be provided for an `extern` modifier "
-                      "on a definition.");
+                      "a library cannot be provided for an `extern` modifier "
+                      "on a definition");
     context.emitter().Emit(introducer.modifier_node_id(ModifierOrder::Extern),
                            ExternLibraryOnDefinition);
   }

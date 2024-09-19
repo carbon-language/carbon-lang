@@ -11,16 +11,16 @@
 namespace NS;
 
 fn F() -> {} {
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+8]]:9: ERROR: Name `NS` not found.
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+8]]:9: error: name `NS` not found
   // CHECK:STDERR:   alias NS.a = {};
   // CHECK:STDERR:         ^~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:16: ERROR: Alias initializer must be a name reference.
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:16: error: alias initializer must be a name reference
   // CHECK:STDERR:   alias NS.a = {};
   // CHECK:STDERR:                ^~
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10: ERROR: Name `a` not found.
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10: error: name `a` not found
   // CHECK:STDERR:   return NS.a;
   // CHECK:STDERR:          ^~~~
   return NS.a;

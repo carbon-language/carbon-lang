@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_prefix_uneven_space_with_assign.carbon
 
-// CHECK:STDERR: fail_prefix_uneven_space_with_assign.carbon:[[@LINE+3]]:12: ERROR: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: fail_prefix_uneven_space_with_assign.carbon:[[@LINE+3]]:12: error: whitespace is not allowed after this unary operator
 // CHECK:STDERR: var n: i8 =- n;
 // CHECK:STDERR:            ^
 var n: i8 =- n;

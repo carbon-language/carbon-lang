@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 base class Base {}
 
 class AdaptWithBase {
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: ERROR: adapter with base class
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: error: adapter with base class
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
@@ -31,7 +31,7 @@ class AdaptWithBase {
 library "[[@TEST_NAME]]";
 
 class AdaptWithField {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: adapter with fields
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
@@ -43,7 +43,7 @@ class AdaptWithField {
 }
 
 class AdaptWithFields {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: adapter with fields
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
@@ -65,7 +65,7 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: ERROR: adapter with base class
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter with base class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here

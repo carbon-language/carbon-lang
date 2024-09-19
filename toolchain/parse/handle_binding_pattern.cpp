@@ -28,8 +28,7 @@ auto HandleBindingPattern(Context& context) -> void {
   auto on_error = [&](llvm::StringLiteral expected) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
-                        "Expected {0} in binding pattern.",
-                        llvm::StringLiteral);
+                        "expected {0} in binding pattern", llvm::StringLiteral);
       context.emitter().Emit(*context.position(), ExpectedBindingPattern,
                              expected);
       state.has_error = true;

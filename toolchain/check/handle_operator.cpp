@@ -77,7 +77,7 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
       lhs_cat != SemIR::ExprCategory::DurableRef &&
       lhs_cat != SemIR::ExprCategory::Error) {
     CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
-                      "Expression is not assignable.");
+                      "expression is not assignable");
     context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
   }
   // TODO: Destroy the old value before reinitializing. This will require
@@ -231,13 +231,13 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       break;
     case SemIR::ExprCategory::EphemeralRef:
       CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
-                        "Cannot take the address of a temporary object.");
+                        "cannot take the address of a temporary object");
       context.emitter().Emit(TokenOnly(node_id), AddrOfEphemeralRef);
       value_id = SemIR::InstId::BuiltinError;
       break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
-                        "Cannot take the address of non-reference expression.");
+                        "cannot take the address of non-reference expression");
       context.emitter().Emit(TokenOnly(node_id), AddrOfNonRef);
       value_id = SemIR::InstId::BuiltinError;
       break;
@@ -263,7 +263,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
   if (context.insts().Get(value_id).kind() == SemIR::ConstType::Kind) {
     CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                       "`const` applied repeatedly to the same type has no "
-                      "additional effect.");
+                      "additional effect");
     context.emitter().Emit(node_id, RepeatedConst);
   }
   auto inner_type_id = ExprAsType(context, node_id, value_id);
@@ -306,7 +306,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
       [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
         CARBON_DIAGNOSTIC(
             DerefOfNonPointer, Error,
-            "Cannot dereference operand of non-pointer type `{0}`.",
+            "cannot dereference operand of non-pointer type `{0}`",
             SemIR::TypeId);
 
         auto builder = context.emitter().Build(
@@ -316,7 +316,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
         if (not_pointer_type_id == SemIR::TypeId::TypeType) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
-              "To form a pointer type, write the `*` after the pointee type.");
+              "to form a pointer type, write the `*` after the pointee type");
           builder.Note(TokenOnly(node_id), DerefOfType);
         }
 

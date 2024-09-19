@@ -37,7 +37,7 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
-                            "Member access into incomplete class `{0}`.",
+                            "member access into incomplete class `{0}`",
                             std::string);
           return context.emitter().Build(
               loc_id, QualifiedExprInIncompleteClassScope,
@@ -51,7 +51,7 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                            "Member access into undefined interface `{0}`.",
+                            "member access into undefined interface `{0}`",
                             std::string);
           return context.emitter().Build(
               loc_id, QualifiedExprInUndefinedInterfaceScope,
@@ -218,7 +218,7 @@ static auto PerformImplLookup(
   if (!witness_id.is_valid()) {
     if (missing_impl_diagnoser) {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
-                        "Type `{1}` does not implement interface `{0}`.",
+                        "type `{1}` does not implement interface `{0}`",
                         SemIR::NameId, SemIR::TypeId);
       (*missing_impl_diagnoser)()
           .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
@@ -226,8 +226,8 @@ static auto PerformImplLookup(
           .Emit();
     } else {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                        "Cannot access member of interface `{0}` in type `{1}` "
-                        "that does not implement that interface.",
+                        "cannot access member of interface `{0}` in type `{1}` "
+                        "that does not implement that interface",
                         SemIR::NameId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
                              interface.name_id,
@@ -388,10 +388,9 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
     -> const llvm::APInt* {
   const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
-    CARBON_DIAGNOSTIC(
-        TupleIndexOutOfBounds, Error,
-        "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
-        SemIR::TypeId);
+    CARBON_DIAGNOSTIC(TupleIndexOutOfBounds, Error,
+                      "tuple element index `{0}` is past the end of type `{1}`",
+                      TypedInt, SemIR::TypeId);
     context.emitter().Emit(loc_id, TupleIndexOutOfBounds,
                            {.type = index_inst.type_id, .value = index_val},
                            operand_inst.type_id());
@@ -417,7 +416,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   auto base_type_id = context.insts().Get(base_id).type_id();
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
-                          "Member access into object of incomplete type `{0}`.",
+                          "member access into object of incomplete type `{0}`",
                           SemIR::TypeId);
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_type_id);
@@ -450,7 +449,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                        "Type `{0}` does not have a member `{1}`.",
+                        "type `{0}` does not have a member `{1}`",
                         SemIR::TypeId, SemIR::NameId);
       context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_type_id,
                              name_id);
@@ -459,7 +458,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
     if (base_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
-                        "Type `{0}` does not support qualified expressions.",
+                        "type `{0}` does not support qualified expressions",
                         SemIR::TypeId);
       context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_type_id);
     }
@@ -508,8 +507,8 @@ auto PerformCompoundMemberAccess(
   // because the base expression is not used for anything.
   if (member_id == member_expr_id && member.type_id() != SemIR::TypeId::Error) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
-                      "Member name of type `{0}` in compound member access is "
-                      "not an instance member or an interface member.",
+                      "member name of type `{0}` in compound member access is "
+                      "not an instance member or an interface member",
                       SemIR::TypeId);
     context.emitter().Emit(loc_id, CompoundMemberAccessDoesNotUseBase,
                            member.type_id());
@@ -528,8 +527,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
   if (!tuple_type) {
     CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
-                      "Type `{0}` does not support tuple indexing. Only "
-                      "tuples can be indexed that way.",
+                      "type `{0}` does not support tuple indexing; only "
+                      "tuples can be indexed that way",
                       SemIR::TypeId);
     context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_type_id);
     return SemIR::InstId::BuiltinError;
@@ -546,7 +545,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   } else if (!index_const_id.is_template()) {
     // TODO: Decide what to do if the index is a symbolic constant.
     CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
-                      "Tuple index must be a constant.");
+                      "tuple index must be a constant");
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
     return SemIR::InstId::BuiltinError;
   }

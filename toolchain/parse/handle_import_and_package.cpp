@@ -50,7 +50,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
         state.has_error = true;
 
         CARBON_DIAGNOSTIC(ExportImportPackage, Error,
-                          "`export` cannot be used when importing a package.");
+                          "`export` cannot be used when importing a package");
         context.emitter().Emit(*package_name_token, ExportImportPackage);
       }
       names.package_id = context.tokens().GetIdentifier(*package_name_token);
@@ -58,9 +58,9 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
     } else if (declaration == NodeKind::PackageDecl ||
                !context.PositionIs(Lex::TokenKind::Library)) {
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
-                        "Expected identifier after `package`.");
+                        "expected identifier after `package`");
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
-                        "Expected identifier or `library` after `import`.");
+                        "expected identifier or `library` after `import`");
       context.emitter().Emit(*context.position(),
                              declaration == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
@@ -94,7 +94,7 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
       // "..."` yet, then most probably the user forgot to add `library`
       // before the library name.
       CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
-                        "Missing `library` keyword.");
+                        "missing `library` keyword");
       context.emitter().Emit(*context.position(), MissingLibraryKeyword);
       on_parse_error();
       return;
@@ -134,8 +134,8 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
       CARBON_DIAGNOSTIC(ImportTooLate, Error,
                         "`import` declarations must come after the `package` "
                         "declaration (if present) and before any other "
-                        "entities in the file.");
-      CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
+                        "entities in the file");
+      CARBON_DIAGNOSTIC(FirstDecl, Note, "first declaration is here");
       context.emitter()
           .Build(intro_token, ImportTooLate)
           .Note(context.first_non_packaging_token(), FirstDecl)
@@ -158,7 +158,7 @@ static auto RestrictExportToApi(Context& context,
   auto packaging = context.tree().packaging_decl();
   if (!packaging || packaging->is_impl) {
     CARBON_DIAGNOSTIC(ExportFromImpl, Error,
-                      "`export` is only allowed in API files.");
+                      "`export` is only allowed in API files");
     context.emitter().Emit(state.token, ExportFromImpl);
     state.has_error = true;
   }
@@ -214,10 +214,10 @@ static auto HandlePackageAndLibraryDecls(Context& context,
   if (state.token != Lex::TokenIndex::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(
         PackageTooLate, Error,
-        "The `{0}` declaration must be the first non-comment line.",
+        "the `{0}` declaration must be the first non-comment line",
         Lex::TokenKind);
     CARBON_DIAGNOSTIC(FirstNonCommentLine, Note,
-                      "First non-comment line is here.");
+                      "first non-comment line is here");
     context.emitter()
         .Build(state.token, PackageTooLate, intro_token_kind)
         .Note(Lex::TokenIndex::FirstNonCommentToken, FirstNonCommentLine)

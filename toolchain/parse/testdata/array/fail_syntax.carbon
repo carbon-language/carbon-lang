@@ -10,7 +10,7 @@
 
 // --- fail_type.carbon
 
-// CHECK:STDERR: fail_type.carbon:[[@LINE+4]]:12: ERROR: Expected `;` in array type.
+// CHECK:STDERR: fail_type.carbon:[[@LINE+4]]:12: error: expected `;` in array type
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -18,19 +18,19 @@ var x: [i32];
 
 // --- fail_invalid_char.carbon
 
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+16]]:12: ERROR: Expected expression.
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+16]]:12: error: expected expression
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+12]]:12: ERROR: Expected `;` in array type.
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+12]]:12: error: expected `;` in array type
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+8]]:12: ERROR: Expected expression.
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+8]]:12: error: expected expression
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+4]]:12: ERROR: Unexpected tokens before `]`.
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+4]]:12: error: unexpected tokens before `]`
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -38,23 +38,23 @@ fn X() -> [:];
 
 // --- fail_unlexed_expr.carbon
 
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+20]]:9: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+20]]:9: error: encountered unrecognized characters while parsing
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+16]]:9: ERROR: Expected expression.
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+16]]:9: error: expected expression
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+12]]:9: ERROR: Expected `;` in array type.
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+12]]:9: error: expected `;` in array type
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:9: ERROR: Expected expression.
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:9: error: expected expression
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+4]]:9: ERROR: Unexpected tokens before `]`.
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+4]]:9: error: unexpected tokens before `]`
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
@@ -62,11 +62,11 @@ var y: [`];
 
 // --- fail_no_close_bracket.carbon
 
-// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+8]]:8: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+8]]:8: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+4]]:8: ERROR: Expected expression.
+// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+4]]:8: error: expected expression
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
@@ -74,7 +74,7 @@ var x: [i32;;
 
 // --- fail_no_semi.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:12: ERROR: Expected `;` in array type.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:12: error: expected `;` in array type
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
 var x: [i32];

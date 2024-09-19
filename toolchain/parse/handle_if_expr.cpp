@@ -20,7 +20,7 @@ auto HandleIfExprFinishCondition(Context& context) -> void {
   } else {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
-                      "Expected `then` after `if` condition.");
+                      "expected `then` after `if` condition");
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
     }
@@ -45,7 +45,7 @@ auto HandleIfExprFinishThen(Context& context) -> void {
   } else {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
-                      "Expected `else` after `if ... then ...`.");
+                      "expected `else` after `if ... then ...`");
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
     }

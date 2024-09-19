@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
 
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -17,17 +17,17 @@ fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:23: error: cannot implicitly convert from `i32` to `y`
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: Type `i32` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
 // CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:5: ERROR: Semantics TODO: `HandleTemplate`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleTemplate`
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
 let template z:! type = i32;

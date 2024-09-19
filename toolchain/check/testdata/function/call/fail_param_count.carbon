@@ -13,52 +13,52 @@ fn Run1(a: i32) {}
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Run0(1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: calling function declared here
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
   // CHECK:STDERR:
   Run0(1);
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 2 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Run0(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: calling function declared here
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
   // CHECK:STDERR:
   Run0(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 0 argument(s) passed to function expecting 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   Run1();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: calling function declared here
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run1();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 2 argument(s) passed to function expecting 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   Run1(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: calling function declared here
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run1(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 0 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   Run2();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: calling function declared here
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run2();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   Run2(0);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: calling function declared here
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   Run2(0);

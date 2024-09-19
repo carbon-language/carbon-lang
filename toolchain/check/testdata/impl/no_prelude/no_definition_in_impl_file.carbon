@@ -58,7 +58,7 @@ impl () as C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: impl () as C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -74,7 +74,7 @@ impl library "[[@TEST_NAME]]";
 
 interface D {};
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: impl () as D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 impl () as D;

@@ -8,21 +8,21 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_with_unknown.carbon
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+8]]:25: ERROR: Expected `.field = value`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+8]]:25: error: expected `.field = value`
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:29: ERROR: Expected `.field = value`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:29: error: expected `.field = value`
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                             ^
 // CHECK:STDERR:
 var x: i32 = {.a = 1, .b, .c: i32};
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+7]]:26: ERROR: Expected `.field: field_type`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+7]]:26: error: expected `.field: field_type`
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                          ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: ERROR: Expected `.field: field_type`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: error: expected `.field: field_type`
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                               ^
 var x: i32 = {.a: i32, .b, .c = 1};

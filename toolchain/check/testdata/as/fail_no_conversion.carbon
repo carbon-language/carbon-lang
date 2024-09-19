@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_no_conversion.carbon
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:21: ERROR: Cannot convert from `i32` to `(i32, i32)` with `as`.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:21: error: cannot convert from `i32` to `(i32, i32)` with `as`
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: Type `i32` does not implement interface `As`.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: type `i32` does not implement interface `As`
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 let n: (i32, i32) = 1 as (i32, i32);

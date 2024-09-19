@@ -48,13 +48,13 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: error: Variable has incomplete type `C`
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import Other library "other_extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:4:1: Class was forward declared here.
+// CHECK:STDERR: other_extern.carbon:4:1: class was forward declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -64,22 +64,22 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: in import
 // CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+6]]:1: in import
 // CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: other_define.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: in name lookup for `C`
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
@@ -89,22 +89,22 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: in import
 // CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: in import
 // CHECK:STDERR: import Other library "other_define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: other_define.carbon:4:1: name is previously declared here
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";
 import Other library "other_conflict";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: In name lookup for `C`.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: in name lookup for `C`
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 var c: Other.C = {};

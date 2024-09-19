@@ -27,7 +27,7 @@ fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
 let a: i32 = Sub(0, 0x7FFFFFFF);
 let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: ERROR: Integer overflow in calculation -2147483647 - 2.
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: error: integer overflow in calculation -2147483647 - 2
 // CHECK:STDERR: let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDERR:              ^~~~
 let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_var_in_type.carbon
 
 var x: type = i32;
-// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 fn Six() -> x { return 6; }

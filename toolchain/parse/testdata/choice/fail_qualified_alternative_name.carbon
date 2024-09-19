@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_qualified_alternative_name.carbon
 
 choice X {
-  // CHECK:STDERR: fail_qualified_alternative_name.carbon:[[@LINE+3]]:4: ERROR: Expected `,` or `}`.
+  // CHECK:STDERR: fail_qualified_alternative_name.carbon:[[@LINE+3]]:4: error: expected `,` or `}`
   // CHECK:STDERR:   A.B
   // CHECK:STDERR:    ^
   A.B

@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: Type `i32` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
   var x: 1 = 1;

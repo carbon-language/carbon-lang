@@ -12,22 +12,22 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found
 // CHECK:STDERR: var a_ref: x;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 var a_ref: x;
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: name `x` not found
 // CHECK:STDERR: var b_ref: {.a = x};
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
 var b_ref: {.a = x};
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: name `x` not found
 // CHECK:STDERR: var c_ref: (x,);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
 var d_ref: x*;

@@ -8,33 +8,33 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_type_mismatch.carbon
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: ERROR: Cannot implicitly convert from `String` to `i32`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert from `String` to `i32`
 // CHECK:STDERR: var a: [i32; 3] = (1, "Hello", "World");
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: Type `String` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: type `String` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var a: [i32; 3] = (1, "Hello", "World");
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var a: [i32; 3] = (1, "Hello", "World");
 
 var t1: (i32, String, String);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: ERROR: Cannot implicitly convert from `String` to `i32`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert from `String` to `i32`
 // CHECK:STDERR: var b: [i32; 3] = t1;
 // CHECK:STDERR:                   ^~
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: Type `String` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: type `String` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var b: [i32; 3] = t1;
 // CHECK:STDERR:                   ^~
 // CHECK:STDERR:
 var b: [i32; 3] = t1;
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: ERROR: Cannot initialize array of 3 element(s) from 2 initializer(s).
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: error: cannot initialize array of 3 element(s) from 2 initializer(s)
 // CHECK:STDERR: var c: [i32; 3] = (1, 2);
 // CHECK:STDERR:                   ^~~~~~
 // CHECK:STDERR:
 var c: [i32; 3] = (1, 2);
 
 var t2: (i32, i32);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: ERROR: Cannot initialize array of 3 element(s) from tuple with 2 element(s).
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: error: cannot initialize array of 3 element(s) from tuple with 2 element(s).
 // CHECK:STDERR: var d: [i32; 3] = t2;
 // CHECK:STDERR:                   ^~
 var d: [i32; 3] = t2;

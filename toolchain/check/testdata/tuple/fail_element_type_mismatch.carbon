@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_element_type_mismatch.carbon
 
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+6]]:21: ERROR: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+6]]:21: error: cannot implicitly convert from `f64` to `i32`
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: Type `f64` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: type `f64` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
 // CHECK:STDERR:                     ^~~~~~~~~~
 var x: (i32, i32) = (2, 65.89);

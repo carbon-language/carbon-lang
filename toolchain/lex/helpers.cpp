@@ -20,8 +20,8 @@ auto CanLexInt(DiagnosticEmitter<const char*>& emitter, llvm::StringRef text)
   if (text.size() > DigitLimit) {
     CARBON_DIAGNOSTIC(
         TooManyDigits, Error,
-        "Found a sequence of {0} digits, which is greater than the "
-        "limit of {1}.",
+        "found a sequence of {0} digits, which is greater than the "
+        "limit of {1}",
         size_t, size_t);
     emitter.Emit(text.begin(), TooManyDigits, text.size(), DigitLimit);
     return false;

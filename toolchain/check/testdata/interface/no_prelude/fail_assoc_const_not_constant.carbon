@@ -9,11 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_constant.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: ERROR: Pattern in associated constant declaration must be a single `:!` binding.
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: error: pattern in associated constant declaration must be a single `:!` binding
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: ERROR: Package `Core` implicitly referenced here, but not found.
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:          ^~~
   let a: i32;

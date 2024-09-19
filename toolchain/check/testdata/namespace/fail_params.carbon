@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_params.carbon
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace A();
 // CHECK:STDERR:            ^~
 // CHECK:STDERR:
@@ -17,23 +17,23 @@ namespace A();
 // Parameters are ignored for error recovery.
 fn A.F() {}
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace B(n: i32);
 // CHECK:STDERR:            ^~~~~~~~
 // CHECK:STDERR:
 namespace B(n: i32);
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: ERROR: `namespace` declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace C[T:! type](x: T);
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
 namespace C[T:! type](x: T);
 
 namespace D;
-// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: error: redeclaration differs because of parameter list
 // CHECK:STDERR: fn D(T:! type).F() {}
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: previously declared without parameter list
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
 fn D(T:! type).F() {}

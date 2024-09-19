@@ -10,18 +10,18 @@
 
 base class B {}
 
-// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: ERROR: `base` declaration outside class
+// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: error: `base` declaration outside class
 // CHECK:STDERR: extend base: B;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 extend base: B;
 
 fn F() {
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+7]]:3: ERROR: Expected expression.
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+7]]:3: error: expected expression
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `HandleInvalidParse`.
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: semantics TODO: `HandleInvalidParse`
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend base: B;

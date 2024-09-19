@@ -14,11 +14,11 @@ class Class {
 
 fn F() -> bool {
   var c1: Class = {.b = true};
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+7]]:17: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+7]]:17: error: expected identifier after `.`
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: ERROR: Semantics TODO: `Error recovery from keyword name.`.
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: error: semantics TODO: `Error recovery from keyword name.`
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   var c2: Class.Self = c1;

@@ -9,57 +9,57 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/no_prelude/fail_decl_param_mismatch.carbon
 
 fn F();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 0.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with parameter count of 0
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 fn F(x: ()) {}
 
 fn G(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 0.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 0
 // CHECK:STDERR: fn G() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with parameter count of 1
 // CHECK:STDERR: fn G(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: ERROR: Package `Core` implicitly referenced here, but not found.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:         ^~~~
 // CHECK:STDERR:
 fn H(x: bool) {}
 
 fn I();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because return type is `()`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `()`
 // CHECK:STDERR: fn I() -> () { return (); }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with no return type.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with no return type
 // CHECK:STDERR: fn I();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 fn I() -> () { return (); }
 
 fn J() -> ();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because no return type is provided.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because no return type is provided
 // CHECK:STDERR: fn J() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with return type `()`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with return type `()`
 // CHECK:STDERR: fn J() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 fn J() {}
 
 fn K() -> ();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function redeclaration differs because return type is `{}`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: error: function redeclaration differs because return type is `{}`
 // CHECK:STDERR: fn K() -> {} { return {}; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with return type `()`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with return type `()`
 // CHECK:STDERR: fn K() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn K() -> {} { return {}; }

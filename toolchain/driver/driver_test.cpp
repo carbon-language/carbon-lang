@@ -129,7 +129,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
                                 "--output=/dev/empty", empty_file})
                    .success);
   EXPECT_THAT(test_error_stream_.TakeStr(),
-              ContainsRegex("ERROR: .*/dev/empty.*"));
+              ContainsRegex("error: .*/dev/empty.*"));
 }
 
 TEST_F(DriverTest, DumpTokens) {

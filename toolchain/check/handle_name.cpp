@@ -46,7 +46,7 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
   auto diagnose_not_pointer = [&context,
                                &node_id](SemIR::TypeId not_pointer_type_id) {
     CARBON_DIAGNOSTIC(ArrowOperatorOfNonPointer, Error,
-                      "Cannot apply `->` operator to non-pointer type `{0}`.",
+                      "cannot apply `->` operator to non-pointer type `{0}`",
                       SemIR::TypeId);
 
     auto builder = context.emitter().Build(

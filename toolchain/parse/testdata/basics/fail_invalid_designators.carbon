@@ -10,12 +10,12 @@
 
 // NOTE: Move to its own directory when more tests are added.
 fn F() {
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.`
   // CHECK:STDERR:   a.;
   // CHECK:STDERR:     ^
   // CHECK:STDERR:
   a.;
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+3]]:5: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+3]]:5: error: expected identifier after `.`
   // CHECK:STDERR:   a.fn;
   // CHECK:STDERR:     ^~
   a.fn;

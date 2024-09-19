@@ -23,7 +23,7 @@ static auto NoteAssociatedFunction(Context& context,
                                    Context::DiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
-                    "Associated function {0} declared here.", SemIR::NameId);
+                    "associated function {0} declared here", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
   builder.Note(function.latest_decl_id(), ImplAssociatedFunctionHere,
                function.name_id);
@@ -86,7 +86,7 @@ static auto CheckAssociatedFunctionImplementation(
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
     CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
-                      "Associated function {0} implemented by non-function.",
+                      "associated function {0} implemented by non-function",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
         impl_decl_id, ImplFunctionWithNonFunction,
@@ -130,7 +130,7 @@ static auto BuildInterfaceWitness(
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
   if (!context.TryToDefineType(interface_type_id, [&] {
         CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
-                          "Implementation of undefined interface {0}.",
+                          "implementation of undefined interface {0}",
                           SemIR::NameId);
         return context.emitter().Build(
             impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
@@ -172,7 +172,7 @@ static auto BuildInterfaceWitness(
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
-              "Missing implementation of {0} in impl of interface {1}.",
+              "missing implementation of {0} in impl of interface {1}",
               SemIR::NameId, SemIR::NameId);
           auto builder =
               context.emitter().Build(impl.definition_id, ImplMissingFunction,

@@ -9,30 +9,30 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
 
 interface NotGeneric;
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter list
 // CHECK:STDERR: interface NotGeneric(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: previously declared without parameter list
 // CHECK:STDERR: interface NotGeneric;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface NotGeneric(T:! type) {}
 
 interface Generic(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of missing parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error: redeclaration differs because of missing parameter list
 // CHECK:STDERR: interface Generic {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared with parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: previously declared with parameter list
 // CHECK:STDERR: interface Generic(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface Generic {}
 
 interface DifferentParams(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error: redeclaration differs at parameter 1
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: previous declaration's corresponding parameter here
 // CHECK:STDERR: interface DifferentParams(T:! type);
 // CHECK:STDERR:                           ^
 interface DifferentParams(T:! ()) {}

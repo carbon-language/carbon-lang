@@ -16,15 +16,15 @@ var c: i32 = 0.4; // still more trailing comment
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lex/testdata/fail_trailing_comments.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/fail_trailing_comments.carbon
-// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-11]]:19: ERROR: Trailing comments are not permitted.
+// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-11]]:19: error: trailing comments are not permitted
 // CHECK:STDERR: var a: i32 = 1;   // trailing comment
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-14]]:19: ERROR: Trailing comments are not permitted.
+// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-14]]:19: error: trailing comments are not permitted
 // CHECK:STDERR: var b: 32 = 13;   // more trailing comment
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-17]]:19: ERROR: Trailing comments are not permitted.
+// CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-17]]:19: error: trailing comments are not permitted
 // CHECK:STDERR: var c: i32 = 0.4; // still more trailing comment
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: - filename: fail_trailing_comments.carbon

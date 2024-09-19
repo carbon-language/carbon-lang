@@ -11,7 +11,7 @@
 base class B {}
 
 fn F() {
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: ERROR: Expected expression.
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: expected expression
   // CHECK:STDERR:   base: B;
   // CHECK:STDERR:   ^~~~
   base: B;

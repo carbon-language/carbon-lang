@@ -23,26 +23,26 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `class Empty` is redundant.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: error: redeclaration of `class Empty` is redundant
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import library "a";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: Previously declared here.
+// CHECK:STDERR: a.carbon:4:1: previously declared here
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:8: ERROR: Variable has incomplete type `Incomplete`.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:8: error: Variable has incomplete type `Incomplete`
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-18]]:1: In import.
+// CHECK:STDERR: fail_b.carbon:[[@LINE-18]]:1: in import
 // CHECK:STDERR: import library "a";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:7:1: Class was forward declared here.
+// CHECK:STDERR: a.carbon:7:1: class was forward declared here
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var a: Incomplete;

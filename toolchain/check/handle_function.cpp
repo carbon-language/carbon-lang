@@ -325,8 +325,8 @@ static auto BuildFunctionDecl(Context& context,
              context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
-                        "Invalid signature for `Main.Run` function. Expected "
-                        "`fn ()` or `fn () -> i32`.");
+                        "invalid signature for `Main.Run` function; expected "
+                        "`fn ()` or `fn () -> i32`");
       context.emitter().Emit(node_id, InvalidMainRunSignature);
     }
   }
@@ -374,7 +374,7 @@ static auto HandleFunctionDefinitionAfterSignature(
     context.TryToCompleteType(param.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
-          "Parameter has incomplete type `{0}` in function definition.",
+          "parameter has incomplete type `{0}` in function definition",
           SemIR::TypeId);
       return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
                                      param.type_id);
@@ -424,7 +424,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     if (context.functions().Get(function_id).return_storage_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
-          "Missing `return` at end of function with declared return type.");
+          "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
       context.AddInst<SemIR::Return>(node_id, {});
@@ -468,7 +468,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
   auto kind = SemIR::BuiltinFunctionKind::ForBuiltinName(builtin_name);
   if (kind == SemIR::BuiltinFunctionKind::None) {
     CARBON_DIAGNOSTIC(UnknownBuiltinFunctionName, Error,
-                      "Unknown builtin function name \"{0}\".", std::string);
+                      "unknown builtin function name \"{0}\"", std::string);
     context.emitter().Emit(name_id, UnknownBuiltinFunctionName,
                            builtin_name.str());
   }
@@ -519,7 +519,7 @@ auto HandleParseNode(Context& context,
       function.builtin_function_kind = builtin_kind;
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
-                        "Invalid signature for builtin function \"{0}\".",
+                        "invalid signature for builtin function \"{0}\"",
                         std::string);
       context.emitter().Emit(fn_node_id, InvalidBuiltinSignature,
                              builtin_kind.name().str());

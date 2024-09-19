@@ -12,7 +12,7 @@ fn F() {
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
   bar
-// CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+3]]:1: ERROR: Expected `;` after expression statement.
+// CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+3]]:1: error: expected `;` after expression statement
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

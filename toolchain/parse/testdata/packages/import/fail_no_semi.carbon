@@ -10,7 +10,7 @@
 
 import Geometry
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+10]]:21: ERROR: `import` declarations must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+10]]:21: error: `import` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_semi.carbon

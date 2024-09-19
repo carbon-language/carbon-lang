@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: ERROR: Cannot implicitly convert from `i32` to `bool`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `i32` to `bool`
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: Type `i32` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
   var x: bool = not 12;

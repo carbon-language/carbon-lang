@@ -46,10 +46,10 @@ class NotGeneric {
   fn F();
 }
 
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter list
 // CHECK:STDERR: fn NotGeneric(T:! type).F() {}
 // CHECK:STDERR:    ^~~~~~~~~~
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: previously declared without parameter list
 // CHECK:STDERR: class NotGeneric {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -63,10 +63,10 @@ class Generic(T:! type) {
   fn TooFew();
 }
 
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter count of 0.
+// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter count of 0
 // CHECK:STDERR: fn Generic().TooFew() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: previously declared with parameter count of 1
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -80,10 +80,10 @@ class Generic(T:! type) {
   fn TooMany();
 }
 
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter count of 2.
+// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter count of 2
 // CHECK:STDERR: fn Generic(T:! type, U:! type).TooMany() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: previously declared with parameter count of 1
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ class Generic(T:! type) {
   fn WrongType();
 }
 
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn Generic(T:! ()).WrongType() {}
 // CHECK:STDERR:            ^
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR:               ^
 fn Generic(T:! ()).WrongType() {}

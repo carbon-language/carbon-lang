@@ -78,7 +78,7 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
   auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
   if (!semi) {
     CARBON_DIAGNOSTIC(ExpectedStatementSemi, Error,
-                      "`{0}` statements must end with a `;`.", Lex::TokenKind);
+                      "`{0}` statements must end with a `;`", Lex::TokenKind);
     context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
@@ -112,7 +112,7 @@ auto HandleStatementForHeader(Context& context) -> void {
     context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   } else {
     CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
-                      "Expected `var` declaration.");
+                      "expected `var` declaration");
     context.emitter().Emit(*context.position(), ExpectedVariableDecl);
 
     if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {

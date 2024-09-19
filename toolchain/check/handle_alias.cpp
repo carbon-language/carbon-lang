@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_value_id = inst->value_id;
   } else {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
-                      "Alias initializer must be a name reference.");
+                      "alias initializer must be a name reference");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
     alias_type_id = SemIR::TypeId::Error;
     alias_value_id = SemIR::InstId::BuiltinError;

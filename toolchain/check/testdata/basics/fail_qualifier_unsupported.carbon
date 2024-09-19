@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_qualifier_unsupported.carbon
 
 var x: i32;
-// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:14: ERROR: Type `i32` does not support qualified expressions.
+// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:14: error: type `i32` does not support qualified expressions
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:              ^~~
 var y: i32 = x.b;

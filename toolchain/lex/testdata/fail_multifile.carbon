@@ -12,7 +12,7 @@
 // CHECK:STDOUT: - filename: fail_a.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
-// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:3: ERROR: Empty digit sequence in numeric literal.
+// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:3: error: empty digit sequence in numeric literal
 // CHECK:STDERR: 1.a
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
@@ -25,7 +25,7 @@
 // CHECK:STDOUT: - filename: fail_b.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:3: ERROR: Empty digit sequence in numeric literal.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:3: error: empty digit sequence in numeric literal
 // CHECK:STDERR: 2.b
 // CHECK:STDERR:   ^
 2.b
