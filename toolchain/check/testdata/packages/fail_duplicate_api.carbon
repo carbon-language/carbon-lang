@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/packages/fail_duplicate_api.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_duplicate_api.carbon
-// CHECK:STDERR: fail_main2.carbon: error: main//default previously provided by `main1.carbon`
+// CHECK:STDERR: fail_main2.carbon: error: `Main//default` previously provided by `main1.carbon`
 // CHECK:STDERR:
 
 // --- main1.carbon

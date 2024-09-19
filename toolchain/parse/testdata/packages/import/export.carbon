@@ -38,7 +38,7 @@ export import library "a";
 
 class C;
 
-// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file
 // CHECK:STDERR: export import library "b";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_order.carbon:[[@LINE-5]]:1: first declaration is here

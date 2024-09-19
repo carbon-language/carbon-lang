@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_extension.carbon
 // CHECK:STDERR: fail_main.incorrect: error: file extension of `.carbon` required for `api`
 // CHECK:STDERR:
-// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: main//default previously provided by `fail_main.incorrect`
+// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: `Main//default` previously provided by `fail_main.incorrect`
 // CHECK:STDERR:
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: file extension of `.carbon` required for `api`
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: file extension of `.impl.carbon` only allowed for `impl`

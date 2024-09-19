@@ -10,7 +10,7 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: first declaration is here

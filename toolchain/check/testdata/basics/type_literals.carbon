@@ -23,12 +23,12 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_i0: i0;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8. Use `Core.Int(1)` instead.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(1)` instead
 // CHECK:STDERR: var test_i1: i1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_i1: i1;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8. Use `Core.Int(15)` instead.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead
 // CHECK:STDERR: var test_i15: i15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -60,12 +60,12 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_u0: u0;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8. Use `Core.UInt(1)` instead.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(1)` instead
 // CHECK:STDERR: var test_u1: u1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_u1: u1;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8. Use `Core.UInt(15)` instead.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead
 // CHECK:STDERR: var test_u15: u15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:

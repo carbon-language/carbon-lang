@@ -20,7 +20,7 @@ class Derived {
 
 fn Make() -> Derived {
   // TODO: This should be valid, and should construct an instance of `partial Abstract` as the base.
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:19: error: cannot construct instance of abstract class. Consider using `partial Abstract` instead
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:19: error: cannot construct instance of abstract class; consider using `partial Abstract` instead
   // CHECK:STDERR:   return {.base = {.a = 1}, .d = 7};
   // CHECK:STDERR:                   ^~~~~~~~
   return {.base = {.a = 1}, .d = 7};

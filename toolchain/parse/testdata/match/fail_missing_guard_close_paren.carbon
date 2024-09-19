@@ -14,7 +14,7 @@ fn f() -> i32 {
     // CHECK:STDERR:     case x: bool if (false => { return 1; }
     // CHECK:STDERR:                     ^
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+3]]:28: error: tODO: Improve match parsing
+    // CHECK:STDERR: fail_missing_guard_close_paren.carbon:[[@LINE+3]]:28: error: TODO: improve match parsing
     // CHECK:STDERR:     case x: bool if (false => { return 1; }
     // CHECK:STDERR:                            ^~
     case x: bool if (false => { return 1; }

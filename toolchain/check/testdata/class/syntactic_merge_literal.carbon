@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
-// CHECK:STDERR: fail_int_mismatch.carbon: error: main//default previously provided by `int_match.carbon`
+// CHECK:STDERR: fail_int_mismatch.carbon: error: `Main//default` previously provided by `int_match.carbon`
 // CHECK:STDERR:
 
 // --- int_match.carbon
