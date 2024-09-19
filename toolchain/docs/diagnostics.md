@@ -181,8 +181,13 @@ methods for formatting arguments:
 
 ## Diagnostic message style guide
 
-In order to provide a consistent experience, Carbon diagnostics should be
-written in the following style:
+We want Carbon's diagnostics to be helpful for developers when they run into an
+error, and phrased consistently across diagnostics. In addition, Carbon
+diagnostics may be mixed with Clang diagnostics when compiling interoperable
+code, so we are borrowing some features of Clang's
+[Diagnostic Wording](https://clang.llvm.org/docs/InternalsManual.html#diagnostic-wording).
+Carbon's diagnostic style aims to balance these by making diagnostics helpful
+and consistent. Our style is:
 
 -   Start diagnostics with a lower case letter or quoted code, and omit trailing
     periods.
@@ -191,6 +196,8 @@ written in the following style:
 
 -   Phrase diagnostics as bullet points rather than full sentences. Leave out
     articles unless they're necessary for clarity.
+
+    -   Semicolons can be used to separate sentence fragments.
 
 -   Diagnostics should describe the situation the toolchain observed. The
     language rule violated can be mentioned if it wouldn't otherwise be clear.
