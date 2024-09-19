@@ -448,6 +448,8 @@ class NodeStack {
         case Parse::NodeKind::DefaultLibrary:
         case Parse::NodeKind::LibraryName:
           return Id::KindFor<SemIR::LibraryNameId>();
+        case Parse::NodeKind::WhereOperand:
+          return Id::KindFor<SemIR::TypeId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:
@@ -643,7 +645,6 @@ class NodeStack {
         case Parse::NodeKind::VariableDecl:
         case Parse::NodeKind::VirtualModifier:
         case Parse::NodeKind::WhereExpr:
-        case Parse::NodeKind::WhereOperand:
         case Parse::NodeKind::WhileStatement:
           return Id::Kind::Invalid;
       }

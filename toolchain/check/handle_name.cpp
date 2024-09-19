@@ -147,6 +147,11 @@ auto HandleParseNode(Context& context, Parse::BaseNameId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::SelfTypeNameId node_id) -> bool {
+  context.node_stack().Push(node_id, SemIR::NameId::SelfType);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::SelfTypeNameExprId node_id)
     -> bool {
   return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType);
@@ -165,6 +170,35 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
 auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
     -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
+    -> bool {
+  // FIXME: delete
+  auto node_kind = context.node_stack().PeekNodeKind();
+  CARBON_CHECK(node_kind == Parse::NodeKind::IdentifierName ||
+               node_kind == Parse::NodeKind::SelfTypeName);
+
+  SemIR::NameId name_id = context.node_stack().PopName();
+
+  // TODO: set `required` to `false` and check for not-found to give a clearer
+  // error when .Self is not found.
+  // FIXME: should this be a call to HandleNameAsExpr instead?
+  auto result = context.LookupUnqualifiedName(
+      node_id, SemIR::NameId::PeriodSelf, /*required=*/true);
+  // FIXME: probably wrong; likely needs lots of the logic from
+  // HandleNameAsExpr. Perhaps make the body of that a helper function?
+  auto period_self_id = result.inst_id;
+  if (name_id == SemIR::NameId::SelfValue) {
+    // If this is `.Self`, result is the period_self_id we have computed.
+    context.node_stack().Push(node_id, period_self_id);
+  } else {
+    // Otherwise this is `.Member`, so look up `Member` in `.Self`.
+    auto member_id =
+        PerformMemberAccess(context, node_id, period_self_id, name_id);
+    context.node_stack().Push(node_id, member_id);
+  }
   return true;
 }
 
