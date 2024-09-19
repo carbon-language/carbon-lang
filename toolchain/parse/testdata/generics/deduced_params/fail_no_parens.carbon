@@ -8,25 +8,25 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/deduced_params/fail_no_parens.carbon
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:12: ERROR: A `(` for parameters is required after implicit parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:12: error: a `(` for parameters is required after implicit parameters
 // CHECK:STDERR: class Foo[];
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 class Foo[];
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:18: ERROR: A `(` for parameters is required after implicit parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:18: error: a `(` for parameters is required after implicit parameters
 // CHECK:STDERR: class Foo[a: i32];
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
 class Foo[a: i32];
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:17: ERROR: A `(` for parameters is required after implicit parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+4]]:17: error: a `(` for parameters is required after implicit parameters
 // CHECK:STDERR: interface Bar[] {}
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 interface Bar[] {}
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: ERROR: A `(` for parameters is required after implicit parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: error: a `(` for parameters is required after implicit parameters
 // CHECK:STDERR: interface Bar[a: i32] {}
 // CHECK:STDERR:                       ^
 interface Bar[a: i32] {}

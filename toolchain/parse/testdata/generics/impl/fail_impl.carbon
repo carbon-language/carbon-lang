@@ -8,87 +8,87 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/fail_impl.carbon
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:10: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:10: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl foo bar;
 // CHECK:STDERR:          ^~~
 // CHECK:STDERR:
 impl foo bar;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:12: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:12: error: expected expression
 // CHECK:STDERR: impl i32 as;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 impl i32 as;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:18: ERROR: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:18: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: impl bool as bar unexpected;
 // CHECK:STDERR:                  ^~~~~~~~~~
 // CHECK:STDERR:
 impl bool as bar unexpected;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:6: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:6: error: expected expression
 // CHECK:STDERR: impl return as A;
 // CHECK:STDERR:      ^~~~~~
 // CHECK:STDERR:
 impl return as A;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:6: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:6: error: expected expression
 // CHECK:STDERR: impl return B;
 // CHECK:STDERR:      ^~~~~~
 // CHECK:STDERR:
 impl return B;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:13: error: expected `[` after `forall` in `impl` declaration
 // CHECK:STDERR: impl forall f32;
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:16: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:16: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl forall f32;
 // CHECK:STDERR:                ^
 // CHECK:STDERR:
 impl forall f32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:19: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:19: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl forall [] u32;
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
 impl forall [] u32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:21: ERROR: Expected `:` or `:!` in binding pattern.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+8]]:21: error: expected `:` or `:!` in binding pattern
 // CHECK:STDERR: impl forall [invalid] i8;
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:25: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:25: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl forall [invalid] i8;
 // CHECK:STDERR:                         ^
 // CHECK:STDERR:
 impl forall [invalid] i8;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:13: error: expected `[` after `forall` in `impl` declaration
 // CHECK:STDERR: impl forall f16 as Quux;
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
 impl forall f16 as Quux;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:30: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:30: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl forall [T:! type] String;
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
 impl forall [T:! type] String;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:26: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:26: error: expected `as` in `impl` declaration
 // CHECK:STDERR: impl forall [T:! type] T missing_as;
 // CHECK:STDERR:                          ^~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! type] T missing_as;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:39: ERROR: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:39: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: impl forall [T:! type] T as Interface extra;
 // CHECK:STDERR:                                       ^~~~~
 // CHECK:STDERR:
 impl forall [T:! type] T as Interface extra;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:5: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:5: error: expected expression
 // CHECK:STDERR: impl;
 // CHECK:STDERR:     ^
 // CHECK:STDERR:
@@ -96,7 +96,7 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+88]]:21: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+88]]:21: error: expected expression
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_impl.carbon

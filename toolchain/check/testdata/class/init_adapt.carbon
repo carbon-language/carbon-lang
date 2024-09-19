@@ -52,19 +52,19 @@ let a: C = {.a = 1, .b = 2};
 
 // Cannot implicitly convert between a type and an adapter for the type.
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: ERROR: Cannot implicitly convert from `C` to `AdaptC`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C` to `AdaptC`
 // CHECK:STDERR: let b: AdaptC = a;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: Type `C` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: let b: AdaptC = a;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: AdaptC = a;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: ERROR: Cannot implicitly convert from `AdaptC` to `C`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `AdaptC` to `C`
 // CHECK:STDERR: let c: C = b;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: Type `<error>` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: type `<error>` does not implement interface `ImplicitAs`
 // CHECK:STDERR: let c: C = b;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -74,19 +74,19 @@ fn MakeC() -> C;
 
 fn MakeAdaptC() -> AdaptC;
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: ERROR: Cannot implicitly convert from `C` to `AdaptC`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C` to `AdaptC`
 // CHECK:STDERR: var d: AdaptC = MakeC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: Type `C` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var d: AdaptC = MakeC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var d: AdaptC = MakeC();
 
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `AdaptC` to `C`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `AdaptC` to `C`
 // CHECK:STDERR: var e: C = MakeAdaptC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: Type `AdaptC` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: type `AdaptC` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var e: C = MakeAdaptC();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 var e: C = MakeAdaptC();

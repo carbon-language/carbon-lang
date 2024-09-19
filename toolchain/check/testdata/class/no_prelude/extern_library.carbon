@@ -10,7 +10,7 @@
 
 // --- fail_todo.carbon
 
-// CHECK:STDERR: fail_todo.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `extern library`.
+// CHECK:STDERR: fail_todo.carbon:[[@LINE+3]]:1: error: semantics TODO: `extern library`
 // CHECK:STDERR: extern library "foo" class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extern library "foo" class C;

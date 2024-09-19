@@ -54,13 +54,13 @@ extern fn F();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+10]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "two_file_impl_mismatch";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1: Previously declared here.
+// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -82,7 +82,7 @@ import library "indirect_two_file_extern";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+4]]:1: ERROR: `extern` entities must have a declaration in the API file.
+// CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+4]]:1: error: `extern` entities must have a declaration in the API file
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -104,7 +104,7 @@ impl library "[[@TEST_NAME]]";
 
 import library "in_impl_extern";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: `extern` entities must have a declaration in the API file.
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 extern fn F() {}

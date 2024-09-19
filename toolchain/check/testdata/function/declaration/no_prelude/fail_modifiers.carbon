@@ -8,84 +8,84 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: `default` not allowed on `fn` declaration outside of an interface.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed on `fn` declaration outside of an interface
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` must appear before `default`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` must appear before `default`
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default protected fn WrongOrder();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: `virtual` not allowed on `fn` declaration outside of a class.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `virtual` not allowed on `fn` declaration outside of a class
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `virtual` repeated on declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `virtual` repeated on declaration
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `virtual` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `virtual` previously appeared here
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 virtual virtual fn DuplicateVirtual() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private protected fn TwoAccess();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: `abstract` not allowed on `fn` declaration outside of a class.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed on `fn` declaration outside of a class
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: ERROR: `virtual` not allowed on declaration with `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `virtual` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR:          ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract virtual fn ModifiersConflict() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `base` not allowed on `fn` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `fn` declaration
 // CHECK:STDERR: base fn InvalidModifier();
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 base fn InvalidModifier();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: ERROR: `default` not allowed on `fn` declaration outside of an interface.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: error: `default` not allowed on `fn` declaration outside of an interface
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:9: ERROR: `final` not allowed on declaration with `default`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:9: error: `final` not allowed on declaration with `default`
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: `default` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: `default` previously appeared here
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:15: ERROR: `virtual` not allowed on declaration with `default`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:15: error: `virtual` not allowed on declaration with `default`
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default final virtual fn ModifiersConflict2() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:8: ERROR: `private` must appear before `extern`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:8: error: `private` must appear before `extern`
 // CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `extern` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `extern` previously appeared here
 // CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
 // CHECK:STDERR: ^~~~~~
 extern private fn ExternOrderAndConflict() {}

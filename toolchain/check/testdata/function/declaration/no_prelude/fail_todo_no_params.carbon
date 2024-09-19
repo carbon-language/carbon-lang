@@ -11,7 +11,7 @@
 // --- fail_no_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `function with positional parameters`.
+// CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters`
 // CHECK:STDERR: fn A;
 // CHECK:STDERR: ^~~~~
 // CHECK:STDERR:
@@ -20,7 +20,7 @@ fn A;
 // --- fail_todo_brace_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `function with positional parameters`.
+// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters`
 // CHECK:STDERR: fn A {
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -31,11 +31,11 @@ fn A {
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `function with positional parameters`.
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+7]]:1: error: semantics TODO: `function with positional parameters`
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+3]]:6: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+3]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR:      ^~
 fn A => 0;

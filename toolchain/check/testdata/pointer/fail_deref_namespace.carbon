@@ -11,12 +11,12 @@
 namespace A;
 
 fn F() {
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+4]]:4: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value
   // CHECK:STDERR:   A->foo;
   // CHECK:STDERR:   ^
   A->foo;

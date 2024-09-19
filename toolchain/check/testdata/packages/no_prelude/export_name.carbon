@@ -87,13 +87,13 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+10]]:1: ERROR: Only imported entities are valid for `export`.
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+10]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export NS;
 // CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import library "base";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:8:1: Name is declared here.
+// CHECK:STDERR: base.carbon:8:1: name is declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -105,10 +105,10 @@ library "[[@TEST_NAME]]";
 
 class Local {}
 
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: ERROR: Only imported entities are valid for `export`.
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export Local;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: Name is declared here.
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: name is declared here
 // CHECK:STDERR: class Local {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,13 +120,13 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: ERROR: Name qualifiers are only allowed for entities that provide a scope.
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import library "base";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:4:1: Referenced non-scope entity declared here.
+// CHECK:STDERR: base.carbon:4:1: referenced non-scope entity declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -158,12 +158,12 @@ library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: ERROR: Name `C` not found.
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: error: name `C` not found
 // CHECK:STDERR: alias Local = C;
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
 alias Local = C;
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: ERROR: Name `NS` not found.
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: error: name `NS` not found
 // CHECK:STDERR: alias NSLocal = NS.NSC;
 // CHECK:STDERR:                 ^~
 // CHECK:STDERR:
@@ -176,10 +176,10 @@ library "[[@TEST_NAME]]";
 import library "base";
 
 export C;
-// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: WARNING: `export` matches previous `export`.
+// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning: `export` matches previous `export`
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: Previous `export` here.
+// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: previous `export` here
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -199,7 +199,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `private` not allowed on `export` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `export` declaration
 // CHECK:STDERR: private export C;
 // CHECK:STDERR: ^~~~~~~
 private export C;

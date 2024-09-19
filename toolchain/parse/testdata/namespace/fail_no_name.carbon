@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/namespace/fail_no_name.carbon
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:10: ERROR: `namespace` introducer should be followed by a name.
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:10: error: `namespace` introducer should be followed by a name
 // CHECK:STDERR: namespace;
 // CHECK:STDERR:          ^
 namespace;

@@ -5,6 +5,6 @@
 // ARGS: compile --no-prelude-import --target=x86_687-unknown-linux-gnu --output=- %s
 // No autoupdate because the message comes from LLVM.
 // NOAUTOUPDATE
-// CHECK:STDERR: ERROR: Invalid target: {{.*}}x86_687{{.*}}
+// CHECK:STDERR: error: invalid target: {{.*}}x86_687{{.*}}
 
 fn Main() {}

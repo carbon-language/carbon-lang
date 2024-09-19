@@ -43,7 +43,7 @@ auto HandleRequirementOperator(Context& context) -> void {
       if (!state.has_error) {
         CARBON_DIAGNOSTIC(
             RequirementEqualAfterNonDesignator, Error,
-            "Requirement can only use `=` after `.member` designator.");
+            "requirement can only use `=` after `.member` designator");
         context.emitter().Emit(*context.position(),
                                RequirementEqualAfterNonDesignator);
       }
@@ -54,7 +54,7 @@ auto HandleRequirementOperator(Context& context) -> void {
       if (!state.has_error) {
         CARBON_DIAGNOSTIC(
             ExpectedRequirementOperator, Error,
-            "Requirement should use `impls`, `=`, or `==` operator.");
+            "requirement should use `impls`, `=`, or `==` operator");
         context.emitter().Emit(*context.position(),
                                ExpectedRequirementOperator);
       }

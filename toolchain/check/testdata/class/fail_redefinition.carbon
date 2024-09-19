@@ -14,10 +14,10 @@ class Class {
   fn I() {}
 }
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `class Class`.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: error: redefinition of `class Class`
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: previously defined here
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -28,16 +28,16 @@ class Class {
 }
 
 fn Class.F() {}
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+4]]:10: ERROR: Out-of-line declaration requires a declaration in scoped entity.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+4]]:10: error: out-of-line declaration requires a declaration in scoped entity
 // CHECK:STDERR: fn Class.G() {}
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
 fn Class.G() {}
 fn Class.H() {}
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn I`.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `fn I`
 // CHECK:STDERR: fn Class.I() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-26]]:3: Previously defined here.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-26]]:3: previously defined here
 // CHECK:STDERR:   fn I() {}
 // CHECK:STDERR:   ^~~~~~~~
 fn Class.I() {}

@@ -32,10 +32,10 @@ fn ExplicitAndAlsoDeduced(T:! type, x: T) -> T*;
 
 // TODO: This should presumably be accepted. We shouldn't deduce values for parameters with explicitly-specified values.
 fn CallExplicitAndAlsoDeduced(n: i32) -> i32* {
-  // CHECK:STDERR: fail_todo_explicit_vs_deduced.carbon:[[@LINE+7]]:10: ERROR: Inconsistent deductions for value of generic parameter `T`.
+  // CHECK:STDERR: fail_todo_explicit_vs_deduced.carbon:[[@LINE+7]]:10: error: inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:   return ExplicitAndAlsoDeduced(A, {});
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_explicit_vs_deduced.carbon:[[@LINE-7]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_todo_explicit_vs_deduced.carbon:[[@LINE-7]]:1: while deducing parameters of generic declared here
   // CHECK:STDERR: fn ExplicitAndAlsoDeduced(T:! type, x: T) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -59,10 +59,10 @@ library "[[@TEST_NAME]]";
 fn TupleParam[T:! type](x: (T, i32));
 
 fn CallTupleParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: ERROR: Cannot deduce value for generic parameter `T`.
+  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T`
   // CHECK:STDERR:   TupleParam((1, 2));
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: while deducing parameters of generic declared here
   // CHECK:STDERR: fn TupleParam[T:! type](x: (T, i32));
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -72,10 +72,10 @@ fn CallTupleParam() {
 fn StructParam[T:! type](x: {.a: T, .b: i32});
 
 fn CallStructParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: ERROR: Cannot deduce value for generic parameter `T`.
+  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T`
   // CHECK:STDERR:   StructParam({.a = 1, .b = 2});
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: while deducing parameters of generic declared here
   // CHECK:STDERR: fn StructParam[T:! type](x: {.a: T, .b: i32});
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -91,10 +91,10 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T:! type, U:! type](x: T) -> U;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE+7]]:3: ERROR: Cannot deduce value for generic parameter `U`.
+  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `U`
   // CHECK:STDERR:   ImplicitNotDeducible(42);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE-6]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE-6]]:1: while deducing parameters of generic declared here
   // CHECK:STDERR: fn ImplicitNotDeducible[T:! type, U:! type](x: T) -> U;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -108,10 +108,10 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE+6]]:3: ERROR: Inconsistent deductions for value of generic parameter `T`.
+  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE+6]]:3: error: inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:   ImplicitNotDeducible(42, {.x = 12});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE-6]]:1: While deducing parameters of generic declared here.
+  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE-6]]:1: while deducing parameters of generic declared here
   // CHECK:STDERR: fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ImplicitNotDeducible(42, {.x = 12});

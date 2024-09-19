@@ -85,7 +85,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
     return open_paren;
   } else {
-    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
@@ -107,7 +107,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
-                      "Unexpected tokens before `{0}`.", llvm::StringLiteral);
+                      "unexpected tokens before `{0}`", llvm::StringLiteral);
     emitter_->Emit(*position_, ExpectedCloseSymbol,
                    open_token_kind.closing_symbol().fixed_spelling());
 
@@ -309,7 +309,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
       CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                        "Whitespace missing {0} binary operator.", RelativeLoc);
+                        "whitespace missing {0} binary operator", RelativeLoc);
       emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace,
                      tokens().HasLeadingWhitespace(*position_)
                          ? RelativeLoc::After
@@ -325,14 +325,14 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     if ((prefix ? tokens().HasTrailingWhitespace(*position_)
                 : tokens().HasLeadingWhitespace(*position_))) {
       CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-                        "Whitespace is not allowed {0} this unary operator.",
+                        "whitespace is not allowed {0} this unary operator",
                         RelativeLoc);
       emitter_->Emit(*position_, UnaryOperatorHasWhitespace,
                      prefix ? RelativeLoc::After : RelativeLoc::Before);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-                        "Whitespace is required {0} this unary operator.",
+                        "whitespace is required {0} this unary operator",
                         RelativeLoc);
       emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace,
                      prefix ? RelativeLoc::Before : RelativeLoc::After);
@@ -346,7 +346,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     // Don't error a second time on the same element.
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                        "Expected `,` or `{0}`.", Lex::TokenKind);
+                        "expected `,` or `{0}`", Lex::TokenKind);
       emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
@@ -421,9 +421,9 @@ auto Context::ParseLibraryName(bool accept_default)
 
   CARBON_DIAGNOSTIC(
       ExpectedLibraryNameOrDefault, Error,
-      "Expected `default` or a string literal to specify the library name.");
+      "expected `default` or a string literal to specify the library name");
   CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
-                    "Expected a string literal to specify the library name.");
+                    "expected a string literal to specify the library name");
   emitter().Emit(*position(), accept_default ? ExpectedLibraryNameOrDefault
                                              : ExpectedLibraryName);
   return std::nullopt;
@@ -442,7 +442,7 @@ auto Context::ParseLibrarySpecifier(bool accept_default)
 
 auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
-                    "`{0}` declarations must end with a `;`.", Lex::TokenKind);
+                    "`{0}` declarations must end with a `;`", Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
 }
 
@@ -450,7 +450,7 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
     -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
-                    "have a `{{ ... }` block for a definition.",
+                    "have a `{{ ... }` block for a definition",
                     Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
 }

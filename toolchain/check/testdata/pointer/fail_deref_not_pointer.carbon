@@ -9,32 +9,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
 
 fn Deref(n: i32) {
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: ERROR: Cannot dereference operand of non-pointer type `i32`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `i32`
   // CHECK:STDERR:   *n;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *n;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: ERROR: Cannot apply `->` operator to non-pointer type `i32`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: error: cannot apply `->` operator to non-pointer type `i32`
   // CHECK:STDERR:   n->foo;
   // CHECK:STDERR:    ^~
   // CHECK:STDERR:
   n->foo;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: ERROR: Cannot dereference operand of non-pointer type `()`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `()`
   // CHECK:STDERR:   *();
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *();
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:5: ERROR: Cannot apply `->` operator to non-pointer type `()`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:5: error: cannot apply `->` operator to non-pointer type `()`
   // CHECK:STDERR:   ()->foo;
   // CHECK:STDERR:     ^~
   // CHECK:STDERR:
   ()->foo;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: ERROR: Cannot dereference operand of non-pointer type `{}`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `{}`
   // CHECK:STDERR:   *{};
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *{};
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:5: ERROR: Cannot apply `->` operator to non-pointer type `{}`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:5: error: cannot apply `->` operator to non-pointer type `{}`
   // CHECK:STDERR:   {}->foo;
   // CHECK:STDERR:     ^~
   {}->foo;

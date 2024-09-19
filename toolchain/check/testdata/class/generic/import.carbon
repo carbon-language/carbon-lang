@@ -55,10 +55,10 @@ import library "foo";
 
 fn Use() {
   // TODO: Include the generic arguments in the formatted type name.
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+7]]:3: ERROR: Cannot implicitly convert from `CompleteClass` to `CompleteClass`.
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `CompleteClass` to `CompleteClass`
   // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: Type `CompleteClass` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: type `CompleteClass` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,18 +69,18 @@ fn Use() {
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+10]]:13: error: redeclaration differs at parameter 1
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "foo";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: foo.carbon:4:13: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Class(T:! type);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 class Class(U:! type) {
-  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
+  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+3]]:10: error: name `T` not found
   // CHECK:STDERR:   var x: T;
   // CHECK:STDERR:          ^
   var x: T;

@@ -10,10 +10,10 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: ERROR: The `package` declaration must be the first non-comment line.
+// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: error: the `package` declaration must be the first non-comment line
 // CHECK:STDERR: package B;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: First non-comment line is here.
+// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: first non-comment line is here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
 package B;

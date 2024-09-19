@@ -57,7 +57,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
                                            NodeKind::BuiltinName)) {
         CARBON_DIAGNOSTIC(ExpectedBuiltinName, Error,
-                          "Expected builtin function name after `=`.");
+                          "expected builtin function name after `=`");
         context.emitter().Emit(*context.position(), ExpectedBuiltinName);
         state.has_error = true;
       }

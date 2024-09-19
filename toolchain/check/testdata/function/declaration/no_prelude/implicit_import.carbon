@@ -30,17 +30,17 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "extern_api";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_api.carbon:4:1: previously declared here
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -56,13 +56,13 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` must match use of `extern`.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import
 // CHECK:STDERR: impl library "extern_impl";
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_impl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_impl.carbon:4:1: previously declared here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 extern fn A();

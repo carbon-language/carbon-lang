@@ -18,7 +18,7 @@ fn Success() {
 // --- fail_numeric_designator.carbon
 
 fn FailNumeric() {
-  // CHECK:STDERR: fail_numeric_designator.carbon:[[@LINE+4]]:4: ERROR: Expected identifier or `Self` after `.`.
+  // CHECK:STDERR: fail_numeric_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.`
   // CHECK:STDERR:   .1;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
@@ -28,7 +28,7 @@ fn FailNumeric() {
 // --- fail_keyword_designator.carbon
 
 fn FailKeyword() {
-  // CHECK:STDERR: fail_keyword_designator.carbon:[[@LINE+4]]:4: ERROR: Expected identifier or `Self` after `.`.
+  // CHECK:STDERR: fail_keyword_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.`
   // CHECK:STDERR:   .base;
   // CHECK:STDERR:    ^~~~
   // CHECK:STDERR:
@@ -38,7 +38,7 @@ fn FailKeyword() {
 // --- fail_empty_designator.carbon
 
 fn FailEmpty() {
-  // CHECK:STDERR: fail_empty_designator.carbon:[[@LINE+4]]:4: ERROR: Expected identifier or `Self` after `.`.
+  // CHECK:STDERR: fail_empty_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.`
   // CHECK:STDERR:   .;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
@@ -48,7 +48,7 @@ fn FailEmpty() {
 // --- fail_star_designator.carbon
 
 fn FailStar() {
-  // CHECK:STDERR: fail_star_designator.carbon:[[@LINE+4]]:4: ERROR: Expected identifier or `Self` after `.`.
+  // CHECK:STDERR: fail_star_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.`
   // CHECK:STDERR:   .*;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
@@ -59,11 +59,11 @@ fn FailStar() {
 
 var x: i32 = .
 
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+93]]:21: ERROR: Expected identifier or `Self` after `.`.
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+93]]:21: error: expected identifier or `Self` after `.`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+89]]:21: ERROR: `var` declarations must end with a `;`.
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+89]]:21: error: `var` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: designator.carbon

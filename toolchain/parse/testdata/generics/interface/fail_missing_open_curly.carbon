@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/fail_missing_open_curly.carbon
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+4]]:15: ERROR: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+4]]:15: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: interface Bar Baz {}
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -16,7 +16,7 @@ interface Bar Baz {}
 
 interface Foo
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+13]]:21: ERROR: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+13]]:21: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_missing_open_curly.carbon

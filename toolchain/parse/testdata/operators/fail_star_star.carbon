@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_star_star.carbon
 
-// CHECK:STDERR: fail_star_star.carbon:[[@LINE+3]]:16: ERROR: Whitespace missing after binary operator.
+// CHECK:STDERR: fail_star_star.carbon:[[@LINE+3]]:16: error: whitespace missing after binary operator
 // CHECK:STDERR: var n: i8 = n* *p;
 // CHECK:STDERR:                ^
 var n: i8 = n* *p;

@@ -11,7 +11,7 @@
 // --- fail_and_where.carbon
 
 fn AndWhere() {
-  // CHECK:STDERR: fail_and_where.carbon:[[@LINE+4]]:14: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_and_where.carbon:[[@LINE+4]]:14: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   true and T where .A = B;
   // CHECK:STDERR:              ^~~~~
   // CHECK:STDERR:
@@ -21,7 +21,7 @@ fn AndWhere() {
 // --- fail_where_or.carbon
 
 fn WhereOr() {
-  // CHECK:STDERR: fail_where_or.carbon:[[@LINE+4]]:22: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_where_or.carbon:[[@LINE+4]]:22: error: expected `;` after expression statement
   // CHECK:STDERR:   U where .C impls D or false;
   // CHECK:STDERR:                      ^~
   // CHECK:STDERR:
@@ -31,7 +31,7 @@ fn WhereOr() {
 // --- fail_equals_where.carbon
 
 fn EqualsWhere() {
-  // CHECK:STDERR: fail_equals_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_equals_where.carbon:[[@LINE+4]]:10: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   e == V where .G == f32;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -41,7 +41,7 @@ fn EqualsWhere() {
 // --- fail_where_neq.carbon
 
 fn WhereNEq() {
-  // CHECK:STDERR: fail_where_neq.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_where_neq.carbon:[[@LINE+4]]:21: error: expected `;` after expression statement
   // CHECK:STDERR:   W where .H = bool != i;
   // CHECK:STDERR:                     ^~
   // CHECK:STDERR:
@@ -51,7 +51,7 @@ fn WhereNEq() {
 // --- fail_less_requirement.carbon
 
 fn LessRequirement() {
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+4]]:14: error: requirement should use `impls`, `=`, or `==` operator
   // CHECK:STDERR:   X where .J < .K;
   // CHECK:STDERR:              ^
   // CHECK:STDERR:
@@ -61,7 +61,7 @@ fn LessRequirement() {
 // --- fail_as_where.carbon
 
 fn AsWhere() {
-  // CHECK:STDERR: fail_as_where.carbon:[[@LINE+4]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_as_where.carbon:[[@LINE+4]]:10: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   Y as Z where .L impls M;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -71,7 +71,7 @@ fn AsWhere() {
 // --- fail_where_as.carbon
 
 fn WhereAs() {
-  // CHECK:STDERR: fail_where_as.carbon:[[@LINE+4]]:21: ERROR: Expected `;` after expression statement.
+  // CHECK:STDERR: fail_where_as.carbon:[[@LINE+4]]:21: error: expected `;` after expression statement
   // CHECK:STDERR:   S where .N == i32 as type;
   // CHECK:STDERR:                     ^~
   // CHECK:STDERR:
@@ -81,7 +81,7 @@ fn WhereAs() {
 // --- fail_as_in_argument.carbon
 
 fn AsInArgument() {
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: ERROR: Requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+4]]:14: error: requirement should use `impls`, `=`, or `==` operator
   // CHECK:STDERR:   R where .O as type impls P;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:
@@ -91,7 +91,7 @@ fn AsInArgument() {
 // --- fail_greater_in_argument.carbon
 
 fn GreaterInArgument() {
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: ERROR: Requirement should use `impls`, `=`, or `==` operator.
+  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+3]]:15: error: requirement should use `impls`, `=`, or `==` operator
   // CHECK:STDERR:   Q where .AA > .BB impls CC;
   // CHECK:STDERR:               ^
   Q where .AA > .BB impls CC;

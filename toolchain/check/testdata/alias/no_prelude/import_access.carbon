@@ -35,7 +35,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:11: ERROR: Name `A` not found.
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:11: error: name `A` not found
 // CHECK:STDERR: var inst: A = {};
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -47,7 +47,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11: ERROR: Name `A` not found.
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11: error: name `A` not found
 // CHECK:STDERR: var inst: Test.A = {};
 // CHECK:STDERR:           ^~~~~~
 var inst: Test.A = {};

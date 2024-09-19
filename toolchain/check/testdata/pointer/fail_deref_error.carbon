@@ -8,12 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_error.carbon
 
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: ERROR: Name `undeclared` not found.
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: error: name `undeclared` not found
 // CHECK:STDERR: let n: i32 = *undeclared;
 // CHECK:STDERR:               ^~~~~~~~~~
 // CHECK:STDERR:
 let n: i32 = *undeclared;
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: ERROR: Name `undeclared` not found.
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: error: name `undeclared` not found
 // CHECK:STDERR: let n2: i32 = undeclared->foo;
 // CHECK:STDERR:               ^~~~~~~~~~
 let n2: i32 = undeclared->foo;

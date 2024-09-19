@@ -25,7 +25,7 @@ auto HandleArrayExprSemi(Context& context) -> void {
   auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
   if (!semi) {
     context.AddNode(NodeKind::ArrayExprSemi, *context.position(), true);
-    CARBON_DIAGNOSTIC(ExpectedArraySemi, Error, "Expected `;` in array type.");
+    CARBON_DIAGNOSTIC(ExpectedArraySemi, Error, "expected `;` in array type");
     context.emitter().Emit(*context.position(), ExpectedArraySemi);
     state.has_error = true;
   } else {

@@ -10,7 +10,7 @@
 
 fn F() {
   return var
-// CHECK:STDERR: fail_var_no_semi.carbon:[[@LINE+3]]:1: ERROR: `return` statements must end with a `;`.
+// CHECK:STDERR: fail_var_no_semi.carbon:[[@LINE+3]]:1: error: `return` statements must end with a `;`
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

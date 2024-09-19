@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_value_and_type.carbon
 
-// CHECK:STDERR: fail_mix_value_and_type.carbon:[[@LINE+3]]:17: ERROR: Expected `.field = value`.
+// CHECK:STDERR: fail_mix_value_and_type.carbon:[[@LINE+3]]:17: error: expected `.field = value`
 // CHECK:STDERR: var x: {.a = 0, b: i32} = {};
 // CHECK:STDERR:                 ^
 var x: {.a = 0, b: i32} = {};

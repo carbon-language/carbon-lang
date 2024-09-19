@@ -34,7 +34,7 @@ auto HandleVarAsReturned(Context& context) -> void {
 
   if (!context.PositionIs(Lex::TokenKind::Var)) {
     CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
-                      "Expected `var` after `returned`.");
+                      "expected `var` after `returned`");
     context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
     context.AddLeafNode(NodeKind::EmptyDecl,
                         context.SkipPastLikelyEnd(returned_token),
@@ -96,13 +96,13 @@ auto HandleVarFinishAsFor(Context& context) -> void {
     end_token = context.Consume();
   } else if (context.PositionIs(Lex::TokenKind::Colon)) {
     CARBON_DIAGNOSTIC(ExpectedInNotColon, Error,
-                      "`:` should be replaced by `in`.");
+                      "`:` should be replaced by `in`");
     context.emitter().Emit(*context.position(), ExpectedInNotColon);
     state.has_error = true;
     end_token = context.Consume();
   } else {
     CARBON_DIAGNOSTIC(ExpectedIn, Error,
-                      "Expected `in` after loop `var` declaration.");
+                      "expected `in` after loop `var` declaration");
     context.emitter().Emit(*context.position(), ExpectedIn);
     state.has_error = true;
   }

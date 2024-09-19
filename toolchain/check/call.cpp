@@ -43,7 +43,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       "{0} argument(s) passed to {1} expecting "
                       "{2} argument(s).",
                       int, llvm::StringLiteral, int);
-    CARBON_DIAGNOSTIC(InCallToEntity, Note, "Calling {0} declared here.",
+    CARBON_DIAGNOSTIC(InCallToEntity, Note, "calling {0} declared here",
                       llvm::StringLiteral);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
@@ -128,7 +128,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       default: {
         if (!callee_function.is_error) {
           CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                            "Value of type `{0}` is not callable.",
+                            "value of type `{0}` is not callable",
                             SemIR::TypeId);
           context.emitter().Emit(loc_id, CallToNonCallable,
                                  context.insts().Get(callee_id).type_id());
@@ -154,7 +154,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     DiagnosticAnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
-                            "Return type declared here.");
+                            "return type declared here");
           builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
         });
     return CheckFunctionReturnType(context, callee_id, callable,

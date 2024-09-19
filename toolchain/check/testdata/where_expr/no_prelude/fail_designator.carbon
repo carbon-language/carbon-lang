@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var x: ();
-  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `HandleDesignatorExpr`.
+  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+4]]:10: error: semantics TODO: `HandleDesignatorExpr`
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~
   // CHECK:STDERR:
@@ -26,7 +26,7 @@ fn Foo() -> () {
 library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
-  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `HandleDesignatorExpr`.
+  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+4]]:10: error: semantics TODO: `HandleDesignatorExpr`
   // CHECK:STDERR:   return .undef;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -38,7 +38,7 @@ fn Bar() -> () {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:28: ERROR: Semantics TODO: `HandleSelfTypeName`.
+  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:28: error: semantics TODO: `HandleSelfTypeName`
   // CHECK:STDERR:   fn F() -> Self { return .Self; }
   // CHECK:STDERR:                            ^~~~
   // CHECK:STDERR:
@@ -50,7 +50,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleSelfTypeName`.
+  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:14: error: semantics TODO: `HandleSelfTypeName`
   // CHECK:STDERR:   fn G() -> .Self { return Self; }
   // CHECK:STDERR:              ^~~~
   fn G() -> .Self { return Self; }

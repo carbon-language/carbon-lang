@@ -9,26 +9,26 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_invalid_base.carbon
 
 namespace N;
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Expression cannot be used as a value.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value
 // CHECK:STDERR: var a: i32 = N[0];
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
 var a: i32 = N[0];
 
 fn F();
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Expression cannot be used as a value.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value
 // CHECK:STDERR: var b: i32 = F[1];
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type `{.a: i32, .b: i32}` does not support indexing
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `type` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: error: type `type` does not support indexing
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 var d: i32 = {.a: i32, .b: i32}[0];

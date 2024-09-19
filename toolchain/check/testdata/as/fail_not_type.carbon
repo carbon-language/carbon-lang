@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/as/fail_not_type.carbon
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+6]]:19: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+6]]:19: error: cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: Type `i32` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
 let n: i32 = 1 as 2;

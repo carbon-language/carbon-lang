@@ -9,12 +9,12 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
+CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here",
                   Lex::TokenKind);
 
 static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
                              Parse::NodeId second_node) -> void {
-  CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
+  CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration",
                     Lex::TokenKind);
   context.emitter()
       .Build(second_node, ModifierRepeated, context.token_kind(second_node))
@@ -25,7 +25,7 @@ static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
 static auto DiagnoseNotAllowedWith(Context& context, Parse::NodeId first_node,
                                    Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
-                    "`{0}` not allowed on declaration with `{1}`.",
+                    "`{0}` not allowed on declaration with `{1}`",
                     Lex::TokenKind, Lex::TokenKind);
   context.emitter()
       .Build(second_node, ModifierNotAllowedWith,
@@ -79,7 +79,7 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     CARBON_CHECK(closest_later_modifier.is_valid());
 
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
-                      "`{0}` must appear before `{1}`.", Lex::TokenKind,
+                      "`{0}` must appear before `{1}`", Lex::TokenKind,
                       Lex::TokenKind);
     context.emitter()
         .Build(node_id, ModifierMustAppearBefore, context.token_kind(node_id),

@@ -10,19 +10,19 @@
 
 class FinalClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: ERROR: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: containing definition here
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   abstract fn Abstract[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: ERROR: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition
   // CHECK:STDERR:   virtual fn Virtual[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: containing definition here
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,13 +31,13 @@ class FinalClass {
 
 abstract class AbstractClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `fn` declaration outside of an interface.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `fn` declaration outside of an interface
   // CHECK:STDERR:   default fn Default[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn Default[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: ERROR: `final` not allowed on `fn` declaration outside of an interface.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `fn` declaration outside of an interface
   // CHECK:STDERR:   final fn Final[self: Self]();
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
@@ -46,10 +46,10 @@ abstract class AbstractClass {
 
 base class BaseClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: ERROR: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: containing definition here
   // CHECK:STDERR: base class BaseClass {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   abstract fn Abstract[self: Self]();

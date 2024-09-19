@@ -13,7 +13,7 @@
 fn F() {
   // Create diagnostics containing string references, and trigger reallocation
   // of the string table.
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: ERROR: Name `undeclared1` not found.
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared1` not found
   // CHECK:STDERR:   undeclared1;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -23,7 +23,7 @@ fn F() {
   // literal storage. Use a hex escape to ensure that the tokenized buffer
   // allocates separate storage for the result.
   "undec\x6Cared2";
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: ERROR: Name `undeclared2` not found.
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared2` not found
   // CHECK:STDERR:   undeclared2;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,7 +31,7 @@ fn F() {
 
   // Add the name into the string table via a declaration rather than an expression.
   if (true) { var undeclared3: () = (); }
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+3]]:3: ERROR: Name `undeclared3` not found.
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+3]]:3: error: name `undeclared3` not found
   // CHECK:STDERR:   undeclared3;
   // CHECK:STDERR:   ^~~~~~~~~~~
   undeclared3;

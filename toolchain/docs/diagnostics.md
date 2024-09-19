@@ -71,7 +71,7 @@ Diagnostics are used to surface issues from compilation. A simple diagnostic
 looks like:
 
 ```cpp
-CARBON_DIAGNOSTIC(InvalidCode, Error, "Code is invalid");
+CARBON_DIAGNOSTIC(InvalidCode, Error, "code is invalid");
 emitter.Emit(location, InvalidCode);
 ```
 
@@ -85,7 +85,7 @@ the `DiagnosticEmitter`.
 A diagnostic with an argument looks like:
 
 ```cpp
-CARBON_DIAGNOSTIC(InvalidCharacter, Error, "Invalid character {0}.", char);
+CARBON_DIAGNOSTIC(InvalidCharacter, Error, "invalid character {0}", char);
 emitter.Emit(location, InvalidCharacter, invalid_char);
 ```
 
@@ -127,7 +127,7 @@ CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                   "{1} argument(s).",
                   int, int);
 CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                  "Calling function declared here.");
+                  "calling function declared here");
 context.emitter()
     .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
            param_refs.size())
@@ -147,7 +147,7 @@ DiagnosticAnnotationScope annotate_diagnostics(
     &context.emitter(), [&](auto& builder) {
       CARBON_DIAGNOSTIC(
           InCallToFunctionParam, Note,
-          "Initializing parameter {0} of function declared here.", int);
+          "initializing parameter {0} of function declared here", int);
       builder.Note(param_parse_node, InCallToFunctionParam,
                    diag_param_index + 1);
     });

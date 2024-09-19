@@ -10,7 +10,7 @@
 
 
 fn f() -> i32 {
-  // CHECK:STDERR: fail_missing_cases.carbon:[[@LINE+3]]:14: ERROR: Expected cases.
+  // CHECK:STDERR: fail_missing_cases.carbon:[[@LINE+3]]:14: error: expected cases
   // CHECK:STDERR:   match (3) {}
   // CHECK:STDERR:              ^
   match (3) {}

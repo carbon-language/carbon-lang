@@ -23,43 +23,43 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd"
 // CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew(a: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd"
 // CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd"
 // CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
 fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant
 // CHECK:STDERR: var too_few: [i32; TooFew(1)];
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew(1)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2, 3)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1, 2)];
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: ERROR: 3 argument(s) passed to function expecting 2 argument(s).
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 3 argument(s) passed to function expecting 2 argument(s).
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: Calling function declared here.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: calling function declared here
 // CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -84,7 +84,7 @@ package FailOverflow;
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 let a: i32 = Add(0x7FFFFFFF, 0);
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: ERROR: Integer overflow in calculation 2147483647 + 1.
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: error: integer overflow in calculation 2147483647 + 1
 // CHECK:STDERR: let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDERR:              ^~~~
 let b: i32 = Add(0x7FFFFFFF, 1);

@@ -10,7 +10,7 @@
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:9: error: expected `default` or a string literal to specify the library name
 // CHECK:STDERR: library Shapes;
 // CHECK:STDERR:         ^~~~~~
 // CHECK:STDERR:
@@ -18,7 +18,7 @@ library Shapes;
 
 // --- fail_raw_identifier.carbon
 
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: error: expected `default` or a string literal to specify the library name
 // CHECK:STDERR: library r#default;
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -26,7 +26,7 @@ library r#default;
 
 // --- fail_missing.carbon
 
-// CHECK:STDERR: fail_missing.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_missing.carbon:[[@LINE+4]]:8: error: expected `default` or a string literal to specify the library name
 // CHECK:STDERR: library;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
@@ -34,7 +34,7 @@ library;
 
 // --- fail_missing_with_api.carbon
 
-// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:8: error: expected `default` or a string literal to specify the library name
 // CHECK:STDERR: library;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ library;
 
 // --- fail_trailing_impl.carbon
 
-// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+4]]:25: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+4]]:25: error: `library` declarations must end with a `;`
 // CHECK:STDERR: library "trailing_impl" impl
 // CHECK:STDERR:                         ^~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]" impl
 
 library "[[@TEST_NAME]]"
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: error: `library` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_identifier.carbon
