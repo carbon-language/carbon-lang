@@ -197,11 +197,15 @@ static auto CheckRedeclParam(Context& context,
                              int32_t param_index,
                              SemIR::InstId new_param_ref_id,
                              SemIR::InstId prev_param_ref_id,
-                             SemIR::SpecificId prev_specific_id) -> bool {
+                             SemIR::SpecificId prev_specific_id,
+                             bool diagnose) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
-  auto diagnose = [&]() {
+  auto emit_diagnostic = [&]() {
+    if (!diagnose) {
+      return;
+    }
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
                       "redeclaration differs at {0}parameter {1}",
                       llvm::StringLiteral, int32_t);
@@ -222,7 +226,7 @@ static auto CheckRedeclParam(Context& context,
           new_param_ref.type_id(),
           SemIR::GetTypeInSpecific(context.sem_ir(), prev_specific_id,
                                    prev_param_ref.type_id()))) {
-    diagnose();
+    emit_diagnostic();
     return false;
   }
 
@@ -232,7 +236,7 @@ static auto CheckRedeclParam(Context& context,
     prev_param_ref =
         context.insts().Get(prev_param_ref.As<SemIR::AddrPattern>().inner_id);
     if (new_param_ref.kind() != prev_param_ref.kind()) {
-      diagnose();
+      emit_diagnostic();
       return false;
     }
   }
@@ -247,7 +251,7 @@ static auto CheckRedeclParam(Context& context,
   auto new_param = new_param_ref.As<SemIR::Param>();
   auto prev_param = prev_param_ref.As<SemIR::Param>();
   if (new_param.name_id != prev_param.name_id) {
-    diagnose();
+    emit_diagnostic();
     return false;
   }
 
@@ -260,7 +264,8 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
-                              SemIR::SpecificId prev_specific_id) -> bool {
+                              SemIR::SpecificId prev_specific_id,
+                              bool diagnose) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -268,6 +273,9 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
 
   // If exactly one of the parameter lists was present, they differ.
   if (new_param_refs_id.is_valid() != prev_param_refs_id.is_valid()) {
+    if (!diagnose) {
+      return false;
+    }
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of {1}{0}parameter list",
                       llvm::StringLiteral, llvm::StringLiteral);
@@ -288,6 +296,9 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   const auto new_param_ref_ids = context.inst_blocks().Get(new_param_refs_id);
   const auto prev_param_ref_ids = context.inst_blocks().Get(prev_param_refs_id);
   if (new_param_ref_ids.size() != prev_param_ref_ids.size()) {
+    if (!diagnose) {
+      return false;
+    }
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
         "redeclaration differs because of {0}parameter count of {1}",
@@ -306,7 +317,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!CheckRedeclParam(context, param_diag_label, index, new_param_ref_id,
-                          prev_param_ref_id, prev_specific_id)) {
+                          prev_param_ref_id, prev_specific_id, diagnose)) {
       return false;
     }
   }
@@ -338,7 +349,8 @@ static auto CheckRedeclParamSyntax(Context& context,
                                    Parse::NodeId new_first_param_node_id,
                                    Parse::NodeId new_last_param_node_id,
                                    Parse::NodeId prev_first_param_node_id,
-                                   Parse::NodeId prev_last_param_node_id)
+                                   Parse::NodeId prev_last_param_node_id,
+                                   bool diagnose)
     -> bool {
   // Parse nodes may not always be available to compare.
   // TODO: Support cross-file syntax checks. Right now imports provide invalid
@@ -366,6 +378,9 @@ static auto CheckRedeclParamSyntax(Context& context,
   // sizes here.
   for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      if (!diagnose) {
+        return false;
+      }
       CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
                         "redeclaration syntax differs here");
       CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
@@ -374,7 +389,6 @@ static auto CheckRedeclParamSyntax(Context& context,
           .Build(new_node_id, RedeclParamSyntaxDiffers)
           .Note(prev_node_id, RedeclParamSyntaxPrevious)
           .Emit();
-
       return false;
     }
   }
@@ -385,7 +399,7 @@ static auto CheckRedeclParamSyntax(Context& context,
 auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                             const DeclParams& prev_entity,
                             SemIR::SpecificId prev_specific_id,
-                            bool check_syntax) -> bool {
+                            bool check_syntax, bool diagnose) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
     return false;
@@ -393,19 +407,19 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(context, new_entity.loc,
                          new_entity.implicit_param_refs_id, prev_entity.loc,
                          prev_entity.implicit_param_refs_id, "implicit ",
-                         prev_specific_id)) {
+                         prev_specific_id, diagnose)) {
     return false;
   }
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_refs_id,
                          prev_entity.loc, prev_entity.param_refs_id, "",
-                         prev_specific_id)) {
+                         prev_specific_id, diagnose)) {
     return false;
   }
   if (check_syntax &&
       !CheckRedeclParamSyntax(context, new_entity.first_param_node_id,
                               new_entity.last_param_node_id,
                               prev_entity.first_param_node_id,
-                              prev_entity.last_param_node_id)) {
+                              prev_entity.last_param_node_id, diagnose)) {
     return false;
   }
   return true;

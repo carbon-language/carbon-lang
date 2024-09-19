@@ -223,10 +223,9 @@ class FormatterImpl {
   // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
-    FormatEntityStart("impl", SemIR::GenericId::Invalid, id);
+    FormatEntityStart("impl", impl_info.generic_id, id);
 
     out_ << ": ";
-    // TODO: Include the deduced parameter list if present.
     FormatType(impl_info.self_id);
     out_ << " as ";
     FormatType(impl_info.constraint_id);
@@ -256,6 +255,8 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(impl_info.generic_id);
   }
 
   // Formats a full function.

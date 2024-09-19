@@ -299,6 +299,38 @@ class ImportRefResolver {
     }
   }
 
+  auto ResolveImpl(SemIR::ImplId import_impl_id) -> void {
+    const auto& import_impl = import_ir_.impls().Get(import_impl_id);
+    auto self_id = ResolveType(import_impl.self_id);
+    auto constraint_id = ResolveType(import_impl.constraint_id);
+
+    // TODO: Create a scope for the `impl` if necessary.
+
+    // TODO: Consider importing the definition_id.
+
+    auto witness_id = import_impl.is_defined()
+                          ? AddImportRef(context_,
+                                         {.ir_id = import_ir_id_,
+                                          .inst_id = import_impl.witness_id},
+                                         SemIR::EntityNameId::Invalid)
+                          : SemIR::InstId::Invalid;
+    auto impl_id =
+        context_.impls().Add({GetIncompleteLocalEntityBase(
+                                  import_impl.latest_decl_id(), import_impl),
+                              {.self_id = self_id,
+                               .constraint_id = constraint_id,
+                               .witness_id = witness_id}});
+
+    // If the `impl` is declared in the API file corresponding to the current
+    // file, add this to impl lookup so that it can be found by redeclarations
+    // in the current file.
+    if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+      context_.impls().LookupBucket(self_id, constraint_id).push_back(impl_id);
+    }
+
+    // TODO: Import the rest of the LocalEntityBase.
+  }
+
  private:
   // The result of attempting to resolve an imported instruction to a constant.
   struct ResolveResult {
@@ -2077,26 +2109,10 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
 
 // Imports the impl `import_impl_id` from the imported IR `import_ir`.
 static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                       const SemIR::File& import_ir,
                        SemIR::ImplId import_impl_id) -> void {
   // Resolve the imported impl to a local impl ID.
   ImportRefResolver resolver(context, import_ir_id);
-  const auto& import_impl = import_ir.impls().Get(import_impl_id);
-  auto self_id = resolver.ResolveType(import_impl.self_id);
-  auto constraint_id = resolver.ResolveType(import_impl.constraint_id);
-
-  // Import the definition if the impl is defined.
-  // TODO: Do we need to check for multiple definitions?
-  auto impl_id = context.impls().LookupOrAdd(self_id, constraint_id);
-  if (import_impl.is_defined()) {
-    // TODO: Create a scope for the `impl` if necessary.
-    // TODO: Consider importing the definition_id.
-
-    auto& impl = context.impls().Get(impl_id);
-    impl.witness_id = AddImportRef(
-        context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id},
-        SemIR::EntityNameId::Invalid);
-  }
+  resolver.ResolveImpl(import_impl_id);
 }
 
 // TODO: This doesn't belong in this file. Consider moving the import resolver
@@ -2111,7 +2127,7 @@ auto ImportImpls(Context& context) -> void {
     SemIR::ImportIRId import_ir_id(import_index);
     for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
       SemIR::ImplId impl_id(impl_index);
-      ImportImpl(context, import_ir_id, *import_ir.sem_ir, impl_id);
+      ImportImpl(context, import_ir_id, impl_id);
     }
   }
 }

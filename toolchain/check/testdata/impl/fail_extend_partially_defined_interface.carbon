@@ -63,7 +63,10 @@ interface I {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.2 as %.1;
+// CHECK:STDOUT: generic impl @impl(@I.%Self: %.1) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: %C.2 as %.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(@I.%Self: %.1) {
 // CHECK:STDOUT: !definition:
@@ -81,4 +84,6 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%Self) {}
 // CHECK:STDOUT:

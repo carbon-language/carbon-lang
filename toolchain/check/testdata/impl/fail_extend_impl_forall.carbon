@@ -96,26 +96,31 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.2 {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = @F.2.%T (constants.%T)]
-// CHECK:STDOUT:     %x.loc20_10.1: @F.2.%T (%T) = param x, runtime_param0
-// CHECK:STDOUT:     %x.loc20_10.2: @F.2.%T (%T) = bind_name x, %x.loc20_10.1
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT: generic impl @impl(@C.%T.loc19_23.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %.1: type = interface_type @GenericInterface, @GenericInterface(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.loc19
+// CHECK:STDOUT:   impl: %C as %.2 {
+// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc19_23.2 [symbolic = @F.2.%T (constants.%T)]
+// CHECK:STDOUT:       %x.loc20_10.1: @F.2.%T (%T) = param x, runtime_param0
+// CHECK:STDOUT:       %x.loc20_10.2: @F.2.%T (%T) = bind_name x, %x.loc20_10.1
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     witness = %.loc19
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.loc19_23.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc19_23.2: type = bind_symbolic_name T 0, %T.loc19_23.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc19_23.2: type = bind_symbolic_name T 0, %T.loc19_23.1 [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc19: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.2 [symbolic = @impl.%T (constants.%T)]
+// CHECK:STDOUT:     %.loc19: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = @impl.%.1 (constants.%.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
@@ -159,6 +164,15 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(@GenericInterface.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericInterface(@impl.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
