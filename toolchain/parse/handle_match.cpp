@@ -127,10 +127,10 @@ auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
 
   Lex::TokenKind kind = context.PositionKind();
   if (kind == Lex::TokenKind::Case or kind == Lex::TokenKind::Default) {
-    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error, "unreachable case; `{0}{1}",
-                      Lex::TokenKind, std::string);
-    context.emitter().Emit(*context.position(), UnreachableMatchCase, kind,
-                           "` occurs after the `default`");
+    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error,
+                      "unreachable case; `{0}` occurs after the `default`",
+                      Lex::TokenKind);
+    context.emitter().Emit(*context.position(), UnreachableMatchCase, kind);
 
     context.ReturnErrorOnState();
     context.PushState(State::MatchCaseLoopAfterDefault);
