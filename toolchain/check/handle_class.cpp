@@ -344,8 +344,8 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                                               SemIRLoc new_loc,
                                               SemIRLoc prev_loc,
                                               Lex::TokenKind tok) -> void {
-  CARBON_DIAGNOSTIC(ClassSpecificDeclRepeated, Error,
-                    "multiple `adapt` declarations in class", Lex::TokenKind);
+  CARBON_DIAGNOSTIC(AdaptDeclRepeated, Error,
+                    "multiple `adapt` declarations in class");
   CARBON_DIAGNOSTIC(BaseDeclRepeated, Error,
                     "multiple `base` declarations in class; multiple "
                     "inheritance is not permitted");
@@ -353,9 +353,8 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                     "previous `{0}` declaration is here", Lex::TokenKind);
   CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
-      .Build(new_loc,
-             tok == Lex::TokenKind::Base ? BaseDeclRepeated
-                                         : ClassSpecificDeclRepeated)
+      .Build(new_loc, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
+                                                   : BaseDeclRepeated)
       .Note(prev_loc, ClassSpecificDeclPrevious, tok)
       .Emit();
 }
