@@ -186,8 +186,7 @@ error, and phrased consistently across diagnostics. In addition, Carbon
 diagnostics may be mixed with Clang diagnostics when compiling interoperable
 code, so we are borrowing some features of Clang's
 [Diagnostic Wording](https://clang.llvm.org/docs/InternalsManual.html#diagnostic-wording).
-Carbon's diagnostic style aims to balance these by making diagnostics helpful
-and consistent. Our style is:
+Carbon's diagnostic style aims to balance these concerns. Our style is:
 
 -   Start diagnostics with a lower case letter or quoted code, and omit trailing
     periods.
