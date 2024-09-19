@@ -80,17 +80,10 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+14]]:8: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: fn Foo(b: D) {}
-// CHECK:STDERR:        ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:        ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: fn Foo(b: D) {}
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-11]]:8: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
@@ -517,8 +510,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
-// CHECK:STDOUT:     %param.loc22: %C = param
-// CHECK:STDOUT:     @.1.%b: %C = bind_name b, %param.loc22
+// CHECK:STDOUT:     %param.loc15: %C = param
+// CHECK:STDOUT:     @.1.%b: %C = bind_name b, %param.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

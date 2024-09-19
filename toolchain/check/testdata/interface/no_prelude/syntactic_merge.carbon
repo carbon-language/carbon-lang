@@ -100,17 +100,10 @@ class C {}
 alias D = C;
 
 interface Foo(a:! C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+14]]:15: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: interface Foo(b:! D) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:15: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: interface Foo(a:! C);
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: interface Foo(b:! D) {}
 // CHECK:STDERR:               ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-11]]:15: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:15: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
@@ -778,8 +771,8 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %b.patt: %C = symbolic_binding_pattern b 0 [symbolic = @.1.%b.patt (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [template = constants.%C]
-// CHECK:STDOUT:     %param.loc22: %C = param
-// CHECK:STDOUT:     %b: %C = bind_symbolic_name b 0, %param.loc22 [symbolic = @.1.%b (constants.%b)]
+// CHECK:STDOUT:     %param.loc15: %C = param
+// CHECK:STDOUT:     %b: %C = bind_symbolic_name b 0, %param.loc15 [symbolic = @.1.%b (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

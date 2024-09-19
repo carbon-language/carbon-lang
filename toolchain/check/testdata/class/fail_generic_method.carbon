@@ -15,17 +15,10 @@ class Class(T:! type) {
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+21]]:10: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class Class(T:! type) {
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-17]]:13: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: class Class(T:! type) {
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -90,16 +83,16 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc39_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc39_14.2: type = converted %int.make_type_32, %.loc39_14.1 [template = i32]
-// CHECK:STDOUT:     %param.loc39_10: i32 = param
-// CHECK:STDOUT:     %N: i32 = bind_symbolic_name N 0, %param.loc39_10 [symbolic = @.1.%N (constants.%N)]
+// CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
+// CHECK:STDOUT:     %param.loc32_10: i32 = param
+// CHECK:STDOUT:     %N: i32 = bind_symbolic_name N 0, %param.loc32_10 [symbolic = @.1.%N (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc39_21: <error> = param
-// CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %param.loc39_21
+// CHECK:STDOUT:     %param.loc32_21: <error> = param
+// CHECK:STDOUT:     @.1.%self: <error> = bind_name self, %param.loc32_21
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc39_33: <error> = param
-// CHECK:STDOUT:     @.1.%n: <error> = bind_name n, %param.loc39_33
+// CHECK:STDOUT:     %param.loc32_33: <error> = param
+// CHECK:STDOUT:     @.1.%n: <error> = bind_name n, %param.loc32_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

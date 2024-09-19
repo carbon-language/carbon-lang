@@ -46,17 +46,10 @@ class NotGeneric {
   fn F();
 }
 
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+14]]:4: ERROR: Redeclaration differs because of parameter list.
-// CHECK:STDERR: fn NotGeneric(T:! type).F() {}
-// CHECK:STDERR:    ^~~~~~~~~~
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: Previously declared without parameter list.
-// CHECK:STDERR: class NotGeneric {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter list.
 // CHECK:STDERR: fn NotGeneric(T:! type).F() {}
 // CHECK:STDERR:    ^~~~~~~~~~
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-14]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: Previously declared without parameter list.
 // CHECK:STDERR: class NotGeneric {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -70,17 +63,10 @@ class Generic(T:! type) {
   fn TooFew();
 }
 
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+14]]:4: ERROR: Redeclaration differs because of parameter count of 0.
-// CHECK:STDERR: fn Generic().TooFew() {}
-// CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
-// CHECK:STDERR: class Generic(T:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter count of 0.
 // CHECK:STDERR: fn Generic().TooFew() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-14]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -94,17 +80,10 @@ class Generic(T:! type) {
   fn TooMany();
 }
 
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+14]]:4: ERROR: Redeclaration differs because of parameter count of 2.
-// CHECK:STDERR: fn Generic(T:! type, U:! type).TooMany() {}
-// CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
-// CHECK:STDERR: class Generic(T:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+7]]:4: ERROR: Redeclaration differs because of parameter count of 2.
 // CHECK:STDERR: fn Generic(T:! type, U:! type).TooMany() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-14]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: Previously declared with parameter count of 1.
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -118,17 +97,10 @@ class Generic(T:! type) {
   fn WrongType();
 }
 
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+13]]:12: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: fn Generic(T:! ()).WrongType() {}
-// CHECK:STDERR:            ^
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class Generic(T:! type) {
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: fn Generic(T:! ()).WrongType() {}
 // CHECK:STDERR:            ^
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-14]]:15: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR:               ^
 fn Generic(T:! ()).WrongType() {}
@@ -656,10 +628,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @Generic.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {} {
-// CHECK:STDOUT:     %param.loc22_12: type = param
-// CHECK:STDOUT:     %T.loc22: type = bind_symbolic_name T 0, %param.loc22_12 [symbolic = @.1.%T (constants.%T)]
-// CHECK:STDOUT:     %param.loc22_22: type = param
-// CHECK:STDOUT:     %U: type = bind_symbolic_name U 1, %param.loc22_22 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %param.loc15_12: type = param
+// CHECK:STDOUT:     %T.loc15: type = bind_symbolic_name T 0, %param.loc15_12 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc15_22: type = param
+// CHECK:STDOUT:     %U: type = bind_symbolic_name U 1, %param.loc15_22 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -685,7 +657,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(file.%T.loc22: type, file.%U: type) {
+// CHECK:STDOUT: generic fn @.1(file.%T.loc15: type, file.%U: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
@@ -761,10 +733,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @Generic.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {} {
-// CHECK:STDOUT:     %.loc21_17.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc21_17.2: type = converted %.loc21_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc21: %.1 = param
-// CHECK:STDOUT:     %T.loc21: %.1 = bind_symbolic_name T 0, %param.loc21 [symbolic = @.1.%T (constants.%T.2)]
+// CHECK:STDOUT:     %.loc14_17.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %param.loc14: %.1 = param
+// CHECK:STDOUT:     %T.loc14: %.1 = bind_symbolic_name T 0, %param.loc14 [symbolic = @.1.%T (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -790,7 +762,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(file.%T.loc21: %.1) {
+// CHECK:STDOUT: generic fn @.1(file.%T.loc14: %.1) {
 // CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %T.patt: %.1 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:

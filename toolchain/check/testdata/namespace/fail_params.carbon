@@ -30,17 +30,10 @@ namespace B(n: i32);
 namespace C[T:! type](x: T);
 
 namespace D;
-// CHECK:STDERR: fail_params.carbon:[[@LINE+13]]:4: ERROR: Redeclaration differs because of parameter list.
-// CHECK:STDERR: fn D(T:! type).F() {}
-// CHECK:STDERR:    ^
-// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
-// CHECK:STDERR: namespace D;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: ERROR: Redeclaration differs because of parameter list.
 // CHECK:STDERR: fn D(T:! type).F() {}
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_params.carbon:[[@LINE-11]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
 fn D(T:! type).F() {}
@@ -100,8 +93,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
-// CHECK:STDOUT:     %param.loc46: type = param
-// CHECK:STDOUT:     %T.loc46: type = bind_symbolic_name T 0, %param.loc46 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc39: type = param
+// CHECK:STDOUT:     %T.loc39: type = bind_symbolic_name T 0, %param.loc39 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +105,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(file.%T.loc46: type) {
+// CHECK:STDOUT: generic fn @.1(file.%T.loc39: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

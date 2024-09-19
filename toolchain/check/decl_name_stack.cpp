@@ -374,10 +374,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     return InvalidResult;
   }
 
-  auto new_params = DeclParams(name.name_loc_id, name.first_param_node_id,
-                               name.last_param_node_id, name.implicit_params_id,
-                               name.implicit_param_patterns_id, name.params_id,
-                               name.param_patterns_id);
+  auto new_params = DeclParams(
+      name.name_loc_id, name.first_param_node_id, name.last_param_node_id,
+      name.implicit_param_patterns_id, name.param_patterns_id);
 
   // Find the scope corresponding to the resolved instruction.
   // TODO: When diagnosing qualifiers on names, print a diagnostic that talks
@@ -422,8 +421,6 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
               *context_, new_params,
               DeclParams(name_context.resolved_inst_id, Parse::NodeId::Invalid,
                          Parse::NodeId::Invalid, SemIR::InstBlockId::Invalid,
-                         SemIR::InstBlockId::Invalid,
-                         SemIR::InstBlockId::Invalid,
                          SemIR::InstBlockId::Invalid))) {
         return InvalidResult;
       }

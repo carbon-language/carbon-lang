@@ -48,22 +48,17 @@ struct DeclParams {
       : loc(base.latest_decl_id()),
         first_param_node_id(base.first_param_node_id),
         last_param_node_id(base.last_param_node_id),
-        implicit_param_refs_id(base.implicit_param_refs_id),
         implicit_param_patterns_id(base.implicit_param_patterns_id),
-        param_refs_id(base.param_refs_id),
         param_patterns_id(base.param_patterns_id) {}
 
   DeclParams(SemIRLoc loc, Parse::NodeId first_param_node_id,
              Parse::NodeId last_param_node_id,
-             SemIR::InstBlockId implicit_params_id,
              SemIR::InstBlockId implicit_param_patterns_id,
-             SemIR::InstBlockId params_id, SemIR::InstBlockId param_patterns_id)
+             SemIR::InstBlockId param_patterns_id)
       : loc(loc),
         first_param_node_id(first_param_node_id),
         last_param_node_id(last_param_node_id),
-        implicit_param_refs_id(implicit_params_id),
         implicit_param_patterns_id(implicit_param_patterns_id),
-        param_refs_id(params_id),
         param_patterns_id(param_patterns_id) {}
 
   // The location of the declaration of the entity.
@@ -77,11 +72,9 @@ struct DeclParams {
 
   // The implicit parameters of the entity. Can be Invalid if there is no
   // implicit parameter list.
-  SemIR::InstBlockId implicit_param_refs_id;
   SemIR::InstBlockId implicit_param_patterns_id;
   // The explicit parameters of the entity. Can be Invalid if there is no
   // explicit parameter list.
-  SemIR::InstBlockId param_refs_id;
   SemIR::InstBlockId param_patterns_id;
 };
 

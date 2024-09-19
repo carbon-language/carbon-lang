@@ -134,8 +134,7 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 static auto EntityHasParamError(Context& context, const DeclParams& info)
     -> bool {
   for (auto param_refs_id :
-       {info.implicit_param_refs_id, info.implicit_param_patterns_id,
-        info.param_refs_id, info.param_patterns_id}) {
+       {info.implicit_param_patterns_id, info.param_patterns_id}) {
     if (param_refs_id.is_valid() &&
         param_refs_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_refs_id)) {
@@ -368,27 +367,15 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   }
   // FIXME check only the patterns (and remove support for params from
   // CheckRedeclParams)
-  bool implicit_params_check = CheckRedeclParams(
-      context, new_entity.loc, new_entity.implicit_param_refs_id,
-      prev_entity.loc, prev_entity.implicit_param_refs_id, "implicit ",
-      prev_specific_id);
-  bool implicit_patterns_check = CheckRedeclParams(
-      context, new_entity.loc, new_entity.implicit_param_patterns_id,
-      prev_entity.loc, prev_entity.implicit_param_patterns_id, "implicit ",
-      prev_specific_id);
-  CARBON_CHECK(implicit_params_check == implicit_patterns_check)
-      << implicit_params_check << " " << implicit_patterns_check;
-  if (!implicit_params_check || !implicit_patterns_check) {
+  if (!CheckRedeclParams(context, new_entity.loc,
+                         new_entity.implicit_param_patterns_id, prev_entity.loc,
+                         prev_entity.implicit_param_patterns_id, "implicit ",
+                         prev_specific_id)) {
     return false;
   }
-  bool params_check = CheckRedeclParams(
-      context, new_entity.loc, new_entity.param_refs_id, prev_entity.loc,
-      prev_entity.param_refs_id, "", prev_specific_id);
-  bool patterns_check = CheckRedeclParams(
-      context, new_entity.loc, new_entity.param_patterns_id, prev_entity.loc,
-      prev_entity.param_patterns_id, "", prev_specific_id);
-  CARBON_CHECK(params_check == patterns_check);
-  if (!params_check || !patterns_check) {
+  if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
+                         prev_entity.loc, prev_entity.param_patterns_id, "",
+                         prev_specific_id)) {
     return false;
   }
   if (check_syntax &&

@@ -66,20 +66,10 @@ fn Use() {
 
 impl library "foo";
 
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+20]]:13: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: class Class(U:! type) {
-// CHECK:STDERR:             ^
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
-// CHECK:STDERR: impl library "foo";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class Class(T:! type);
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-15]]:6: In import.
+// CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl library "foo";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
@@ -783,11 +773,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc28: <error> = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc18: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.3
-// CHECK:STDOUT:     .x = %.loc28
+// CHECK:STDOUT:     .x = %.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

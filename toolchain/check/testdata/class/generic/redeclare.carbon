@@ -22,17 +22,10 @@ class Generic(T:! type) {
 library "mismatch_param_list";
 
 class A;
-// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE+14]]:1: ERROR: Redeclaration differs because of parameter list.
-// CHECK:STDERR: class A(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
-// CHECK:STDERR: class A;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
 // CHECK:STDERR: class A(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE-11]]:1: Previously declared without parameter list.
+// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -43,17 +36,10 @@ class A(T:! type) {}
 library "implicit_mismatch_param_list";
 
 class B(N:! i32);
-// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+14]]:1: ERROR: Redeclaration differs because of implicit parameter list.
-// CHECK:STDERR: class B[T:! type](N:! T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-4]]:1: Previously declared without implicit parameter list.
-// CHECK:STDERR: class B(N:! i32);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of implicit parameter list.
 // CHECK:STDERR: class B[T:! type](N:! T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-11]]:1: Previously declared without implicit parameter list.
+// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-4]]:1: Previously declared without implicit parameter list.
 // CHECK:STDERR: class B(N:! i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -64,17 +50,10 @@ class B[T:! type](N:! T) {}
 library "mismatch_param_count";
 
 class C(T:! type);
-// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+14]]:1: ERROR: Redeclaration differs because of parameter count of 2.
-// CHECK:STDERR: class C(T:! type, U:! i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 1.
-// CHECK:STDERR: class C(T:! type);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 2.
 // CHECK:STDERR: class C(T:! type, U:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-11]]:1: Previously declared with parameter count of 1.
+// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 1.
 // CHECK:STDERR: class C(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -85,17 +64,10 @@ class C(T:! type, U:! i32) {}
 library "mismatch_param_type";
 
 class D(T:! type);
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+14]]:9: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: class D(T:! i32) {}
-// CHECK:STDERR:         ^
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class D(T:! type);
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class D(T:! i32) {}
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-11]]:9: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: class D(T:! type);
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
@@ -106,17 +78,10 @@ class D(T:! i32) {}
 library "mismatch_param_name";
 
 class E(T:! type);
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+13]]:9: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: class E(U:! type) {}
-// CHECK:STDERR:         ^
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: class E(T:! type);
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class E(U:! type) {}
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-11]]:9: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: class E(T:! type);
 // CHECK:STDERR:         ^
 class E(U:! type) {}
@@ -293,13 +258,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc19: @.1.%T (%T) = symbolic_binding_pattern N 1 [symbolic = @.1.%N.patt (constants.%N.patt.2)]
+// CHECK:STDOUT:     %N.patt.loc12: @.1.%T (%T) = symbolic_binding_pattern N 1 [symbolic = @.1.%N.patt (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc19_9: type = param
-// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param.loc19_9 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc12_9: type = param
+// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param.loc12_9 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T [symbolic = @.1.%T (constants.%T)]
-// CHECK:STDOUT:     %param.loc19_19: @.1.%T (%T) = param
-// CHECK:STDOUT:     %N.loc19: @.1.%T (%T) = bind_symbolic_name N 1, %param.loc19_19 [symbolic = @.1.%N (constants.%N.2)]
+// CHECK:STDOUT:     %param.loc12_19: @.1.%T (%T) = param
+// CHECK:STDOUT:     %N.loc12: @.1.%T (%T) = bind_symbolic_name N 1, %param.loc12_19 [symbolic = @.1.%N (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +275,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%T: type, file.%N.loc19: @.1.%T (%T)) {
+// CHECK:STDOUT: generic class @.1(file.%T: type, file.%N.loc12: @.1.%T (%T)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N 1 [symbolic = %N (constants.%N.2)]
@@ -384,16 +349,16 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt: i32 = symbolic_binding_pattern U 1 [symbolic = @.1.%U.patt (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc19_9: type = param
-// CHECK:STDOUT:     %T.loc19: type = bind_symbolic_name T 0, %param.loc19_9 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:     %param.loc12_9: type = param
+// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 0, %param.loc12_9 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc19_23.2: type = converted %int.make_type_32, %.loc19_23.1 [template = i32]
-// CHECK:STDOUT:     %param.loc19_19: i32 = param
-// CHECK:STDOUT:     %U: i32 = bind_symbolic_name U 1, %param.loc19_19 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
+// CHECK:STDOUT:     %param.loc12_19: i32 = param
+// CHECK:STDOUT:     %U: i32 = bind_symbolic_name U 1, %param.loc12_19 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -404,7 +369,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%T.loc19: type, file.%U: i32) {
+// CHECK:STDOUT: generic class @.1(file.%T.loc12: type, file.%U: i32) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %U: i32 = bind_symbolic_name U 1 [symbolic = %U (constants.%U)]
@@ -478,13 +443,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @D.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc19: i32 = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc12: i32 = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc19_13.2: type = converted %int.make_type_32, %.loc19_13.1 [template = i32]
-// CHECK:STDOUT:     %param.loc19: i32 = param
-// CHECK:STDOUT:     %T.loc19: i32 = bind_symbolic_name T 0, %param.loc19 [symbolic = @.1.%T (constants.%T.2)]
+// CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
+// CHECK:STDOUT:     %param.loc12: i32 = param
+// CHECK:STDOUT:     %T.loc12: i32 = bind_symbolic_name T 0, %param.loc12 [symbolic = @.1.%T (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -495,7 +460,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%T.loc19: i32) {
+// CHECK:STDOUT: generic class @.1(file.%T.loc12: i32) {
 // CHECK:STDOUT:   %T: i32 = bind_symbolic_name T 0 [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %T.patt: i32 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
@@ -563,8 +528,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 0 [symbolic = @.1.%U.patt (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc18: type = param
-// CHECK:STDOUT:     %U: type = bind_symbolic_name U 0, %param.loc18 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %param.loc11: type = param
+// CHECK:STDOUT:     %U: type = bind_symbolic_name U 0, %param.loc11 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

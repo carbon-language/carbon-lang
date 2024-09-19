@@ -9,51 +9,30 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
 
 interface NotGeneric;
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+14]]:1: ERROR: Redeclaration differs because of parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
 // CHECK:STDERR: interface NotGeneric(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared without parameter list.
 // CHECK:STDERR: interface NotGeneric;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
-// CHECK:STDERR: interface NotGeneric(T:! type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-11]]:1: Previously declared without parameter list.
-// CHECK:STDERR: interface NotGeneric;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 interface NotGeneric(T:! type) {}
 
 interface Generic(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+14]]:1: ERROR: Redeclaration differs because of missing parameter list.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of missing parameter list.
 // CHECK:STDERR: interface Generic {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: Previously declared with parameter list.
 // CHECK:STDERR: interface Generic(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of missing parameter list.
-// CHECK:STDERR: interface Generic {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-11]]:1: Previously declared with parameter list.
-// CHECK:STDERR: interface Generic(T:! type);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 interface Generic {}
 
 interface DifferentParams(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+13]]:27: ERROR: Redeclaration differs at parameter 1.
-// CHECK:STDERR: interface DifferentParams(T:! ()) {}
-// CHECK:STDERR:                           ^
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: interface DifferentParams(T:! type);
-// CHECK:STDERR:                           ^
-// CHECK:STDERR:
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-11]]:27: Previous declaration's corresponding parameter here.
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: interface DifferentParams(T:! type);
 // CHECK:STDERR:                           ^
 interface DifferentParams(T:! ()) {}
@@ -90,38 +69,38 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {} {}
-// CHECK:STDOUT:   %.decl.loc26: %.type.1 = interface_decl @.1 [template = constants.%.3] {
-// CHECK:STDOUT:     %T.patt.loc26: type = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt.1)]
+// CHECK:STDOUT:   %.decl.loc19: %.type.1 = interface_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0 [symbolic = @.1.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc26: type = param
-// CHECK:STDOUT:     %T.loc26: type = bind_symbolic_name T 0, %param.loc26 [symbolic = @.1.%T (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc19: type = param
+// CHECK:STDOUT:     %T.loc19: type = bind_symbolic_name T 0, %param.loc19 [symbolic = @.1.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
-// CHECK:STDOUT:     %T.patt.loc28: type = symbolic_binding_pattern T 0 [symbolic = @Generic.%T.patt (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc21: type = symbolic_binding_pattern T 0 [symbolic = @Generic.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc28: type = param
-// CHECK:STDOUT:     %T.loc28: type = bind_symbolic_name T 0, %param.loc28 [symbolic = @Generic.%T (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc21: type = param
+// CHECK:STDOUT:     %T.loc21: type = bind_symbolic_name T 0, %param.loc21 [symbolic = @Generic.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc43: type = interface_decl @.2 [template = constants.%.5] {} {}
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.5] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
-// CHECK:STDOUT:     %T.patt.loc45: type = symbolic_binding_pattern T 0 [symbolic = @DifferentParams.%T.patt (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc31: type = symbolic_binding_pattern T 0 [symbolic = @DifferentParams.%T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc45: type = param
-// CHECK:STDOUT:     %T.loc45: type = bind_symbolic_name T 0, %param.loc45 [symbolic = @DifferentParams.%T (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc31: type = param
+// CHECK:STDOUT:     %T.loc31: type = bind_symbolic_name T 0, %param.loc31 [symbolic = @DifferentParams.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc59: %.type.2 = interface_decl @.3 [template = constants.%.6] {
-// CHECK:STDOUT:     %T.patt.loc59: %.2 = symbolic_binding_pattern T 0 [symbolic = @.3.%T.patt (constants.%T.patt.2)]
+// CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
+// CHECK:STDOUT:     %T.patt.loc38: %.2 = symbolic_binding_pattern T 0 [symbolic = @.3.%T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc59_32.1: %.2 = tuple_literal ()
-// CHECK:STDOUT:     %.loc59_32.2: type = converted %.loc59_32.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %param.loc59: %.2 = param
-// CHECK:STDOUT:     %T.loc59: %.2 = bind_symbolic_name T 0, %param.loc59 [symbolic = @.3.%T (constants.%T.2)]
+// CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
+// CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %param.loc38: %.2 = param
+// CHECK:STDOUT:     %T.loc38: %.2 = bind_symbolic_name T 0, %param.loc38 [symbolic = @.3.%T (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGeneric;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(file.%T.loc26: type) {
+// CHECK:STDOUT: generic interface @.1(file.%T.loc19: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
@@ -138,7 +117,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Generic(file.%T.loc28: type) {
+// CHECK:STDOUT: generic interface @Generic(file.%T.loc21: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
@@ -153,14 +132,14 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @DifferentParams(file.%T.loc45: type) {
+// CHECK:STDOUT: generic interface @DifferentParams(file.%T.loc31: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T.1)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.3(file.%T.loc59: %.2) {
+// CHECK:STDOUT: generic interface @.3(file.%T.loc38: %.2) {
 // CHECK:STDOUT:   %T: %.2 = bind_symbolic_name T 0 [symbolic = %T (constants.%T.2)]
 // CHECK:STDOUT:   %T.patt: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
