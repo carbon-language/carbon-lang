@@ -1146,7 +1146,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                                  prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
-                            "main//default previously provided by `{0}`",
+                            "`Main//default` previously provided by `{0}`",
                             std::string);
           // Use the invalid node because there's no node to associate with.
           unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
