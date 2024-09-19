@@ -127,7 +127,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
   if (!(context.ints().Get(size_id) & 3).isZero()) {
     CARBON_DIAGNOSTIC(IntWidthNotMultipleOf8, Error,
                       "bit width of integer type literal must be a multiple of "
-                      "8. Use `Core.{0}({1})` instead.",
+                      "8; use `Core.{0}({1})` instead",
                       std::string, llvm::APSInt);
     context.emitter().Emit(
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",

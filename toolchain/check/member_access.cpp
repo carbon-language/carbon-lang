@@ -527,7 +527,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
   if (!tuple_type) {
     CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
-                      "type `{0}` does not support tuple indexing. Only "
+                      "type `{0}` does not support tuple indexing; only "
                       "tuples can be indexed that way",
                       SemIR::TypeId);
     context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_type_id);

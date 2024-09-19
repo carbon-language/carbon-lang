@@ -1270,7 +1270,7 @@ auto CheckParseTrees(
             } else {
               // The import hasn't been checked, indicating a cycle.
               CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
-                                "import cannot be used due to a cycle. Cycle "
+                                "import cannot be used due to a cycle; cycle "
                                 "must be fixed to import");
               unit_info.emitter.Emit(import_it->names.node_id,
                                      ImportCycleDetected);

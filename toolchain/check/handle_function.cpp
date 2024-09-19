@@ -325,8 +325,8 @@ static auto BuildFunctionDecl(Context& context,
              context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
-                        "invalid signature for `Main.Run` function. Expected "
-                        "`fn ()` or `fn () -> i32`.");
+                        "invalid signature for `Main.Run` function; expected "
+                        "`fn ()` or `fn () -> i32`");
       context.emitter().Emit(node_id, InvalidMainRunSignature);
     }
   }
