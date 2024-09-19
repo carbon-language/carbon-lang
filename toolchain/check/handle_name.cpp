@@ -175,11 +175,6 @@ auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
-  // FIXME: delete
-  auto node_kind = context.node_stack().PeekNodeKind();
-  CARBON_CHECK(node_kind == Parse::NodeKind::IdentifierName ||
-               node_kind == Parse::NodeKind::SelfTypeName);
-
   SemIR::NameId name_id = context.node_stack().PopName();
 
   // TODO: set `required` to `false` and check for not-found to give a clearer
