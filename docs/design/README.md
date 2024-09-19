@@ -550,8 +550,8 @@ represent that value.
 
 Floating-point types in Carbon have IEEE-754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
-with a _type literals_, consisting of `f` and the number of bits, which must be
-a multiple of 8. These types will always be available:
+using _type literals_, consisting of `f` and the number of bits, which must be a
+multiple of 8. These types will always be available:
 [`f16`](https://en.wikipedia.org/wiki/Half-precision_floating-point_format),
 [`f32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format),
 and
