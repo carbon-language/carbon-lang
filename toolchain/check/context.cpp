@@ -361,7 +361,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                                                SemIR::AccessKind access_kind,
                                                bool is_parent_access,
                                                AccessInfo access_info) -> void {
-
   auto inst = context.insts().Get(
       context.constant_values().GetInstId(access_info.constant_id));
 
@@ -389,7 +388,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
                            class_info.adapt_id)) {
           parent_type_id = adapt_decl->adapted_type_id;
         } else {
-          CARBON_FATAL() << "Expected parent for parent access";
+          CARBON_FATAL("Expected parent for parent access");
         }
       }
 
@@ -410,7 +409,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
 
       CARBON_DIAGNOSTIC(NamespaceInvalidAccess, Error,
                         "Cannot access {0} member `{1}` of namespace `{2}`.",
-                        llvm::StringLiteral, SemIR::NameId, SemIR::NameId);
+                        SemIR::AccessKind, SemIR::NameId, SemIR::NameId);
 
       context.emitter()
           .Build(loc, NamespaceInvalidAccess, access_kind, name_id,

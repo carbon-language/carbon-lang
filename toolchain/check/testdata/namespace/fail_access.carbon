@@ -74,8 +74,8 @@ alias B = NS.B;
 // CHECK:STDOUT:   %X.decl: %X.type = fn_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %.loc36_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc36_9.2: type = converted %.loc36_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc29_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc29_9.2: type = converted %.loc29_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %B.ref: <error> = name_ref B, <error> [template = <error>]
 // CHECK:STDOUT:   %B: <error> = bind_alias B, <error> [template = <error>]
