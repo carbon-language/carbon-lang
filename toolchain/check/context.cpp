@@ -48,7 +48,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      pattern_block_stack_(this),
+      pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_,
                                 pattern_node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
@@ -83,6 +83,7 @@ auto Context::VerifyOnFinish() -> void {
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
+  pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
   CARBON_CHECK(pattern_node_stack_.empty());
 }
@@ -152,8 +153,8 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
 
 auto Context::AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  pattern_block_stack_.AddInst(inst_id);
+  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+  pattern_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
@@ -1139,6 +1140,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
   node_stack_.PrintForStackDump(formatter, Indent, output);
   inst_block_stack_.PrintForStackDump(formatter, Indent, output);
+  pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
   param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
   args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
 }

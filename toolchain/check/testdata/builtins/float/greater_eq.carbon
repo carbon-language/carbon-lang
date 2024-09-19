@@ -85,8 +85,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GreaterEq.decl: %GreaterEq.type = fn_decl @GreaterEq [template = constants.%GreaterEq] {
-// CHECK:STDOUT:     %.loc2_14: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_22: f64 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc2: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc2: f64 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_17.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_17: init type = call constants.%Float(%.loc2_17.1) [template = f64]
@@ -106,7 +106,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @GreaterEq.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
-// CHECK:STDOUT:     %.loc3_11: f64 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc3: f64 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%Float(%.loc3_14.1) [template = f64]
@@ -123,8 +123,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {} {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc8_6: %True = binding_pattern true_
-// CHECK:STDOUT:     %.loc8_19: %False = binding_pattern false_
+// CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
+// CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
 // CHECK:STDOUT:     %param.loc8_6: %True = param
@@ -134,8 +134,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @F.%false_: %False = bind_name false_, %param.loc8_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
-// CHECK:STDOUT:     %.loc16_16: f64 = binding_pattern a
-// CHECK:STDOUT:     %.loc16_24: f64 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc16: f64 = binding_pattern a
+// CHECK:STDOUT:     %b.patt.loc16: f64 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%Float(%.loc16_19.1) [template = f64]

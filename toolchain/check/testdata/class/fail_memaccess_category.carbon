@@ -80,11 +80,11 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %.loc19_6: %.6 = binding_pattern s
-// CHECK:STDOUT:     %.loc19_18: %B = binding_pattern b
+// CHECK:STDOUT:     %s.patt: %.6 = binding_pattern s
+// CHECK:STDOUT:     %b.patt: %B = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.6]
+// CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.6]
 // CHECK:STDOUT:     %param.loc19_6: %.6 = param
 // CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %param.loc19_6
 // CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
@@ -95,8 +95,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %.loc12_13: %.1 = binding_pattern self
-// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %.loc12_13
+// CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
+// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]

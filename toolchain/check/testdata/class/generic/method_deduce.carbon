@@ -83,13 +83,13 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %.loc14: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc14: type = param
 // CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param.loc14 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [template = constants.%CallGenericMethod] {
-// CHECK:STDOUT:     %.loc19_22: %Class.3 = binding_pattern c
+// CHECK:STDOUT:     %c.patt.loc19: %Class.3 = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc19: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %A.ref.loc19_31: type = name_ref A, %A.decl [template = constants.%A]
@@ -105,7 +105,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     @CallGenericMethod.%return: ref %.5 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.decl: %CallGenericMethodWithNonDeducedParam.type = fn_decl @CallGenericMethodWithNonDeducedParam [template = constants.%CallGenericMethodWithNonDeducedParam] {
-// CHECK:STDOUT:     %.loc23_41: %Class.3 = binding_pattern c
+// CHECK:STDOUT:     %c.patt.loc23: %Class.3 = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc23: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %A.ref.loc23_50: type = name_ref A, %A.decl [template = constants.%A]
@@ -143,7 +143,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = %Get (constants.%Get.1)] {
-// CHECK:STDOUT:       %.loc15_10: type = symbolic_binding_pattern U 1
+// CHECK:STDOUT:       %U.patt.loc15: type = symbolic_binding_pattern U 1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %param.loc15: type = param
 // CHECK:STDOUT:       %U.loc15: type = bind_symbolic_name U 1, %param.loc15 [symbolic = @Get.%U.1 (constants.%U)]
@@ -154,8 +154,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %return.var.loc15: ref @Get.%.1 (%.4) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetNoDeduce.decl: @Class.%GetNoDeduce.type (%GetNoDeduce.type.1) = fn_decl @GetNoDeduce [symbolic = %GetNoDeduce (constants.%GetNoDeduce.1)] {
-// CHECK:STDOUT:       %.loc16_18: %T = binding_pattern x
-// CHECK:STDOUT:       %.loc16_24: type = symbolic_binding_pattern U 1
+// CHECK:STDOUT:       %x.patt: @GetNoDeduce.%T (%T) = binding_pattern x
+// CHECK:STDOUT:       %U.patt.loc16: type = symbolic_binding_pattern U 1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc16_21: type = name_ref T, file.%T [symbolic = @GetNoDeduce.%T (constants.%T)]
 // CHECK:STDOUT:       %param.loc16_18: @GetNoDeduce.%T (%T) = param

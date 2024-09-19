@@ -70,17 +70,17 @@ fn Initializing() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [template = constants.%Value] {
-// CHECK:STDOUT:     %.loc17: %X = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %X = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %param.loc17: %X = param
 // CHECK:STDOUT:     @Value.%n: %X = bind_name n, %param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
-// CHECK:STDOUT:     %.loc21_14: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.4]
+// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.4]
 // CHECK:STDOUT:     %param.loc21: %.4 = param
 // CHECK:STDOUT:     @Reference.%p: %.4 = bind_name p, %param.loc21
 // CHECK:STDOUT:   }

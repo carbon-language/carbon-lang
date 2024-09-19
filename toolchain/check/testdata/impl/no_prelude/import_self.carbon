@@ -52,8 +52,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
-// CHECK:STDOUT:     %.loc5_9: %Self = binding_pattern self
-// CHECK:STDOUT:     %.loc5_21: %Self = binding_pattern other
+// CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_15: %.1 = name_ref Self, %Self [symbolic = @Op.%Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = @Op.%Self (constants.%Self)]
@@ -126,8 +126,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc10_6: %.1 = binding_pattern x
-// CHECK:STDOUT:     %.loc10_13: %.1 = binding_pattern y
+// CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
+// CHECK:STDOUT:     %y.patt: %.1 = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
@@ -152,8 +152,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.1 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
-// CHECK:STDOUT:     %.loc7_9: %.1 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_21: %.1 = binding_pattern other
+// CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
+// CHECK:STDOUT:     %other.patt: %.1 = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %param.loc7_9: %.1 = param

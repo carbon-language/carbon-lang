@@ -46,7 +46,7 @@ fn G(a: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc11_6: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc11: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
@@ -55,7 +55,7 @@ fn G(a: i32);
 // CHECK:STDOUT:     @F.%a: i32 = bind_name a, %param.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc13_6: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc13: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_9.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]

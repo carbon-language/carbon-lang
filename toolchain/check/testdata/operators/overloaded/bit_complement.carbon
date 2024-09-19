@@ -77,7 +77,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
-// CHECK:STDOUT:     %.loc23: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -96,7 +96,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
-// CHECK:STDOUT:     %.loc18: %C = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param

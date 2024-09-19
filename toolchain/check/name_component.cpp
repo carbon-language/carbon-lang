@@ -57,6 +57,7 @@ auto PopNameComponent(Context& context) -> NameComponent {
       .params_loc_id = params_loc_id,
       .params_id = params_id.value_or(SemIR::InstBlockId::Invalid),
       .param_patterns_id = param_patterns_id,
+      .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
 

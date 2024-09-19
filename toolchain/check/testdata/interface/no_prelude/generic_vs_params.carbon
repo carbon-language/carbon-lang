@@ -94,13 +94,13 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %NotGenericNoParams.decl: type = interface_decl @NotGenericNoParams [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = interface_decl @NotGenericButParams [template = constants.%NotGenericButParams] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = interface_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
-// CHECK:STDOUT:     %.loc6: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc6: type = param
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param.loc6 [symbolic = @GenericAndParams.1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %.loc8: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc8: type = param
 // CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8 [symbolic = @C.%T (constants.%T)]
@@ -252,7 +252,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%.5] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = interface_decl @GenericAndParams.2 [template = constants.%GenericAndParams.2] {
-// CHECK:STDOUT:       %.loc10: type = symbolic_binding_pattern U 1
+// CHECK:STDOUT:       %U.patt: type = symbolic_binding_pattern U 1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %param: type = param
 // CHECK:STDOUT:       %U: type = bind_symbolic_name U 1, %param [symbolic = @GenericAndParams.2.%U (constants.%U)]
@@ -336,7 +336,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %.loc8: type = binding_pattern T
+// CHECK:STDOUT:     %T.patt: type = binding_pattern T
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_name T, %param
@@ -366,7 +366,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %.loc7: type = binding_pattern T
+// CHECK:STDOUT:     %T.patt: type = binding_pattern T
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_name T, %param

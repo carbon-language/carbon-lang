@@ -118,15 +118,15 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {
-// CHECK:STDOUT:     %.loc22: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc22: %C = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc22: %C = param
 // CHECK:STDOUT:     @TestIncNonRef.%a: %C = bind_name a, %param.loc22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
-// CHECK:STDOUT:     %.loc33_24: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc33_30: %C = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc33: %C = binding_pattern a
+// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc33_24: %C = param
@@ -153,8 +153,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
-// CHECK:STDOUT:     %.loc16_14: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc16_9.1: %.3 = addr_pattern %.loc16_14
+// CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc16_9.1: %.3 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.3]
@@ -171,9 +171,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
-// CHECK:STDOUT:     %.loc19_14: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc19_9.1: %.3 = addr_pattern %.loc19_14
-// CHECK:STDOUT:     %.loc19_24: %C = binding_pattern other
+// CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
+// CHECK:STDOUT:     %.loc19_9.1: %.3 = addr_pattern %self.patt
+// CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]

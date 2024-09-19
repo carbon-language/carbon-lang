@@ -70,10 +70,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc16_6: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16_14: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %param: %.4 = param
 // CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %param
 // CHECK:STDOUT:   }

@@ -58,8 +58,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc11_6: %.3 = binding_pattern arr
-// CHECK:STDOUT:     %.loc11_21: i32 = binding_pattern i
+// CHECK:STDOUT:     %arr.patt: %.3 = binding_pattern arr
+// CHECK:STDOUT:     %i.patt: i32 = binding_pattern i
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]

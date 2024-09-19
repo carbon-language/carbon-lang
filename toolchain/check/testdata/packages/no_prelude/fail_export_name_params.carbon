@@ -47,13 +47,13 @@ export C2(T:! type);
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [template = constants.%C1.1] {
-// CHECK:STDOUT:     %.loc4: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4 [symbolic = @C1.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [template = constants.%C2.1] {
-// CHECK:STDOUT:     %.loc5: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc5: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc5: type = param
 // CHECK:STDOUT:     %T.loc5: type = bind_symbolic_name T 0, %param.loc5 [symbolic = @C2.%T (constants.%T)]

@@ -91,9 +91,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %.loc39: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
 // CHECK:STDOUT:     %param.loc39: type = param
 // CHECK:STDOUT:     %T.loc39: type = bind_symbolic_name T 0, %param.loc39 [symbolic = @.1.%T (constants.%T)]
 // CHECK:STDOUT:   }

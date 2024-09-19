@@ -191,15 +191,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
-  SemIR::InstBlockId pattern_block_id = context.pattern_block_stack().Pop();
   auto [params_node, params_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
   if (params_id) {
     context.pattern_node_stack().Pop<SemIR::InstBlockId>(params_node);
   }
   auto decl_block_id = context.inst_block_stack().Pop();
-  SemIR::DeclId decl_id = context.sem_ir().decls().Add(
-      {.pattern_block_id = pattern_block_id, .decl_block_id = decl_block_id});
   context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
   // Convert the constraint expression to a type.
@@ -227,7 +224,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Does lookup in an impl file need to look for a prior impl declaration
   // in the api file?
   auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
-  SemIR::ImplDecl impl_decl = {.impl_id = impl_id, .decl_id = decl_id};
+  context.impls().Get(impl_id).pattern_block_id =
+      context.pattern_block_stack().Pop();
+  SemIR::ImplDecl impl_decl = {.impl_id = impl_id,
+                               .decl_block_id = decl_block_id};
   auto impl_decl_id = context.AddInst(node_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.

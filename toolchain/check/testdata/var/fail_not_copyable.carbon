@@ -61,7 +61,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc14: %X = binding_pattern x
+// CHECK:STDOUT:     %x.patt: %X = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %param: %X = param

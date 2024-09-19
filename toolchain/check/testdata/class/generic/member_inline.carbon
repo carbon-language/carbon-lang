@@ -56,7 +56,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %.loc11: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = @Class.%T (constants.%T)]
@@ -76,7 +76,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
-// CHECK:STDOUT:       %.loc12: %T = binding_pattern n
+// CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc12_11: type = name_ref T, file.%T [symbolic = @F.%T (constants.%T)]
 // CHECK:STDOUT:       %param.loc12: @F.%T (%T) = param
@@ -85,10 +85,10 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %return.var.loc12: ref @F.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
-// CHECK:STDOUT:       %.loc16_8: %Class.2 = binding_pattern self
+// CHECK:STDOUT:       %self.patt: @G.%Class (%Class.2) = binding_pattern self
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc16_14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16_14 [symbolic = @G.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16 [symbolic = @G.%Class (constants.%Class.2)]
 // CHECK:STDOUT:       %param.loc16: @G.%Class (%Class.2) = param
 // CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %param.loc16
 // CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, file.%T [symbolic = @G.%T (constants.%T)]

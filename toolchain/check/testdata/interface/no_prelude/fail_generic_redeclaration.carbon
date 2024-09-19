@@ -68,26 +68,26 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = interface_decl @.1 [template = constants.%.3] {
-// CHECK:STDOUT:     %.loc19: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc19: type = param
 // CHECK:STDOUT:     %T.loc19: type = bind_symbolic_name T 0, %param.loc19 [symbolic = @.1.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
-// CHECK:STDOUT:     %.loc21: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc21: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc21: type = param
 // CHECK:STDOUT:     %T.loc21: type = bind_symbolic_name T 0, %param.loc21 [symbolic = @Generic.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.5] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
-// CHECK:STDOUT:     %.loc31: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc31: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc31: type = param
 // CHECK:STDOUT:     %T.loc31: type = bind_symbolic_name T 0, %param.loc31 [symbolic = @DifferentParams.%T (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
-// CHECK:STDOUT:     %.loc38_27: %.2 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc38: %.2 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]

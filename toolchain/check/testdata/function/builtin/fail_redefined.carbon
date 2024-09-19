@@ -74,8 +74,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl.loc11: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %.loc11_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc11_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc19_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc19_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_9 [template = i32]
@@ -93,8 +93,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl.loc19: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %.loc19_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc19_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc19_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc19_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc19_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_9.1: type = value_of_initializer %int.make_type_32.loc19_9 [template = i32]
@@ -112,8 +112,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc21: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %.loc21_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc21_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc29_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc29_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_9.1: type = value_of_initializer %int.make_type_32.loc21_9 [template = i32]
@@ -131,8 +131,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %.loc29_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc29_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc29_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc29_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc29_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_9.1: type = value_of_initializer %int.make_type_32.loc29_9 [template = i32]
@@ -150,8 +150,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc31: %C.type = fn_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %.loc31_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc31_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc38_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc38_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc31_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_9.1: type = value_of_initializer %int.make_type_32.loc31_9 [template = i32]
@@ -169,8 +169,8 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.var.loc31: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc38: %C.type = fn_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %.loc38_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc38_14: i32 = binding_pattern m
+// CHECK:STDOUT:     %n.patt.loc38_6.2: i32 = binding_pattern n
+// CHECK:STDOUT:     %m.patt.loc38_14.2: i32 = binding_pattern m
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc38_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc38_9.1: type = value_of_initializer %int.make_type_32.loc38_9 [template = i32]

@@ -126,7 +126,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc20_12: %Class = binding_pattern self
+// CHECK:STDOUT:     @Class.%self.patt.loc20: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc20: %Class = param
@@ -137,7 +137,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
-// CHECK:STDOUT:     %.loc24_9: %Class = binding_pattern c
+// CHECK:STDOUT:     %c.patt.loc24: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc24: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc24: %Class = param
@@ -148,7 +148,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallAlias.decl: %CallAlias.type = fn_decl @CallAlias [template = constants.%CallAlias] {
-// CHECK:STDOUT:     %.loc30_14: %Class = binding_pattern c
+// CHECK:STDOUT:     %c.patt.loc30: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc30: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc30: %Class = param
@@ -171,7 +171,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     @CallWithAddr.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFThroughPointer.decl: %CallFThroughPointer.type = fn_decl @CallFThroughPointer [template = constants.%CallFThroughPointer] {
-// CHECK:STDOUT:     %.loc43_24: %.2 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc43: %.2 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc43: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc43_32: type = ptr_type %Class [template = constants.%.2]
@@ -183,7 +183,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     @CallFThroughPointer.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGThroughPointer.decl: %CallGThroughPointer.type = fn_decl @CallGThroughPointer [template = constants.%CallGThroughPointer] {
-// CHECK:STDOUT:     %.loc47_24: %.2 = binding_pattern p
+// CHECK:STDOUT:     %p.patt.loc47: %.2 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc47_32: type = ptr_type %Class [template = constants.%.2]
@@ -214,7 +214,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc12_8: %Class = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc20: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc12: %Class = param
@@ -225,8 +225,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc13_13: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc13_8.1: %.2 = addr_pattern %.loc13_13
+// CHECK:STDOUT:     %self.patt.loc13: %.2 = binding_pattern self
+// CHECK:STDOUT:     %.loc13_8.1: %.2 = addr_pattern %self.patt.loc13
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]

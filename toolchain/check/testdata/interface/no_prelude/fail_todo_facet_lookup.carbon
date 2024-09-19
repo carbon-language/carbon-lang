@@ -50,15 +50,15 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %CallStatic.decl: %CallStatic.type = fn_decl @CallStatic [template = constants.%CallStatic] {
-// CHECK:STDOUT:     %.loc13: %.1 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc13: %.1 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref.loc13: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param.loc13: %.1 = param
 // CHECK:STDOUT:     @CallStatic.%T.loc13: %.1 = bind_symbolic_name T 0, %param.loc13 [symbolic = @CallStatic.%T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
-// CHECK:STDOUT:     %.loc21_14: %.1 = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %.loc21_29: %T = binding_pattern x
+// CHECK:STDOUT:     %T.patt.loc21: %.1 = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %x.patt: @CallFacet.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param.loc21_14: %.1 = param

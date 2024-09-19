@@ -43,7 +43,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc13_6: %.1 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_14: type = ptr_type %Class [template = constants.%.1]

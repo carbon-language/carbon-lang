@@ -71,14 +71,14 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %.loc2: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc2: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc2: type = param
 // CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %param.loc2 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
-// CHECK:STDOUT:     %.loc6_26: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %.loc6_36: %T = binding_pattern x
+// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc6_26: type = param
 // CHECK:STDOUT:     @InitFromStructGeneric.%T.loc6: type = bind_symbolic_name T 0, %param.loc6_26 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
@@ -202,7 +202,7 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %.loc4: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = @Class.%T (constants.%T)]

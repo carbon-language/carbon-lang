@@ -99,6 +99,7 @@ class DeclNameStack {
           .generic_id = SemIR::GenericId::Invalid,
           .first_param_node_id = name.first_param_node_id,
           .last_param_node_id = name.last_param_node_id,
+          .pattern_block_id = name.pattern_block_id,
           .implicit_param_refs_id = name.implicit_params_id,
           .param_refs_id = name.params_id,
           .is_extern = is_extern,

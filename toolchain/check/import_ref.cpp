@@ -845,6 +845,7 @@ class ImportRefResolver {
         .generic_id = MakeIncompleteGeneric(decl_id, import_base.generic_id),
         .first_param_node_id = Parse::NodeId::Invalid,
         .last_param_node_id = Parse::NodeId::Invalid,
+        .pattern_block_id = SemIR::InstBlockId::Invalid,
         .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty
                                       : SemIR::InstBlockId::Invalid,
@@ -1172,13 +1173,9 @@ class ImportRefResolver {
   // type.
   auto MakeIncompleteClass(const SemIR::Class& import_class)
       -> std::pair<SemIR::ClassId, SemIR::ConstantId> {
-    SemIR::DeclId decl_id = context_.sem_ir().decls().Add({
-        .pattern_block_id = SemIR::InstBlockId::Empty,
-        .decl_block_id = SemIR::InstBlockId::Empty,
-    });
     SemIR::ClassDecl class_decl = {.type_id = SemIR::TypeId::TypeType,
                                    .class_id = SemIR::ClassId::Invalid,
-                                   .decl_id = decl_id};
+                                   .decl_block_id = SemIR::InstBlockId::Empty};
     auto class_decl_id =
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
             AddImportIRInst(import_class.latest_decl_id()), class_decl));
@@ -1366,14 +1363,10 @@ class ImportRefResolver {
   auto MakeFunctionDecl(const SemIR::Function& import_function,
                         SemIR::SpecificId specific_id)
       -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
-    SemIR::DeclId decl_id = context_.sem_ir().decls().Add({
-        .pattern_block_id = SemIR::InstBlockId::Empty,
-        .decl_block_id = SemIR::InstBlockId::Empty,
-    });
     SemIR::FunctionDecl function_decl = {
         .type_id = SemIR::TypeId::Invalid,
         .function_id = SemIR::FunctionId::Invalid,
-        .decl_id = decl_id};
+        .decl_block_id = SemIR::InstBlockId::Empty};
     auto function_decl_id =
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
             AddImportIRInst(import_function.latest_decl_id()), function_decl));
@@ -1539,14 +1532,10 @@ class ImportRefResolver {
   // importing the interface definition in order to resolve cycles.
   auto MakeInterfaceDecl(const SemIR::Interface& import_interface)
       -> std::pair<SemIR::InterfaceId, SemIR::ConstantId> {
-    SemIR::DeclId decl_id = context_.sem_ir().decls().Add({
-        .pattern_block_id = SemIR::InstBlockId::Empty,
-        .decl_block_id = SemIR::InstBlockId::Empty,
-    });
     SemIR::InterfaceDecl interface_decl = {
         .type_id = SemIR::TypeId::TypeType,
         .interface_id = SemIR::InterfaceId::Invalid,
-        .decl_id = decl_id};
+        .decl_block_id = SemIR::InstBlockId::Empty};
     auto interface_decl_id =
         context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst(
             AddImportIRInst(import_interface.first_owning_decl_id),

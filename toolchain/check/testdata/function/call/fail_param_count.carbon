@@ -107,7 +107,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [template = constants.%Run0] {} {}
 // CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [template = constants.%Run1] {
-// CHECK:STDOUT:     %.loc12_9: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc12: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
@@ -116,8 +116,8 @@ fn Main() {
 // CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
-// CHECK:STDOUT:     %.loc13_9: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc13_17: i32 = binding_pattern b
+// CHECK:STDOUT:     %a.patt.loc13: i32 = binding_pattern a
+// CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]

@@ -102,14 +102,14 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.1 = fn_decl @Abstract.1 [template = constants.%Abstract.1] {
-// CHECK:STDOUT:     %.loc20: %FinalClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc20: %FinalClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %param.loc20: %FinalClass = param
 // CHECK:STDOUT:     %self.loc20: %FinalClass = bind_name self, %param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: %Virtual.type = fn_decl @Virtual [template = constants.%Virtual] {
-// CHECK:STDOUT:     %.loc29: %FinalClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc29: %FinalClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc29: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %param.loc29: %FinalClass = param
@@ -124,14 +124,14 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [template = constants.%Default] {
-// CHECK:STDOUT:     %.loc38: %AbstractClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc38: %AbstractClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc38: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %param.loc38: %AbstractClass = param
 // CHECK:STDOUT:     %self.loc38: %AbstractClass = bind_name self, %param.loc38
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {
-// CHECK:STDOUT:     %.loc44: %AbstractClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc44: %AbstractClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc44: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %param.loc44: %AbstractClass = param
@@ -146,7 +146,7 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.2 = fn_decl @Abstract.2 [template = constants.%Abstract.2] {
-// CHECK:STDOUT:     %.loc55: %BaseClass = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %BaseClass = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT:     %param: %BaseClass = param

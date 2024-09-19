@@ -62,7 +62,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc18_12: %Class = binding_pattern self
+// CHECK:STDOUT:     @Class.%self.patt.loc18: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc18: %Class = param
@@ -73,8 +73,8 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc22_17: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc22_12.1: %.2 = addr_pattern %.loc22_17
+// CHECK:STDOUT:     @Class.%self.patt.loc22: %.2 = binding_pattern self
+// CHECK:STDOUT:     @Class.%.loc22: %.2 = addr_pattern @Class.%self.patt.loc22
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc22_27: type = ptr_type %Class [template = constants.%.2]
@@ -90,7 +90,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc12_8: %Class = binding_pattern self
+// CHECK:STDOUT:     %self.patt.loc18: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc12: %Class = param
@@ -101,14 +101,14 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc13_13: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc13_8.1: %.2 = addr_pattern %.loc13_13
+// CHECK:STDOUT:     %self.patt.loc22: %.2 = binding_pattern self
+// CHECK:STDOUT:     %.loc22: %.2 = addr_pattern %self.patt.loc22
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]
 // CHECK:STDOUT:     %param.loc13: %.2 = param
 // CHECK:STDOUT:     %self.loc13_13.2: %.2 = bind_name self, %param.loc13
-// CHECK:STDOUT:     %.loc13_8.2: %.2 = addr_param %self.loc13_13.2
+// CHECK:STDOUT:     %.loc13_8: %.2 = addr_param %self.loc13_13.2
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_31.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_31.2: type = converted %int.make_type_32.loc13, %.loc13_31.1 [template = i32]

@@ -74,13 +74,13 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %.loc11: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc11: type = param
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param.loc11 [symbolic = @Class.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %.loc15_6: %Class.3 = binding_pattern c
+// CHECK:STDOUT:     %c.patt.loc15: %Class.3 = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc15: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
@@ -97,8 +97,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %.loc19_6: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %.loc19_16: %Class.2 = binding_pattern c
+// CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %c.patt.loc19: @G.%Class (%Class.2) = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc19_6: type = param
 // CHECK:STDOUT:     @G.%T.loc19: type = bind_symbolic_name T 0, %param.loc19_6 [symbolic = @G.%T.1 (constants.%T)]
@@ -113,8 +113,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     @G.%return: ref @G.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
-// CHECK:STDOUT:     %.loc23_6: type = symbolic_binding_pattern U 0
-// CHECK:STDOUT:     %.loc23_16: %Class.4 = binding_pattern c
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 0
+// CHECK:STDOUT:     %c.patt.loc23: @H.%Class (%Class.4) = binding_pattern c
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc23_6: type = param
 // CHECK:STDOUT:     @H.%U.loc23: type = bind_symbolic_name U 0, %param.loc23_6 [symbolic = @H.%U.1 (constants.%U)]
