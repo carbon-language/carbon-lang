@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Rule for symlinking an entire filegroup, preserving its structure."""
+"""Rules for symlinking in ways that assist install_filegroups."""
 
 def _symlink_filegroup_impl(ctx):
     prefix = ctx.attr.out_prefix
@@ -28,9 +28,42 @@ def _symlink_filegroup_impl(ctx):
     ]
 
 symlink_filegroup = rule(
+    doc = "Symlinks an entire filegroup, preserving its structure.",
     implementation = _symlink_filegroup_impl,
     attrs = {
         "out_prefix": attr.string(mandatory = True),
         "srcs": attr.label_list(mandatory = True),
+    },
+)
+
+def _symlink_file_impl(ctx):
+    if ctx.attr.symlink_label:
+        out = ctx.actions.declare_file(ctx.label.name)
+        ctx.actions.symlink(
+            output = out,
+            target_file = ctx.file.symlink_label,
+        )
+    elif ctx.attr.symlink_relative:
+        out = ctx.actions.declare_symlink(ctx.label.name)
+        ctx.actions.symlink(
+            output = out,
+            target_path = ctx.attr.symlink_relative,
+        )
+    else:
+        fail("Missing symlink target")
+
+    return [
+        DefaultInfo(
+            files = depset(direct = [out]),
+            default_runfiles = ctx.runfiles(files = [out]),
+        ),
+    ]
+
+symlink_file = rule(
+    doc = "Symlinks a single file, with support for multiple approaches.",
+    implementation = _symlink_file_impl,
+    attrs = {
+        "symlink_label": attr.label(allow_single_file = True),
+        "symlink_relative": attr.string(),
     },
 )
