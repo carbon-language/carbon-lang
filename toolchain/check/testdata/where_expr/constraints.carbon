@@ -34,7 +34,7 @@ library "[[@TEST_NAME]]";
 import library "state_constraints";
 
 // TODO: Should fail since `2` can't be converted to the type of `I.Member`,
-// but constraints are not type checked.
+// but constraints are not yet type checked.
 fn TypeMismatch(X:! I where .Member = 2);
 
 // --- fail_todo_enforce_constraint.carbon
@@ -47,7 +47,7 @@ import library "state_constraints";
 class C {}
 impl C as J {}
 
-// TODO: Should eventually report that `C` does not meeet the constraint.
+// TODO: Should report that `C` does not meeet the constraint.
 fn DoesNotImplI() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+13]]:3: error: cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   Impls(C);
@@ -67,7 +67,7 @@ fn DoesNotImplI() {
 
 fn EmptyStruct(Y:! J where .Self == {});
 
-// TODO: Should eventually report that `C` does not meeet the constraint.
+// TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   EmptyStruct(C);
