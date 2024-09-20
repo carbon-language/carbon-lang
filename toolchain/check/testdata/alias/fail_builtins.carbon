@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_builtins.carbon
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference
 // CHECK:STDERR: alias a = i32;
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 alias a = i32;
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference
 // CHECK:STDERR: alias b = bool;
 // CHECK:STDERR:           ^~~~
 alias b = bool;

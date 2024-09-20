@@ -12,7 +12,7 @@ interface Simple {
   fn F();
 }
 
-// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: ERROR: `impl as` can only be used in a class.
+// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: error: `impl as` can only be used in a class
 // CHECK:STDERR: impl as Simple {
 // CHECK:STDERR:      ^~
 impl as Simple {

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 var c: [i32; 2] = (42, 42);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface `Negate` in type `i32` that does not implement that interface.
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: error: cannot access member of interface `Negate` in type `i32` that does not implement that interface
 // CHECK:STDERR: var d: i32 = c[-10];
 // CHECK:STDERR:                ^~~
 var d: i32 = c[-10];

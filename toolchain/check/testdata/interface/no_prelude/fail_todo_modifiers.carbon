@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_todo_modifiers.carbon
 
 interface Modifiers {
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   final fn Final() { }
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   final fn Final() { }
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   default fn Default() { }
   // CHECK:STDERR:   ^~~~~~~
   default fn Default() { }

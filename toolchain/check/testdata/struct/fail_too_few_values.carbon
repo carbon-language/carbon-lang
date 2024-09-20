@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_too_few_values.carbon
 
-// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:29: ERROR: Cannot initialize struct with 2 field(s) from struct with 1 field(s).
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:29: error: cannot initialize struct with 2 field(s) from struct with 1 field(s).
 // CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDERR:                             ^~~~~~~~
 var x: {.a: i32, .b: i32} = {.a = 1};

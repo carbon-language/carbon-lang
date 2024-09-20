@@ -10,7 +10,7 @@
 
 // --- fail_runtime_binding.carbon
 
-// CHECK:STDERR: fail_runtime_binding.carbon:[[@LINE+4]]:5: ERROR: Expected name in binding pattern.
+// CHECK:STDERR: fail_runtime_binding.carbon:[[@LINE+4]]:5: error: expected name in binding pattern
 // CHECK:STDERR: let : i32 = 4;
 // CHECK:STDERR:     ^
 // CHECK:STDERR:
@@ -18,7 +18,7 @@ let : i32 = 4;
 
 // --- fail_complietime_binding.carbon
 
-// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+3]]:5: ERROR: Expected name in binding pattern.
+// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+3]]:5: error: expected name in binding pattern
 // CHECK:STDERR: let :! bool = true;
 // CHECK:STDERR:     ^~
 let :! bool = true;

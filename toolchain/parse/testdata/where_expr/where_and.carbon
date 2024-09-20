@@ -16,7 +16,7 @@ fn TwoAnd(Y:! I where .J impls K and .L == .M and .N = bool);
 
 // --- fail_and_prefix.carbon
 
-// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+4]]:29: ERROR: Expected expression.
+// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+4]]:29: error: expected expression
 // CHECK:STDERR: fn AndPrefix(T:! type where and .V == .W);
 // CHECK:STDERR:                             ^~~
 // CHECK:STDERR:
@@ -24,7 +24,7 @@ fn AndPrefix(T:! type where and .V == .W);
 
 // --- fail_and_suffix.carbon
 
-// CHECK:STDERR: fail_and_suffix.carbon:[[@LINE+4]]:40: ERROR: Expected expression.
+// CHECK:STDERR: fail_and_suffix.carbon:[[@LINE+4]]:40: error: expected expression
 // CHECK:STDERR: fn AndSuffix(Y:! I where .J impls K and);
 // CHECK:STDERR:                                        ^
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn AndSuffix(Y:! I where .J impls K and);
 
 // --- fail_and_early.carbon
 
-// CHECK:STDERR: fail_and_early.carbon:[[@LINE+3]]:28: ERROR: Requirement should use `impls`, `=`, or `==` operator.
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+3]]:28: error: requirement should use `impls`, `=`, or `==` operator
 // CHECK:STDERR: fn AndEarly(Z:! L where .M and N);
 // CHECK:STDERR:                            ^~~
 fn AndEarly(Z:! L where .M and N);

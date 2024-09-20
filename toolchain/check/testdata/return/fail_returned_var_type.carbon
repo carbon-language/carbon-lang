@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
 
 fn Mismatch() -> i32 {
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: ERROR: Type `f64` of `returned var` does not match return type of enclosing function.
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: error: type `f64` of `returned var` does not match return type of enclosing function
   // CHECK:STDERR:   returned var v: f64 = 0.0;
   // CHECK:STDERR:                   ^~~
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: Return type of function is `i32`.
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: return type of function is `i32`
   // CHECK:STDERR: fn Mismatch() -> i32 {
   // CHECK:STDERR:               ^~~~~~
   returned var v: f64 = 0.0;

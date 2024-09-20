@@ -17,7 +17,7 @@ auto HandleBaseAfterIntroducer(Context& context) -> void {
     // based on whether we're in a class, whether we have an `extend`
     // modifier, and the following tokens.
     CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
-                      "`class` or `:` expected after `base`.");
+                      "`class` or `:` expected after `base`");
     context.emitter().Emit(*context.position(), ExpectedAfterBase);
     context.RecoverFromDeclError(state, NodeKind::BaseDecl,
                                  /*skip_past_likely_end=*/true);

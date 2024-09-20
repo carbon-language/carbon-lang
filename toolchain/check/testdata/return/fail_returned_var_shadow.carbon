@@ -11,10 +11,10 @@
 fn SameScope() -> i32 {
   if (true) {
     returned var v: i32 = 0;
-    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:18: ERROR: Cannot declare a `returned var` in the scope of another `returned var`.
+    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:18: error: cannot declare a `returned var` in the scope of another `returned var`
     // CHECK:STDERR:     returned var w: i32 = 1;
     // CHECK:STDERR:                  ^
-    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: `returned var` was declared here.
+    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: `returned var` was declared here
     // CHECK:STDERR:     returned var v: i32 = 0;
     // CHECK:STDERR:                  ^
     // CHECK:STDERR:
@@ -27,10 +27,10 @@ fn DifferentScopes() -> i32 {
   if (true) {
     returned var v: i32 = 0;
     if (true) {
-      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+6]]:20: ERROR: Cannot declare a `returned var` in the scope of another `returned var`.
+      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+6]]:20: error: cannot declare a `returned var` in the scope of another `returned var`
       // CHECK:STDERR:       returned var w: i32 = 1;
       // CHECK:STDERR:                    ^
-      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: `returned var` was declared here.
+      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: `returned var` was declared here
       // CHECK:STDERR:     returned var v: i32 = 0;
       // CHECK:STDERR:                  ^
       returned var w: i32 = 1;

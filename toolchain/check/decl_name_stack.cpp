@@ -140,8 +140,8 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
             // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
                 QualifiedDeclOutsideScopeEntity, Error,
-                "Out-of-line declaration requires a declaration in "
-                "scoped entity.");
+                "out-of-line declaration requires a declaration in "
+                "scoped entity");
             context_->emitter().Emit(name_context.loc_id,
                                      QualifiedDeclOutsideScopeEntity);
           }
@@ -312,7 +312,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                                                         SemIR::ClassId class_id)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
-                    "Cannot declare a member of incomplete class `{0}`.",
+                    "cannot declare a member of incomplete class `{0}`",
                     SemIR::TypeId);
   auto builder =
       context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,
@@ -327,7 +327,7 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
-                    "Cannot declare a member of undefined interface `{0}`.",
+                    "cannot declare a member of undefined interface `{0}`",
                     std::string);
   auto builder = context.emitter().Build(
       loc, QualifiedDeclInUndefinedInterfaceScope,
@@ -345,9 +345,9 @@ static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
                                                    SemIRLoc import_loc)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
-                    "Imported packages cannot be used for declarations.");
+                    "imported packages cannot be used for declarations");
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
-                    "Package imported here.");
+                    "package imported here");
   context.emitter()
       .Build(use_loc, QualifiedDeclOutsidePackage)
       .Note(import_loc, QualifiedDeclOutsidePackageSource)
@@ -360,10 +360,10 @@ static auto DiagnoseQualifiedDeclInNonScope(Context& context, SemIRLoc use_loc,
                                             SemIRLoc non_scope_entity_loc)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
-                    "Name qualifiers are only allowed for entities that "
-                    "provide a scope.");
+                    "name qualifiers are only allowed for entities that "
+                    "provide a scope");
   CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
-                    "Referenced non-scope entity declared here.");
+                    "referenced non-scope entity declared here");
   context.emitter()
       .Build(use_loc, QualifiedNameInNonScope)
       .Note(non_scope_entity_loc, QualifiedNameNonScopeEntity)

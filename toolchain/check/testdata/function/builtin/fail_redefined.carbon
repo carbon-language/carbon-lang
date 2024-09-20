@@ -9,30 +9,30 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/builtin/fail_redefined.carbon
 
 fn A(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `fn A`.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `fn A`
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn A(n: i32, m: i32) -> i32 { return n; }
 
 fn B(n: i32, m: i32) -> i32 { return n; }
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `fn B`.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `fn B`
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn B(n: i32, m: i32) -> i32 = "int.sadd";
 
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn C`.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `fn C`
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn C(n: i32, m: i32) -> i32 = "int.sadd";

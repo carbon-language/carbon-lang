@@ -49,7 +49,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:9: ERROR: Name `Def` not found.
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:9: error: name `Def` not found
 // CHECK:STDERR: fn F(i: Def) {}
 // CHECK:STDERR:         ^~~
 // CHECK:STDERR:
@@ -61,7 +61,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: ERROR: Name `Def` not found.
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: name `Def` not found
 // CHECK:STDERR: fn F(i: Test.Def) {}
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
@@ -79,7 +79,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:9: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:9: error: name `ForwardWithDef` not found
 // CHECK:STDERR: fn F(i: ForwardWithDef) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -91,7 +91,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: ERROR: Name `ForwardWithDef` not found.
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: name `ForwardWithDef` not found
 // CHECK:STDERR: fn F(i: Test.ForwardWithDef) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -101,7 +101,7 @@ fn F(i: Test.ForwardWithDef) {}
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:9: ERROR: Name `Forward` not found.
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:9: error: name `Forward` not found
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -115,7 +115,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: ERROR: Name `Forward` not found.
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -127,7 +127,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: ERROR: Name `Forward` not found.
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: name `Forward` not found
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 fn F(i: Forward*) {}

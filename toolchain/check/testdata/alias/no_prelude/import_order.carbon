@@ -37,6 +37,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.v: %.1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,6 +63,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc4_19.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_19.2: type = converted %.loc4_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_16: %.2 = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc4_22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -74,20 +76,21 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.v: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %.1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+16, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//a, inst+18, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+16, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+18, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//a, inst+20, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.4 = import_ref Main//a, inst+7, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: %.5 = import_ref Main//a, inst+7, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -134,7 +137,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc7_25: init %C = converted %.loc7_24.1, %.loc7_24.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d_val.var, %.loc7_25
 // CHECK:STDOUT:   %d_val.ref: ref %C = name_ref d_val, file.%d_val
-// CHECK:STDOUT:   %v.ref.loc8: %.4 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc8: %.5 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_27.1: ref %.1 = class_element_access %d_val.ref, element0
 // CHECK:STDOUT:   %.loc8_29.1: %.2 = struct_literal (%.loc8_27.1)
 // CHECK:STDOUT:   %.loc8_29.2: ref %.1 = class_element_access file.%c_val.var, element0
@@ -144,7 +147,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc8_30: init %C = converted %.loc8_29.1, %.loc8_29.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_30
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %v.ref.loc9: %.4 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc9: %.5 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc9_27.1: ref %.1 = class_element_access %c_val.ref, element0
 // CHECK:STDOUT:   %.loc9_29.1: %.2 = struct_literal (%.loc9_27.1)
 // CHECK:STDOUT:   %.loc9_29.2: ref %.1 = class_element_access file.%b_val.var, element0
@@ -154,7 +157,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc9_30: init %C = converted %.loc9_29.1, %.loc9_29.4 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc9_30
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %v.ref.loc10: %.4 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc10: %.5 = name_ref v, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_27.1: ref %.1 = class_element_access %b_val.ref, element0
 // CHECK:STDOUT:   %.loc10_29.1: %.2 = struct_literal (%.loc10_27.1)
 // CHECK:STDOUT:   %.loc10_29.2: ref %.1 = class_element_access file.%a_val.var, element0

@@ -10,7 +10,7 @@
 
 // TODO: This creates an array temporary, which we don't yet support evaluating.
 
-// CHECK:STDERR: fail_aggregate.carbon:[[@LINE+3]]:43: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_aggregate.carbon:[[@LINE+3]]:43: error: array bound is not a constant
 // CHECK:STDERR: var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDERR:                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];

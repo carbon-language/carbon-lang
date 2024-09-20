@@ -38,10 +38,10 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,10 +52,10 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F();
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -66,18 +66,18 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` must match use of `extern`.
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: Previously declared here.
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -88,10 +88,10 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F() {}
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -105,7 +105,7 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: `extern` entities must have a declaration in the API file.
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 extern fn F() {}

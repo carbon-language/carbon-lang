@@ -11,11 +11,11 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: ERROR: Cannot access member of interface `Add` in type `i32` that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: error: cannot access member of interface `Add` in type `i32` that does not implement that interface
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Add` in type `<error>` that does not implement that interface.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Add` in type `<error>` that does not implement that interface
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~~~~~~
   return 12 + 3.4 + 12;

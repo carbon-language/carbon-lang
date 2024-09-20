@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `String` to `bool`.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `String` to `bool`
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: Type `String` does not implement interface `ImplicitAs`.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: type `String` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}

@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var x: ();
-  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `HandleDesignatorExpr`.
+  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+4]]:10: error: semantics TODO: `HandleDesignatorExpr`
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~
   // CHECK:STDERR:
@@ -26,7 +26,7 @@ fn Foo() -> () {
 library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
-  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+4]]:10: ERROR: Semantics TODO: `HandleDesignatorExpr`.
+  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+4]]:10: error: semantics TODO: `HandleDesignatorExpr`
   // CHECK:STDERR:   return .undef;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -38,7 +38,7 @@ fn Bar() -> () {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:28: ERROR: Semantics TODO: `HandleSelfTypeName`.
+  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:28: error: semantics TODO: `HandleSelfTypeName`
   // CHECK:STDERR:   fn F() -> Self { return .Self; }
   // CHECK:STDERR:                            ^~~~
   // CHECK:STDERR:
@@ -50,7 +50,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleSelfTypeName`.
+  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:14: error: semantics TODO: `HandleSelfTypeName`
   // CHECK:STDERR:   fn G() -> .Self { return Self; }
   // CHECK:STDERR:              ^~~~
   fn G() -> .Self { return Self; }
@@ -92,7 +92,8 @@ class D {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
@@ -102,6 +103,7 @@ class D {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

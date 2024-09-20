@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/index/fail_malformed_expr.carbon
 
-// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: ERROR: Unexpected tokens before `]`.
+// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: error: unexpected tokens before `]`
 // CHECK:STDERR: var v: i32 = t[0,];
 // CHECK:STDERR:                 ^
 var v: i32 = t[0,];

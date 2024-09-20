@@ -51,10 +51,11 @@ struct ClassFields {
 
   // The following members are set at the `}` of the class definition.
 
-  // The object representation type to use for this class. This is valid once
-  // the class is defined. For an adapter, this is the non-adapter type that
-  // this class directly or transitively adapts.
-  TypeId object_repr_id = TypeId::Invalid;
+  // A `CompleteTypeWitness` instruction witnessing that this class type is
+  // complete, and tracking its object representation. This is valid once the
+  // class is defined. For an adapter, the object representation is the
+  // non-adapter type that this class directly or transitively adapts.
+  InstId complete_type_witness_id = InstId::Invalid;
 };
 
 // A class. See EntityWithParamsBase regarding the inheritance here.
@@ -69,7 +70,13 @@ struct Class : public EntityWithParamsBase,
 
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
-  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
+  auto is_defined() const -> bool {
+    return complete_type_witness_id.is_valid();
+  }
+
+  // Gets the object representation for this class. Returns Invalid if the class
+  // is not yet defined.
+  auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 };
 
 }  // namespace Carbon::SemIR

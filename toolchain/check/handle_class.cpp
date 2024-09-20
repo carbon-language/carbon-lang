@@ -79,9 +79,9 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   // TODO: The rule here is not yet decided. See #3384.
   if (prev_class.inheritance_kind != new_class.inheritance_kind) {
     CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "Class redeclared with different inheritance kind.");
+                      "class redeclared with different inheritance kind");
     CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "Previously declared here.");
+                      "previously declared here");
     context.emitter()
         .Build(new_loc, ClassRedeclarationDifferentIntroducer)
         .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
@@ -94,7 +94,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.body_block_id = new_class.body_block_id;
     prev_class.adapt_id = new_class.adapt_id;
     prev_class.base_id = new_class.base_id;
-    prev_class.object_repr_id = new_class.object_repr_id;
+    prev_class.complete_type_witness_id = new_class.complete_type_witness_id;
   }
 
   if ((prev_import_ir_id.is_valid() && !new_is_import) ||
@@ -322,8 +322,7 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
                                                   SemIRLoc loc,
                                                   Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
-                    "`{0}` declaration can only be used in a class.",
-                    Lex::TokenKind);
+                    "`{0}` declaration outside class", Lex::TokenKind);
   context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
 }
 
@@ -345,16 +344,17 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                                               SemIRLoc new_loc,
                                               SemIRLoc prev_loc,
                                               Lex::TokenKind tok) -> void {
-  CARBON_DIAGNOSTIC(ClassSpecificDeclRepeated, Error,
-                    "Multiple `{0}` declarations in class.{1}", Lex::TokenKind,
-                    std::string);
-  const llvm::StringRef extra = tok == Lex::TokenKind::Base
-                                    ? " Multiple inheritance is not permitted."
-                                    : "";
+  CARBON_DIAGNOSTIC(AdaptDeclRepeated, Error,
+                    "multiple `adapt` declarations in class");
+  CARBON_DIAGNOSTIC(BaseDeclRepeated, Error,
+                    "multiple `base` declarations in class; multiple "
+                    "inheritance is not permitted");
   CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
-                    "Previous `{0}` declaration is here.", Lex::TokenKind);
+                    "previous `{0}` declaration is here", Lex::TokenKind);
+  CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
-      .Build(new_loc, ClassSpecificDeclRepeated, tok, extra.str())
+      .Build(new_loc, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
+                                                   : BaseDeclRepeated)
       .Note(prev_loc, ClassSpecificDeclPrevious, tok)
       .Emit();
 }
@@ -390,7 +390,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   auto adapted_type_id = ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "Adapted type `{0}` is an incomplete type.",
+                      "adapted type `{0}` is an incomplete type",
                       SemIR::TypeId);
     return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
                                    adapted_type_id);
@@ -454,8 +454,8 @@ constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
                                 SemIR::TypeId base_type_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
-                    "Deriving from final type `{0}`. Base type must be an "
-                    "`abstract` or `base` class.",
+                    "deriving from final type `{0}`; base type must be an "
+                    "`abstract` or `base` class",
                     SemIR::TypeId);
   context.emitter().Emit(node_id, BaseIsFinal, base_type_id);
 }
@@ -466,7 +466,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
   auto base_type_id = ExprAsType(context, node_id, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "Base `{0}` is an incomplete type.", SemIR::TypeId);
+                      "base `{0}` is an incomplete type", SemIR::TypeId);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
                                    base_type_id);
   });
@@ -505,7 +505,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
   if (!introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
-                      "Missing `extend` before `base` declaration in class.");
+                      "missing `extend` before `base` declaration");
     context.emitter().Emit(node_id, BaseMissingExtend);
   }
 
@@ -561,55 +561,89 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ClassDefinitionId /*node_id*/)
+// Checks that the specified finished adapter definition is valid and builds and
+// returns a corresponding complete type witness instruction.
+static auto CheckCompleteAdapterClassType(Context& context,
+                                          Parse::NodeId node_id,
+                                          SemIR::ClassId class_id,
+                                          SemIR::InstBlockId fields_id)
+    -> SemIR::InstId {
+  const auto& class_info = context.classes().Get(class_id);
+  if (class_info.base_id.is_valid()) {
+    CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
+    CARBON_DIAGNOSTIC(AdaptWithBaseHere, Note, "`base` declaration is here");
+    context.emitter()
+        .Build(class_info.adapt_id, AdaptWithBase)
+        .Note(class_info.base_id, AdaptWithBaseHere)
+        .Emit();
+    return SemIR::InstId::BuiltinError;
+  }
+
+  if (!context.inst_blocks().Get(fields_id).empty()) {
+    auto first_field_id = context.inst_blocks().Get(fields_id).front();
+    CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
+    CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
+                      "first field declaration is here");
+    context.emitter()
+        .Build(class_info.adapt_id, AdaptWithFields)
+        .Note(first_field_id, AdaptWithFieldHere)
+        .Emit();
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // The object representation of the adapter is the object representation
+  // of the adapted type. This is the adapted type itself unless it's a class
+  // type.
+  //
+  // TODO: The object representation of `const T` should also be the object
+  // representation of `T`.
+  auto adapted_type_id = context.insts()
+                             .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+                             .adapted_type_id;
+  if (auto adapted_class =
+          context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
+    auto& adapted_class_info = context.classes().Get(adapted_class->class_id);
+    if (adapted_class_info.adapt_id.is_valid()) {
+      return adapted_class_info.complete_type_witness_id;
+    }
+  }
+
+  return context.AddInst<SemIR::CompleteTypeWitness>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
+       .object_repr_id = adapted_type_id});
+}
+
+// Checks that the specified finished class definition is valid and builds and
+// returns a corresponding complete type witness instruction.
+static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
+                                   SemIR::ClassId class_id,
+                                   SemIR::InstBlockId fields_id)
+    -> SemIR::InstId {
+  auto& class_info = context.classes().Get(class_id);
+  if (class_info.adapt_id.is_valid()) {
+    return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
+  }
+
+  return context.AddInst<SemIR::CompleteTypeWitness>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
+       .object_repr_id = context.GetStructType(fields_id)});
+}
+
+auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-  context.inst_block_stack().Pop();
 
   // The class type is now fully defined. Compute its object representation.
+  auto complete_type_witness_id =
+      CheckCompleteClassType(context, node_id, class_id, fields_id);
   auto& class_info = context.classes().Get(class_id);
-  if (class_info.adapt_id.is_valid()) {
-    class_info.object_repr_id = SemIR::TypeId::Error;
-    if (class_info.base_id.is_valid()) {
-      CARBON_DIAGNOSTIC(AdaptWithBase, Error,
-                        "Adapter cannot have a base class.");
-      CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here.");
-      context.emitter()
-          .Build(class_info.adapt_id, AdaptWithBase)
-          .Note(class_info.base_id, AdaptBaseHere)
-          .Emit();
-    } else if (!context.inst_blocks().Get(fields_id).empty()) {
-      auto first_field_id = context.inst_blocks().Get(fields_id).front();
-      CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
-      CARBON_DIAGNOSTIC(AdaptFieldHere, Note,
-                        "First field declaration is here.");
-      context.emitter()
-          .Build(class_info.adapt_id, AdaptWithFields)
-          .Note(first_field_id, AdaptFieldHere)
-          .Emit();
-    } else {
-      // The object representation of the adapter is the object representation
-      // of the adapted type.
-      auto adapted_type_id = context.insts()
-                                 .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-                                 .adapted_type_id;
-      // If we adapt an adapter, directly track the non-adapter type we're
-      // adapting so that we have constant-time access to it.
-      if (auto adapted_class =
-              context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
-        auto& adapted_class_info =
-            context.classes().Get(adapted_class->class_id);
-        if (adapted_class_info.adapt_id.is_valid()) {
-          adapted_type_id = adapted_class_info.object_repr_id;
-        }
-      }
-      class_info.object_repr_id = adapted_type_id;
-    }
-  } else {
-    class_info.object_repr_id = context.GetStructType(fields_id);
-  }
+  class_info.complete_type_witness_id = complete_type_witness_id;
+
+  context.inst_block_stack().Pop();
 
   FinishGenericDefinition(context, class_info.generic_id);
 

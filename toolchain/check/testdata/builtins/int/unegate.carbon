@@ -25,53 +25,53 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.unegate".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew() -> i32 = "int.unegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.unegate".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.unegate".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn BadReturnType(a: i32) -> bool = "int.unegate";
 fn JustRight(a: i32) -> i32 = "int.unegate";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant
 // CHECK:STDERR: var too_few: [i32; TooFew()];
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew()];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1)];
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1)];
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: ERROR: 2 argument(s) passed to function expecting 1 argument(s).
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 2 argument(s) passed to function expecting 1 argument(s).
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: Calling function declared here.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: calling function declared here
 // CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2)];
 
 fn RuntimeCallTooFew(a: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: calling function declared here
   // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -79,10 +79,10 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
 }
 
 fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: ERROR: 3 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: calling function declared here
   // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -90,10 +90,10 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
 }
 
 fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: ERROR: 2 argument(s) passed to function expecting 1 argument(s).
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: calling function declared here
   // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return BadReturnType(a, b);

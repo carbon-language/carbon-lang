@@ -8,19 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/package_expr/fail_in_name.carbon
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:5: ERROR: Expected name in binding pattern.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:5: error: expected name in binding pattern
 // CHECK:STDERR: var package.val: i32;
 // CHECK:STDERR:     ^~~~~~~
 // CHECK:STDERR:
 var package.val: i32;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:11: ERROR: `namespace` introducer should be followed by a name.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:11: error: `namespace` introducer should be followed by a name
 // CHECK:STDERR: namespace package.NS;
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
 namespace package.NS;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:7: ERROR: `class` introducer should be followed by a name.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:7: error: `class` introducer should be followed by a name
 // CHECK:STDERR: class package.C {
 // CHECK:STDERR:       ^~~~~~~
 class package.C {

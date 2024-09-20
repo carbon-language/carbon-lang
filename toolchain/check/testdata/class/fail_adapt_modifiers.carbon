@@ -11,7 +11,7 @@
 class B {}
 
 class C1 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `private` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `private` not allowed on `adapt` declaration
   // CHECK:STDERR:   private adapt B;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -19,7 +19,7 @@ class C1 {
 }
 
 class C2 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `abstract` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `abstract` not allowed on `adapt` declaration
   // CHECK:STDERR:   abstract adapt B;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -27,7 +27,7 @@ class C2 {
 }
 
 class C3 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `adapt` declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `adapt` declaration
   // CHECK:STDERR:   default adapt B;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -35,10 +35,10 @@ class C3 {
 }
 
 class C4 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: ERROR: `extend` repeated on declaration.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -46,10 +46,10 @@ class C4 {
 }
 
 class C5 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: ERROR: `base` not allowed on declaration with `extend`.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:   ^~~~~~
   extend base adapt B;
@@ -60,9 +60,11 @@ class C5 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %B [template]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
 // CHECK:STDOUT:   %C3: type = class_type @C3 [template]
 // CHECK:STDOUT:   %C4: type = class_type @C4 [template]
@@ -102,6 +104,8 @@ class C5 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
@@ -109,6 +113,7 @@ class C5 {
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   adapt_decl %B
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %B [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
@@ -117,6 +122,7 @@ class C5 {
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   adapt_decl %B
+// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %B [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
@@ -125,6 +131,7 @@ class C5 {
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   adapt_decl %B
+// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %B [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
@@ -133,6 +140,7 @@ class C5 {
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   adapt_decl %B
+// CHECK:STDOUT:   %.loc46: <witness> = complete_type_witness %B [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4
@@ -142,6 +150,7 @@ class C5 {
 // CHECK:STDOUT: class @C5 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   adapt_decl %B
+// CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %B [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C5

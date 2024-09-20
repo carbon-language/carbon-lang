@@ -10,7 +10,7 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: `Main//default` must omit `package` declaration.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration
 // CHECK:STDERR: package Main;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -18,7 +18,7 @@ package Main;
 
 // --- fail_main_impl.carbon
 
-// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:6: ERROR: `Main//default` must omit `package` declaration.
+// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:6: error: `Main//default` must omit `package` declaration
 // CHECK:STDERR: impl package Main;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -27,7 +27,7 @@ impl package Main;
 // --- fail_raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: ERROR: `Main//default` must omit `package` declaration.
+// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration
 // CHECK:STDERR: package r#Main;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -35,7 +35,7 @@ package r#Main;
 
 // --- fail_main_lib.carbon
 
-// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+3]]:1: ERROR: Use `library` declaration in `Main` package libraries.
+// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+3]]:1: error: use `library` declaration in `Main` package libraries
 // CHECK:STDERR: package Main library "main_lib";
 // CHECK:STDERR: ^~~~~~~
 package Main library "[[@TEST_NAME]]";

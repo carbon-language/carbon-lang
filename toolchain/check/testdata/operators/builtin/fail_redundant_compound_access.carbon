@@ -12,12 +12,12 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `i32` in compound member access is not an instance member or an interface member
   // CHECK:STDERR:   a = a.(a);
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: ERROR: Member name of type `<type of F>` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member
   // CHECK:STDERR:   a = a.(F)();
   // CHECK:STDERR:       ^~~~~
   a = a.(F)();

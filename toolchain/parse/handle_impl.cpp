@@ -32,7 +32,7 @@ auto HandleImplAfterIntroducer(Context& context) -> void {
       context.PushState(State::PatternListAsImplicit);
     } else {
       CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
-                        "Expected `[` after `forall` in `impl` declaration.");
+                        "expected `[` after `forall` in `impl` declaration");
       context.emitter().Emit(*context.position(), ImplExpectedAfterForall);
       context.ReturnErrorOnState();
       // If we aren't producing a node from the PatternListAsImplicit state,
@@ -69,7 +69,7 @@ auto HandleImplBeforeAs(Context& context) -> void {
   } else {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
-                        "Expected `as` in `impl` declaration.");
+                        "expected `as` in `impl` declaration");
       context.emitter().Emit(*context.position(), ImplExpectedAs);
     }
     context.ReturnErrorOnState();

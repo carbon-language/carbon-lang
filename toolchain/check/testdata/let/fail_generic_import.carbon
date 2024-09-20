@@ -19,10 +19,10 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+6]]:1: ERROR: Cannot implicitly convert from `i32` to `T`.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `i32` to `T`
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: Type `i32` does not implement interface `ImplicitAs`.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 let a: T = 0;

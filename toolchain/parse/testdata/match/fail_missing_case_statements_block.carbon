@@ -11,7 +11,7 @@
 fn f() -> i32 {
   match (3) {
     case x: i32 =>
-    // CHECK:STDERR: fail_missing_case_statements_block.carbon:[[@LINE+3]]:5: ERROR: Expected `{` after `=>`.
+    // CHECK:STDERR: fail_missing_case_statements_block.carbon:[[@LINE+3]]:5: error: expected `{` after `=>`
     // CHECK:STDERR:     default => { return 3; }
     // CHECK:STDERR:     ^~~~~~~
     default => { return 3; }

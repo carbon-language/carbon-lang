@@ -25,7 +25,7 @@ static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
 static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
     -> void {
   CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
-                    "Unrecognized declaration introducer.");
+                    "unrecognized declaration introducer");
   context.emitter().Emit(*context.position(), UnrecognizedDecl);
   FinishAndSkipInvalidDecl(context, subtree_start);
 }

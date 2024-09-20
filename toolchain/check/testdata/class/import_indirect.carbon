@@ -105,6 +105,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -130,6 +131,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
@@ -139,10 +142,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -176,9 +180,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
 // CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D [template = constants.%C]
-// CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %b_ptr.var: ref %.4 = var b_ptr
-// CHECK:STDOUT:   %b_ptr: ref %.4 = bind_name b_ptr, %b_ptr.var
+// CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %b_ptr.var: ref %.5 = var b_ptr
+// CHECK:STDOUT:   %b_ptr: ref %.5 = bind_name b_ptr, %b_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -193,7 +197,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_18
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %.loc9: %.4 = addr_of %b_val.ref
+// CHECK:STDOUT:   %.loc9: %.5 = addr_of %b_val.ref
 // CHECK:STDOUT:   assign file.%b_ptr.var, %.loc9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -203,10 +207,11 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -240,9 +245,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
 // CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, %E [template = constants.%C]
-// CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %c_ptr.var: ref %.4 = var c_ptr
-// CHECK:STDOUT:   %c_ptr: ref %.4 = bind_name c_ptr, %c_ptr.var
+// CHECK:STDOUT:   %.loc9: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %c_ptr.var: ref %.5 = var c_ptr
+// CHECK:STDOUT:   %c_ptr: ref %.5 = bind_name c_ptr, %c_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -257,7 +262,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_18
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %.loc9: %.4 = addr_of %c_val.ref
+// CHECK:STDOUT:   %.loc9: %.5 = addr_of %c_val.ref
 // CHECK:STDOUT:   assign file.%c_ptr.var, %.loc9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -267,17 +272,18 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//b, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//b, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//b, inst+26, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -307,9 +313,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %ptr.var: ref %.5 = var ptr
+// CHECK:STDOUT:   %ptr: ref %.5 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -324,7 +330,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %.4 = addr_of %val.ref
+// CHECK:STDOUT:   %.loc8: %.5 = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -334,16 +340,17 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//b, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
@@ -374,9 +381,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %ptr.var: ref %.5 = var ptr
+// CHECK:STDOUT:   %ptr: ref %.5 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -391,7 +398,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %.4 = addr_of %val.ref
+// CHECK:STDOUT:   %.loc8: %.5 = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -401,19 +408,20 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//c, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//c, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//b, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//c, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//c, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//c, inst+26, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -424,7 +432,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -445,9 +453,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, imports.%import_ref.4 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %ptr.var: ref %.5 = var ptr
+// CHECK:STDOUT:   %ptr: ref %.5 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -462,7 +470,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %.4 = addr_of %val.ref
+// CHECK:STDOUT:   %.loc8: %.5 = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -472,19 +480,20 @@ var ptr: E* = &val;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//b, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//b, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, inst+11, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//b, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//b, inst+26, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -495,7 +504,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//b, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -516,9 +525,9 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
 // CHECK:STDOUT:   %E.ref: type = name_ref E, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:   %ptr.var: ref %.4 = var ptr
-// CHECK:STDOUT:   %ptr: ref %.4 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %.loc8: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:   %ptr.var: ref %.5 = var ptr
+// CHECK:STDOUT:   %ptr: ref %.5 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -533,7 +542,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %.4 = addr_of %val.ref
+// CHECK:STDOUT:   %.loc8: %.5 = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

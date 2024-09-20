@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface `Add` in type `i32` that does not implement that interface.
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Add` in type `i32` that does not implement that interface
   // CHECK:STDERR:   return 12 + 34;
   // CHECK:STDERR:          ^~~~~~~
   return 12 + 34;

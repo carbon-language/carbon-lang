@@ -11,7 +11,7 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: ERROR: Value of type `<associated <type of F> in Interface>` is not callable.
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<associated <type of F> in Interface>` is not callable
   // CHECK:STDERR:   T.F();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -19,7 +19,7 @@ fn CallStatic(T:! Interface) {
 }
 
 fn CallFacet(T:! Interface, x: T) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: ERROR: Type `T` does not support qualified expressions.
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: error: type `T` does not support qualified expressions
   // CHECK:STDERR:   x.F();
   // CHECK:STDERR:   ^~~
   x.F();

@@ -21,24 +21,24 @@ fn ReturnDUnused() -> D;
 fn ReturnDUsed() -> D;
 
 fn Call() {
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: ERROR: Function returns incomplete type `C`.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: Return type declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: return type declared here
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
   ReturnCUsed();
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: ERROR: Function returns incomplete type `D`.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D`
   // CHECK:STDERR:   ReturnDUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: class was forward declared here
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: Return type declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: return type declared here
   // CHECK:STDERR: fn ReturnDUsed() -> D;
   // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
@@ -54,36 +54,36 @@ library "[[@TEST_NAME]]";
 import library "incomplete_return";
 
 fn CallFAndGIncomplete() {
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+16]]:3: ERROR: Function returns incomplete type `C`.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+16]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUnused();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: In import.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: in import
   // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-12]]:1: In import.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-12]]:1: in import
   // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: Return type declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: return type declared here
   // CHECK:STDERR: fn ReturnCUnused() -> C;
   // CHECK:STDERR:                    ^~~~
   // CHECK:STDERR:
   ReturnCUnused();
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+15]]:3: ERROR: Function returns incomplete type `C`.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+15]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: In import.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import
   // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-29]]:1: In import.
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-29]]:1: in import
   // CHECK:STDERR: import library "incomplete_return";
   // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: Return type declared here.
+  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: return type declared here
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                  ^~~~
   ReturnCUsed();
@@ -108,6 +108,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -145,6 +146,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc37: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
@@ -181,7 +184,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }

@@ -10,7 +10,7 @@
 
 // TODO: This should work.
 fn G(N:! i32) {
-  // CHECK:STDERR: fail_symbolic.carbon:[[@LINE+3]]:16: ERROR: Semantics TODO: `symbolic array bound`.
+  // CHECK:STDERR: fail_symbolic.carbon:[[@LINE+3]]:16: error: semantics TODO: `symbolic array bound`
   // CHECK:STDERR:   var k: [i32; N];
   // CHECK:STDERR:                ^
   var k: [i32; N];

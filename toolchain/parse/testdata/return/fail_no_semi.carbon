@@ -10,11 +10,11 @@
 
 fn F() {
   return
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+7]]:1: ERROR: Expected expression.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+7]]:1: error: expected expression
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:1: ERROR: `return` statements must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:1: error: `return` statements must end with a `;`
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

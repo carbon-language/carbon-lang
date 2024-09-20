@@ -434,8 +434,10 @@ static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
     -> llvm::Type* {
-  auto object_repr_id =
-      context.sem_ir().classes().Get(inst.class_id).object_repr_id;
+  auto object_repr_id = context.sem_ir()
+                            .classes()
+                            .Get(inst.class_id)
+                            .GetObjectRepr(context.sem_ir(), inst.specific_id);
   return context.GetType(object_repr_id);
 }
 

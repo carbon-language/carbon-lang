@@ -11,6 +11,7 @@
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -172,6 +173,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
   return context.GetConstant(inst.function_id);
+}
+
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CompleteTypeWitness inst) -> llvm::Constant* {
+  return context.GetUnusedConstant(inst.type_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)

@@ -16,7 +16,7 @@ fn ConditionIsNonConstant(b: bool) {
   // We choose to not accept this even if both arms evaluate to the same
   // constant value, because it notionally involves evaluating a non-constant
   // condition.
-  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var v: if b then i32 else i32 = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -28,12 +28,12 @@ fn ConditionIsNonConstant(b: bool) {
 package NonConstantResult;
 
 fn ChosenBranchIsNonConstant(t: type) {
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var v: if true then t else i32 = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var v: if true then t else i32 = 1;
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+3]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var w: if false then i32 else t = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
   var w: if false then i32 else t = 1;

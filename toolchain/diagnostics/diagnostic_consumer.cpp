@@ -21,10 +21,10 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
     *stream_ << ": ";
     switch (message.level) {
       case DiagnosticLevel::Error:
-        *stream_ << "ERROR: ";
+        *stream_ << "error: ";
         break;
       case DiagnosticLevel::Warning:
-        *stream_ << "WARNING: ";
+        *stream_ << "warning: ";
         break;
       case DiagnosticLevel::Note:
         break;

@@ -87,13 +87,13 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+10]]:1: ERROR: Only imported entities are valid for `export`.
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+10]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export NS;
 // CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import library "base";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:8:1: Name is declared here.
+// CHECK:STDERR: base.carbon:8:1: name is declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -105,10 +105,10 @@ library "[[@TEST_NAME]]";
 
 class Local {}
 
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: ERROR: Only imported entities are valid for `export`.
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export Local;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: Name is declared here.
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: name is declared here
 // CHECK:STDERR: class Local {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,13 +120,13 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: ERROR: Name qualifiers are only allowed for entities that provide a scope.
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import
 // CHECK:STDERR: import library "base";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:4:1: Referenced non-scope entity declared here.
+// CHECK:STDERR: base.carbon:4:1: referenced non-scope entity declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -158,12 +158,12 @@ library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: ERROR: Name `C` not found.
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: error: name `C` not found
 // CHECK:STDERR: alias Local = C;
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
 alias Local = C;
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: ERROR: Name `NS` not found.
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: error: name `NS` not found
 // CHECK:STDERR: alias NSLocal = NS.NSC;
 // CHECK:STDERR:                 ^~
 // CHECK:STDERR:
@@ -176,10 +176,10 @@ library "[[@TEST_NAME]]";
 import library "base";
 
 export C;
-// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: WARNING: `export` matches previous `export`.
+// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning: `export` matches previous `export`
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: Previous `export` here.
+// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: previous `export` here
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -199,7 +199,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `private` not allowed on `export` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `export` declaration
 // CHECK:STDERR: private export C;
 // CHECK:STDERR: ^~~~~~~
 private export C;
@@ -211,9 +211,11 @@ private export C;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %NSC, %.1 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %NSC, %.1 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -232,6 +234,7 @@ private export C;
 // CHECK:STDOUT:   %.loc5_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -241,7 +244,8 @@ private export C;
 // CHECK:STDOUT: class @NSC {
 // CHECK:STDOUT:   %.loc10_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_11.2: type = converted %.loc10_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_8: %.4 = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc10_8: %.5 = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NSC
@@ -254,21 +258,23 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+12, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+14, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -296,12 +302,12 @@ private export C;
 // CHECK:STDOUT: --- not_reexporting.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//export, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst+24, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -318,21 +324,23 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+22, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -369,26 +377,28 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.2: %NSC = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+22, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -431,7 +441,7 @@ private export C;
 // CHECK:STDOUT:   %.loc6_21: init %C = converted %.loc6_20.1, %.loc6_20.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_21
 // CHECK:STDOUT:   %.loc7_26.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_27.1: %.4 = struct_literal (%.loc7_26.1)
+// CHECK:STDOUT:   %.loc7_27.1: %.5 = struct_literal (%.loc7_26.1)
 // CHECK:STDOUT:   %.loc7_27.2: ref %.1 = class_element_access file.%nsc.var, element0
 // CHECK:STDOUT:   %.loc7_26.2: init %.1 = tuple_init () to %.loc7_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc7_27.3: init %.1 = converted %.loc7_26.1, %.loc7_26.2 [template = constants.%tuple]
@@ -447,26 +457,28 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.2: %NSC = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+15, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export_export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+22, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+24, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -510,7 +522,7 @@ private export C;
 // CHECK:STDOUT:   %.loc4_21: init %C = converted %.loc4_20.1, %.loc4_20.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_21
 // CHECK:STDOUT:   %.loc5_26.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_27.1: %.4 = struct_literal (%.loc5_26.1)
+// CHECK:STDOUT:   %.loc5_27.1: %.5 = struct_literal (%.loc5_26.1)
 // CHECK:STDOUT:   %.loc5_27.2: ref %.1 = class_element_access file.%nsc.var, element0
 // CHECK:STDOUT:   %.loc5_26.2: init %.1 = tuple_init () to %.loc5_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc5_27.3: init %.1 = converted %.loc5_26.1, %.loc5_26.2 [template = constants.%tuple]
@@ -526,26 +538,28 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.2: %NSC = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+15, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export_export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+22, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+24, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -588,7 +602,7 @@ private export C;
 // CHECK:STDOUT:   %.loc6_21: init %C = converted %.loc6_20.1, %.loc6_20.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_21
 // CHECK:STDOUT:   %.loc7_26.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_27.1: %.4 = struct_literal (%.loc7_26.1)
+// CHECK:STDOUT:   %.loc7_27.1: %.5 = struct_literal (%.loc7_26.1)
 // CHECK:STDOUT:   %.loc7_27.2: ref %.1 = class_element_access file.%nsc.var, element0
 // CHECK:STDOUT:   %.loc7_26.2: init %.1 = tuple_init () to %.loc7_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc7_27.3: init %.1 = converted %.loc7_26.1, %.loc7_26.2 [template = constants.%tuple]
@@ -602,11 +616,11 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//base, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -622,6 +636,7 @@ private export C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Local: type = class_type @Local [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -632,6 +647,8 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Local {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Local
 // CHECK:STDOUT: }
@@ -642,15 +659,16 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -675,26 +693,28 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.2: %NSC = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+12, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+14, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -737,7 +757,7 @@ private export C;
 // CHECK:STDOUT:   %.loc7_21: init %C = converted %.loc7_20.1, %.loc7_20.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_21
 // CHECK:STDOUT:   %.loc8_26.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_27.1: %.4 = struct_literal (%.loc8_26.1)
+// CHECK:STDOUT:   %.loc8_27.1: %.5 = struct_literal (%.loc8_26.1)
 // CHECK:STDOUT:   %.loc8_27.2: ref %.1 = class_element_access file.%nsc.var, element0
 // CHECK:STDOUT:   %.loc8_26.2: init %.1 = tuple_init () to %.loc8_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc8_27.3: init %.1 = converted %.loc8_26.1, %.loc8_26.2 [template = constants.%tuple]
@@ -753,26 +773,28 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.y: %.1} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: %.1} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.2: %NSC = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+22, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -815,7 +837,7 @@ private export C;
 // CHECK:STDOUT:   %.loc7_21: init %C = converted %.loc7_20.1, %.loc7_20.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_21
 // CHECK:STDOUT:   %.loc8_26.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_27.1: %.4 = struct_literal (%.loc8_26.1)
+// CHECK:STDOUT:   %.loc8_27.1: %.5 = struct_literal (%.loc8_26.1)
 // CHECK:STDOUT:   %.loc8_27.2: ref %.1 = class_element_access file.%nsc.var, element0
 // CHECK:STDOUT:   %.loc8_26.2: init %.1 = tuple_init () to %.loc8_27.2 [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc8_27.3: init %.1 = converted %.loc8_26.1, %.loc8_26.2 [template = constants.%tuple]
@@ -845,15 +867,16 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -879,15 +902,16 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//repeat_export, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//repeat_export, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//repeat_export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//repeat_export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//repeat_export, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//repeat_export, inst+14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -926,15 +950,16 @@ private export C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }

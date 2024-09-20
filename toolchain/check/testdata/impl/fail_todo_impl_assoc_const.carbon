@@ -10,7 +10,7 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleWhereOperand`.
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:14: error: semantics TODO: `HandleWhereOperand`
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR:              ^~~~~~~
 impl bool as I where .T = bool {}

@@ -32,12 +32,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.3: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class, %.3 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.n: i32, .next: %.3} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [template]
 // CHECK:STDOUT:   %MakeReorder: %MakeReorder.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.next: %.3, .n: i32} [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.next: %.3, .n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -100,6 +101,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_18: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_11: %.4 = field_decl next, element1 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -127,7 +129,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc21_31.1: %.7 = struct_literal (%next.ref, %n.ref)
+// CHECK:STDOUT:   %.loc21_31.1: %.8 = struct_literal (%next.ref, %n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc21_31.3: init i32 = initialize_from %n.ref to %.loc21_31.2
 // CHECK:STDOUT:   %.loc21_31.4: ref %.3 = class_element_access %return, element0

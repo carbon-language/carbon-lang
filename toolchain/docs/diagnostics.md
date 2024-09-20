@@ -71,7 +71,7 @@ Diagnostics are used to surface issues from compilation. A simple diagnostic
 looks like:
 
 ```cpp
-CARBON_DIAGNOSTIC(InvalidCode, Error, "Code is invalid");
+CARBON_DIAGNOSTIC(InvalidCode, Error, "code is invalid");
 emitter.Emit(location, InvalidCode);
 ```
 
@@ -85,7 +85,7 @@ the `DiagnosticEmitter`.
 A diagnostic with an argument looks like:
 
 ```cpp
-CARBON_DIAGNOSTIC(InvalidCharacter, Error, "Invalid character {0}.", char);
+CARBON_DIAGNOSTIC(InvalidCharacter, Error, "invalid character {0}", char);
 emitter.Emit(location, InvalidCharacter, invalid_char);
 ```
 
@@ -127,7 +127,7 @@ CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                   "{1} argument(s).",
                   int, int);
 CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                  "Calling function declared here.");
+                  "calling function declared here");
 context.emitter()
     .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
            param_refs.size())
@@ -147,7 +147,7 @@ DiagnosticAnnotationScope annotate_diagnostics(
     &context.emitter(), [&](auto& builder) {
       CARBON_DIAGNOSTIC(
           InCallToFunctionParam, Note,
-          "Initializing parameter {0} of function declared here.", int);
+          "initializing parameter {0} of function declared here", int);
       builder.Note(param_parse_node, InCallToFunctionParam,
                    diag_param_index + 1);
     });
@@ -158,52 +158,77 @@ different kinds of diagnostic.
 
 ## Diagnostic parameter types
 
-Here are some types you might consider for the parameters to a diagnostic:
+Diagnostic parameters should have informative types. We rely on three different
+methods for formatting arguments:
 
--   `llvm::StringLiteral`. Note that we don't use `llvm::StringRef` to avoid
-    lifetime issues.
--   `std::string`
--   Carbon types `T` that implement `llvm::format_provider<T>` like:
-    -   `Lex::TokenKind`
-    -   `Lex::NumericLiteral::Radix`
-    -   `Parse::RelativeLocation`
--   integer types: `int`, `uint64_t`, `int64_t`, `size_t`
--   `char`
--   Other
-    [types supported by llvm::formatv](https://llvm.org/doxygen/FormatVariadic_8h_source.html)
+-   Builtin
+    [llvm::formatv](https://llvm.org/doxygen/FormatVariadic_8h_source.html)
+    support.
+    -   This includes `char` and integer types (`int`, `int32_t`, and so on).
+    -   String types can be added as needed, but stringifying values using the
+        methods noted below is preferred.
+        -   Use `llvm::StringLiteral` where appropriate; use `std::string` when
+            allocations are required.
+        -   `llvm::StringRef` is disallowed due to lifetime issues.
+-   `llvm::format_provider<...>` specializations.
+    -   This can be used when formatting the parameter doesn't require
+        additional context.
+    -   For example, `Lex::TokenKind` and `Parse::RelativeLoc` provide
+        diagnostic formatting this way.
+-   `DiagnosticConverter::ConvertArg` overrides.
+    -   This can provide additional context to a formatter.
+    -   For example, formatting `SemIR::NameId` accesses the IR's name list.
 
 ## Diagnostic message style guide
 
-In order to provide a consistent experience, Carbon diagnostics should be
-written in the following style:
+We want Carbon's diagnostics to be helpful for developers when they run into an
+error, and phrased consistently across diagnostics. In addition, Carbon
+diagnostics may be mixed with Clang diagnostics when compiling interoperable
+code, so we are borrowing some features of Clang's
+[Diagnostic Wording](https://clang.llvm.org/docs/InternalsManual.html#diagnostic-wording).
+Carbon's diagnostic style aims to balance these concerns. Our style is:
 
--   Start diagnostics with a capital letter or quoted code, and end them with a
-    period.
+-   Start diagnostics with a lower case letter or quoted code, and omit trailing
+    periods.
 
--   Quoted code should be enclosed in backticks, for example:
-    ``"`{0}` is bad."``
+-   Quoted code should be enclosed in backticks, for example: ``"`{0}` is bad"``
 
 -   Phrase diagnostics as bullet points rather than full sentences. Leave out
     articles unless they're necessary for clarity.
 
--   Diagnostics should describe the situation the toolchain observed and the
-    language rule that was violated, although either can be omitted if it's
-    clear from the other. For example:
+    -   Semicolons can be used to separate sentence fragments.
 
-    -   `"Redeclaration of X."` describes the situation and implies that
+-   Diagnostics should describe the situation the toolchain observed. The
+    language rule violated can be mentioned if it wouldn't otherwise be clear.
+    For example:
+
+    -   `"redeclaration of X"` describes the situation and implies that
         redeclarations are not permitted.
 
-    -   ``"`self` can only be declared in an implicit parameter list."``
-        describes the language rule and implies that you declared `self`
-        somewhere else.
+    -   ``"`self` declared in invalid context; can only be declared in implicit parameter list"``
+        describes the language rule.
 
     -   It's OK for a diagnostic to guess at the developer's intent and provide
         a hint after explaining the situation and the rule, but not as a
         substitute for that. For example,
-        ``"Add an `as String` cast to format this integer as a string."`` is not
-        sufficient as an error message, but
-        ``"Cannot add i32 to String. Add an `as String` cast to format this integer as a string."``
+        ``"add `as String` to convert `i32` to `String`"`` is not sufficient as
+        an error message, but
+        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
         could be acceptable.
+
+-   Use "cannot" if needed, but try to use phrasing that doesn't require it.
+    Avoid "allowed", "legal", "permitted", "valid", and related wording. For
+    example:
+
+    -   ``"`export` in `impl` file"`` rather than
+        ``"`export` is only allowed in API files"``.
+    -   ``"`extern library` specifies current library"`` rather than
+        `` "`extern library` cannot specify the current library"``.
+
+-   Try to structure diagnostics such that inputs can be extracted without
+    string parsing; prefer [typed parameters](#diagnostic-parameter-types). We
+    would like to keep a path for diagnostics to be an API. There can be
+    exceptions where this is particularly difficult.
 
 -   TODO: Should diagnostics be atemporal and non-sequential ("multiple
     declarations of X", "additional declaration here"), present tense but
@@ -211,17 +236,6 @@ written in the following style:
     temporal ("redeclaration of X", "previous declaration was here")? We could
     try to sidestep difference between the latter two by avoiding verbs with
     tense ("previously declared here", "Y declared here", with no is/was).
-
--   TODO: Word choices:
-
-    -   For disallowed constructs, do we say they're not permitted / not allowed
-        / not valid / not legal / illegal / ill-formed / disallowed? Do we say
-        "X cannot be Y" or "X may not be Y" or "X must not be Y" or "X shall not
-        be Y"?
-
--   TODO: Is structuring diagnostics such that inputs can be parsed without
-    string parsing important? that is, when is passing strings in as part of the
-    message templating okay?
 
 -   TODO: When do we put identifiers or expressions in diagnostics, versus
     requiring notes pointing at relevant code? Is it only avoided for values, or

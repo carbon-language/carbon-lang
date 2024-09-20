@@ -234,10 +234,10 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   if (tuple_elem_types.size() != array_bound) {
     CARBON_DIAGNOSTIC(
         ArrayInitFromLiteralArgCountMismatch, Error,
-        "Cannot initialize array of {0} element(s) from {1} initializer(s).",
+        "cannot initialize array of {0} element(s) from {1} initializer(s)",
         uint64_t, size_t);
     CARBON_DIAGNOSTIC(ArrayInitFromExprArgCountMismatch, Error,
-                      "Cannot initialize array of {0} element(s) from tuple "
+                      "cannot initialize array of {0} element(s) from tuple "
                       "with {1} element(s).",
                       uint64_t, size_t);
     context.emitter().Emit(value_loc_id,
@@ -318,7 +318,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // Check that the tuples are the same size.
   if (src_elem_types.size() != dest_elem_types.size()) {
     CARBON_DIAGNOSTIC(TupleInitElementCountMismatch, Error,
-                      "Cannot initialize tuple of {0} element(s) from tuple "
+                      "cannot initialize tuple of {0} element(s) from tuple "
                       "with {1} element(s).",
                       size_t, size_t);
     context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
@@ -406,7 +406,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   // exist in the destination or vice versa in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields.size()) {
     CARBON_DIAGNOSTIC(StructInitElementCountMismatch, Error,
-                      "Cannot initialize {0} with {1} field(s) from struct "
+                      "cannot initialize {0} with {1} field(s) from struct "
                       "with {2} field(s).",
                       llvm::StringLiteral, size_t, size_t);
     context.emitter().Emit(
@@ -460,14 +460,14 @@ static auto ConvertStructToStructOrClass(Context& context,
         if (literal_elems_id.is_valid()) {
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
-              "Missing value for field `{0}` in struct initialization.",
+              "missing value for field `{0}` in struct initialization",
               SemIR::NameId);
           context.emitter().Emit(value_loc_id, StructInitMissingFieldInLiteral,
                                  dest_field.name_id);
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                            "Cannot convert from struct type `{0}` to `{1}`: "
-                            "missing field `{2}` in source type.",
+                            "cannot convert from struct type `{0}` to `{1}`: "
+                            "missing field `{2}` in source type",
                             SemIR::TypeId, SemIR::TypeId, SemIR::NameId);
           context.emitter().Emit(
               value_loc_id, StructInitMissingFieldInConversion, value.type_id(),
@@ -532,21 +532,23 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
-  auto& class_info = context.classes().Get(dest_type.class_id);
-  if (class_info.inheritance_kind == SemIR::Class::Abstract) {
+  auto& dest_class_info = context.classes().Get(dest_type.class_id);
+  if (dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
     CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
-                      "Cannot construct instance of abstract class. "
-                      "Consider using `partial {0}` instead.",
+                      "cannot construct instance of abstract class; "
+                      "consider using `partial {0}` instead",
                       SemIR::TypeId);
     context.emitter().Emit(value_id, ConstructionOfAbstractClass,
                            target.type_id);
     return SemIR::InstId::BuiltinError;
   }
-  if (class_info.object_repr_id == SemIR::TypeId::Error) {
+  auto object_repr_id =
+      dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
+  if (object_repr_id == SemIR::TypeId::Error) {
     return SemIR::InstId::BuiltinError;
   }
   auto dest_struct_type =
-      context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
+      context.types().GetAs<SemIR::StructType>(object_repr_id);
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -571,9 +573,10 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   return result_id;
 }
 
-// An inheritance path is a sequence of `BaseDecl`s in order from derived to
-// base.
-using InheritancePath = llvm::SmallVector<SemIR::InstId>;
+// An inheritance path is a sequence of `BaseDecl`s and corresponding base types
+// in order from derived to base.
+using InheritancePath =
+    llvm::SmallVector<std::pair<SemIR::InstId, SemIR::TypeId>>;
 
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
@@ -602,10 +605,13 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
       result = std::nullopt;
       break;
     }
-    result->push_back(derived_class.base_id);
-    derived_id = context.insts()
-                     .GetAs<SemIR::BaseDecl>(derived_class.base_id)
-                     .base_type_id;
+    auto base_decl =
+        context.insts().GetAs<SemIR::BaseDecl>(derived_class.base_id);
+    auto base_type_id = SemIR::GetTypeInSpecific(
+        context.sem_ir(), derived_class_type->specific_id,
+        base_decl.base_type_id);
+    result->push_back({derived_class.base_id, base_type_id});
+    derived_id = base_type_id;
   }
   return result;
 }
@@ -619,10 +625,10 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
   value_id = ConvertToValueOrRefExpr(context, value_id);
 
   // Add a series of `.base` accesses.
-  for (auto base_id : path) {
+  for (auto [base_id, base_type_id] : path) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
     value_id = context.AddInst<SemIR::ClassElementAccess>(
-        loc_id, {.type_id = base_decl.base_type_id,
+        loc_id, {.type_id = base_type_id,
                  .base_id = value_id,
                  .index = base_decl.index});
   }
@@ -677,7 +683,8 @@ static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
   if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
     if (class_info.adapt_id.is_valid()) {
-      return class_info.object_repr_id;
+      return class_info.GetObjectRepr(context.sem_ir(),
+                                      class_type->specific_id);
     }
   }
 
@@ -902,7 +909,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // TODO: We don't yet have rules for whether and when a class type is
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
-                    "Cannot copy value of type `{0}`.", SemIR::TypeId);
+                    "cannot copy value of type `{0}`", SemIR::TypeId);
   context.emitter().Emit(expr_id, CopyOfUncopyableType, type_id);
   return SemIR::InstId::BuiltinError;
 }
@@ -924,7 +931,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
     CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
-                      "Expression cannot be used as a value.");
+                      "expression cannot be used as a value");
     context.emitter().Emit(expr_id, UseOfNonExprAsValue);
     return SemIR::InstId::BuiltinError;
   }
@@ -932,13 +939,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // We can only perform initialization for complete types.
   if (!context.TryToCompleteType(target.type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
-                          "Initialization of incomplete type `{0}`.",
+                          "initialization of incomplete type `{0}`",
                           SemIR::TypeId);
         CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                          "Forming value of incomplete type `{0}`.",
+                          "forming value of incomplete type `{0}`",
                           SemIR::TypeId);
         CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                          "Invalid use of incomplete type `{0}`.",
+                          "invalid use of incomplete type `{0}`",
                           SemIR::TypeId);
         return context.emitter().Build(loc_id,
                                        target.is_initializer()
@@ -971,10 +978,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
       CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                        "Cannot implicitly convert from `{0}` to `{1}`.",
+                        "cannot implicitly convert from `{0}` to `{1}`",
                         SemIR::TypeId, SemIR::TypeId);
       CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                        "Cannot convert from `{0}` to `{1}` with `as`.",
+                        "cannot convert from `{0}` to `{1}` with `as`",
                         SemIR::TypeId, SemIR::TypeId);
       return context.emitter().Build(loc_id,
                                      target.kind == ConversionTarget::ExplicitAs
@@ -1119,7 +1126,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                  {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
-CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
+CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
 
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
@@ -1130,7 +1137,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId self_id) -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
-                      "Missing object argument in method call.");
+                      "missing object argument in method call");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
         .Note(callee_loc, InCallToFunction)
@@ -1142,7 +1149,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(
             InCallToFunctionSelf, Note,
-            "Initializing `{0}` parameter of method declared here.",
+            "initializing `{0}` parameter of method declared here",
             llvm::StringLiteral);
         builder.Note(self_param_id, InCallToFunctionSelf,
                      addr_pattern ? llvm::StringLiteral("addr self")
@@ -1161,7 +1168,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
         break;
       default:
         CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
-                          "`addr self` method cannot be invoked on a value.");
+                          "`addr self` method cannot be invoked on a value");
         context.emitter().Emit(TokenOnly(call_loc_id), AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
@@ -1221,7 +1228,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
-            "Initializing parameter {0} of function declared here.", int);
+            "initializing parameter {0} of function declared here", int);
         builder.Note(callee.callee_loc, InCallToFunctionParam,
                      diag_param_index + 1);
       });
@@ -1274,7 +1281,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
   auto type_const_id = context.constant_values().Get(type_inst_id);
   if (!type_const_id.is_constant()) {
     CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
-                      "Cannot evaluate type expression.");
+                      "cannot evaluate type expression");
     context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
     return SemIR::TypeId::Error;
   }

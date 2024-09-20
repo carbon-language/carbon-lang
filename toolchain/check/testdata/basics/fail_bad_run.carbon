@@ -8,11 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_bad_run.carbon
 
-// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+7]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
+// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+7]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32`
 // CHECK:STDERR: fn Run() -> String {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+3]]:21: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+3]]:21: error: missing `return` at end of function with declared return type
 // CHECK:STDERR: fn Run() -> String {}
 // CHECK:STDERR:                     ^
 fn Run() -> String {}

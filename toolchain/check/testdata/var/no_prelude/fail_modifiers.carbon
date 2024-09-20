@@ -8,35 +8,35 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members
 // CHECK:STDERR: protected var b: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 protected var b: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private protected var c: ();
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
 // CHECK:STDERR: private protected var c: ();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private protected var c: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: ERROR: `protected` repeated on declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `protected` repeated on declaration
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `protected` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `protected` previously appeared here
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 protected protected var d: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `abstract` not allowed on `var` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `var` declaration
 // CHECK:STDERR: abstract var e: ();
 // CHECK:STDERR: ^~~~~~~~
 abstract var e: ();

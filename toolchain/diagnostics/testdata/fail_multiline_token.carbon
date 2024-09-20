@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/diagnostics/testdata/fail_multiline_token.carbon
 
-// CHECK:STDERR: fail_multiline_token.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_multiline_token.carbon:[[@LINE+3]]:1: error: unrecognized declaration introducer
 // CHECK:STDERR: '''
 // CHECK:STDERR: ^~~
 '''

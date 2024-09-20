@@ -820,11 +820,11 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
   }
 
   CARBON_DIAGNOSTIC(UnsupportedLFCRLineEnding, Error,
-                    "The LF+CR line ending is not supported, only LF and CR+LF "
-                    "are supported.");
+                    "the LF+CR line ending is not supported, only LF and CR+LF "
+                    "are supported");
   CARBON_DIAGNOSTIC(UnsupportedCRLineEnding, Error,
-                    "A raw CR line ending is not supported, only LF and CR+LF "
-                    "are supported.");
+                    "a raw CR line ending is not supported, only LF and CR+LF "
+                    "are supported");
   bool is_lfcr = position > 0 && source_text[position - 1] == '\n';
   // TODO: This diagnostic has an unfortunate snippet -- we should tweak the
   // snippet rendering to gracefully handle CRs.
@@ -865,7 +865,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   const auto* line_info = current_line_info();
   if (LLVM_UNLIKELY(position != line_info->start + line_info->indent)) {
     CARBON_DIAGNOSTIC(TrailingComment, Error,
-                      "Trailing comments are not permitted.");
+                      "trailing comments are not permitted");
 
     emitter_.Emit(source_text.begin() + position, TrailingComment);
 
@@ -882,7 +882,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-                      "Whitespace is required after '//'.");
+                      "whitespace is required after '//'");
     emitter_.Emit(source_text.begin() + position + 2,
                   NoWhitespaceAfterCommentIntroducer);
 
@@ -1052,7 +1052,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                                byte_offset);
   } else {
     CARBON_DIAGNOSTIC(UnterminatedString, Error,
-                      "String is missing a terminator.");
+                      "string is missing a terminator");
     emitter_.Emit(literal->text().begin(), UnterminatedString);
     return LexTokenWithPayload(TokenKind::Error, literal_size, byte_offset);
   }
@@ -1295,7 +1295,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
   auto token =
       LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
-                    "Encountered unrecognized characters while parsing.");
+                    "encountered unrecognized characters while parsing");
   emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
 
   position += error_text.size();
@@ -1454,7 +1454,7 @@ class Lexer::ErrorRecoveryBuffer {
 static auto DiagnoseUnmatchedOpening(TokenDiagnosticEmitter& emitter,
                                      TokenIndex opening_token) -> void {
   CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "Opening symbol without a corresponding closing symbol.");
+                    "opening symbol without a corresponding closing symbol");
   emitter.Emit(opening_token, UnmatchedOpening);
 }
 
@@ -1501,7 +1501,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     if (opening_it == open_groups_.rend()) {
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,
-          "Closing symbol without a corresponding opening symbol.");
+          "closing symbol without a corresponding opening symbol");
       token_emitter_.Emit(token, UnmatchedClosing);
       fixes.ReplaceWithError(token);
       continue;

@@ -11,7 +11,7 @@
 base class B {}
 
 class C1 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: ERROR: `private` not allowed on `base` declaration.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: `private` not allowed on `base` declaration
   // CHECK:STDERR:   private extend base: B;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -19,11 +19,11 @@ class C1 {
 }
 
 class C2 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+8]]:3: ERROR: `abstract` not allowed on `base` declaration.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+8]]:3: error: `abstract` not allowed on `base` declaration
   // CHECK:STDERR:   abstract base: B;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: ERROR: Missing `extend` before `base` declaration in class.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: missing `extend` before `base` declaration
   // CHECK:STDERR:   abstract base: B;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,10 +31,10 @@ class C2 {
 }
 
 class C3 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: ERROR: `default` not allowed on declaration with `extend`.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: error: `default` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -42,10 +42,10 @@ class C3 {
 }
 
 class C4 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+6]]:10: ERROR: `extend` repeated on declaration.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+6]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here.
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend extend base: B;
@@ -56,17 +56,19 @@ class C4 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C1, %B [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C1, %B [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %C2, %B [template]
+// CHECK:STDOUT:   %.8: type = unbound_element_type %C2, %B [template]
 // CHECK:STDOUT:   %C3: type = class_type @C3 [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type %C3, %B [template]
+// CHECK:STDOUT:   %.9: type = unbound_element_type %C3, %B [template]
 // CHECK:STDOUT:   %C4: type = class_type @C4 [template]
-// CHECK:STDOUT:   %.8: type = unbound_element_type %C4, %B [template]
+// CHECK:STDOUT:   %.10: type = unbound_element_type %C4, %B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -100,13 +102,16 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc18: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.5 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
@@ -116,7 +121,8 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc30: %.6 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc30: %.8 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc31: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
@@ -125,7 +131,8 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc41: %.7 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc41: %.9 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc42: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
@@ -135,7 +142,8 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc51: %.8 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc51: %.10 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc52: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4

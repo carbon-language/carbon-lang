@@ -32,14 +32,14 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: ERROR: Bit width must be 64.
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: bit width must be 64
 // CHECK:STDERR: var invalid_float: Float(32);
 // CHECK:STDERR:                    ^~~~~~
 // CHECK:STDERR:
 var invalid_float: Float(32);
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression
 // CHECK:STDERR: var dyn: Float(dyn_size);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 var dyn: Float(dyn_size);

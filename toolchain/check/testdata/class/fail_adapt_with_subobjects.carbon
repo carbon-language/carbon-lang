@@ -15,11 +15,11 @@ library "[[@TEST_NAME]]";
 base class Base {}
 
 class AdaptWithBase {
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: ERROR: Adapter cannot have a base class.
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: error: adapter with base class
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: `base` declaration is here.
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: `base` declaration is here
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,11 +31,11 @@ class AdaptWithBase {
 library "[[@TEST_NAME]]";
 
 class AdaptWithField {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: Adapter cannot have fields.
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: First field declaration is here.
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -43,11 +43,11 @@ class AdaptWithField {
 }
 
 class AdaptWithFields {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: Adapter cannot have fields.
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: First field declaration is here.
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
   // CHECK:STDERR:   var a: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -65,10 +65,10 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: ERROR: Adapter cannot have a base class.
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter with base class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here.
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   adapt {};
@@ -79,12 +79,13 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AdaptWithBase: type = class_type @AdaptWithBase [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %AdaptWithBase, %Base [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %AdaptWithBase, %Base [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -114,6 +115,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT: }
@@ -124,7 +127,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_32, %.loc10_12.1 [template = i32]
 // CHECK:STDOUT:   adapt_decl i32
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc15: %.4 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.5 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
@@ -219,13 +222,14 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields: type = class_type @AdaptWithBaseAndFields [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %AdaptWithBaseAndFields, i32 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %AdaptWithBaseAndFields, i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -255,17 +259,19 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc7: %.4 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc7: %.5 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: %.5 = field_decl n, element1 [template]
+// CHECK:STDOUT:   %.loc8_8: %.6 = field_decl n, element1 [template]
 // CHECK:STDOUT:   %.loc15_10: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1

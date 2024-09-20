@@ -47,19 +47,19 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = RightShift(1, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: ERROR: Shift distance not in range [0, 32) in 1 >> 32.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 >> 32
 // CHECK:STDERR: let size_2: i32 = RightShift(1, 32);
 // CHECK:STDERR:                   ^~~~~~~~~~~
 // CHECK:STDERR:
 let size_2: i32 = RightShift(1, 32);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: ERROR: Shift distance not in range [0, 32) in 1 >> 33.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 >> 33
 // CHECK:STDERR: let size_3: i32 = RightShift(1, 33);
 // CHECK:STDERR:                   ^~~~~~~~~~~
 // CHECK:STDERR:
 let size_3: i32 = RightShift(1, 33);
 
 // Negative shifts aren't allowed either.
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: ERROR: Shift distance not in range [0, 32) in 1 >> -1.
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error: shift distance not in range [0, 32) in 1 >> -1
 // CHECK:STDERR: let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~~
 let negative: i32 = RightShift(1, Negate(1));

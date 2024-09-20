@@ -512,7 +512,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
               .Get(bound->int_id)
               .ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
-                          "Array index `{0}` is past the end of type `{1}`.",
+                          "array index `{0}` is past the end of type `{1}`",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
             index_inst.index_id, ArrayIndexOutOfBounds,
@@ -553,7 +553,7 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
       (context.types().IsSignedInt(bit_width->type_id) &&
        bit_width_val.isNegative())) {
     CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
-                      "Integer type width of {0} is not positive.", TypedInt);
+                      "integer type width of {0} is not positive", TypedInt);
     context.emitter().Emit(
         loc, IntWidthNotPositive,
         {.type = bit_width->type_id, .value = bit_width_val});
@@ -564,8 +564,8 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
   constexpr int MaxIntWidth = 1 << 23;
   if (bit_width_val.ugt(MaxIntWidth)) {
     CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
-                      "Integer type width of {0} is greater than the "
-                      "maximum supported width of {1}.",
+                      "integer type width of {0} is greater than the "
+                      "maximum supported width of {1}",
                       TypedInt, int);
     context.emitter().Emit(loc, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
@@ -598,7 +598,7 @@ static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
     return true;
   }
 
-  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "Bit width must be 64.");
+  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "bit width must be 64");
   context.emitter().Emit(loc, CompileTimeFloatBitWidth);
   return false;
 }
@@ -617,7 +617,7 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
 
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
-  CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
+  CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
@@ -634,7 +634,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       if (context.types().IsSignedInt(op.type_id) &&
           op_val.isMinSignedValue()) {
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
-                          "Integer overflow in negation of {0}.", TypedInt);
+                          "integer overflow in negation of {0}", TypedInt);
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
                                {.type = op.type_id, .value = op_val});
       }
@@ -750,10 +750,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                    : llvm::StringLiteral(">>");
       if (rhs_val.uge(lhs_val.getBitWidth()) ||
           (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
-        CARBON_DIAGNOSTIC(
-            CompileTimeShiftOutOfRange, Error,
-            "Shift distance not in range [0, {0}) in {1} {2} {3}.", unsigned,
-            TypedInt, llvm::StringLiteral, TypedInt);
+        CARBON_DIAGNOSTIC(CompileTimeShiftOutOfRange, Error,
+                          "shift distance not in range [0, {0}) in {1} {2} {3}",
+                          unsigned, TypedInt, llvm::StringLiteral, TypedInt);
         context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
                                lhs_val.getBitWidth(),
                                {.type = lhs.type_id, .value = lhs_val}, op_str,
@@ -777,7 +776,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
-                      "Integer overflow in calculation {0} {1} {2}.", TypedInt,
+                      "integer overflow in calculation {0} {1} {2}", TypedInt,
                       llvm::StringLiteral, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
                            {.type = lhs.type_id, .value = lhs_val}, op_str,
@@ -1134,7 +1133,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
             if (eval_context.types().IsSignedInt(int_bound->type_id) &&
                 bound_val.isNegative()) {
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
-                                "Array bound of {0} is negative.", TypedInt);
+                                "array bound of {0} is negative", TypedInt);
               eval_context.emitter().Emit(
                   bound_id, ArrayBoundNegative,
                   {.type = int_bound->type_id, .value = bound_val});
@@ -1142,7 +1141,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
             }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                "Array bound of {0} is too large.", TypedInt);
+                                "array bound of {0} is too large", TypedInt);
               eval_context.emitter().Emit(
                   bound_id, ArrayBoundTooLarge,
                   {.type = int_bound->type_id, .value = bound_val});
@@ -1166,6 +1165,9 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ClassType::specific_id);
+    case SemIR::CompleteTypeWitness::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);

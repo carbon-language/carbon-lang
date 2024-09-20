@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_todo_define_default_fn_inline.carbon
 
 interface Interface {
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   default fn F() {}
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn F() {}
 
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
   // CHECK:STDERR:   ^~~~~~~
   default fn G(a: i32, b: i32) -> i32 = "int.sadd";

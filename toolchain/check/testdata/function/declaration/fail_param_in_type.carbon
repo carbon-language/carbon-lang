@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: ERROR: Array bound is not a constant.
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant
 // CHECK:STDERR: fn F(n: i32, a: [i32; n]*);
 // CHECK:STDERR:                       ^
 fn F(n: i32, a: [i32; n]*);

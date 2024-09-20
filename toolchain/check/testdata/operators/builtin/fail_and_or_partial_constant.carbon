@@ -13,12 +13,12 @@
 package FailNonConstantResult;
 
 fn PartialConstant(x: bool) {
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var a: if true and x then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var a: if true and x then bool else ();
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var b: if false or x then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -32,12 +32,12 @@ package FailDespiteKnownResult;
 fn KnownValueButNonConstantCondition(x: bool) {
   // We choose not to give these cases constant values, even though we could,
   // because they notionally involve evaluating a non-constant condition.
-  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var c: if x and false then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var c: if x and false then bool else ();
-  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+3]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression
   // CHECK:STDERR:   var d: if x or true then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   var d: if x or true then bool else ();

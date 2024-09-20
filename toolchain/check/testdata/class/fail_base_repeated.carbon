@@ -13,10 +13,10 @@ base class B2 {}
 
 class C {
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted
   // CHECK:STDERR:   extend base: B2;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: Previous `base` declaration is here.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: previous `base` declaration is here
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -26,10 +26,10 @@ class C {
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: Previous `base` declaration is here.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: previous `base` declaration is here
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   extend base: B1;
@@ -40,14 +40,16 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B1: type = class_type @B1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B1 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %B1} [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %B1 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %B1} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %D, %B1 [template]
+// CHECK:STDOUT:   %.8: type = unbound_element_type %D, %B1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -79,19 +81,24 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc15: %.4 = base_decl %B1, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.5 = base_decl %B1, element0 [template]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
+// CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -101,8 +108,9 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc28: %.6 = base_decl %B1, element0 [template]
+// CHECK:STDOUT:   %.loc28: %.8 = base_decl %B1, element0 [template]
 // CHECK:STDOUT:   %B1.ref.loc35: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %.loc36: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D

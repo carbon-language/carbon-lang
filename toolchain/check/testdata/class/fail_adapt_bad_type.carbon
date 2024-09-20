@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 class Incomplete;
 
 class AdaptIncomplete {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: ERROR: Adapted type `Incomplete` is an incomplete type.
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: adapted type `Incomplete` is an incomplete type
   // CHECK:STDERR:   adapt Incomplete;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: class was forward declared here
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   adapt Incomplete;
@@ -60,6 +60,7 @@ class AdaptIncomplete {
 // CHECK:STDOUT: class @AdaptIncomplete {
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   adapt_decl <error>
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptIncomplete

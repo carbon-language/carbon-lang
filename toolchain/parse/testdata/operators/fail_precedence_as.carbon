@@ -10,43 +10,43 @@
 
 fn F(n: i32) {
   // No ordering between `not` and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   not true as bool;
   // CHECK:STDERR:            ^~
   // CHECK:STDERR:
   not true as bool;
 
   // No ordering between mathematical binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   1 + 1 as i32;
   // CHECK:STDERR:         ^~
   // CHECK:STDERR:
   1 + 1 as i32;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:9: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   5 % 2 as i32;
   // CHECK:STDERR:         ^~
   // CHECK:STDERR:
   5 % 2 as i32;
 
   // No ordering between logical binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   3 as i32 and true;
   // CHECK:STDERR:            ^~~
   // CHECK:STDERR:
   3 as i32 and true;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:14: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:14: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   false or 4 as i32;
   // CHECK:STDERR:              ^~
   // CHECK:STDERR:
   false or 4 as i32;
 
   // No ordering between relational binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+4]]:12: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   6 as i32 == 7;
   // CHECK:STDERR:            ^~
   // CHECK:STDERR:
   6 as i32 == 7;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:10: ERROR: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:10: error: parentheses are required to disambiguate operator precedence
   // CHECK:STDERR:   8 <= 9 as i32;
   // CHECK:STDERR:          ^~
   8 <= 9 as i32;

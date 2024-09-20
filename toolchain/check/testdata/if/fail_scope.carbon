@@ -13,7 +13,7 @@ fn VarScope(b: bool) -> i32 {
     var n: i32 = 2;
     return n;
   }
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: ERROR: Name `n` not found.
+  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: error: name `n` not found
   // CHECK:STDERR:   return n;
   // CHECK:STDERR:          ^
   return n;

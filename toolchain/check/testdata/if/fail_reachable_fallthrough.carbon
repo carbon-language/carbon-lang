@@ -13,7 +13,7 @@ fn If1(b: bool) -> i32 {
     return 1;
   } else {
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
@@ -24,7 +24,7 @@ fn If2(b: bool) -> i32 {
   } else {
     return 2;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
@@ -34,7 +34,7 @@ fn If3(b: bool) -> i32 {
   if (b) {
     return 1;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: error: missing `return` at end of function with declared return type
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

@@ -10,10 +10,10 @@
 
 class Class {
   fn F() {}
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: ERROR: Redefinition of `fn F`.
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: error: redefinition of `fn F`
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: Previously defined here.
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: previously defined here
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
   fn F() {}
@@ -27,6 +27,7 @@ class Class {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,6 +55,7 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %F.decl.loc19: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

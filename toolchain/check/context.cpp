@@ -27,6 +27,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -69,8 +70,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
 }
 
 auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
-  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
-                    std::string);
+  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "semantics TODO: `{0}`", std::string);
   emitter_->Emit(loc, SemanticsTodo, std::move(label));
   return false;
 }
@@ -201,9 +201,8 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
     -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
-                    "Duplicate name being declared in the same scope.");
-  CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
-                    "Name is previously declared here.");
+                    "duplicate name being declared in the same scope");
+  CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
   emitter_->Build(dup_def, NameDeclDuplicate)
       .Note(prev_def, NameDeclPrevious)
       .Emit();
@@ -211,8 +210,7 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
 
 auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
     -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
-                    SemIR::NameId);
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "name `{0}` not found", SemIR::NameId);
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
@@ -222,11 +220,11 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                      "Class is incomplete within its definition.");
+                      "class is incomplete within its definition");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
     CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                      "Class was forward declared here.");
+                      "class was forward declared here");
     builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
   }
 }
@@ -237,12 +235,12 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   CARBON_CHECK(!interface_info.is_defined(), "Interface is not incomplete");
   if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
-                      "Interface is currently being defined.");
+                      "interface is currently being defined");
     builder.Note(interface_info.definition_id,
                  InterfaceUndefinedWithinDefinition);
   } else {
     CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
-                      "Interface was forward declared here.");
+                      "interface was forward declared here");
     builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
   }
 }
@@ -373,10 +371,10 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   auto class_info = context.classes().Get(class_type->class_id);
 
   CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "Cannot access {0} member `{1}` of type `{2}`.",
+                    "cannot access {0} member `{1}` of type `{2}`",
                     SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
-                    "The {0} member `{1}` is defined here.", SemIR::AccessKind,
+                    "the {0} member `{1}` is defined here", SemIR::AccessKind,
                     SemIR::NameId);
 
   auto parent_type_id = class_info.self_type_id;
@@ -490,7 +488,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
       // Add test coverage once this is possible.
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
-          "Ambiguous use of name `{0}` found in multiple extended scopes.",
+          "ambiguous use of name `{0}` found in multiple extended scopes",
           SemIR::NameId);
       emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
@@ -553,9 +551,8 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     }
   }
 
-  CARBON_DIAGNOSTIC(
-      CoreNotFound, Error,
-      "Package `Core` implicitly referenced here, but not found.");
+  CARBON_DIAGNOSTIC(CoreNotFound, Error,
+                    "package `Core` implicitly referenced here, but not found");
   context.emitter().Emit(loc, CoreNotFound);
   return SemIR::NameScopeId::Invalid;
 }
@@ -573,7 +570,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   if (!inst_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         CoreNameNotFound, Error,
-        "Name `Core.{0}` implicitly referenced here, but not found.",
+        "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
     emitter_->Emit(loc, CoreNameNotFound, name_id);
     return SemIR::InstId::BuiltinError;
@@ -873,7 +870,7 @@ class TypeCompleter {
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
-        Push(class_info.object_repr_id);
+        Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
         break;
       }
       case CARBON_KIND(SemIR::ConstType inst): {
@@ -1051,14 +1048,19 @@ class TypeCompleter {
     // The value representation of an adapter is the value representation of
     // its adapted type.
     if (class_info.adapt_id.is_valid()) {
-      return GetNestedValueRepr(class_info.object_repr_id);
+      return GetNestedValueRepr(SemIR::GetTypeInSpecific(
+          context_.sem_ir(), inst.specific_id,
+          context_.insts()
+              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+              .adapted_type_id));
     }
     // Otherwise, the value representation for a class is a pointer to the
     // object representation.
     // TODO: Support customized value representations for classes.
     // TODO: Pick a better value representation when possible.
-    return MakePointerValueRepr(class_info.object_repr_id,
-                                SemIR::ValueRepr::ObjectAggregate);
+    return MakePointerValueRepr(
+        class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id),
+        SemIR::ValueRepr::ObjectAggregate);
   }
 
   template <typename InstT>
