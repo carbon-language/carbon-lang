@@ -64,7 +64,7 @@ class DiagnosticEmitter {
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
-                       diagnostic_base.Level == DiagnosticLevel::Context,
+                       diagnostic_base.Level == DiagnosticLevel::LocationInfo,
                    "{0}", static_cast<int>(diagnostic_base.Level));
       AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
       return *this;

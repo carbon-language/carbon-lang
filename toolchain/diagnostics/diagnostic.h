@@ -21,7 +21,7 @@ enum class DiagnosticLevel : int8_t {
   // Information about the location of another diagnostic, showing how we
   // reached that location. This is currently only used for the "in import"
   // message.
-  Context,
+  LocationInfo,
   // A note, not indicating an error on its own, but possibly providing
   // additional information for an error or warning.
   Note,
