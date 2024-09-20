@@ -122,9 +122,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %Base]();
+// CHECK:STDOUT: fn @F[%self.patt: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[%self: %Base]();
+// CHECK:STDOUT: fn @Unused[%self.patt: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -238,5 +238,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %Base]();
+// CHECK:STDOUT: fn @F[%self.patt: %Base]();
 // CHECK:STDOUT:

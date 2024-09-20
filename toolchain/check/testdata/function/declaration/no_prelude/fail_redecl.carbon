@@ -118,11 +118,11 @@ fn E() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%x.loc21: %.1);
+// CHECK:STDOUT: fn @B(%x.patt: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%x: %.1);
+// CHECK:STDOUT: fn @.1(%x.patt: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:

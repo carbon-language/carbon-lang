@@ -129,9 +129,9 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.smul";
+// CHECK:STDOUT: fn @Mul(%a.patt: i32, %b.patt: i32) -> i32 = "int.smul";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: i32, %b.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -216,7 +216,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.smul";
+// CHECK:STDOUT: fn @Mul(%a.patt: i32, %b.patt: i32) -> i32 = "int.smul";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

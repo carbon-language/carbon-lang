@@ -164,21 +164,21 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%x: %.1) {
+// CHECK:STDOUT: fn @.1(%x.patt: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x: %.1);
+// CHECK:STDOUT: fn @G(%x.patt: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%x: %.1);
+// CHECK:STDOUT: fn @H(%x.patt: %.1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.3(%x: <error>) {
+// CHECK:STDOUT: fn @.3(%x.patt: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

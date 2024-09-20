@@ -143,7 +143,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%d: %Derived) -> %return: %.15 {
+// CHECK:STDOUT: fn @Access(%d.patt: %Derived) -> %return: %.15 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc30_11: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %d.ref.loc30_12: %.6 = name_ref d, @Derived.%.loc18_8 [template = @Derived.%.loc18_8]

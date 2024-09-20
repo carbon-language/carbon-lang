@@ -177,13 +177,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b: i32) -> i32 {
+// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c: %.3) -> %.4 {
+// CHECK:STDOUT: fn @C(%c.patt: %.3) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
@@ -297,9 +297,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.patt: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -366,7 +366,7 @@ fn D() {}
 // CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]
 // CHECK:STDOUT:     %.loc27_9.2: type = converted %int.make_type_32.loc27_9, %.loc27_9.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param
-// CHECK:STDOUT:     %b.loc27: i32 = bind_name b, %param
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc27_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc27_17.1: type = value_of_initializer %int.make_type_32.loc27_17 [template = i32]
 // CHECK:STDOUT:     %.loc27_17.2: type = converted %int.make_type_32.loc27_17, %.loc27_17.1 [template = i32]
@@ -381,7 +381,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl_then_def.carbon
 // CHECK:STDOUT:

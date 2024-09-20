@@ -88,7 +88,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%arr: %.3, %i: i32) -> i32 {
+// CHECK:STDOUT: fn @F(%arr.patt: %.3, %i.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %.3 = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: i32 = name_ref i, %i

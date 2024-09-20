@@ -168,7 +168,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   .Self = imports.%import_ref.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c: %C) {
+// CHECK:STDOUT: fn @G(%c.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]

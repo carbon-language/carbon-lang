@@ -158,7 +158,7 @@ extern library "foo" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self: %C]();
+// CHECK:STDOUT: fn @G[%self.patt: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extern_library.carbon
 // CHECK:STDOUT:

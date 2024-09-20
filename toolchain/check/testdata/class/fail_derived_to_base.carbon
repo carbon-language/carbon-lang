@@ -158,13 +158,13 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertUnrelated(%p: %.9) -> %.10 {
+// CHECK:STDOUT: fn @ConvertUnrelated(%p.patt: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertIncomplete(%p: %.14) -> %.15 {
+// CHECK:STDOUT: fn @ConvertIncomplete(%p.patt: %.14) -> %.15 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
 // CHECK:STDOUT:   return <error>

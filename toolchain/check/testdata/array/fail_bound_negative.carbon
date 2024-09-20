@@ -74,5 +74,5 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%n.patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:

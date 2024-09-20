@@ -49,7 +49,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n: %.1) -> %return: %.2 {
+// CHECK:STDOUT: fn @Foo(%n.patt: %.1) -> %return: %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %.1 = tuple_literal ()

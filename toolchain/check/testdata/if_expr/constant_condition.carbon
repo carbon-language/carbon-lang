@@ -239,7 +239,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   return %.loc25_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartiallyConstant(%t: type) -> i32 {
+// CHECK:STDOUT: fn @PartiallyConstant(%t.patt: type) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc29_13: bool = bool_literal true [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc29_13 br !if.expr.then.loc29 else br !if.expr.else.loc29

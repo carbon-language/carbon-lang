@@ -877,30 +877,30 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%b: bool);
+// CHECK:STDOUT: fn @F.2(%b.patt: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self: %FExtraImplicitParam]();
+// CHECK:STDOUT: fn @F.3[%self.patt: %FExtraImplicitParam]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.5(@J.%Self: %.6) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: bool](%b: bool) -> bool;
+// CHECK:STDOUT:   fn[%self.patt: bool](%b.patt: bool) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.6[%self: bool]() -> bool;
+// CHECK:STDOUT: fn @F.6[%self.patt: bool]() -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.7(%b: bool) -> bool;
+// CHECK:STDOUT: fn @F.7(%b.patt: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.8[%self: bool](%b: bool);
+// CHECK:STDOUT: fn @F.8[%self.patt: bool](%b.patt: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.9[%self: bool](%b: %FDifferentParamType) -> bool;
+// CHECK:STDOUT: fn @F.9[%self.patt: bool](%b.patt: %FDifferentParamType) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.10[%self: %FDifferentImplicitParamType](%b: bool) -> bool;
+// CHECK:STDOUT: fn @F.10[%self.patt: %FDifferentImplicitParamType](%b.patt: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.11[%self: bool](%b: bool) -> %FDifferentReturnType;
+// CHECK:STDOUT: fn @F.11[%self.patt: bool](%b.patt: bool) -> %FDifferentReturnType;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.12[%self: bool](%not_b: bool) -> bool;
+// CHECK:STDOUT: fn @F.12[%self.patt: bool](%not_b.patt: bool) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -911,12 +911,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.13.%.1 (%.10), @F.13.%.2 (%.11)) [symbolic = %.3 (constants.%.13)]
 // CHECK:STDOUT:   %.4: type = array_type constants.%.14, @F.13.%Self (%Self.3) [symbolic = %.4 (constants.%.15)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x: @F.13.%.3 (%.13)) -> @F.13.%.4 (%.15);
+// CHECK:STDOUT:   fn(%x.patt: @F.13.%.3 (%.13)) -> @F.13.%.4 (%.15);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.14(%x: %.20) -> %.21;
+// CHECK:STDOUT: fn @F.14(%x.patt: %.20) -> %.21;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.15(%x: %.26) -> %.21;
+// CHECK:STDOUT: fn @F.15(%x.patt: %.26) -> %.21;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:

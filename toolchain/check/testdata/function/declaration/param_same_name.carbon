@@ -67,7 +67,7 @@ fn G(a: i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a: i32);
+// CHECK:STDOUT: fn @F(%a.patt: i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a: i32);
+// CHECK:STDOUT: fn @G(%a.patt: i32);
 // CHECK:STDOUT:

@@ -205,15 +205,15 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%self: %Base]() -> i32;
+// CHECK:STDOUT: fn @F.1[%self.patt: %Base]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1[%self: %Derived]() -> i32;
+// CHECK:STDOUT: fn @G.1[%self.patt: %Derived]() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self: %Derived]();
+// CHECK:STDOUT: fn @F.2[%self.patt: %Derived]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[%self: %Derived]();
+// CHECK:STDOUT: fn @G.2[%self.patt: %Derived]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%a: %Derived) -> i32 {
+// CHECK:STDOUT: fn @Call(%a.patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
@@ -228,7 +228,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %.loc26_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallIndirect(%p: %.8) -> i32 {
+// CHECK:STDOUT: fn @CallIndirect(%p.patt: %.8) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
@@ -244,7 +244,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %.loc30_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PassDerivedToBase(%a: %Derived) -> i32 {
+// CHECK:STDOUT: fn @PassDerivedToBase(%a.patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
@@ -256,7 +256,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %.loc34_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p: %.8) -> i32 {
+// CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p.patt: %.8) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]

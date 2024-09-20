@@ -112,9 +112,9 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[%self: %Class]();
+// CHECK:STDOUT: fn @WithSelf[%self.patt: %Class]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: %Class) {
+// CHECK:STDOUT: fn @F(%c.patt: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc19: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%NoSelf]

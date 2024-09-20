@@ -169,7 +169,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32;
+// CHECK:STDOUT:   fn(%a.patt: i32, %b.patt: i32) -> i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(@Interface.%Self: %.1) {
@@ -183,7 +183,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.2(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.patt: i32, %b.patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}
@@ -297,7 +297,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.loc20: %C.2](%U.loc20: type, %u.loc20: %U) -> %U {
+// CHECK:STDOUT:   fn[%self.patt: %C.2](%U.patt.loc20: type, %u.patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref

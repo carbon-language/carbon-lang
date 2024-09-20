@@ -110,7 +110,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b: %.3) {
+// CHECK:STDOUT: fn @G(%b.patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.2]
@@ -154,7 +154,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ValueBinding(%b: %.3) {
+// CHECK:STDOUT: fn @ValueBinding(%b.patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 3 [template = constants.%.2]

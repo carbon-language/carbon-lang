@@ -86,7 +86,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Deref(%n: i32) {
+// CHECK:STDOUT: fn @Deref(%n.patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref.loc16: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16

@@ -284,7 +284,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddressOfParam(%param.loc95_19.2: i32) {
+// CHECK:STDOUT: fn @AddressOfParam(%param.patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc99: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_32.loc99 [template = i32]

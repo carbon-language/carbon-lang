@@ -140,11 +140,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mul(%a: f64, %b: f64) -> f64 = "float.mul";
+// CHECK:STDOUT: fn @Mul(%a.patt: f64, %b.patt: f64) -> f64 = "float.mul";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: f64, %b.patt: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -372,19 +372,19 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooFew(%a: f64) -> f64;
+// CHECK:STDOUT: fn @TooFew(%a.patt: f64) -> f64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooMany(%a: f64, %b: f64, %c: f64) -> f64;
+// CHECK:STDOUT: fn @TooMany(%a.patt: f64, %b.patt: f64, %c.patt: f64) -> f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BadReturnType(%a: f64, %b: f64) -> bool;
+// CHECK:STDOUT: fn @BadReturnType(%a.patt: f64, %b.patt: f64) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%a: f64, %b: f64) -> f64 = "float.mul";
+// CHECK:STDOUT: fn @JustRight(%a.patt: f64, %b.patt: f64) -> f64 = "float.mul";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallTooFew(%a: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallTooFew(%a.patt: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -394,7 +394,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return %.loc21_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallTooMany(%a: f64, %b: f64, %c: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallTooMany(%a.patt: f64, %b.patt: f64, %c.patt: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, file.%TooMany.decl [template = constants.%TooMany]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -406,7 +406,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return %.loc25_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: f64, %b: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a.patt: f64, %b.patt: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

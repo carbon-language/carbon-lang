@@ -166,15 +166,15 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterEq(%a: f64, %b: f64) -> bool = "float.greater_eq";
+// CHECK:STDOUT: fn @GreaterEq(%a.patt: f64, %b.patt: f64) -> bool = "float.greater_eq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @Negate(%a.patt: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_: %True, %false_: %False) {
+// CHECK:STDOUT: fn @F(%true_.patt: %True, %false_.patt: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %GreaterEq.ref.loc9: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
@@ -282,7 +282,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: f64, %b.patt: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

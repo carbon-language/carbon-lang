@@ -152,7 +152,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: %Class.3) -> i32 {
+// CHECK:STDOUT: fn @F(%c.patt: %Class.3) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.3 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %.4 = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
@@ -169,7 +169,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc19: type, %c: @G.%Class (%Class.2)) -> @G.%T.1 (%T) {
+// CHECK:STDOUT:   fn(%T.patt.loc19: type, %c.patt: @G.%Class (%Class.2)) -> @G.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class (%Class.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%.1 (%.2) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
@@ -187,7 +187,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @H.%Class (%Class.4), @H.%U.1 (%U) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc23: type, %c: @H.%Class (%Class.4)) -> @H.%U.1 (%U) {
+// CHECK:STDOUT:   fn(%U.patt.loc23: type, %c.patt: @H.%Class (%Class.4)) -> @H.%U.1 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class (%Class.4) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%.1 (%.6) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]

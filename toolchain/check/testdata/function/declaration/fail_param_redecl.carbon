@@ -65,5 +65,5 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.loc17_6: i32, %n.loc17_14: i32);
+// CHECK:STDOUT: fn @F(%n.patt.loc17_6: i32, %n.patt.loc17_14: i32);
 // CHECK:STDOUT:

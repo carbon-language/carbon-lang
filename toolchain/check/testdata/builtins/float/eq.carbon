@@ -151,13 +151,13 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Eq(%a: f64, %b: f64) -> bool = "float.eq";
+// CHECK:STDOUT: fn @Eq(%a.patt: f64, %b.patt: f64) -> bool = "float.eq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_: %True, %false_: %False) {
+// CHECK:STDOUT: fn @F(%true_.patt: %True, %false_.patt: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
@@ -200,7 +200,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: f64, %b.patt: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -266,7 +266,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongResult(%a: f64, %b: f64) -> f64;
+// CHECK:STDOUT: fn @WrongResult(%a.patt: f64, %b.patt: f64) -> f64;
 // CHECK:STDOUT:

@@ -88,7 +88,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartialConstant(%x: bool) {
+// CHECK:STDOUT: fn @PartialConstant(%x.patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.3]
@@ -193,7 +193,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x: bool) {
+// CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
 // CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.2]

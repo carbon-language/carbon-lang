@@ -69,7 +69,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Print.1(%a: i32) = "print.int";
+// CHECK:STDOUT: fn @Print.1(%a.patt: i32) = "print.int";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
@@ -83,5 +83,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Print.2(%x: i32) = "print.int";
+// CHECK:STDOUT: fn @Print.2(%x.patt: i32) = "print.int";
 // CHECK:STDOUT:

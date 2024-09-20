@@ -72,7 +72,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.4: type = struct_type {.a: @F.%T.1 (%T)} [symbolic = %.4 (constants.%.8)]
 // CHECK:STDOUT:   %.5: type = array_type constants.%.9, @F.%T.1 (%T) [symbolic = %.5 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc12: type) {
+// CHECK:STDOUT:   fn(%T.patt.loc12: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc13_11: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_12: type = ptr_type %T [symbolic = %.1 (constants.%.2)]

@@ -169,7 +169,7 @@ interface Class { }
 // CHECK:STDOUT: generic fn @F(@.1.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @F.%Self (%Self.2)]();
+// CHECK:STDOUT:   fn[%self.patt: @F.%Self (%Self.2)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self.2) {

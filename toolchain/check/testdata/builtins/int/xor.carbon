@@ -117,9 +117,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Xor(%a: i32, %b: i32) -> i32 = "int.xor";
+// CHECK:STDOUT: fn @Xor(%a.patt: i32, %b.patt: i32) -> i32 = "int.xor";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: i32, %b.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Xor.ref: %Xor.type = name_ref Xor, file.%Xor.decl [template = constants.%Xor]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a

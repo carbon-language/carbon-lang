@@ -71,7 +71,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc14: i32, %a: <error>);
+// CHECK:STDOUT:   fn(%N.patt.loc14: i32, %a.patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {

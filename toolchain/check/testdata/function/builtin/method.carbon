@@ -143,12 +143,12 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @F.1.%Self (%Self)](%other: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.patt: @F.1.%Self (%Self)](%other.patt: @F.1.%Self (%Self)) -> @F.1.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self: i32](%other: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @F.2[%self.patt: i32](%other.patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

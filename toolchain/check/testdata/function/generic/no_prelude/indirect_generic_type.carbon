@@ -53,7 +53,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc11: type, %p: @F.%.2 (%.2)) -> @F.%.1 (%.1) {
+// CHECK:STDOUT:   fn(%T.patt.loc11: type, %p.patt: @F.%.2 (%.2)) -> @F.%.1 (%.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%.2 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref

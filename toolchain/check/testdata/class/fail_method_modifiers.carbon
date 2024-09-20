@@ -158,13 +158,13 @@ base class BaseClass {
 // CHECK:STDOUT:   .Abstract = %Abstract.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.1[%self: %FinalClass]();
+// CHECK:STDOUT: fn @Abstract.1[%self.patt: %FinalClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Virtual[%self: %FinalClass]();
+// CHECK:STDOUT: fn @Virtual[%self.patt: %FinalClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default[%self: %AbstractClass]();
+// CHECK:STDOUT: fn @Default[%self.patt: %AbstractClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final[%self: %AbstractClass]();
+// CHECK:STDOUT: fn @Final[%self.patt: %AbstractClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.2[%self: %BaseClass]();
+// CHECK:STDOUT: fn @Abstract.2[%self.patt: %BaseClass]();
 // CHECK:STDOUT:

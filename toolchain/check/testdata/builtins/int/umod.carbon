@@ -153,9 +153,9 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.umod";
+// CHECK:STDOUT: fn @Mod(%a.patt: i32, %b.patt: i32) -> i32 = "int.umod";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: i32, %b.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mod.ref: %Mod.type = name_ref Mod, file.%Mod.decl [template = constants.%Mod]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -283,11 +283,11 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.umod";
+// CHECK:STDOUT: fn @Mod(%a.patt: i32, %b.patt: i32) -> i32 = "int.umod";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.usub";
+// CHECK:STDOUT: fn @Sub(%a.patt: i32, %b.patt: i32) -> i32 = "int.usub";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.unegate";
+// CHECK:STDOUT: fn @Negate(%a.patt: i32) -> i32 = "int.unegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -408,7 +408,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.umod";
+// CHECK:STDOUT: fn @Mod(%a.patt: i32, %b.patt: i32) -> i32 = "int.umod";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

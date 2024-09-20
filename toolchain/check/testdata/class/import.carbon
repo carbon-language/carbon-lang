@@ -125,13 +125,13 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.5 = binding_pattern self
-// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc15_8.1: %.5 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:     %param: %.5 = param
 // CHECK:STDOUT:     %self: %.5 = bind_name self, %param
-// CHECK:STDOUT:     %.loc15_8.1: %.5 = addr_param %self
+// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -144,9 +144,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F[%self.patt: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self: %.5]();
+// CHECK:STDOUT: fn @G[addr %self.patt: %.5]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -298,7 +298,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %ForwardDeclared.1]();
+// CHECK:STDOUT: fn @F[%self.patt: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self: %.9]();
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst+91: %.9]();
 // CHECK:STDOUT:

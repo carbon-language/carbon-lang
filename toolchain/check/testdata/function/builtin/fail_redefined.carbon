@@ -191,17 +191,17 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%n.loc19: i32, %m.loc19: i32) -> i32 = "int.sadd" {
+// CHECK:STDOUT: fn @A(%n.patt: i32, %m.patt: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n.loc19
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%n.loc29: i32, %m.loc29: i32) -> i32 = "int.sadd" {
+// CHECK:STDOUT: fn @B(%n.patt: i32, %m.patt: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n.loc21
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%n.loc38: i32, %m.loc38: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @C(%n.patt: i32, %m.patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

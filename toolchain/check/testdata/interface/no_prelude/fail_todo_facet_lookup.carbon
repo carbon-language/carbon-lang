@@ -94,7 +94,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc13: %.1) {
+// CHECK:STDOUT:   fn(%T.patt.loc13: %.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
@@ -108,7 +108,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc21: %.1, %x: @CallFacet.%T.1 (%T)) {
+// CHECK:STDOUT:   fn(%T.patt.loc21: %.1, %x.patt: @CallFacet.%T.1 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @CallFacet.%T.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return

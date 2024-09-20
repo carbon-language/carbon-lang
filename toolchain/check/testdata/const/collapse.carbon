@@ -73,7 +73,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p: %.4) -> %.4 {
+// CHECK:STDOUT: fn @F(%p.patt: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

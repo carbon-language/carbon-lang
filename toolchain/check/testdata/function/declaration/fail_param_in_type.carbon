@@ -62,5 +62,5 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: i32, %a: <error>);
+// CHECK:STDOUT: fn @F(%n.patt: i32, %a.patt: <error>);
 // CHECK:STDOUT:

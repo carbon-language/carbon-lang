@@ -192,9 +192,9 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @StaticMemberFunction();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdapterMethod[%self: %SomeClassAdapter]();
+// CHECK:STDOUT: fn @AdapterMethod[%self.patt: %SomeClassAdapter]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestStaticMemberFunction(%a: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @TestStaticMemberFunction(%a.patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %StaticMemberFunction.ref: %StaticMemberFunction.type = name_ref StaticMemberFunction, @SomeClass.%StaticMemberFunction.decl [template = constants.%StaticMemberFunction]
@@ -202,7 +202,7 @@ class StructAdapter {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAdapterMethod(%a: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @TestAdapterMethod(%a.patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %AdapterMethod.ref: %AdapterMethod.type = name_ref AdapterMethod, @SomeClass.%AdapterMethod.decl [template = constants.%AdapterMethod]
@@ -279,9 +279,9 @@ class StructAdapter {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%self: %SomeClass]();
+// CHECK:STDOUT: fn @F.1[%self.patt: %SomeClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @F.2(%a.patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
@@ -369,7 +369,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a: %SomeClassAdapter) -> i32 {
+// CHECK:STDOUT: fn @F(%a.patt: %SomeClassAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]

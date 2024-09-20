@@ -46,8 +46,8 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     auto fn_loc = Parse::NodeId::Invalid;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
-    CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
-    CollectNamesInBlock(fn_scope, fn.param_refs_id);
+    CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
+    CollectNamesInBlock(fn_scope, fn.param_patterns_id);
     if (fn.return_storage_id.is_valid()) {
       insts_[fn.return_storage_id.index] = {
           fn_scope,

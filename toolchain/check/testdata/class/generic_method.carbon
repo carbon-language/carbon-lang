@@ -110,7 +110,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.loc16: %Class.2](%n.loc16: %T) {
+// CHECK:STDOUT:   fn[%self.patt: %Class.2](%n.patt: %T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

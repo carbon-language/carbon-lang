@@ -87,7 +87,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConditionIsNonConstant(%b: bool) {
+// CHECK:STDOUT: fn @ConditionIsNonConstant(%b.patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
@@ -156,7 +156,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t: type) {
+// CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t.patt: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc9_13 br !if.expr.then.loc9 else br !if.expr.else.loc9

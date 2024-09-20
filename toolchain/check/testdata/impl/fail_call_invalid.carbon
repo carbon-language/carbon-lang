@@ -117,14 +117,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @G.1.%Self (%Self)]();
+// CHECK:STDOUT:   fn[%self.patt: @G.1.%Self (%Self)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[%self: <error>]();
+// CHECK:STDOUT: fn @G.2[%self.patt: <error>]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InstanceCall(%n: i32) {
+// CHECK:STDOUT: fn @InstanceCall(%n.patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]

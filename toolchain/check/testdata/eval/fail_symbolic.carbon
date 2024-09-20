@@ -67,7 +67,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc12: i32) {
+// CHECK:STDOUT:   fn(%N.patt.loc12: i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc12 [symbolic = %N.1 (constants.%N)]

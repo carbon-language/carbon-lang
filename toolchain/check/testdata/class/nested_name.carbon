@@ -106,7 +106,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%oi: %Inner) -> i32 {
+// CHECK:STDOUT: fn @F(%oi.patt: %Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %.2 = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
@@ -115,7 +115,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%o: %Outer) {
+// CHECK:STDOUT: fn @G(%o.patt: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]

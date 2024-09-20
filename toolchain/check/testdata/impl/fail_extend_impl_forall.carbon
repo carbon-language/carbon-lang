@@ -136,7 +136,7 @@ class C {
 // CHECK:STDOUT: generic fn @F.1(@GenericInterface.%T.loc11: type, @GenericInterface.%Self.1: @GenericInterface.%.1 (%.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x: @F.1.%T (%T));
+// CHECK:STDOUT:   fn(%x.patt: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@impl.%T: type) {
@@ -144,7 +144,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x: @F.2.%T (%T)) {
+// CHECK:STDOUT:   fn(%x.patt: @F.2.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

@@ -79,7 +79,7 @@ class Class {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%a: %.1]();
+// CHECK:STDOUT: fn @F[%a.patt: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b: %.1);
+// CHECK:STDOUT: fn @G(%b.patt: %.1);
 // CHECK:STDOUT:

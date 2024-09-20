@@ -265,8 +265,8 @@ class FormatterImpl {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    FormatParamList(fn.implicit_param_refs_id, /*is_implicit=*/true);
-    FormatParamList(fn.param_refs_id, /*is_implicit=*/false);
+    FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
+    FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
 
     if (fn.return_storage_id.is_valid()) {
       out_ << " -> ";
@@ -433,21 +433,22 @@ class FormatterImpl {
   // Formats parameters, eliding them completely if they're empty. Wraps in
   // parentheses or square brackets based on whether these are implicit
   // parameters.
-  auto FormatParamList(InstBlockId param_refs_id, bool is_implicit) -> void {
-    if (!param_refs_id.is_valid()) {
+  auto FormatParamList(InstBlockId param_patterns_id, bool is_implicit)
+      -> void {
+    if (!param_patterns_id.is_valid()) {
       return;
     }
 
     out_ << (is_implicit ? "[" : "(");
 
     llvm::ListSeparator sep;
-    for (InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
+    for (InstId param_id : sem_ir_.inst_blocks().Get(param_patterns_id)) {
       out_ << sep;
       if (!param_id.is_valid()) {
         out_ << "invalid";
         continue;
       }
-      if (auto addr = sem_ir_.insts().TryGetAs<SemIR::AddrParam>(param_id)) {
+      if (auto addr = sem_ir_.insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
         out_ << "addr ";
         param_id = addr->inner_id;
       }

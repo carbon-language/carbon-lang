@@ -133,11 +133,11 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Complement(%a: i32) -> i32 = "int.complement";
+// CHECK:STDOUT: fn @Complement(%a.patt: i32) -> i32 = "int.complement";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @And(%a: i32, %b: i32) -> i32 = "int.and";
+// CHECK:STDOUT: fn @And(%a.patt: i32, %b.patt: i32) -> i32 = "int.and";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [template = constants.%Complement]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a

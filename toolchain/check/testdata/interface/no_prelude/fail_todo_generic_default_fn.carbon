@@ -111,7 +111,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @F.%Self (%Self)]() -> @F.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.patt: @F.%Self (%Self)]() -> @F.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%T.loc22: type, @I.%Self.1: @I.%.1 (%.2)) {
@@ -122,7 +122,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
+// CHECK:STDOUT:   fn[%self.patt: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @.1.%Self (%Self) = name_ref self, %self
 // CHECK:STDOUT:     return %self.ref

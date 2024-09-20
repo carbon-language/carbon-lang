@@ -126,7 +126,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
+// CHECK:STDOUT: fn @If1(%b.patt: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -141,7 +141,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
+// CHECK:STDOUT: fn @If2(%b.patt: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -156,7 +156,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
+// CHECK:STDOUT: fn @If3(%b.patt: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

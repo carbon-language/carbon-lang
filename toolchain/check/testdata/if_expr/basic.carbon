@@ -84,7 +84,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
+// CHECK:STDOUT: fn @F(%b.patt: bool, %n.patt: i32, %m.patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 1 [template = constants.%.2]

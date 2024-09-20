@@ -88,7 +88,7 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.loc17: %Class](%b.loc17: bool) {
+// CHECK:STDOUT: fn @F[%self.patt: %Class](%b.patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

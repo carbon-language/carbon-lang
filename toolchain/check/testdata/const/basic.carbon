@@ -94,13 +94,13 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%p: %.4) -> %.4 {
+// CHECK:STDOUT: fn @A(%p.patt: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%p: %.6) -> %.6 {
+// CHECK:STDOUT: fn @B(%p.patt: %.6) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

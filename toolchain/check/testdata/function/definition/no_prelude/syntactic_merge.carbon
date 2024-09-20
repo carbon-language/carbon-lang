@@ -226,12 +226,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.loc8: %C) {
+// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.loc11: %C) {
+// CHECK:STDOUT: fn @Bar(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -274,7 +274,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[](%a.loc7: %C) {
+// CHECK:STDOUT: fn @Foo[](%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -319,9 +319,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C);
+// CHECK:STDOUT: fn @Foo(%a.patt: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a: %C) {
+// CHECK:STDOUT: fn @.1(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -364,7 +364,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.loc7: %C) {
+// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -412,9 +412,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C);
+// CHECK:STDOUT: fn @Foo(%a.patt: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a: %C);
+// CHECK:STDOUT: fn @Bar(%a.patt: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.impl.carbon
 // CHECK:STDOUT:
@@ -467,12 +467,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C) {
+// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a: %C) {
+// CHECK:STDOUT: fn @Bar(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -520,9 +520,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C);
+// CHECK:STDOUT: fn @Foo(%a.patt: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%b: %C) {
+// CHECK:STDOUT: fn @.1(%b.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -570,9 +570,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C);
+// CHECK:STDOUT: fn @Foo(%a.patt: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a: %C) {
+// CHECK:STDOUT: fn @.1(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -620,9 +620,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[%a: %C]();
+// CHECK:STDOUT: fn @Foo[%a.patt: %C]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%a: %C]() {
+// CHECK:STDOUT: fn @.1[%a.patt: %C]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -701,7 +701,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C);
+// CHECK:STDOUT: fn @Foo(%a.patt: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
 // CHECK:STDOUT:
@@ -744,7 +744,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %C) {
+// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -793,9 +793,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: %.2);
+// CHECK:STDOUT: fn @Foo(%a.patt: %.2);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a: %.2) {
+// CHECK:STDOUT: fn @.1(%a.patt: %.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

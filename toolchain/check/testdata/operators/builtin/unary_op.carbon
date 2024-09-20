@@ -82,7 +82,7 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%b: bool) -> bool {
+// CHECK:STDOUT: fn @Not(%b.patt: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc12: bool = not %b.ref

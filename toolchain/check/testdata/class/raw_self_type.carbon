@@ -122,7 +122,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x.loc24: %MemberNamedSelf, %y.loc24: %Self) {
+// CHECK:STDOUT: fn @F.2(%x.patt: %MemberNamedSelf, %y.patt: %Self) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

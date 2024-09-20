@@ -113,7 +113,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -222,15 +222,15 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: %.3) -> %.3 {
+// CHECK:STDOUT: fn @F(%n.patt: %.3) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n: %.5) -> %.5 {
+// CHECK:STDOUT: fn @G(%n.patt: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.5 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
@@ -245,7 +245,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc14: i32, %x: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
+// CHECK:STDOUT:   fn(%N.patt.loc14: i32, %x.patt: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -297,7 +297,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_negative_size.carbon
 // CHECK:STDOUT:
@@ -365,9 +365,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%n.patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_oversized.carbon
 // CHECK:STDOUT:
@@ -408,5 +408,5 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:

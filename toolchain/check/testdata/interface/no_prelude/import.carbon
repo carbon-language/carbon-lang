@@ -272,17 +272,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%import_ref.14, imports.%import_ref.15)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%e: %.1) {
+// CHECK:STDOUT: fn @UseEmpty(%e.patt: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseBasic(%e: %.3) {
+// CHECK:STDOUT: fn @UseBasic(%e.patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseForwardDeclared(%f: %.4) {
+// CHECK:STDOUT: fn @UseForwardDeclared(%f.patt: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

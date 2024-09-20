@@ -145,7 +145,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.loc25: %Class) {
+// CHECK:STDOUT: fn @F.1(%self.patt: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -160,9 +160,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self: %Class]();
+// CHECK:STDOUT: fn @F.2[%self.patt: %Class]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallWrongSelf(%ws: %WrongSelf) {
+// CHECK:STDOUT: fn @CallWrongSelf(%ws.patt: %WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]

@@ -107,7 +107,7 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.patt: i32, %b.patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

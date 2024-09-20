@@ -71,7 +71,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p: %.6) -> %.2 {
+// CHECK:STDOUT: fn @F(%p.patt: %.6) -> %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
 // CHECK:STDOUT:   %.loc13_11.1: ref %.4 = deref %p.ref

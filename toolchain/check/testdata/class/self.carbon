@@ -128,7 +128,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.loc18: %Class]() -> i32 {
+// CHECK:STDOUT: fn @F[%self.patt: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc18
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc15_8 [template = @Class.%.loc15_8]
@@ -137,7 +137,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   return %.loc19_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.loc22: %.2]() -> i32 {
+// CHECK:STDOUT: fn @G[addr %self.patt: %.2]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self.loc22
 // CHECK:STDOUT:   %.loc23_11: ref %Class = deref %self.ref

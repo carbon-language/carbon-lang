@@ -264,7 +264,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartialConstant(%x: bool) {
+// CHECK:STDOUT: fn @PartialConstant(%x.patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc26_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc26_18.1: bool = not %.loc26_13 [template = constants.%.3]

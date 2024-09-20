@@ -1066,13 +1066,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_8.2: %.3 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc7_8.1: %.3 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc7_23: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %param
-// CHECK:STDOUT:     %.loc7_8.1: %.3 = addr_param %self
+// CHECK:STDOUT:     %.loc7_8.2: %.3 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1081,9 +1081,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self: %.3]();
+// CHECK:STDOUT: fn @F[addr %self.patt: %.3]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[addr %self: %.3]() {
+// CHECK:STDOUT: fn @.1[addr %self.patt: %.3]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
