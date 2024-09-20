@@ -119,55 +119,55 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [template = constants.%ConvertCToB] {
-// CHECK:STDOUT:     %p.patt.loc25: %.14 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.14 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc25_20: type = ptr_type %C [template = constants.%.14]
-// CHECK:STDOUT:     %param.loc25: %.14 = param
-// CHECK:STDOUT:     @ConvertCToB.%p: %.14 = bind_name p, %param.loc25
-// CHECK:STDOUT:     %B.ref.loc25: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %param: %.14 = param
+// CHECK:STDOUT:     %p: %.14 = bind_name p, %param
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc25_27: type = ptr_type %B [template = constants.%.15]
-// CHECK:STDOUT:     @ConvertCToB.%return: ref %.15 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.15 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [template = constants.%ConvertBToA] {
-// CHECK:STDOUT:     %p.patt.loc26: %.15 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.15 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %B.ref.loc26: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc26_20: type = ptr_type %B [template = constants.%.15]
-// CHECK:STDOUT:     %param.loc26: %.15 = param
-// CHECK:STDOUT:     @ConvertBToA.%p: %.15 = bind_name p, %param.loc26
-// CHECK:STDOUT:     %A.ref.loc26: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %param: %.15 = param
+// CHECK:STDOUT:     %p: %.15 = bind_name p, %param
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc26_27: type = ptr_type %A [template = constants.%.19]
-// CHECK:STDOUT:     @ConvertBToA.%return: ref %.19 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.19 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [template = constants.%ConvertCToA] {
-// CHECK:STDOUT:     %p.patt.loc27: %.14 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.14 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc27_20: type = ptr_type %C [template = constants.%.14]
-// CHECK:STDOUT:     %param.loc27: %.14 = param
-// CHECK:STDOUT:     @ConvertCToA.%p: %.14 = bind_name p, %param.loc27
-// CHECK:STDOUT:     %A.ref.loc27: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %param: %.14 = param
+// CHECK:STDOUT:     %p: %.14 = bind_name p, %param
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc27_27: type = ptr_type %A [template = constants.%.19]
-// CHECK:STDOUT:     @ConvertCToA.%return: ref %.19 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.19 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [template = constants.%ConvertValue] {
-// CHECK:STDOUT:     %c.patt.loc29: %C = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc29: %C = param
-// CHECK:STDOUT:     @ConvertValue.%c: %C = bind_name c, %param.loc29
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     %c: %C = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [template = constants.%ConvertRef] {
-// CHECK:STDOUT:     %c.patt.loc33: %.14 = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %.14 = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc33: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc33_19: type = ptr_type %C [template = constants.%.14]
-// CHECK:STDOUT:     %param.loc33: %.14 = param
-// CHECK:STDOUT:     @ConvertRef.%c: %.14 = bind_name c, %param.loc33
-// CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %param: %.14 = param
+// CHECK:STDOUT:     %c: %.14 = bind_name c, %param
+// CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc33_26: type = ptr_type %A [template = constants.%.19]
-// CHECK:STDOUT:     @ConvertRef.%return: ref %.19 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.19 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertInit.decl: %ConvertInit.type = fn_decl @ConvertInit [template = constants.%ConvertInit] {} {}
 // CHECK:STDOUT: }
@@ -262,7 +262,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.14 = name_ref c, %c
 // CHECK:STDOUT:   %.loc34_12: ref %C = deref %c.ref
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc34: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc34_15.1: ref %B = class_element_access %.loc34_12, element0
 // CHECK:STDOUT:   %.loc34_15.2: ref %A = class_element_access %.loc34_15.1, element0
 // CHECK:STDOUT:   %.loc34_15.3: ref %A = converted %.loc34_12, %.loc34_15.2

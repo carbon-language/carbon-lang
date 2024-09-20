@@ -70,7 +70,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:     %.loc15_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %bool.make_type, %.loc15_10.1 [template = bool]
 // CHECK:STDOUT:     %param: bool = param
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %param
+// CHECK:STDOUT:     %b: bool = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

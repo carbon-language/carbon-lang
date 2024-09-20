@@ -31,9 +31,9 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %.1 = binding_pattern e
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     @F.%e: %.1 = bind_name e, %param
+// CHECK:STDOUT:     %e: %.1 = bind_name e, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

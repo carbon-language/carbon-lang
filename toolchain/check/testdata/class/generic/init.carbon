@@ -72,35 +72,35 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.patt.loc2: type = symbolic_binding_pattern T 0 [symbolic = @Class.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc2: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc2: type = param
-// CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %param.loc2 [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
-// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0 [symbolic = @InitFromStructGeneric.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc6_26: type = param
-// CHECK:STDOUT:     @InitFromStructGeneric.%T.loc6: type = bind_symbolic_name T 0, %param.loc6_26 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc6_39: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param.loc6_26 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc6_39: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc6_36: @InitFromStructGeneric.%T.1 (%T) = param
-// CHECK:STDOUT:     @InitFromStructGeneric.%x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %param.loc6_36
-// CHECK:STDOUT:     %T.ref.loc6_45: type = name_ref T, @InitFromStructGeneric.%T.loc6 [symbolic = @InitFromStructGeneric.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @InitFromStructGeneric.%return: ref @InitFromStructGeneric.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %param.loc6_36
+// CHECK:STDOUT:     %T.ref.loc6_45: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @InitFromStructGeneric.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(file.%T.loc2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT: generic class @Class(%T.loc2: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc2 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc3: @Class.%.1 (%.2) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -111,7 +111,7 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InitFromStructGeneric(%T.loc6: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
@@ -121,8 +121,8 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   fn(%T.loc6: type, %x: @InitFromStructGeneric.%T.1 (%T)) -> @InitFromStructGeneric.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_15: init type = call %Class.ref(%T.ref) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc7_15: init type = call %Class.ref(%T.ref.loc7) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc7_17.1: type = value_of_initializer %.loc7_15 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:     %.loc7_17.2: type = converted %.loc7_15, %.loc7_17.1 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class (%Class.2) = var v
@@ -143,27 +143,27 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT: specific @Class(@Class.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromStructGeneric(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@InitFromStructGeneric.%T.1) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init.carbon
@@ -210,29 +210,29 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = @Class.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
-// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {} {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc9_32.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc9_32.2: type = converted %int.make_type_32, %.loc9_32.1 [template = i32]
-// CHECK:STDOUT:     @InitFromStructSpecific.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc9_32.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:     %.loc9_32.2: type = converted %int.make_type_32.loc9, %.loc9_32.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(file.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT: generic class @Class(%T.loc4: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Class.%.1 (%.2) = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -246,9 +246,9 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT: fn @InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_15.2: type = converted %int.make_type_32, %.loc13_15.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_15.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_15.2: type = converted %int.make_type_32.loc13, %.loc13_15.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_15.3: init type = call %Class.ref(%.loc13_15.2) [template = constants.%Class.3]
 // CHECK:STDOUT:   %.loc13_19.1: type = value_of_initializer %.loc13_15.3 [template = constants.%Class.3]
 // CHECK:STDOUT:   %.loc13_19.2: type = converted %.loc13_15.3, %.loc13_19.1 [template = constants.%Class.3]
@@ -265,18 +265,18 @@ fn InitFromStructSpecific() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT: specific @Class(@Class.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(i32) {
-// CHECK:STDOUT:   %T => i32
-// CHECK:STDOUT:   %T.patt => i32
+// CHECK:STDOUT:   %T.1 => i32
+// CHECK:STDOUT:   %T.patt.1 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.3

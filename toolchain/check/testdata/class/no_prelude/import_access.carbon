@@ -407,7 +407,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
 // CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     @F.%c: %.1 = bind_name c, %param
+// CHECK:STDOUT:     %c: %.1 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
@@ -441,7 +441,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %param: <error> = param
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %param
+// CHECK:STDOUT:     %c: <error> = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,7 +477,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %param: <error> = param
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %param
+// CHECK:STDOUT:     %c: <error> = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

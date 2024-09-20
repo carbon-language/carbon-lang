@@ -61,11 +61,11 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
 // CHECK:STDOUT:     %param: bool = param
-// CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %param
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32, %.loc11_25.1 [template = i32]
-// CHECK:STDOUT:     @VarScope.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %b: bool = bind_name b, %param
+// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32.loc11, %.loc11_25.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,9 +79,9 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32, %.loc13_12.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32.loc13, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc13_18: i32 = int_literal 2 [template = constants.%.2]

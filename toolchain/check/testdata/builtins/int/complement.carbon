@@ -65,36 +65,36 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Complement.decl: %Complement.type = fn_decl @Complement [template = constants.%Complement] {
-// CHECK:STDOUT:     %a.patt.loc2: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
 // CHECK:STDOUT:     %.loc2_18.2: type = converted %int.make_type_32.loc2_18, %.loc2_18.1 [template = i32]
-// CHECK:STDOUT:     %param.loc2: i32 = param
-// CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %param.loc2
+// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32.loc2_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %int.make_type_32.loc2_26 [template = i32]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %int.make_type_32.loc2_26, %.loc2_26.1 [template = i32]
-// CHECK:STDOUT:     @Complement.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
-// CHECK:STDOUT:     %a.patt.loc3: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc3_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_11.1: type = value_of_initializer %int.make_type_32.loc3_11 [template = i32]
 // CHECK:STDOUT:     %.loc3_11.2: type = converted %int.make_type_32.loc3_11, %.loc3_11.1 [template = i32]
 // CHECK:STDOUT:     %param.loc3_8: i32 = param
-// CHECK:STDOUT:     @And.%a: i32 = bind_name a, %param.loc3_8
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc3_8
 // CHECK:STDOUT:     %int.make_type_32.loc3_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_19.1: type = value_of_initializer %int.make_type_32.loc3_19 [template = i32]
 // CHECK:STDOUT:     %.loc3_19.2: type = converted %int.make_type_32.loc3_19, %.loc3_19.1 [template = i32]
 // CHECK:STDOUT:     %param.loc3_16: i32 = param
-// CHECK:STDOUT:     @And.%b: i32 = bind_name b, %param.loc3_16
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc3_16
 // CHECK:STDOUT:     %int.make_type_32.loc3_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_27.1: type = value_of_initializer %int.make_type_32.loc3_27 [template = i32]
 // CHECK:STDOUT:     %.loc3_27.2: type = converted %int.make_type_32.loc3_27, %.loc3_27.1 [template = i32]
-// CHECK:STDOUT:     @And.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %And.ref: %And.type = name_ref And, %And.decl [template = constants.%And]
@@ -117,17 +117,17 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_26: type = array_type %.loc6_18, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc6_27: type = ptr_type %.6 [template = constants.%.7]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
-// CHECK:STDOUT:     %a.patt.loc8: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]
 // CHECK:STDOUT:     %.loc8_19.2: type = converted %int.make_type_32.loc8_19, %.loc8_19.1 [template = i32]
-// CHECK:STDOUT:     %param.loc8: i32 = param
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %param.loc8
+// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32.loc8_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
-// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

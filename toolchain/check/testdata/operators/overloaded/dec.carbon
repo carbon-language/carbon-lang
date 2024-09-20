@@ -73,7 +73,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
@@ -90,13 +90,13 @@ fn TestOp() {
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc18_9.1: %.3 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc18_9.2: %.3 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc18_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param
-// CHECK:STDOUT:     %self.loc18_14.2: %.3 = bind_name self, %param
-// CHECK:STDOUT:     %.loc18_9.2: %.3 = addr_param %self.loc18_14.2
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %param
+// CHECK:STDOUT:     %.loc18_9.1: %.3 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -110,7 +110,7 @@ fn TestOp() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr @impl.%self.loc18_14.2: %.3]();
+// CHECK:STDOUT: fn @Op.1[addr %self: %.3]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]

@@ -61,7 +61,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param
-// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %param
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }

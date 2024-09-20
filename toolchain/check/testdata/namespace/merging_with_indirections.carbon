@@ -125,7 +125,7 @@ fn Run() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     @F.%return: ref %A = var <return slot>
+// CHECK:STDOUT:     %return: ref %A = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

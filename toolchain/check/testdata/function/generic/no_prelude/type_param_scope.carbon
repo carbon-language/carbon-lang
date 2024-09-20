@@ -28,28 +28,28 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = @F.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %n.patt: @F.%T.1 (%T) = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc11_6: type = param
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %param.loc11_6 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param.loc11_6 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc11_16: @F.%T.1 (%T) = param
-// CHECK:STDOUT:     @F.%n: @F.%T.1 (%T) = bind_name n, %param.loc11_16
-// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, @F.%T.loc11 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     @F.%return: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %n: @F.%T.1 (%T) = bind_name n, %param.loc11_16
+// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @F.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc11: type, %n: @F.%T.1 (%T)) -> @F.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %n.ref: @F.%T.1 (%T) = name_ref n, %n
 // CHECK:STDOUT:     %m: @F.%T.1 (%T) = bind_name m, %n.ref
 // CHECK:STDOUT:     %m.ref: @F.%T.1 (%T) = name_ref m, %m
@@ -59,6 +59,6 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

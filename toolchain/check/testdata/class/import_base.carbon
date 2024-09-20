@@ -82,18 +82,18 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc5: %Base = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %param.loc5: %Base = param
-// CHECK:STDOUT:     %self.loc5: %Base = bind_name self, %param.loc5
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:     %param: %Base = param
+// CHECK:STDOUT:     %self: %Base = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
-// CHECK:STDOUT:     %self.patt.loc6: %Base = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %param.loc6: %Base = param
-// CHECK:STDOUT:     %self.loc6: %Base = bind_name self, %param.loc6
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:     %param: %Base = param
+// CHECK:STDOUT:     %self: %Base = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -122,9 +122,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Base.%self.loc5: %Base]();
+// CHECK:STDOUT: fn @F[%self: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[@Base.%self.loc6: %Base]();
+// CHECK:STDOUT: fn @Unused[%self: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

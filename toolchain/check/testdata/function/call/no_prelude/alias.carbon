@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {
 // CHECK:STDOUT:     %.loc11_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @A.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %B: %A.type = bind_alias B, %A.decl [template = constants.%A]

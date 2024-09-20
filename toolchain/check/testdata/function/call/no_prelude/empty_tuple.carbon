@@ -38,10 +38,10 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     @Echo.%a: %.1 = bind_name a, %param
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %param
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Echo.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

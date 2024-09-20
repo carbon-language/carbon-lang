@@ -58,7 +58,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     %.loc12_23.4: type = value_of_initializer %int.make_type_32.loc12_20 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.5: type = converted %int.make_type_32.loc12_20, %.loc12_23.4 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.6: type = converted %.loc12_23.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     @Main.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

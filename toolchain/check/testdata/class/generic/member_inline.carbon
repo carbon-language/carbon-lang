@@ -57,46 +57,46 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = @Class.%T.patt (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
-// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = @Class.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(file.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT: generic class @Class(%T.loc11: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T.1) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T) [symbolic = %G.type (constants.%G.type)]
+// CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.1) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T (%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {
+// CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc12_11: type = name_ref T, file.%T [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %param.loc12: @F.%T (%T) = param
-// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param.loc12
-// CHECK:STDOUT:       %T.ref.loc12_17: type = name_ref T, file.%T [symbolic = @F.%T (constants.%T)]
-// CHECK:STDOUT:       %return.var.loc12: ref @F.%T (%T) = var <return slot>
+// CHECK:STDOUT:       %T.ref.loc12_11: type = name_ref T, @Class.%T.loc11 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %param: @F.%T (%T) = param
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param
+// CHECK:STDOUT:       %T.ref.loc12_17: type = name_ref T, @Class.%T.loc11 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %return: ref @F.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = %G (constants.%G)] {
+// CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = @Class.%G (constants.%G)] {
 // CHECK:STDOUT:       %self.patt: @G.%Class (%Class.2) = binding_pattern self
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16 [symbolic = @G.%Class (constants.%Class.2)]
-// CHECK:STDOUT:       %param.loc16: @G.%Class (%Class.2) = param
-// CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %param.loc16
-// CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, file.%T [symbolic = @G.%T (constants.%T)]
-// CHECK:STDOUT:       %return.var.loc16: ref @G.%T (%T) = var <return slot>
+// CHECK:STDOUT:       %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16 [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %param: @G.%Class (%Class.2) = param
+// CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %param
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %return: ref @G.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.ref.loc20: type = name_ref T, file.%T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc20: @Class.%.1 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -107,28 +107,28 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T: type) {
+// CHECK:STDOUT: generic fn @F(@Class.%T.loc11: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@Class.%n: @F.%T (%T)) -> @F.%T (%T) {
+// CHECK:STDOUT:   fn(%n: @F.%T (%T)) -> @F.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, @Class.%n
+// CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:     return %n.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(file.%T: type) {
+// CHECK:STDOUT: generic fn @G(@Class.%T.loc11: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@Class.%self: @G.%Class (%Class.2)]() -> @G.%T (%T) {
+// CHECK:STDOUT:   fn[%self: @G.%Class (%Class.2)]() -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, @Class.%self
+// CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @G.%.1 (%.2) = name_ref n, @Class.%.loc20 [template = @Class.%.loc20]
 // CHECK:STDOUT:     %.loc17_16.1: ref @G.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc17_16.2: @G.%T (%T) = bind_value %.loc17_16.1
@@ -137,8 +137,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type
@@ -154,8 +154,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@G.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
@@ -163,8 +163,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT: specific @Class(@Class.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

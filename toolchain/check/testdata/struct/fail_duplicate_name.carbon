@@ -109,7 +109,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %int.make_type_32.loc18_56: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_56.1: type = value_of_initializer %int.make_type_32.loc18_56 [template = i32]
 // CHECK:STDOUT:     %.loc18_56.2: type = converted %int.make_type_32.loc18_56, %.loc18_56.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc27_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_13.1: type = value_of_initializer %int.make_type_32.loc27_13 [template = i32]

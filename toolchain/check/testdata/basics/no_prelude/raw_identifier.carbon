@@ -43,37 +43,37 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %n.patt.loc15: %.1 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc15: %.1 = param
-// CHECK:STDOUT:     @A.%n: %.1 = bind_name n, %param.loc15
+// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %n: %.1 = bind_name n, %param
 // CHECK:STDOUT:     %.loc15_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_17.2: type = converted %.loc15_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @A.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %n.patt.loc19: %.1 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc19: %.1 = param
-// CHECK:STDOUT:     @B.%n: %.1 = bind_name n, %param.loc19
+// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %n: %.1 = bind_name n, %param
 // CHECK:STDOUT:     %.loc19_19.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_19.2: type = converted %.loc19_19.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @B.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %if.patt: %.1 = binding_pattern r#if
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc23_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc23: %.1 = param
-// CHECK:STDOUT:     @C.%if: %.1 = bind_name r#if, %param.loc23
+// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %if: %.1 = bind_name r#if, %param
 // CHECK:STDOUT:     %.loc23_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_20.2: type = converted %.loc23_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @C.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -172,7 +172,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc6_8: %.2 = field_decl y, element1 [template]
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %return.var: ref %A = var <return slot>
+// CHECK:STDOUT:     %return: ref %A = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -192,18 +192,18 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> @A.%return.var: %A {
+// CHECK:STDOUT: fn @Make() -> %return: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_26: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_27.1: %.3 = struct_literal (%.loc9_18, %.loc9_26)
-// CHECK:STDOUT:   %.loc9_27.2: ref i32 = class_element_access @A.%return.var, element0
+// CHECK:STDOUT:   %.loc9_27.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc9_27.3: init i32 = initialize_from %.loc9_18 to %.loc9_27.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_27.4: ref i32 = class_element_access @A.%return.var, element1
+// CHECK:STDOUT:   %.loc9_27.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc9_27.5: init i32 = initialize_from %.loc9_26 to %.loc9_27.4 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_27.6: init %A = class_init (%.loc9_27.3, %.loc9_27.5), @A.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_27.6: init %A = class_init (%.loc9_27.3, %.loc9_27.5), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_28: init %A = converted %.loc9_27.1, %.loc9_27.6 [template = constants.%struct]
-// CHECK:STDOUT:   return %.loc9_28 to @A.%return.var
+// CHECK:STDOUT:   return %.loc9_28 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -82,15 +82,15 @@ fn F(c: Class) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %A: %WithSelf.type = bind_alias A, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %param: %Class = param
-// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %param
+// CHECK:STDOUT:     %c: %Class = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +112,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[@Class.%self: %Class]();
+// CHECK:STDOUT: fn @WithSelf[%self: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: %Class) {
 // CHECK:STDOUT: !entry:

@@ -81,8 +81,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_32, %.loc4_16.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param
-// CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %param
-// CHECK:STDOUT:     @Float.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %size: i32 = bind_name size, %param
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,8 +142,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32, %.loc8_23.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param
-// CHECK:STDOUT:     @GetFloat.%dyn_size: i32 = bind_name dyn_size, %param
-// CHECK:STDOUT:     @GetFloat.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %dyn_size: i32 = bind_name dyn_size, %param
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

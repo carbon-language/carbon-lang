@@ -60,11 +60,11 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_10.2: type = converted %bool.make_type, %.loc11_10.1 [template = bool]
 // CHECK:STDOUT:     %param: bool = param
-// CHECK:STDOUT:     @If.%b: bool = bind_name b, %param
+// CHECK:STDOUT:     %b: bool = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]
-// CHECK:STDOUT:     @If.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

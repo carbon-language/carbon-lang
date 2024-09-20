@@ -70,9 +70,9 @@ fn F(c: C) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
-// CHECK:STDOUT:     @F.2.%c: %C = bind_name c, %param
+// CHECK:STDOUT:     %c: %C = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,7 +104,7 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc24: %.3 = name_ref F, @C.%F [template = constants.%.4]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc28: %.3 = name_ref F, @C.%F [template = constants.%.4]

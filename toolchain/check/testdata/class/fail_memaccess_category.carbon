@@ -83,26 +83,26 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %s.patt: %.6 = binding_pattern s
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.6]
 // CHECK:STDOUT:     %param.loc19_6: %.6 = param
-// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %param.loc19_6
-// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %s: %.6 = bind_name s, %param.loc19_6
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %param.loc19_18: %B = param
-// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %param.loc19_18
+// CHECK:STDOUT:     %b: %B = bind_name b, %param.loc19_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     %self.loc12_13.2: %.1 = bind_name self, %param
-// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_param %self.loc12_13.2
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %.loc12_8.1: %.1 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -119,7 +119,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.2: %.1]();
+// CHECK:STDOUT: fn @F.1[addr %self: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: %.6, %b: %B) {
 // CHECK:STDOUT: !entry:

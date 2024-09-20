@@ -71,7 +71,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32.loc11, %.loc11_25.1 [template = i32]
-// CHECK:STDOUT:     @UnrelatedScopes.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EnclosingButAfter.decl: %EnclosingButAfter.type = fn_decl @EnclosingButAfter [template = constants.%EnclosingButAfter] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
@@ -80,11 +80,11 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc21_25.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc21_25.2: type = converted %bool.make_type, %.loc21_25.1 [template = bool]
 // CHECK:STDOUT:     %param: bool = param
-// CHECK:STDOUT:     @EnclosingButAfter.%b: bool = bind_name b, %param
+// CHECK:STDOUT:     %b: bool = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_34.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_34.2: type = converted %int.make_type_32.loc21, %.loc21_34.1 [template = i32]
-// CHECK:STDOUT:     @EnclosingButAfter.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -88,9 +88,9 @@ interface I {
 // CHECK:STDOUT:     %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_32.loc14_27, %.loc14_27.1 [template = i32]
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_31: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:   %int.make_type_32.loc18_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc18_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc18_27: %.7 = tuple_literal (%int.make_type_32.loc18_19, %int.make_type_32.loc18_24)
@@ -111,7 +111,7 @@ interface I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc13
-// CHECK:STDOUT:   .G = %.loc14_31
+// CHECK:STDOUT:   .G = %.loc14
 // CHECK:STDOUT:   .T = %.loc18_28.6
 // CHECK:STDOUT:   .N = %.loc19_19
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl, %T, %N)
@@ -130,7 +130,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@I.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@I.%a: i32, @I.%b: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

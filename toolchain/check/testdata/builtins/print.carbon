@@ -62,7 +62,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %int.make_type_32, %.loc11_13.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param
-// CHECK:STDOUT:     @Print.1.%a: i32 = bind_name a, %param
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

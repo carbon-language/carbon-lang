@@ -112,7 +112,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %param
+// CHECK:STDOUT:     %i: %.1 = bind_name i, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

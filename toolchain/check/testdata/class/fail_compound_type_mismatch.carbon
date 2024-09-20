@@ -68,13 +68,13 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [template = constants.%AccessBInA] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %param: %A = param
-// CHECK:STDOUT:     @AccessBInA.%a: %A = bind_name a, %param
+// CHECK:STDOUT:     %a: %A = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_24.2: type = converted %int.make_type_32, %.loc19_24.1 [template = i32]
-// CHECK:STDOUT:     @AccessBInA.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

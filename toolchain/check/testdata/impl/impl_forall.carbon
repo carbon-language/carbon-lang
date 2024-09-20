@@ -58,7 +58,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
+// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,7 +87,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(file.%T: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {

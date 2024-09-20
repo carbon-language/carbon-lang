@@ -108,32 +108,32 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl.1 {} {
-// CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {} {
-// CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {
-// CHECK:STDOUT:     %a.patt.loc22: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc22: %C = param
-// CHECK:STDOUT:     @TestIncNonRef.%a: %C = bind_name a, %param.loc22
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %param: %C = param
+// CHECK:STDOUT:     %a: %C = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
-// CHECK:STDOUT:     %a.patt.loc33: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc33_24: %C = param
-// CHECK:STDOUT:     @TestAddAssignNonRef.%a: %C = bind_name a, %param.loc33_24
-// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc33_24
+// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc33_30: %C = param
-// CHECK:STDOUT:     @TestAddAssignNonRef.%b: %C = bind_name b, %param.loc33_30
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc33_30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,13 +154,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc16_9.1: %.3 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc16_9.2: %.3 = addr_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param
-// CHECK:STDOUT:     %self.loc16_14.2: %.3 = bind_name self, %param
-// CHECK:STDOUT:     %.loc16_9.2: %.3 = addr_param %self.loc16_14.2
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %param
+// CHECK:STDOUT:     %.loc16_9.1: %.3 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -172,14 +172,14 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc19_9.1: %.3 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc19_9.2: %.3 = addr_pattern %self.patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %param.loc19_14: %.3 = param
-// CHECK:STDOUT:     %self.loc19_14.2: %.3 = bind_name self, %param.loc19_14
-// CHECK:STDOUT:     %.loc19_9.2: %.3 = addr_param %self.loc19_14.2
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %param.loc19_14
+// CHECK:STDOUT:     %.loc19_9.1: %.3 = addr_param %self
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc19_24: %C = param
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_24
@@ -196,7 +196,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr @impl.1.%self.loc16_14.2: %.3]();
+// CHECK:STDOUT: fn @Op.1[addr %self: %.3]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
@@ -205,7 +205,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   fn[addr %self: @Op.2.%.2 (%.5)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr @impl.2.%self.loc19_14.2: %.3](@impl.2.%other: %C);
+// CHECK:STDOUT: fn @Op.3[addr %self: %.3](%other: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.7) {
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]

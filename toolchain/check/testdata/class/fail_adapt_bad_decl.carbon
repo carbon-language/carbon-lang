@@ -129,9 +129,9 @@ class C {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %param: %Bad = param
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %param
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,9 +183,9 @@ class C {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %param: %Bad = param
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %param
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

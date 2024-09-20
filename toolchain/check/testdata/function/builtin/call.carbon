@@ -56,24 +56,24 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
 // CHECK:STDOUT:     %param.loc11_8: i32 = param
-// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %param.loc11_8
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc11_8
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %param.loc11_16: i32 = param
-// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %param.loc11_16
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc11_16
 // CHECK:STDOUT:     %int.make_type_32.loc11_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %int.make_type_32.loc11_27 [template = i32]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %int.make_type_32.loc11_27, %.loc11_27.1 [template = i32]
-// CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_23: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc13_20, %.loc13_23) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32.loc13, %.loc13_11.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc13_25: type = array_type %int.sadd, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %arr.var: ref %.5 = var arr
 // CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var

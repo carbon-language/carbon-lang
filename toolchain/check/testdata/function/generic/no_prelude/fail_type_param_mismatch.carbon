@@ -34,21 +34,21 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = @F.%T.patt (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 1 [symbolic = @F.%U.patt (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc11: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc11_6: type = param
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %param.loc11_6 [symbolic = @F.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param.loc11_6 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc11_16: type = param
-// CHECK:STDOUT:     @F.%U.loc11: type = bind_symbolic_name U 1, %param.loc11_16 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U 1, %param.loc11_16 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11: type, %U.loc11: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U 1 [symbolic = %U.patt (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
@@ -70,8 +70,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT:   %U.1 => constants.%U
-// CHECK:STDOUT:   %U.patt => constants.%U
+// CHECK:STDOUT:   %U.patt.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

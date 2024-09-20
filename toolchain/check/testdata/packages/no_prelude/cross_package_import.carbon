@@ -273,7 +273,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
-// CHECK:STDOUT:     @F.%x: %.1 = bind_name x, %param
+// CHECK:STDOUT:     %x: %.1 = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
