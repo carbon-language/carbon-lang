@@ -126,7 +126,8 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
   // When there's only one command being run, this will run it in-process.
   // However, a `clang` invocation may cause multiple `cc1` invocations, which
-  // still subprocess.
+  // still subprocess. See `InProcess` comment at:
+  // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
   //
   // TODO: It would be nice to find a way to set up the driver's understanding
   // of the executable name in a way that causes the multiple `cc1` invocations
