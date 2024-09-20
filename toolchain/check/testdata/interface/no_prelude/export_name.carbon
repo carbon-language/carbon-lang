@@ -111,8 +111,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     %i.patt: %.1 = binding_pattern i
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %i.loc6_13.1: %.1 = param i
-// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %i.loc6_13.1
+// CHECK:STDOUT:     %i.param: %.1 = param i
+// CHECK:STDOUT:     %i: %.1 = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

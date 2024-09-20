@@ -69,8 +69,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, %HasF.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,10 +169,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
+// CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc4_6.1: %C = param c
-// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     %c.param: %C = param c
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +196,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: fn @G(%c: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
+// CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.2]
 // CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.3 [template = constants.%.6]
 // CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]

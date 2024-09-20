@@ -49,25 +49,25 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_19.1: type = param T
-// CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T 0, %T.loc4_19.1 [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param T
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @AddWith(file.%T.loc4_19.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic interface @AddWith(%T.loc4: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.1: type = interface_type @AddWith, @AddWith(%T.1) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T.1) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @AddWith.%.1 (%.2), @AddWith.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:   %.3: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @AddWith.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = %F (constants.%F)] {} {}
+// CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = @AddWith.%F (constants.%F)] {} {}
 // CHECK:STDOUT:     %.loc5: @AddWith.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -77,19 +77,19 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(file.%T.loc4_19.2: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
+// CHECK:STDOUT: generic fn @F(@AddWith.%T.loc4: type, @AddWith.%Self.1: @AddWith.%.1 (%.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: specific @AddWith(@AddWith.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -133,13 +133,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer %.loc7_18 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_18, %.loc7_20.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_20.1: type = value_of_initializer @impl.%.loc7 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_20.2: type = converted @impl.%.loc7, %.loc7_20.1 [template = constants.%.6]
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith]
-// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc7_18: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.6]
+// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc7: init type = call %AddWith.ref(%C.ref.loc7_19) [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

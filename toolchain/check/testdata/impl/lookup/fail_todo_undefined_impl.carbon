@@ -78,11 +78,11 @@ impl C as I {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
-// CHECK:STDOUT:     @F.2.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %I.ref.loc27: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref.loc16: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

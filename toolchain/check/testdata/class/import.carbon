@@ -117,20 +117,20 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc14: %ForwardDeclared = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %ForwardDeclared = binding_pattern self
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self.loc14_8.1: %ForwardDeclared = param self
-// CHECK:STDOUT:     %self.loc14_8.2: %ForwardDeclared = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
+// CHECK:STDOUT:     %self.param: %ForwardDeclared = param self
+// CHECK:STDOUT:     %self: %ForwardDeclared = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt.loc15: %.5 = binding_pattern self
+// CHECK:STDOUT:     %self.patt: %.5 = binding_pattern self
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
-// CHECK:STDOUT:     %self.loc15_13.1: %.5 = param self
-// CHECK:STDOUT:     %self.loc15_13.3: %.5 = bind_name self, %self.loc15_13.1
-// CHECK:STDOUT:     %.loc15_8: %.5 = addr_pattern %self.loc15_13.3
+// CHECK:STDOUT:     %self.param: %.5 = param self
+// CHECK:STDOUT:     %self: %.5 = bind_name self, %self.param
+// CHECK:STDOUT:     %.loc15_8: %.5 = addr_pattern %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -143,9 +143,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@ForwardDeclared.%self.loc14_8.2: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F[%self: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr @ForwardDeclared.%self.loc15_13.3: %.5]();
+// CHECK:STDOUT: fn @G[addr %self: %.5]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

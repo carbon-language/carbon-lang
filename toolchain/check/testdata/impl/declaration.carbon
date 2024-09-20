@@ -47,7 +47,7 @@ impl i32 as I;
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_6.2: type = converted %int.make_type_32, %.loc13_6.1 [template = i32]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

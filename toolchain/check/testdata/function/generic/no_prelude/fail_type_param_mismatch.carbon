@@ -35,10 +35,10 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc11_6.1: type = param T
-// CHECK:STDOUT:     @F.%T.loc11: type = bind_symbolic_name T 0, %T.loc11_6.1 [symbolic = @F.%T.1 (constants.%T)]
-// CHECK:STDOUT:     %U.loc11_16.1: type = param U
-// CHECK:STDOUT:     @F.%U.loc11: type = bind_symbolic_name U 1, %U.loc11_16.1 [symbolic = @F.%U.1 (constants.%U)]
+// CHECK:STDOUT:     %T.param: type = param T
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %U.param: type = param U
+// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U 1, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

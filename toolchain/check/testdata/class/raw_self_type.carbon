@@ -61,15 +61,15 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     @MemberNamedSelf.%x.patt: %MemberNamedSelf = binding_pattern x
-// CHECK:STDOUT:     @MemberNamedSelf.%y.patt: %Self = binding_pattern y
+// CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
+// CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc24_22.1: %MemberNamedSelf = param x
-// CHECK:STDOUT:     @F.2.%x: %MemberNamedSelf = bind_name x, %x.loc24_22.1
+// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = param x
+// CHECK:STDOUT:     %x.loc24: %MemberNamedSelf = bind_name x, %x.param.loc24
 // CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
-// CHECK:STDOUT:     %y.loc24_31.1: %Self = param y
-// CHECK:STDOUT:     @F.2.%y: %Self = bind_name y, %y.loc24_31.1
+// CHECK:STDOUT:     %y.param.loc24: %Self = param y
+// CHECK:STDOUT:     %y.loc24: %Self = bind_name y, %y.param.loc24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,11 +88,11 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21_11: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc21_8.1: %MemberNamedSelf = param x
-// CHECK:STDOUT:     %x.loc21_8.2: %MemberNamedSelf = bind_name x, %x.loc21_8.1
-// CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, %Self.decl [template = constants.%Self]
-// CHECK:STDOUT:     %y.loc21_17.1: %Self = param y
-// CHECK:STDOUT:     %y.loc21_17.2: %Self = bind_name y, %y.loc21_17.1
+// CHECK:STDOUT:     %x.param.loc21: %MemberNamedSelf = param x
+// CHECK:STDOUT:     %x.loc21: %MemberNamedSelf = bind_name x, %x.param.loc21
+// CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
+// CHECK:STDOUT:     %y.param.loc21: %Self = param y
+// CHECK:STDOUT:     %y.loc21: %Self = bind_name y, %y.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -122,7 +122,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x: %MemberNamedSelf, %y: %Self) {
+// CHECK:STDOUT: fn @F.2(%x.loc24: %MemberNamedSelf, %y.loc24: %Self) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

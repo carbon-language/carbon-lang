@@ -64,19 +64,19 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {} {}
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32.loc15, %.loc15_6.1 [template = i32]
-// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32, %.loc15_6.1 [template = i32]
+// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
-// CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32.loc22, %.loc22_20.1 [template = i32]
-// CHECK:STDOUT:     %n.loc22_17.1: i32 = param n
-// CHECK:STDOUT:     @InstanceCall.%n: i32 = bind_name n, %n.loc22_17.1
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32, %.loc22_20.1 [template = i32]
+// CHECK:STDOUT:     %n.param: i32 = param n
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,17 +85,17 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, %Self [symbolic = @G.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = @G.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = @G.1.%Self (constants.%Self)]
-// CHECK:STDOUT:     %self.loc12_8.1: @G.1.%Self (%Self) = param self
-// CHECK:STDOUT:     %self.loc12_8.2: @G.1.%Self (%Self) = bind_name self, %self.loc12_8.1
+// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = param self
+// CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_21: %.3 = assoc_entity element0, %G.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %G.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .G = %.loc12_21
+// CHECK:STDOUT:   .G = %.loc12
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,8 +104,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [template = <error>]
-// CHECK:STDOUT:     %self.loc19_8.1: <error> = param self
-// CHECK:STDOUT:     %self.loc19_8.2: <error> = bind_name self, %self.loc19_8.1
+// CHECK:STDOUT:     %self.param: <error> = param self
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -117,18 +117,18 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@Simple.%self.loc12_8.2: @G.1.%Self (%Self)]();
+// CHECK:STDOUT:   fn[%self: @G.1.%Self (%Self)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[@impl.%self.loc19_8.2: <error>]();
+// CHECK:STDOUT: fn @G.2[%self: <error>]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCall(%n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
-// CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12_21 [template = constants.%.4]
+// CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element0 [template = <error>]
 // CHECK:STDOUT:   %.loc23: <bound method> = bound_method %n.ref, %.1
 // CHECK:STDOUT:   return

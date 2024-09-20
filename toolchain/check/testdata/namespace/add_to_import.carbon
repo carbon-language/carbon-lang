@@ -84,14 +84,14 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc4_14.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
-// CHECK:STDOUT:     %.loc4_14.2: type = converted %int.make_type_32.loc4, %.loc4_14.1 [template = i32]
-// CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_14.2: type = converted %int.make_type_32, %.loc4_14.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
-// CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32.loc6, %.loc6_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32, %.loc6_8.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT: }
@@ -100,8 +100,8 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc4
+// CHECK:STDOUT:   %.loc4_27: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc4_27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

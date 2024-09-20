@@ -123,20 +123,20 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [template = constants.%ReturnCUnused] {} {
-// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUnused.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [template = constants.%ReturnCUsed] {} {
-// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUsed.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [template = constants.%ReturnDUnused] {} {
-// CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUnused.%return: ref %D = var <return slot>
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [template = constants.%ReturnDUsed] {} {
-// CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUsed.%return: ref %D = var <return slot>
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {} {}
 // CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [template = constants.%D] {} {}

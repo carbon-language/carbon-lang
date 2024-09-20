@@ -66,23 +66,23 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11_12 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11_12, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %arr.loc11_6.1: %.3 = param arr
-// CHECK:STDOUT:     @F.%arr: %.3 = bind_name arr, %arr.loc11_6.1
+// CHECK:STDOUT:     %arr.param: %.3 = param arr
+// CHECK:STDOUT:     %arr: %.3 = bind_name arr, %arr.param
 // CHECK:STDOUT:     %int.make_type_32.loc11_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_24.1: type = value_of_initializer %int.make_type_32.loc11_24 [template = i32]
 // CHECK:STDOUT:     %.loc11_24.2: type = converted %int.make_type_32.loc11_24, %.loc11_24.1 [template = i32]
-// CHECK:STDOUT:     %i.loc11_21.1: i32 = param i
-// CHECK:STDOUT:     @F.%i: i32 = bind_name i, %i.loc11_21.1
+// CHECK:STDOUT:     %i.param: i32 = param i
+// CHECK:STDOUT:     %i: i32 = bind_name i, %i.param
 // CHECK:STDOUT:     %int.make_type_32.loc11_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_32.1: type = value_of_initializer %int.make_type_32.loc11_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %int.make_type_32.loc11_32, %.loc11_32.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:     %.loc15_11.2: type = converted %int.make_type_32.loc15, %.loc15_11.1 [template = i32]
-// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc15_11.2: type = converted %int.make_type_32, %.loc15_11.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

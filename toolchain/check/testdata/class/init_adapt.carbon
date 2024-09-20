@@ -133,12 +133,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC.ref.loc15: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [template = constants.%MakeC] {} {
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [template = constants.%MakeAdaptC] {} {
-// CHECK:STDOUT:     %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
-// CHECK:STDOUT:     @MakeAdaptC.%return: ref %AdaptC = var <return slot>
+// CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     %return: ref %AdaptC = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d
@@ -274,12 +274,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [template = constants.%MakeC] {} {
-// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @MakeC.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeAdaptC.decl: %MakeAdaptC.type = fn_decl @MakeAdaptC [template = constants.%MakeAdaptC] {} {
-// CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
-// CHECK:STDOUT:     @MakeAdaptC.%return: ref %AdaptC = var <return slot>
+// CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     %return: ref %AdaptC = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc37: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d

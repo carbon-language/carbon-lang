@@ -37,7 +37,7 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     .TestAdd = %TestAdd.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
-// CHECK:STDOUT:     @Int32.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdd.decl: %TestAdd.type = fn_decl @TestAdd [template = constants.%TestAdd] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
@@ -46,17 +46,17 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5_15 [template = i32]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %int.make_type_32.loc5_15, %.loc5_15.1 [template = i32]
-// CHECK:STDOUT:     %a.loc5_12.1: i32 = param a
-// CHECK:STDOUT:     @TestAdd.%a: i32 = bind_name a, %a.loc5_12.1
+// CHECK:STDOUT:     %a.param: i32 = param a
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc5_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_23.1: type = value_of_initializer %int.make_type_32.loc5_23 [template = i32]
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %int.make_type_32.loc5_23, %.loc5_23.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_20.1: i32 = param b
-// CHECK:STDOUT:     @TestAdd.%b: i32 = bind_name b, %b.loc5_20.1
+// CHECK:STDOUT:     %b.param: i32 = param b
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc5_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_31.1: type = value_of_initializer %int.make_type_32.loc5_31 [template = i32]
 // CHECK:STDOUT:     %.loc5_31.2: type = converted %int.make_type_32.loc5_31, %.loc5_31.1 [template = i32]
-// CHECK:STDOUT:     @TestAdd.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

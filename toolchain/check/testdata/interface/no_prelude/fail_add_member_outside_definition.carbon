@@ -90,7 +90,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Inner.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.3 (constants.%Self.3)]
-// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = %.2 (constants.%.6)] {} {}
+// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = @Inner.%.2 (constants.%.6)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

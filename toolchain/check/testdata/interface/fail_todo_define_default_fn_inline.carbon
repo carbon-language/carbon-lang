@@ -73,24 +73,24 @@ interface Interface {
 // CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
 // CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
-// CHECK:STDOUT:     %a.loc21_16.1: i32 = param a
-// CHECK:STDOUT:     %a.loc21_16.2: i32 = bind_name a, %a.loc21_16.1
+// CHECK:STDOUT:     %a.param: i32 = param a
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
 // CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
-// CHECK:STDOUT:     %b.loc21_24.1: i32 = param b
-// CHECK:STDOUT:     %b.loc21_24.2: i32 = bind_name b, %b.loc21_24.1
+// CHECK:STDOUT:     %b.param: i32 = param b
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
 // CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_39: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc16
-// CHECK:STDOUT:   .G = %.loc21_39
+// CHECK:STDOUT:   .G = %.loc21
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +107,7 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(@Interface.%a.loc21_16.2: i32, @Interface.%b.loc21_24.2: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}
