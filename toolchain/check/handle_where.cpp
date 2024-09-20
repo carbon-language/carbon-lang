@@ -70,7 +70,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId /*node_id*/)
 
 auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
     -> bool {
-  // Nothing to do
+  // Nothing to do.
   return true;
 }
 

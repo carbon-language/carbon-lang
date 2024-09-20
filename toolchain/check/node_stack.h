@@ -443,8 +443,8 @@ class NodeStack {
           return Id::KindFor<SemIR::InterfaceId>();
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
-        case Parse::NodeKind::SelfValueName:
         case Parse::NodeKind::SelfTypeName:
+        case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
         case Parse::NodeKind::DefaultLibrary:
         case Parse::NodeKind::LibraryName:
