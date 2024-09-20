@@ -83,7 +83,7 @@ Command::Command(CommandInfo info, Command* parent)
 
 class MetaPrinter {
  public:
-  explicit MetaPrinter(llvm::raw_ostream& out) : out_(&out) {}
+  explicit MetaPrinter(llvm::raw_ostream* out) : out_(out) {}
 
   // Registers this meta printer with a command through the provided builder.
   //
@@ -536,7 +536,7 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   // Buffer the options rendering so we can limit its length.
   std::string buffer_str;
   llvm::raw_string_ostream buffer_out(buffer_str);
-  MetaPrinter buffer_printer(buffer_out);
+  MetaPrinter buffer_printer(&buffer_out);
   bool have_short_flags = false;
   for (const auto& arg : command.options) {
     if (static_cast<int>(buffer_str.size()) > max_option_width) {
@@ -710,7 +710,7 @@ void MetaPrinter::PrintHelpOptions(const Command& command) const {
 
 class Parser {
  public:
-  explicit Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
+  explicit Parser(llvm::raw_ostream* out, llvm::raw_ostream* errors,
                   CommandInfo command_info,
                   llvm::function_ref<void(CommandBuilder&)> build);
 
@@ -1231,15 +1231,15 @@ auto Parser::ParsePositionalSuffix(
   return true;
 }
 
-Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
+Parser::Parser(llvm::raw_ostream* out, llvm::raw_ostream* errors,
                CommandInfo command_info,
                llvm::function_ref<void(CommandBuilder&)> build)
     : meta_printer_(out),
-      errors_(&errors),
+      errors_(errors),
       error_meta_printer_(errors),
       root_command_(command_info) {
   // Run the command building lambda on a builder for the root command.
-  CommandBuilder builder(root_command_, meta_printer_);
+  CommandBuilder builder(&root_command_, &meta_printer_);
   build(builder);
   builder.Finalize();
   command_ = &root_command_;
@@ -1324,7 +1324,7 @@ void ArgBuilder::HelpHidden(bool is_help_hidden) {
   arg_->is_help_hidden = is_help_hidden;
 }
 
-ArgBuilder::ArgBuilder(Arg& arg) : arg_(&arg) {}
+ArgBuilder::ArgBuilder(Arg* arg) : arg_(arg) {}
 
 void FlagBuilder::Default(bool flag_value) {
   arg_->has_default = true;
@@ -1420,7 +1420,7 @@ void CommandBuilder::AddMetaActionOption(
 void CommandBuilder::AddIntegerPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::Integer, [build](Arg& arg) {
-    IntegerArgBuilder builder(arg);
+    IntegerArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1428,7 +1428,7 @@ void CommandBuilder::AddIntegerPositionalArg(
 void CommandBuilder::AddStringPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::String, [build](Arg& arg) {
-    StringArgBuilder builder(arg);
+    StringArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1436,7 +1436,7 @@ void CommandBuilder::AddStringPositionalArg(
 void CommandBuilder::AddOneOfPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::OneOf, [build](Arg& arg) {
-    OneOfArgBuilder builder(arg);
+    OneOfArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1452,7 +1452,7 @@ void CommandBuilder::AddSubcommand(
       "Cannot add subcommands to a command with a positional argument.");
 
   command_->subcommands.emplace_back(new Command(info, command_));
-  CommandBuilder builder(*command_->subcommands.back(), *meta_printer_);
+  CommandBuilder builder(command_->subcommands.back().get(), meta_printer_);
   build(builder);
   builder.Finalize();
 }
@@ -1488,10 +1488,10 @@ void CommandBuilder::Meta(ActionT action) {
   command_->action = std::move(action);
 }
 
-CommandBuilder::CommandBuilder(Command& command, MetaPrinter& meta_printer)
-    : command_(&command), meta_printer_(&meta_printer) {}
+CommandBuilder::CommandBuilder(Command* command, MetaPrinter* meta_printer)
+    : command_(command), meta_printer_(meta_printer) {}
 
-auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg& {
+auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg* {
   CARBON_CHECK(IsValidName(info.name), "Invalid argument name: {0}", info.name);
   CARBON_CHECK(arg_names_.insert(info.name).second,
                "Added a duplicate argument name: {0}", info.name);
@@ -1499,7 +1499,7 @@ auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg& {
   command_->options.emplace_back(new Arg(info));
   Arg* arg = command_->options.back().get();
   arg->kind = kind;
-  return *arg;
+  return arg;
 }
 
 void CommandBuilder::AddPositionalArgImpl(
@@ -1534,7 +1534,7 @@ auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
            llvm::function_ref<void(CommandBuilder&)> build) -> ParseResult {
   // Build a parser, which includes building the command description provided by
   // the user.
-  Parser parser(out, errors, command_info, build);
+  Parser parser(&out, &errors, command_info, build);
 
   // Now parse the arguments provided using that parser.
   return parser.Parse(unparsed_args);
