@@ -93,10 +93,10 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: i32 as %.1 {
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_24: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc18
+// CHECK:STDOUT:   witness = %.loc18_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %D as %.1;

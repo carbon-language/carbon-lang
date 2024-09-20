@@ -49,11 +49,11 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:     %N.loc12_6.1: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     @G.%N.loc12: i32 = bind_symbolic_name N 0, %N.loc12_6.1 [symbolic = @G.%N.1 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc12: i32 = bind_symbolic_name N 0, %N.param [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,10 +66,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.loc12: i32) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc12 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
+// CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
+// CHECK:STDOUT:     %.loc16_11.2: type = converted %int.make_type_32.loc16, %.loc16_11.1 [template = i32]
 // CHECK:STDOUT:     %.loc16_17: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:     %k.var: ref <error> = var k
 // CHECK:STDOUT:     %k: ref <error> = bind_name k, %k.var

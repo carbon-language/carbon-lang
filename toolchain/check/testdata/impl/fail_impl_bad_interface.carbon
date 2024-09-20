@@ -75,12 +75,12 @@ impl i32 as false {}
 // CHECK:STDOUT:   %.loc21_13.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc21_13.2: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.8]
 // CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc21_13.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc21_13.3: type = converted %.loc21_13.4, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_13.3: type = converted @impl.%.loc21_13, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_6.2: type = converted %int.make_type_32, %.loc21_6.1 [template = i32]
-// CHECK:STDOUT:     %.loc21_13.4: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_13: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

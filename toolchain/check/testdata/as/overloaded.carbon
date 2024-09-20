@@ -94,26 +94,26 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   impl_decl @impl.1 {
-// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32.loc15, %.loc15_6.1 [template = i32]
-// CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref.loc15: %As.type = name_ref As, imports.%import_ref.2 [template = constants.%As]
-// CHECK:STDOUT:     %X.ref.loc15: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_32, %.loc15_6.1 [template = i32]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %As.ref: %As.type = name_ref As, imports.%import_ref.2 [template = constants.%As]
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc15_20: type = interface_type @As, @As(constants.%X) [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
-// CHECK:STDOUT:     %X.ref.loc19: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     %Core.ref.loc19: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref.loc19: %As.type = name_ref As, imports.%import_ref.2 [template = constants.%As]
-// CHECK:STDOUT:     %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_18.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:     %.loc19_18.2: type = converted %int.make_type_32.loc19, %.loc19_18.1 [template = i32]
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %As.ref: %As.type = name_ref As, imports.%import_ref.2 [template = constants.%As]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc19_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_18.2: type = converted %int.make_type_32, %.loc19_18.1 [template = i32]
 // CHECK:STDOUT:     %.loc19_18.3: type = interface_type @As, @As(i32) [template = constants.%.12]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
-// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32.loc23, %.loc23_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32, %.loc23_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(constants.%Dest: type) {
@@ -140,33 +140,33 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_20.2: type = converted %int.make_type_32, %.loc16_20.1 [template = i32]
-// CHECK:STDOUT:     %self.loc16_14.1: i32 = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc16_14.2: i32 = bind_name self, %self.loc16_14.1
+// CHECK:STDOUT:     %self.param: i32 = param self, runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return.var: ref %X = var <return slot>
+// CHECK:STDOUT:     %return: ref %X = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Convert.decl) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = %.loc15
+// CHECK:STDOUT:   witness = %.loc15_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %X as %.12 {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %self.loc20_14.1: %X = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc20_14.2: %X = bind_name self, %self.loc20_14.1
+// CHECK:STDOUT:     %self.param: %X = param self, runtime_param0
+// CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_28.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc20_28.2: type = converted %int.make_type_32, %.loc20_28.1 [template = i32]
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%Convert.decl) [template = constants.%.15]
+// CHECK:STDOUT:   %.loc19_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = %.loc19
+// CHECK:STDOUT:   witness = %.loc19_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -190,20 +190,20 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   fn[%self: @Convert.1.%Self (%Self.2)]() -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[@impl.1.%self.loc16_14.2: i32]() -> @impl.1.%return.var: %X {
+// CHECK:STDOUT: fn @Convert.2[%self: i32]() -> %return: %X {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: i32 = name_ref self, @impl.1.%self.loc16_14.2
+// CHECK:STDOUT:   %self.ref: i32 = name_ref self, %self
 // CHECK:STDOUT:   %.loc16_51.1: %.3 = struct_literal (%self.ref)
-// CHECK:STDOUT:   %.loc16_51.2: ref i32 = class_element_access @impl.1.%return.var, element0
+// CHECK:STDOUT:   %.loc16_51.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc16_51.3: init i32 = initialize_from %self.ref to %.loc16_51.2
-// CHECK:STDOUT:   %.loc16_51.4: init %X = class_init (%.loc16_51.3), @impl.1.%return.var
+// CHECK:STDOUT:   %.loc16_51.4: init %X = class_init (%.loc16_51.3), %return
 // CHECK:STDOUT:   %.loc16_52: init %X = converted %.loc16_51.1, %.loc16_51.4
-// CHECK:STDOUT:   return %.loc16_52 to @impl.1.%return.var
+// CHECK:STDOUT:   return %.loc16_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[@impl.2.%self.loc20_14.2: %X]() -> i32 {
+// CHECK:STDOUT: fn @Convert.3[%self: %X]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %X = name_ref self, @impl.2.%self.loc20_14.2
+// CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %.2 = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_45.1: ref i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc20_45.2: i32 = bind_value %.loc20_45.1
@@ -220,7 +220,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc23_26.1: type = interface_type @As, @As(constants.%X) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc23_26.2: %.8 = specific_constant imports.%import_ref.4, @As(constants.%X) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref.loc23_26: %.8 = name_ref Convert, %.loc23_26.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc23_26.3: %Convert.type.3 = interface_witness_access @impl.1.%.loc15, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc23_26.3: %Convert.type.3 = interface_witness_access @impl.1.%.loc15_24, element0 [template = constants.%Convert.2]
 // CHECK:STDOUT:   %.loc23_26.4: <bound method> = bound_method %.loc23_16, %.loc23_26.3 [template = constants.%.18]
 // CHECK:STDOUT:   %.loc23_26.5: ref %X = temporary_storage
 // CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %.loc23_26.4(%.loc23_16) to %.loc23_26.5
@@ -232,7 +232,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc23_32.2: %.13 = specific_constant imports.%import_ref.4, @As(i32) [template = constants.%.14]
 // CHECK:STDOUT:   %Convert.ref.loc23_32: %.13 = name_ref Convert, %.loc23_32.2 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc23_26.7: ref %X = temporary %.loc23_26.5, %.loc23_26.6
-// CHECK:STDOUT:   %.loc23_32.3: %Convert.type.5 = interface_witness_access @impl.2.%.loc19, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc23_32.3: %Convert.type.5 = interface_witness_access @impl.2.%.loc19_24, element0 [template = constants.%Convert.4]
 // CHECK:STDOUT:   %.loc23_32.4: <bound method> = bound_method %.loc23_26.7, %.loc23_32.3
 // CHECK:STDOUT:   %.loc23_26.8: %X = bind_value %.loc23_26.7
 // CHECK:STDOUT:   %Convert.call.loc23_32: init i32 = call %.loc23_32.4(%.loc23_26.8)

@@ -136,7 +136,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
 // CHECK:STDOUT:     %.loc4_16.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %.loc4_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -203,7 +203,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
 // CHECK:STDOUT:     %.loc8_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
@@ -247,7 +247,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
 // CHECK:STDOUT:     %.loc7_21.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc7_21.2: type = converted %.loc7_21.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
@@ -297,7 +297,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
 // CHECK:STDOUT:     %.loc6_18.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc6_18.2: type = converted %.loc6_18.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

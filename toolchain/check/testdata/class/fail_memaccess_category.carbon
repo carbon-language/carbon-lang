@@ -81,13 +81,13 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.6]
-// CHECK:STDOUT:     %s.loc19_6.1: %.6 = param s, runtime_param0
-// CHECK:STDOUT:     @F.2.%s: %.6 = bind_name s, %s.loc19_6.1
-// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:     %b.loc19_18.1: %B = param b, runtime_param1
-// CHECK:STDOUT:     @F.2.%b: %B = bind_name b, %b.loc19_18.1
+// CHECK:STDOUT:     %s.param: %.6 = param s, runtime_param0
+// CHECK:STDOUT:     %s: %.6 = bind_name s, %s.param
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
+// CHECK:STDOUT:     %b.param: %B = param b, runtime_param1
+// CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,9 +95,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %self.loc12_13.1: %.1 = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc12_13.3: %.1 = bind_name self, %self.loc12_13.1
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self.loc12_13.3
+// CHECK:STDOUT:     %self.param: %.1 = param self, runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -114,7 +114,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr @A.%self.loc12_13.3: %.1]();
+// CHECK:STDOUT: fn @F.1[addr %self: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: %.6, %b: %B) {
 // CHECK:STDOUT: !entry:

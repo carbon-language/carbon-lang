@@ -84,13 +84,13 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
-// CHECK:STDOUT:     %Derived.ref.loc21: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     @Make.%return: ref %Derived = var <return slot>
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %return: ref %Derived = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
-// CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %d.loc25_11.1: %Derived = param d, runtime_param0
-// CHECK:STDOUT:     @Access.%d: %Derived = bind_name d, %d.loc25_11.1
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %d.param: %Derived = param d, runtime_param0
+// CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %int.make_type_32.loc25_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc25_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_35.1: %.14 = tuple_literal (%int.make_type_32.loc25_27, %int.make_type_32.loc25_32)
@@ -99,7 +99,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_35.4: type = value_of_initializer %int.make_type_32.loc25_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_35.5: type = converted %int.make_type_32.loc25_32, %.loc25_35.4 [template = i32]
 // CHECK:STDOUT:     %.loc25_35.6: type = converted %.loc25_35.1, constants.%.15 [template = constants.%.15]
-// CHECK:STDOUT:     @Access.%return: ref %.15 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.15 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

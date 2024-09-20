@@ -83,14 +83,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc5_8.1: %Base = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc5_8.2: %Base = bind_name self, %self.loc5_8.1
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:     %self.param: %Base = param self, runtime_param0
+// CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
-// CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %self.loc6_13.1: %Base = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc6_13.2: %Base = bind_name self, %self.loc6_13.1
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:     %self.param: %Base = param self, runtime_param0
+// CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -119,9 +119,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Base.%self.loc5_8.2: %Base]();
+// CHECK:STDOUT: fn @F[%self: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[@Base.%self.loc6_13.2: %Base]();
+// CHECK:STDOUT: fn @Unused[%self: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

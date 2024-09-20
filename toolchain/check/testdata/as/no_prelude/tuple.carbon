@@ -52,8 +52,8 @@ fn Var() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:     @Make.%return: ref %X = var <return slot>
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:     %return: ref %X = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {}
 // CHECK:STDOUT:   %Var.decl: %Var.type = fn_decl @Var [template = constants.%Var] {}

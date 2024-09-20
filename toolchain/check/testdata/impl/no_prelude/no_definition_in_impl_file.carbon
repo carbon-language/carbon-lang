@@ -95,7 +95,7 @@ impl () as D;
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -148,10 +148,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.1 as %.2 {
-// CHECK:STDOUT:   %.loc6: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc6
+// CHECK:STDOUT:   witness = %.loc6_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
@@ -205,7 +205,7 @@ impl () as D;
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%.1]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ impl () as D;
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +336,7 @@ impl () as D;
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc9_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%.1]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

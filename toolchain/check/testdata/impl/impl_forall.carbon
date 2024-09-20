@@ -53,10 +53,10 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc15_14.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15_14.2: type = bind_symbolic_name T 0, %T.loc15_14.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = constants.%T]
-// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,7 +85,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(file.%T.loc15_14.2: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
