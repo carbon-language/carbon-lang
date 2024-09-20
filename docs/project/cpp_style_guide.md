@@ -161,8 +161,10 @@ these.
 
             ```cpp
             class Bar {
+             public:
               // `foo` must not be null.
               explicit Bar(Foo* foo) : foo_(foo) {}
+             private:
               Foo* foo_;
             };
             ```
