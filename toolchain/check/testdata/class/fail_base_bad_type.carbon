@@ -38,7 +38,7 @@ class DeriveFromNonType {
 fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> i32 { return (*p).n; }
 
 class DeriveFromi32 {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: Deriving from final type `i32`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: deriving from final type `i32`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: i32;
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR:
@@ -59,7 +59,7 @@ fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 
 class DeriveFromTuple {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: Deriving from final type `(Base,)`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: deriving from final type `(Base,)`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: (Base,);
   // CHECK:STDERR:                ^~~~~~~
   // CHECK:STDERR:
@@ -80,7 +80,7 @@ fn AccessMemberWithInvalidBaseTuple(p: DeriveFromTuple*) -> i32 { return (*p).n;
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
 class DeriveFromStruct {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: Deriving from final type `{.a: i32, .b: i32}`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: deriving from final type `{.a: i32, .b: i32}`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: {.a: i32, .b: i32};
   // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -102,7 +102,7 @@ fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).
 base class Incomplete;
 
 class DeriveFromIncomplete {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+7]]:16: error: Base `Incomplete` is an incomplete type.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+7]]:16: error: base `Incomplete` is an incomplete type
   // CHECK:STDERR:   extend base: Incomplete;
   // CHECK:STDERR:                ^~~~~~~~~~
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: class was forward declared here
@@ -124,7 +124,7 @@ fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return 
 fn AccessMemberWithInvalidBaseIncomplete(p: DeriveFromIncomplete*) -> i32 { return (*p).n; }
 
 class DeriveFromFinal {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: Deriving from final type `Final`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:16: error: deriving from final type `Final`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: Final;
   // CHECK:STDERR:                ^~~~~
   // CHECK:STDERR:
