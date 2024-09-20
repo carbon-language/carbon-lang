@@ -13,7 +13,7 @@ interface I {
     // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: error: `extend impl` requires a definition for interface `I`
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: interface is currently being defined
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
     extend impl as I;

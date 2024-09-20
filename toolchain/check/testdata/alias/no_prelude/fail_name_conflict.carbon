@@ -14,7 +14,7 @@ alias a = C;
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope
 // CHECK:STDERR: var a: C = {};
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note: name is previously declared here
 // CHECK:STDERR: alias a = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
@@ -24,7 +24,7 @@ var b: C = {};
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
 alias b = C;

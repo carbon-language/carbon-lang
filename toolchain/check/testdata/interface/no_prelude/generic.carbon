@@ -52,7 +52,7 @@ fn G(T:! Generic(B)) {
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: error: package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:6: initializing generic parameter `T` declared here
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here
   // CHECK:STDERR: fn F(T:! Generic(A));
   // CHECK:STDERR:      ^
   F(T);

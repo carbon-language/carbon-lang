@@ -17,7 +17,7 @@ class Class {
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: error: redefinition of `class Class`
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: previously defined here
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: note: previously defined here
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -37,7 +37,7 @@ fn Class.H() {}
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `fn I`
 // CHECK:STDERR: fn Class.I() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-26]]:3: previously defined here
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-26]]:3: note: previously defined here
 // CHECK:STDERR:   fn I() {}
 // CHECK:STDERR:   ^~~~~~~~
 fn Class.I() {}

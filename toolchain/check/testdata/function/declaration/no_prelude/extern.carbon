@@ -28,7 +28,7 @@ extern fn F();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ extern fn F();
 // CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:

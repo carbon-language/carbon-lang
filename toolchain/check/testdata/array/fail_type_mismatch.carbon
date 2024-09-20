@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert from `String` to `i32`
 // CHECK:STDERR: var a: [i32; 3] = (1, "Hello", "World");
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: type `String` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: note: type `String` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var a: [i32; 3] = (1, "Hello", "World");
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -21,7 +21,7 @@ var t1: (i32, String, String);
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert from `String` to `i32`
 // CHECK:STDERR: var b: [i32; 3] = t1;
 // CHECK:STDERR:                   ^~
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: type `String` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: note: type `String` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var b: [i32; 3] = t1;
 // CHECK:STDERR:                   ^~
 // CHECK:STDERR:

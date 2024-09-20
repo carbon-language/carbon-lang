@@ -27,10 +27,15 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
         *stream_ << "warning: ";
         break;
       case DiagnosticLevel::Note:
+        *stream_ << "note: ";
+        break;
+      case DiagnosticLevel::Context:
         break;
     }
     *stream_ << message.format_fn(message) << "\n";
-    message.loc.FormatSnippet(*stream_);
+    if (message.level != DiagnosticLevel::Context) {
+      message.loc.FormatSnippet(*stream_);
+    }
   }
 }
 

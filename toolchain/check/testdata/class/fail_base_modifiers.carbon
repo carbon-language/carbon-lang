@@ -34,7 +34,7 @@ class C3 {
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: error: `default` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -45,7 +45,7 @@ class C4 {
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+6]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend extend base: B;

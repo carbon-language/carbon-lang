@@ -12,7 +12,7 @@ var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `f64` to `i32`
 // CHECK:STDERR: var b: i32 = a.(2.6);
 // CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17: type `f64` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17: note: type `f64` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var b: i32 = a.(2.6);
 // CHECK:STDERR:                 ^~~
 var b: i32 = a.(2.6);

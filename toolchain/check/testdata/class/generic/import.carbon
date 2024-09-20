@@ -58,7 +58,7 @@ fn Use() {
   // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `CompleteClass` to `CompleteClass`
   // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: type `CompleteClass` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:3: note: type `CompleteClass` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var v: CompleteClass(i32*) = F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,13 +69,11 @@ fn Use() {
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+10]]:13: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+8]]:13: error: redeclaration differs at parameter 1
 // CHECK:STDERR: class Class(U:! type) {
 // CHECK:STDERR:             ^
 // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "foo";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: foo.carbon:4:13: previous declaration's corresponding parameter here
+// CHECK:STDERR: foo.carbon:4:13: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Class(T:! type);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
@@ -833,8 +831,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %U.loc14_13.1: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc14_13.2: type = bind_symbolic_name U 0, %U.loc14_13.1 [symbolic = @.1.%U (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_13.1: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc12_13.2: type = bind_symbolic_name U 0, %U.loc12_13.1 [symbolic = @.1.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -844,19 +842,19 @@ class Class(U:! type) {
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(file.%U.loc14_13.2: type) {
+// CHECK:STDOUT: generic class @.1(file.%U.loc12_13.2: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc18: <error> = field_decl x, element0 [template]
-// CHECK:STDOUT:     %.loc19: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:     %.loc16: <error> = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc17: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.3
-// CHECK:STDOUT:     .x = %.loc18
+// CHECK:STDOUT:     .x = %.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

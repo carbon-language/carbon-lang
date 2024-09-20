@@ -20,7 +20,7 @@ let y:! type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:23: error: cannot implicitly convert from `i32` to `y`
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: note: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
 // CHECK:STDERR:

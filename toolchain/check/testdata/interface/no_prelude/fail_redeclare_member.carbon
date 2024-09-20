@@ -13,7 +13,7 @@ interface Interface {
   // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+6]]:3: error: duplicate name being declared in the same scope
   // CHECK:STDERR:   fn F();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: name is previously declared here
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: note: name is previously declared here
   // CHECK:STDERR:   fn F();
   // CHECK:STDERR:   ^~~~~~~
   fn F();

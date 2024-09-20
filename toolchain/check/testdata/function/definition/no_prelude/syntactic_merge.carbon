@@ -40,7 +40,7 @@ fn Foo(a: C);
 // CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: (C)) {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: comparing with previous declaration here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -83,7 +83,7 @@ fn Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn Foo(b: D) {}
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
@@ -100,7 +100,7 @@ fn Foo(a: C);
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: D) {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: comparing with previous declaration here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -117,7 +117,7 @@ fn Foo[a: C]();
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
 // CHECK:STDERR: fn Foo[a: D]() {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: comparing with previous declaration here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
 // CHECK:STDERR: fn Foo[a: C]();
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -163,7 +163,7 @@ fn Foo(a: const C);
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:17: error: redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:                 ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: comparing with previous declaration here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: const C);
 // CHECK:STDERR:                 ^
 fn Foo(a: const (const C)) {}

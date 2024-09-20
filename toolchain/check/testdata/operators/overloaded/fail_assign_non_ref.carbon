@@ -23,7 +23,7 @@ fn TestIncNonRef(a: C) {
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:14: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:14: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:              ^~~~
   // CHECK:STDERR:
@@ -34,7 +34,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:5: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:     ^~
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:14: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:14: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:              ^~~~
   a += b;
