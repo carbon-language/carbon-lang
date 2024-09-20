@@ -18,7 +18,19 @@ interface I {
 
 fn PeriodSelf(T:! I where .Self == ());
 
-fn PeriodMember(T:! I where .Member = {});
+fn PeriodMember(U:! I where .Member = {});
+
+// --- fail_todo_type_period_self.carbon
+
+library "[[@TEST_NAME]]";
+
+interface J {}
+
+// CHECK:STDERR: fail_todo_type_period_self.carbon:[[@LINE+4]]:33: error: type `type` does not support qualified expressions
+// CHECK:STDERR: fn TypeSelfImpls(V:! type where .Self impls J);
+// CHECK:STDERR:                                 ^~~~~
+// CHECK:STDERR:
+fn TypeSelfImpls(V:! type where .Self impls J);
 
 // --- fail_wrong_member.carbon
 
@@ -29,10 +41,10 @@ interface J {
 }
 
 // CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: name `Mismatch` not found
-// CHECK:STDERR: fn PeriodMismatch(T:! J where .Mismatch = {});
+// CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
 // CHECK:STDERR:                               ^~~~~~~~~
 // CHECK:STDERR:
-fn PeriodMismatch(T:! J where .Mismatch = {});
+fn PeriodMismatch(W:! J where .Mismatch = {});
 
 // --- fail_designator_matches_var.carbon
 
@@ -95,6 +107,7 @@ class D {
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %U: %.1 = bind_symbolic_name U 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -119,8 +132,8 @@ class D {
 // CHECK:STDOUT:     %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = @PeriodMember.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, @I.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc10: %.5 = struct_literal ()
-// CHECK:STDOUT:     %T.loc10_17.1: %.1 = param T, runtime_param<invalid>
-// CHECK:STDOUT:     @PeriodMember.%T.loc10: %.1 = bind_symbolic_name T 0, %T.loc10_17.1 [symbolic = @PeriodMember.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %U.loc10_17.1: %.1 = param U, runtime_param<invalid>
+// CHECK:STDOUT:     @PeriodMember.%U.loc10: %.1 = bind_symbolic_name U 0, %U.loc10_17.1 [symbolic = @PeriodMember.%U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -143,11 +156,11 @@ class D {
 // CHECK:STDOUT:   fn(%T.loc8: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%T.loc10: %.1) {
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10: %.1) {
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self)]
-// CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %U.1: %.1 = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc10: %.1);
+// CHECK:STDOUT:   fn(%U.loc10: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
@@ -156,9 +169,55 @@ class D {
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @PeriodMember(constants.%T) {
-// CHECK:STDOUT:   %.Self => constants.%T
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @PeriodMember(constants.%U) {
+// CHECK:STDOUT:   %.Self => constants.%U
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_type_period_self.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @J [template]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self 0 [symbolic]
+// CHECK:STDOUT:   %V: type = bind_symbolic_name V 0 [symbolic]
+// CHECK:STDOUT:   %TypeSelfImpls.type: type = fn_type @TypeSelfImpls [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .J = %J.decl
+// CHECK:STDOUT:     .TypeSelfImpls = %TypeSelfImpls.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.1] {}
+// CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self 0 [symbolic = @TypeSelfImpls.%.Self (constants.%.Self)]
+// CHECK:STDOUT:     %J.ref: type = name_ref J, %J.decl [template = constants.%.1]
+// CHECK:STDOUT:     %V.loc10_18.1: type = param V, runtime_param<invalid>
+// CHECK:STDOUT:     @TypeSelfImpls.%V.loc10: type = bind_symbolic_name V 0, %V.loc10_18.1 [symbolic = @TypeSelfImpls.%V.1 (constants.%V)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @J {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc10: type) {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self)]
+// CHECK:STDOUT:   %V.1: type = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%V.loc10: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
+// CHECK:STDOUT:   %.Self => constants.%V
+// CHECK:STDOUT:   %V.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_member.carbon
@@ -171,7 +230,7 @@ class D {
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %T: %.1 = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %W: %.1 = bind_symbolic_name W 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMismatch.type: type = fn_type @PeriodMismatch [template]
 // CHECK:STDOUT:   %PeriodMismatch: %PeriodMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -187,8 +246,8 @@ class D {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = @PeriodMismatch.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12: %.5 = struct_literal ()
-// CHECK:STDOUT:     %T.loc12_19.1: %.1 = param T, runtime_param<invalid>
-// CHECK:STDOUT:     @PeriodMismatch.%T.loc12: %.1 = bind_symbolic_name T 0, %T.loc12_19.1 [symbolic = @PeriodMismatch.%T.1 (constants.%T)]
+// CHECK:STDOUT:     %W.loc12_19.1: %.1 = param W, runtime_param<invalid>
+// CHECK:STDOUT:     @PeriodMismatch.%W.loc12: %.1 = bind_symbolic_name W 0, %W.loc12_19.1 [symbolic = @PeriodMismatch.%W.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -203,16 +262,16 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMismatch(%T.loc12: %.1) {
+// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12: %.1) {
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self)]
-// CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %W.1: %.1 = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc12: %.1);
+// CHECK:STDOUT:   fn(%W.loc12: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @PeriodMismatch(constants.%T) {
-// CHECK:STDOUT:   %.Self => constants.%T
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @PeriodMismatch(constants.%W) {
+// CHECK:STDOUT:   %.Self => constants.%W
+// CHECK:STDOUT:   %W.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_designator_matches_var.carbon
