@@ -87,8 +87,8 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
-       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_refs_id)) {
-    if (SemIR::Function::GetNameFromParamRefId(sem_ir, param_id) ==
+       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id)) {
+    if (SemIR::Function::GetNameFromParamPatternId(sem_ir, param_id) ==
         SemIR::NameId::SelfValue) {
       return true;
     }

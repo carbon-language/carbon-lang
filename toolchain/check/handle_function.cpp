@@ -262,9 +262,9 @@ static auto BuildFunctionDecl(Context& context,
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (function_info.implicit_param_refs_id.is_valid() ||
-        !function_info.param_refs_id.is_valid() ||
-        !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
+    if (function_info.implicit_param_patterns_id.is_valid() ||
+        !function_info.param_patterns_id.is_valid() ||
+        !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
@@ -310,13 +310,14 @@ static auto HandleFunctionDefinitionAfterSignature(
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<const SemIR::InstId>(
-           context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
-           context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
+           context.inst_blocks().GetOrEmpty(
+               function.implicit_param_patterns_id),
+           context.inst_blocks().GetOrEmpty(function.param_patterns_id))) {
     auto param = context.insts().Get(param_id);
 
     // Find the parameter in the pattern.
     // TODO: More general pattern handling?
-    if (auto addr_pattern = param.TryAs<SemIR::AddrParam>()) {
+    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
       param_id = addr_pattern->inner_id;
       param = context.insts().Get(param_id);
     }
@@ -434,12 +435,14 @@ static auto IsValidBuiltinDeclaration(Context& context,
     -> bool {
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(function.param_refs_id);
-  param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
-  for (auto param_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
+  param_type_ids.reserve(implicit_param_patterns.size() +
+                         param_patterns.size());
+  for (auto param_id : llvm::concat<const SemIR::InstId>(
+           implicit_param_patterns, param_patterns)) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());

@@ -65,7 +65,8 @@ struct EntityWithParamsBase {
 
   // Determines whether this entity has any parameter lists.
   auto has_parameters() const -> bool {
-    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+    return implicit_param_patterns_id.is_valid() ||
+           param_patterns_id.is_valid();
   }
 
   // The following members always have values, and do not change throughout the

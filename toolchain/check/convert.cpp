@@ -1181,19 +1181,20 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      const SemIR::EntityWithParamsBase& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
-  auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(callee.implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(callee.param_refs_id);
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
 
   // If sizes mismatch, fail early.
-  if (arg_refs.size() != param_refs.size()) {
+  if (arg_refs.size() != param_patterns.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument(s) passed to function expecting "
                       "{1} argument(s).",
                       int, int);
     context.emitter()
         .Build(call_loc_id, CallArgCountMismatch, arg_refs.size(),
-               param_refs.size())
+               param_patterns.size())
         .Note(callee.latest_decl_id(), InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
@@ -1201,14 +1202,14 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Start building a block to hold the converted arguments.
   llvm::SmallVector<SemIR::InstId> args;
-  args.reserve(implicit_param_refs.size() + param_refs.size() +
+  args.reserve(implicit_param_patterns.size() + param_patterns.size() +
                return_storage_id.is_valid());
 
   // Check implicit parameters.
-  for (auto implicit_param_id : implicit_param_refs) {
+  for (auto implicit_param_id : implicit_param_patterns) {
     auto implicit_param = context.insts().Get(implicit_param_id);
-    bool addr_pattern = implicit_param.kind() == SemIR::InstKind::AddrParam;
-    if (SemIR::Function::GetNameFromParamRefId(
+    bool addr_pattern = implicit_param.kind() == SemIR::InstKind::AddrPattern;
+    if (SemIR::Function::GetNameFromParamPatternId(
             context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
           context, call_loc_id, callee.latest_decl_id(), callee_specific_id,
@@ -1235,7 +1236,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       });
 
   // Check type conversions per-element.
-  for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_refs)) {
+  for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_patterns)) {
     diag_param_index = i;
 
     auto param_type_id =
