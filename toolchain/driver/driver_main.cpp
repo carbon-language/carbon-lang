@@ -19,14 +19,18 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
+  // Resolve paths before calling SetWorkingDirForBazel.
   std::string exe_path = Carbon::FindExecutablePath(argv[0]);
+  const auto install_paths = Carbon::InstallPaths::MakeExeRelative(exe_path);
+  if (install_paths.error()) {
+    llvm::errs() << "error: " << *install_paths.error();
+    return EXIT_FAILURE;
+  }
 
   Carbon::SetWorkingDirForBazel();
 
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
-
-  const auto install_paths = Carbon::InstallPaths::MakeExeRelative(exe_path);
 
   Carbon::Driver driver(*fs, &install_paths, llvm::outs(), llvm::errs());
   bool success = driver.RunCommand(args).success;

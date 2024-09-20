@@ -83,8 +83,9 @@ class InstallPaths {
   // fails for any reason, it will `CARBON_CHECK` fail with the error message.
   static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
 
-  // Provide an explicit install paths prefix. This is useful for testing or for
-  // using Carbon in an environment with an unusual path to the installed files.
+  // Provide an explicit install paths prefix, which must be absolute. This is
+  // useful for testing or for using Carbon in an environment with an unusual
+  // path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
 
   // Returns the contents of the prelude manifest file. This is the list of

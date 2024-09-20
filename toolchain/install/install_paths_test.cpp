@@ -118,7 +118,7 @@ TEST_F(InstallPathsTest, BinaryRunfiles) {
 }
 
 TEST_F(InstallPathsTest, Errors) {
-  auto paths = InstallPaths::Make("foo/bar/baz");
+  auto paths = InstallPaths::Make("/foo/bar/baz");
   EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
   EXPECT_THAT(paths.prefix(), Eq(""));
 
