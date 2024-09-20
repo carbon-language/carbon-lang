@@ -187,6 +187,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   auto period_self_id = result.inst_id;
   if (name_id == SemIR::NameId::SelfValue) {
     // If this is `.Self`, result is the period_self_id we have computed.
+    // FIXME: should we generate a name reference?
     context.node_stack().Push(node_id, period_self_id);
   } else {
     // Otherwise this is `.Member`, so look up `Member` in `.Self`.
