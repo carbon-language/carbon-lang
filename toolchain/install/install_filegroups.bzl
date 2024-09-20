@@ -86,13 +86,17 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
             pkg_srcs.append(pkg_path)
 
             if "target" in entry:
-                symlink_file(
-                    name = prefixed_path,
-                    symlink_label = entry["target"],
-                )
                 if entry["executable"]:
+                    symlink_file(
+                        name = prefixed_path,
+                        symlink_binary = entry["target"],
+                    )
                     mode = "0755"
                 else:
+                    symlink_file(
+                        name = prefixed_path,
+                        symlink_label = entry["target"],
+                    )
                     mode = "0644"
                 pkg_files(
                     name = pkg_path,
