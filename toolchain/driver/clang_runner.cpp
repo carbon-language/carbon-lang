@@ -127,6 +127,13 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // When there's only one command being run, this will run it in-process.
   // However, a `clang` invocation may cause multiple `cc1` invocations, which
   // still subprocess.
+  //
+  // TODO: It would be nice to find a way to set up the driver's understanding
+  // of the executable name in a way that causes the multiple `cc1` invocations
+  // to actually result in `carbon clang -- ...` invocations (even if as
+  // subprocesses). This may dovetail with having symlinks that redirect to a
+  // busybox of LLD as well, and having even the subprocesses consistently run
+  // the Carbon install toolchain and not a system toolchain whenever possible.
   driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) -> int {
     llvm::ToolContext tool_context;
     return clang_main(argv.size(), const_cast<char**>(argv.data()),
