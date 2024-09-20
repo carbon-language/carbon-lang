@@ -314,6 +314,7 @@ class ArgBuilder {
 
  protected:
   friend CommandBuilder;
+  // `arg` must not be null.
   explicit ArgBuilder(Arg* arg);
 
   Arg* arg_;
@@ -630,6 +631,7 @@ class CommandBuilder {
  private:
   friend Parser;
 
+  // `command` and `meta_printer` must not be null.
   explicit CommandBuilder(Command* command, MetaPrinter* meta_printer);
 
   auto AddArgImpl(const ArgInfo& info, ArgKind kind) -> Arg*;

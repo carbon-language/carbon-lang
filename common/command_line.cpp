@@ -83,6 +83,7 @@ Command::Command(CommandInfo info, Command* parent)
 
 class MetaPrinter {
  public:
+  // `out` must not be null.
   explicit MetaPrinter(llvm::raw_ostream* out) : out_(out) {}
 
   // Registers this meta printer with a command through the provided builder.
@@ -710,6 +711,7 @@ void MetaPrinter::PrintHelpOptions(const Command& command) const {
 
 class Parser {
  public:
+  // `out` and `errors` must not be null.
   explicit Parser(llvm::raw_ostream* out, llvm::raw_ostream* errors,
                   CommandInfo command_info,
                   llvm::function_ref<void(CommandBuilder&)> build);
