@@ -20,7 +20,7 @@ var a: [i32; 39999999999999999993];
 // CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+10]]:9: error: cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: note: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:

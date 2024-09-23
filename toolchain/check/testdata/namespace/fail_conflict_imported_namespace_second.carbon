@@ -20,25 +20,21 @@ package Example;
 
 import library "fn";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+10]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fn.carbon:4:1: name is previously declared here
+// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:4: error: name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-17]]:1: in import
-// CHECK:STDERR: import library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fn.carbon:4:1: referenced non-scope entity declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-15]]:1: in import
+// CHECK:STDERR: fn.carbon:4:1: note: referenced non-scope entity declared here
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 fn NS.Foo();
@@ -106,7 +102,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc14: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

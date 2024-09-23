@@ -24,7 +24,7 @@ class B2 {
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+7]]:38: error: cannot implicitly convert from `B2*` to `A1*`
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: type `B2*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: note: type `B2*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
@@ -35,7 +35,7 @@ class Incomplete;
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+6]]:47: error: cannot implicitly convert from `Incomplete*` to `A2*`
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47: type `Incomplete*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47: note: type `Incomplete*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }

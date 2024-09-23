@@ -16,7 +16,7 @@ class Bad {
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ class Bad {
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ class MultipleAdapts {
   // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ class MultipleAdaptsSameType {
   // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:

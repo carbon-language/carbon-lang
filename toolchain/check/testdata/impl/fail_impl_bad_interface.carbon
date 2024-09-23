@@ -15,7 +15,7 @@
 // CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+6]]:13: error: cannot implicitly convert from `bool` to `type`
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: type `bool` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: note: type `bool` does not implement interface `ImplicitAs`
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
 impl i32 as false {}

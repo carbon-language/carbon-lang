@@ -13,7 +13,7 @@ class Incomplete;
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+6]]:8: error: Variable has incomplete type `[Incomplete; 1]`
 // CHECK:STDERR: var a: [Incomplete; 1];
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: class was forward declared here
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var a: [Incomplete; 1];

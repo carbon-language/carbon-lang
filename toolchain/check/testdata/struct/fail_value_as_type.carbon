@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: error: cannot implicitly convert from `{.a: i32}` to `type`
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: type `{.a: i32}` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `{.a: i32}` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:        ^~~~~~~~
 var x: {.a = 1};

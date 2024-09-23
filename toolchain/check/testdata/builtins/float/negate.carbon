@@ -43,7 +43,7 @@ fn RuntimeCallTooFew(a: f64) -> f64 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-17]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-17]]:1: note: calling function declared here
   // CHECK:STDERR: fn TooFew() -> f64 = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -54,7 +54,7 @@ fn RuntimeCallTooMany(a: f64, b: f64, c: f64) -> f64 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-23]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-23]]:1: note: calling function declared here
   // CHECK:STDERR: fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -65,7 +65,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-29]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-29]]:1: note: calling function declared here
   // CHECK:STDERR: fn BadReturnType(a: f64) -> bool = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return BadReturnType(a, b);

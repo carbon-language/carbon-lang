@@ -58,9 +58,7 @@ var b: () = a_alias;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: in import
-// CHECK:STDERR: import library "var2";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_var3.carbon:[[@LINE+4]]:1: in import
 // CHECK:STDERR: var2.carbon:8:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`
 // CHECK:STDERR: var b: () = a_alias;
 // CHECK:STDERR:     ^
@@ -255,8 +253,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref %.1 = var c
 // CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -264,9 +262,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias_alias.ref: ref %.1 = name_ref a_alias_alias, imports.%import_ref.1 [template = <error>]
-// CHECK:STDOUT:   %.loc12_13: init %.1 = tuple_init () to file.%c.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_26: init %.1 = converted %a_alias_alias.ref, %.loc12_13 [template = constants.%tuple]
-// CHECK:STDOUT:   assign file.%c.var, %.loc12_26
+// CHECK:STDOUT:   %.loc10_13: init %.1 = tuple_init () to file.%c.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc10_26: init %.1 = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%tuple]
+// CHECK:STDOUT:   assign file.%c.var, %.loc10_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

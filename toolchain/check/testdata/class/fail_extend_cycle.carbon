@@ -19,7 +19,7 @@ base class B {
 // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+7]]:1: error: redefinition of `class A`
 // CHECK:STDERR: base class A {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE-11]]:1: previously defined here
+// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE-11]]:1: note: previously defined here
 // CHECK:STDERR: base class A {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:

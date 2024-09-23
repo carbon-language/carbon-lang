@@ -16,7 +16,7 @@ alias ns = NS;
 // CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: referenced non-scope entity declared here
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here
 // CHECK:STDERR: alias ns = NS;
 // CHECK:STDERR:       ^~
 fn ns.A() -> i32 { return 0; }

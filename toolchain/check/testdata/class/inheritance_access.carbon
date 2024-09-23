@@ -82,7 +82,7 @@ class Square {
     // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: error: cannot access private member `y` of type `Shape`
     // CHECK:STDERR:     return self.y;
     // CHECK:STDERR:            ^~~~~~
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: the private member `y` is defined here
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: note: the private member `y` is defined here
     // CHECK:STDERR:   private var y: i32;
     // CHECK:STDERR:               ^~~~~~
     // CHECK:STDERR:
@@ -121,7 +121,7 @@ class C {
   // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B`
   // CHECK:STDERR:   fn G() { Self.F(); }
   // CHECK:STDERR:            ^~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE-8]]:3: the private member `F` is defined here
+  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE-8]]:3: note: the private member `F` is defined here
   // CHECK:STDERR:   private fn F() {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -161,7 +161,7 @@ class B {
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:5: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A`
     // CHECK:STDERR:     A.SOME_PRIVATE_CONSTANT;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: the private member `SOME_PRIVATE_CONSTANT` is defined here
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: note: the private member `SOME_PRIVATE_CONSTANT` is defined here
     // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 5;
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -170,7 +170,7 @@ class B {
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A`
     // CHECK:STDERR:     return A.SOME_PROTECTED_CONSTANT;
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: the protected member `SOME_PROTECTED_CONSTANT` is defined here
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: note: the protected member `SOME_PROTECTED_CONSTANT` is defined here
     // CHECK:STDERR:   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
     // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -181,7 +181,7 @@ class B {
     // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal`
     // CHECK:STDERR:     return self.internal.INTERNAL_CONSTANT;
     // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: the protected member `INTERNAL_CONSTANT` is defined here
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: note: the protected member `INTERNAL_CONSTANT` is defined here
     // CHECK:STDERR:   protected let INTERNAL_CONSTANT: i32 = 5;
     // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -203,7 +203,7 @@ class B {
     // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+6]]:11: error: cannot access private member `x` of type `A`
     // CHECK:STDERR:     self.(A.x);
     // CHECK:STDERR:           ^~~
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: the private member `x` is defined here
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: note: the private member `x` is defined here
     // CHECK:STDERR:   private var x: i32;
     // CHECK:STDERR:               ^~~~~~
     self.(A.x);

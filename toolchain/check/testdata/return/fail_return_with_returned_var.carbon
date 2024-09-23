@@ -13,7 +13,7 @@ fn F() -> i32 {
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error: can only `return var;` in the scope of a `returned var`
   // CHECK:STDERR:   return 1;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here
   // CHECK:STDERR:   returned var v: i32 = 0;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -26,7 +26,7 @@ fn G() -> C {
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: error: can only `return var;` in the scope of a `returned var`
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here
   // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
   // CHECK:STDERR:                ^
   return c;

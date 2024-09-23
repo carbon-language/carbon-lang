@@ -12,7 +12,7 @@ fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `fn A`
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: note: previously defined here
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn B(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `fn B`
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: note: previously defined here
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `fn C`
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: previously defined here
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: note: previously defined here
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn C(n: i32, m: i32) -> i32 = "int.sadd";

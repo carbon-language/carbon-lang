@@ -12,7 +12,7 @@ fn Procedure() {
   // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE+6]]:3: error: cannot declare a `returned var` in this function
   // CHECK:STDERR:   returned var v: () = ();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE-4]]:1: there was no return type provided
+  // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE-4]]:1: note: there was no return type provided
   // CHECK:STDERR: fn Procedure() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~
   returned var v: () = ();

@@ -87,13 +87,11 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+10]]:1: error: only imported entities are valid for `export`
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+8]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export NS;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import library "base";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:8:1: name is declared here
+// CHECK:STDERR: base.carbon:8:1: note: name is declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -108,7 +106,7 @@ class Local {}
 // CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error: only imported entities are valid for `export`
 // CHECK:STDERR: export Local;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: name is declared here
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: note: name is declared here
 // CHECK:STDERR: class Local {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,13 +118,11 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+10]]:8: error: name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+8]]:8: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import library "base";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:4:1: referenced non-scope entity declared here
+// CHECK:STDERR: base.carbon:4:1: note: referenced non-scope entity declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -179,7 +175,7 @@ export C;
 // CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning: `export` matches previous `export`
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: previous `export` here
+// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: note: previous `export` here
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

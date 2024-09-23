@@ -28,7 +28,7 @@ class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument(s) passed to generic class expecting 2 argument(s).
 // CHECK:STDERR: var a: Class(i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: calling generic class declared here
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note: calling generic class declared here
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 argument(s) passed to generic class expecting 2 argument(s).
 // CHECK:STDERR: var a: Class(i32*, 1, 2);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: calling generic class declared here
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note: calling generic class declared here
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -58,10 +58,10 @@ class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:13: initializing generic parameter `T` declared here
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR:             ^
 var a: Class(5, i32*);

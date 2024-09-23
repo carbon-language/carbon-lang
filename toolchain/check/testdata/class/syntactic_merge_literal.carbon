@@ -23,7 +23,7 @@ class D(b:! C(1000));
 // CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+6]]:15: error: redeclaration syntax differs here
 // CHECK:STDERR: class D(b:! C(1_000)) {}
 // CHECK:STDERR:               ^~~~~
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: comparing with previous declaration here
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here
 // CHECK:STDERR: class D(b:! C(1000));
 // CHECK:STDERR:               ^~~~
 class D(b:! C(1_000)) {}

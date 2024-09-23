@@ -12,7 +12,7 @@ fn Main() {
   // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
   var x: 1 = 1;
