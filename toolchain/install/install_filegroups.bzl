@@ -14,7 +14,7 @@ def install_filegroup(name, filegroup_target):
 
     Args:
       name: The base directory for the filegroup.
-      filegroup_target: A relative path for the symlink.
+      filegroup_target: The bazel filegroup target to install.
     """
     return {
         "filegroup": filegroup_target,
