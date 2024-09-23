@@ -7,6 +7,7 @@ load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
+load("run_tool.bzl", "run_tool")
 load("symlink_filegroup.bzl", "symlink_filegroup")
 
 package(default_visibility = ["//visibility:public"])
@@ -229,4 +230,11 @@ pkg_tar_and_test(
         ":install_data",
     ],
     test_install_marker = ":install_marker",
+)
+
+# Support `bazel run` on specific binaries.
+run_tool(
+    name = "run_carbon",
+    data = [":install_data"],
+    tool = "prefix_root/bin/carbon",
 )

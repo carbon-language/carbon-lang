@@ -32,10 +32,10 @@ namespace Carbon {
 //   - MakeForBazelRunfiles for locating through Bazel's runfile tree.
 //   - Make for an explicit path, for example in tests.
 //
-// When locating an install, we verify it by
-// looking for the `carbon_install.txt` marker file at a specific location
-// below. When errors occur, the install prefix is made empty, and error() can
-// be used for diagnostics; InstallPaths remains minimally functional.
+// When locating an install, we verify it by looking for the
+// `carbon_install.txt` marker file at a specific location below. When errors
+// occur, the install prefix is made empty, and error() can be used for
+// diagnostics; InstallPaths remains minimally functional.
 //
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
@@ -83,8 +83,9 @@ class InstallPaths {
   // fails for any reason, it will `CARBON_CHECK` fail with the error message.
   static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
 
-  // Provide an explicit install paths prefix. This is useful for testing or for
-  // using Carbon in an environment with an unusual path to the installed files.
+  // Provide an explicit install paths prefix, which must be absolute. This is
+  // useful for testing or for using Carbon in an environment with an unusual
+  // path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
 
   // Returns the contents of the prelude manifest file. This is the list of
@@ -105,6 +106,11 @@ class InstallPaths {
   // The computed installation prefix. This should correspond to the
   // `prefix_root` directory in Bazel's output, or to some prefix the toolchain
   // is installed into on a system such as `/usr/local` or `/home/$USER`.
+  //
+  // This will be an absolute path. We keep an absolute path for when the
+  // command line uses a relative path (`./bin/carbon`) and the working
+  // directory changes after initialization (for example, to Bazel's working
+  // directory).
   //
   // In the event of an error, this will be the empty string.
   auto prefix() const -> llvm::StringRef { return prefix_; }
