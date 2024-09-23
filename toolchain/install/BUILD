@@ -234,7 +234,7 @@ pkg_tar_and_test(
 
 # Support `bazel run` on specific binaries.
 run_tool(
-    name = "carbon.bin",
+    name = "run_carbon",
     data = [":install_data"],
     tool = "prefix_root/bin/carbon",
 )

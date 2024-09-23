@@ -6,5 +6,5 @@
 # available.
 alias(
     name = "toolchain",
-    actual = "//toolchain/install:carbon.bin",
+    actual = "//toolchain/install:run_carbon",
 )

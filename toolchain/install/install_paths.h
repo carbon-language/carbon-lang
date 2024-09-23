@@ -32,10 +32,15 @@ namespace Carbon {
 //   - MakeForBazelRunfiles for locating through Bazel's runfile tree.
 //   - Make for an explicit path, for example in tests.
 //
-// When locating an install, we verify it by
-// looking for the `carbon_install.txt` marker file at a specific location
-// below. When errors occur, the install prefix is made empty, and error() can
-// be used for diagnostics; InstallPaths remains minimally functional.
+// When locating an install, we verify it by looking for the
+// `carbon_install.txt` marker file at a specific location below. When errors
+// occur, the install prefix is made empty, and error() can be used for
+// diagnostics; InstallPaths remains minimally functional.
+//
+// The install path is stored as an absolute path. This addresses cases where
+// the command line uses a relative path (`./bin/carbon`) and the working
+// directory changes after initialization (for example, to Bazel's working
+// directory).
 //
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
