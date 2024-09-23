@@ -96,15 +96,10 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
 }
 
-struct NodeAndInstIds {
-  Parse::NodeId node_id;
-  SemIR::InstId inst_id;
-};
-
 // Handle a name that is used as an expression by performing unqualified name
 // lookup.
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
-                             SemIR::NameId name_id) -> NodeAndInstIds {
+                             SemIR::NameId name_id) -> SemIR::InstId {
   auto result = context.LookupUnqualifiedName(node_id, name_id);
   auto value = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
@@ -121,10 +116,9 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                   .specific_id = result.specific_id});
   }
 
-  return {node_id, context.AddInst<SemIR::NameRef>(
-                       node_id, {.type_id = type_id,
-                                 .name_id = name_id,
-                                 .value_id = result.inst_id})};
+  return context.AddInst<SemIR::NameRef>(
+      node_id,
+      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameId node_id)
@@ -144,8 +138,8 @@ auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
   if (!name_id) {
     return context.TODO(node_id, "Error recovery from keyword name.");
   }
-  auto result = HandleNameAsExpr(context, node_id, *name_id);
-  context.node_stack().Push(result.node_id, result.inst_id);
+  context.node_stack().Push(node_id,
+                            HandleNameAsExpr(context, node_id, *name_id));
   return true;
 }
 
@@ -161,8 +155,8 @@ auto HandleParseNode(Context& context, Parse::SelfTypeNameId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::SelfTypeNameExprId node_id)
     -> bool {
-  auto result = HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType);
-  context.node_stack().Push(result.node_id, result.inst_id);
+  context.node_stack().Push(
+      node_id, HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType));
   return true;
 }
 
@@ -173,8 +167,8 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
     -> bool {
-  auto result = HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
-  context.node_stack().Push(result.node_id, result.inst_id);
+  context.node_stack().Push(
+      node_id, HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue));
   return true;
 }
 
@@ -191,7 +185,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
   // TODO: Give a clearer error when .Self is not found, particularly if this
   // is a `.Member` designator expression.
   SemIR::InstId period_self_id =
-      HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf).inst_id;
+      HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);
 
   if (name_id == SemIR::NameId::SelfType) {
     // If this is `.Self`, result is the period_self_id we have computed.
