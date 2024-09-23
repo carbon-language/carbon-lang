@@ -121,11 +121,10 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                   .specific_id = result.specific_id});
   }
 
-  SemIR::LocIdAndInst arg(node_id, SemIR::NameRef{.type_id = type_id,
-                                                  .name_id = name_id,
-                                                  .value_id = result.inst_id});
-  auto inst_id = context.AddInst(arg);
-  return {arg.loc_id.node_id(), inst_id};
+  return {node_id, context.AddInst<SemIR::NameRef>(
+                       node_id, {.type_id = type_id,
+                                 .name_id = name_id,
+                                 .value_id = result.inst_id})};
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameId node_id)
