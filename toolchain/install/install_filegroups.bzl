@@ -18,7 +18,7 @@ def install_filegroup(name, filegroup_target):
     """
     return {
         "filegroup": filegroup_target,
-        "for_driver": False,
+        "is_driver": False,
         "name": name,
     }
 
@@ -32,12 +32,12 @@ def install_symlink(name, symlink_to):
       symlink_to: A relative path for the symlink.
     """
     return {
-        "for_driver": False,
+        "is_driver": False,
         "name": name,
         "symlink": symlink_to,
     }
 
-def install_target(name, target, executable = False, for_driver = False):
+def install_target(name, target, executable = False, is_driver = False):
     """Adds a target for install.
 
     Used in the `install_dirs` dict.
@@ -46,12 +46,12 @@ def install_target(name, target, executable = False, for_driver = False):
       name: The filename to use.
       target: The bazel target being installed.
       executable: True if executable.
-      for_driver: False if it should be included in the `no_driver_name`
+      is_driver: False if it should be included in the `no_driver_name`
         filegroup.
     """
     return {
         "executable": executable,
-        "for_driver": for_driver,
+        "is_driver": is_driver,
         "name": name,
         "target": target,
     }
@@ -79,7 +79,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
 
             prefixed_path = "{0}/{1}".format(prefix, path)
             all_srcs.append(prefixed_path)
-            if not entry["for_driver"]:
+            if not entry["is_driver"]:
                 no_driver_srcs.append(prefixed_path)
 
             pkg_path = path + ".pkg"

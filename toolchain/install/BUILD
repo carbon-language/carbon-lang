@@ -82,7 +82,7 @@ install_dirs = {
             "carbon",
             "//toolchain/driver:carbon",
             executable = True,
-            for_driver = True,
+            is_driver = True,
         ),
     ],
     "lib/carbon": [
