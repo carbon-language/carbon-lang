@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 class Incomplete;
 
 class AdaptIncomplete {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: Adapted type `Incomplete` is an incomplete type.
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: adapted type `Incomplete` is an incomplete type
   // CHECK:STDERR:   adapt Incomplete;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here

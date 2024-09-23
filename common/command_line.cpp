@@ -57,7 +57,7 @@ auto operator<<(llvm::raw_ostream& output, CommandKind kind)
   }
   CARBON_FATAL("Corrupt command kind!");
 }
-Arg::Arg(const ArgInfo& info) : info(info) {}
+Arg::Arg(ArgInfo info) : info(info) {}
 
 Arg::~Arg() {
   switch (kind) {
@@ -78,12 +78,13 @@ Arg::~Arg() {
   }
 }
 
-Command::Command(const CommandInfo& info, Command* parent)
+Command::Command(CommandInfo info, Command* parent)
     : info(info), parent(parent) {}
 
 class MetaPrinter {
  public:
-  explicit MetaPrinter(llvm::raw_ostream& out) : out_(out) {}
+  // `out` must not be null.
+  explicit MetaPrinter(llvm::raw_ostream* out) : out_(out) {}
 
   // Registers this meta printer with a command through the provided builder.
   //
@@ -202,7 +203,7 @@ Prints the version of this command.
   void PrintHelpPositionalArgs(const Command& command) const;
   void PrintHelpOptions(const Command& command) const;
 
-  llvm::raw_ostream& out_;
+  llvm::raw_ostream* out_;
 
   // A flag that may be configured during command line parsing to select between
   // long and short form help output.
@@ -274,16 +275,16 @@ void MetaPrinter::PrintHelp(const Command& command) const {
   if (!info.version.empty()) {
     // We use the version string as a header for the command help when present.
     PrintRawVersion(command, /*indent=*/"");
-    out_ << "\n";
+    *out_ << "\n";
   }
   if (!command.info.help.empty()) {
     PrintTextBlock("", info.help);
-    out_ << "\n";
+    *out_ << "\n";
   }
   if (!info.build_info.empty()) {
-    out_ << "Build info:\n";
+    *out_ << "Build info:\n";
     PrintRawBuildInfo(command, /*indent=*/"  ");
-    out_ << "\n";
+    *out_ << "\n";
   }
 
   PrintUsage(command);
@@ -292,13 +293,13 @@ void MetaPrinter::PrintHelp(const Command& command) const {
   PrintHelpOptions(command);
 
   if (!info.help_epilogue.empty()) {
-    out_ << "\n";
+    *out_ << "\n";
     PrintTextBlock("", info.help_epilogue);
   }
 
   // End with a blank line for the long help to make it easier to separate from
   // anything that follows in the shell.
-  out_ << "\n";
+  *out_ << "\n";
 }
 
 void MetaPrinter::PrintHelpForSubcommandName(
@@ -310,8 +311,8 @@ void MetaPrinter::PrintHelpForSubcommandName(
     }
   }
 
-  out_ << "ERROR: Could not find a subcommand named '" << subcommand_name
-       << "'.\n";
+  *out_ << "ERROR: Could not find a subcommand named '" << subcommand_name
+        << "'.\n";
 }
 
 void MetaPrinter::PrintVersion(const Command& command) const {
@@ -320,7 +321,7 @@ void MetaPrinter::PrintVersion(const Command& command) const {
       "Printing should not be enabled without a version string configured.");
   PrintRawVersion(command, /*indent=*/"");
   if (!command.info.build_info.empty()) {
-    out_ << "\n";
+    *out_ << "\n";
     // If there is build info to print, we also render that without any indent.
     PrintRawBuildInfo(command, /*indent=*/"");
   }
@@ -329,19 +330,19 @@ void MetaPrinter::PrintVersion(const Command& command) const {
 void MetaPrinter::PrintSubcommands(const Command& command) const {
   for (const auto& subcommand :
        llvm::ArrayRef(command.subcommands).drop_back()) {
-    out_ << "'" << subcommand->info.name << "', ";
+    *out_ << "'" << subcommand->info.name << "', ";
   }
   if (command.subcommands.size() > 1) {
-    out_ << "or ";
+    *out_ << "or ";
   }
-  out_ << "'" << command.subcommands.back()->info.name << "'";
+  *out_ << "'" << command.subcommands.back()->info.name << "'";
 }
 
 void MetaPrinter::PrintRawVersion(const Command& command,
                                   llvm::StringRef indent) const {
   // Newlines are trimmed from the version string an a closing newline added but
   // no other formatting is performed.
-  out_ << indent << command.info.version.trim('\n') << "\n";
+  *out_ << indent << command.info.version.trim('\n') << "\n";
 }
 void MetaPrinter::PrintRawBuildInfo(const Command& command,
                                     llvm::StringRef indent) const {
@@ -351,7 +352,7 @@ void MetaPrinter::PrintRawBuildInfo(const Command& command,
   llvm::SmallVector<llvm::StringRef, 128> lines;
   command.info.build_info.trim('\n').split(lines, "\n");
   for (auto line : lines) {
-    out_ << indent << line << "\n";
+    *out_ << indent << line << "\n";
   }
 }
 
@@ -382,7 +383,7 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
   for (int i = 0, size = input_lines.size(); i < size;) {
     if (input_lines[i].empty()) {
       // Blank lines are preserved.
-      out_ << "\n";
+      *out_ << "\n";
       ++i;
       continue;
     }
@@ -392,7 +393,7 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
       llvm::StringRef fence =
           input_lines[i].slice(0, input_lines[i].find_first_not_of("`"));
       do {
-        out_ << indent << input_lines[i] << "\n";
+        *out_ << indent << input_lines[i] << "\n";
         ++i;
       } while (i < size && !input_lines[i].starts_with(fence));
       if (i >= size) {
@@ -400,7 +401,7 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
         break;
       }
       // Including the close of the fence.
-      out_ << indent << input_lines[i] << "\n";
+      *out_ << indent << input_lines[i] << "\n";
       ++i;
       continue;
     }
@@ -409,7 +410,7 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
       // Indented code blocks ar preserved verbatim, but we don't support tabs
       // in the indent for simplicity.
       do {
-        out_ << indent << input_lines[i] << "\n";
+        *out_ << indent << input_lines[i] << "\n";
         ++i;
       } while (i < size && input_lines[i].starts_with("    "));
       continue;
@@ -423,49 +424,49 @@ void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
     // TODO: This is where we should re-flow.
     llvm::StringRef space = indent;
     do {
-      out_ << space << input_lines[i].trim();
+      *out_ << space << input_lines[i].trim();
       space = " ";
       ++i;
     } while (i < size && !input_lines[i].empty());
-    out_ << "\n";
+    *out_ << "\n";
   }
 }
 
 void MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
   if (!arg.info.value_name.empty()) {
-    out_ << arg.info.value_name;
+    *out_ << arg.info.value_name;
     return;
   }
   if (arg.kind == Arg::Kind::OneOf) {
-    out_ << "(";
+    *out_ << "(";
     llvm::ListSeparator sep("|");
     for (llvm::StringRef value_string : arg.value_strings) {
-      out_ << sep << value_string;
+      *out_ << sep << value_string;
     }
-    out_ << ")";
+    *out_ << ")";
     return;
   }
-  out_ << "...";
+  *out_ << "...";
 }
 
 void MetaPrinter::PrintOptionUsage(const Arg& option) const {
   if (option.kind == Arg::Kind::Flag) {
-    out_ << "--" << (option.default_flag ? "no-" : "") << option.info.name;
+    *out_ << "--" << (option.default_flag ? "no-" : "") << option.info.name;
     return;
   }
-  out_ << "--" << option.info.name;
+  *out_ << "--" << option.info.name;
   if (option.kind != Arg::Kind::MetaActionOnly) {
-    out_ << (option.has_default ? "[" : "") << "=";
+    *out_ << (option.has_default ? "[" : "") << "=";
     PrintArgValueUsage(option);
     if (option.has_default) {
-      out_ << "]";
+      *out_ << "]";
     }
   }
 }
 
 void MetaPrinter::PrintOptionShortName(const Arg& arg) const {
   CARBON_CHECK(!arg.info.short_name.empty(), "No short name to use.");
-  out_ << "-" << arg.info.short_name;
+  *out_ << "-" << arg.info.short_name;
 }
 
 void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
@@ -474,21 +475,21 @@ void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
       "Only one-of arguments have interesting value snippets to print.");
   llvm::ListSeparator sep;
   for (llvm::StringRef value_string : arg.value_strings) {
-    out_ << sep << value_string;
+    *out_ << sep << value_string;
   }
 }
 void MetaPrinter::PrintArgLongValues(const Arg& arg,
                                      llvm::StringRef indent) const {
-  out_ << indent << "Possible values:\n";
+  *out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
   // here.
   for (int i : llvm::seq<int>(0, arg.value_strings.size())) {
     llvm::StringRef value_string = arg.value_strings[i];
-    out_ << indent << "- " << value_string;
+    *out_ << indent << "- " << value_string;
     if (arg.has_default && i == arg.default_value_index) {
-      out_ << " (default)";
+      *out_ << " (default)";
     }
-    out_ << "\n";
+    *out_ << "\n";
   }
 }
 
@@ -500,18 +501,18 @@ void MetaPrinter::PrintArgHelp(const Arg& arg, llvm::StringRef indent) const {
   switch (arg.kind) {
     case Arg::Kind::Integer:
       if (arg.has_default) {
-        out_ << "\n";
-        out_ << indent << "Default value: " << arg.default_integer << "\n";
+        *out_ << "\n";
+        *out_ << indent << "Default value: " << arg.default_integer << "\n";
       }
       break;
     case Arg::Kind::String:
       if (arg.has_default) {
-        out_ << "\n";
-        out_ << indent << "Default value: " << arg.default_string << "\n";
+        *out_ << "\n";
+        *out_ << indent << "Default value: " << arg.default_string << "\n";
       }
       break;
     case Arg::Kind::OneOf:
-      out_ << "\n";
+      *out_ << "\n";
       PrintArgLongValues(arg, indent);
       break;
     case Arg::Kind::Flag:
@@ -528,15 +529,15 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   // Recursively print parent usage first with a compressed width.
   if (command.parent) {
     PrintRawUsageCommandAndOptions(*command.parent, MaxParentOptionUsageWidth);
-    out_ << " ";
+    *out_ << " ";
   }
 
-  out_ << command.info.name;
+  *out_ << command.info.name;
 
   // Buffer the options rendering so we can limit its length.
   std::string buffer_str;
   llvm::raw_string_ostream buffer_out(buffer_str);
-  MetaPrinter buffer_printer(buffer_out);
+  MetaPrinter buffer_printer(&buffer_out);
   bool have_short_flags = false;
   for (const auto& arg : command.options) {
     if (static_cast<int>(buffer_str.size()) > max_option_width) {
@@ -573,9 +574,9 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   }
   if (!buffer_str.empty()) {
     if (static_cast<int>(buffer_str.size()) <= max_option_width) {
-      out_ << " [" << buffer_str << "]";
+      *out_ << " [" << buffer_str << "]";
     } else {
-      out_ << " [OPTIONS]";
+      *out_ << " [OPTIONS]";
     }
   }
 }
@@ -589,31 +590,31 @@ void MetaPrinter::PrintRawUsage(const Command& command,
 
   if (command.kind != Command::Kind::RequiresSubcommand) {
     // We're a valid leaf command, so synthesize a full usage line.
-    out_ << indent;
+    *out_ << indent;
     PrintRawUsageCommandAndOptions(command);
 
     if (!command.positional_args.empty()) {
       bool open_optional = false;
       for (int i : llvm::seq<int>(0, command.positional_args.size())) {
-        out_ << " ";
+        *out_ << " ";
         if (i != 0 && command.positional_args[i - 1]->is_append) {
-          out_ << "-- ";
+          *out_ << "-- ";
         }
         const auto& arg = command.positional_args[i];
         if (!arg->is_required && !open_optional) {
-          out_ << "[";
+          *out_ << "[";
           open_optional = true;
         }
-        out_ << "<" << arg->info.name << ">";
+        *out_ << "<" << arg->info.name << ">";
         if (arg->is_append) {
-          out_ << "...";
+          *out_ << "...";
         }
       }
       if (open_optional) {
-        out_ << "]";
+        *out_ << "]";
       }
     }
-    out_ << "\n";
+    *out_ << "\n";
   }
 
   // If we have subcommands, also recurse into them so each one can print their
@@ -629,9 +630,9 @@ void MetaPrinter::PrintRawUsage(const Command& command,
 
 void MetaPrinter::PrintUsage(const Command& command) const {
   if (!command.parent) {
-    out_ << "Usage:\n";
+    *out_ << "Usage:\n";
   } else {
-    out_ << "Subcommand '" << command.info.name << "' usage:\n";
+    *out_ << "Subcommand '" << command.info.name << "' usage:\n";
   }
   PrintRawUsage(command, "  ");
 }
@@ -645,13 +646,13 @@ void MetaPrinter::PrintHelpSubcommands(const Command& command) const {
     if (first_subcommand) {
       first_subcommand = false;
       if (!command.parent) {
-        out_ << "\nSubcommands:";
+        *out_ << "\nSubcommands:";
       } else {
-        out_ << "\nSubcommand '" << command.info.name << "' subcommands:";
+        *out_ << "\nSubcommand '" << command.info.name << "' subcommands:";
       }
     }
-    out_ << "\n";
-    out_ << "  " << subcommand->info.name << "\n";
+    *out_ << "\n";
+    *out_ << "  " << subcommand->info.name << "\n";
     PrintTextBlock(BlockIndent, subcommand->info.help);
   }
 }
@@ -665,14 +666,14 @@ void MetaPrinter::PrintHelpPositionalArgs(const Command& command) const {
     if (first_positional_arg) {
       first_positional_arg = false;
       if (!command.parent) {
-        out_ << "\nPositional arguments:";
+        *out_ << "\nPositional arguments:";
       } else {
-        out_ << "\nSubcommand '" << command.info.name
-             << "' positional arguments:";
+        *out_ << "\nSubcommand '" << command.info.name
+              << "' positional arguments:";
       }
     }
-    out_ << "\n";
-    out_ << "  " << positional_arg->info.name << "\n";
+    *out_ << "\n";
+    *out_ << "  " << positional_arg->info.name << "\n";
     PrintArgHelp(*positional_arg, BlockIndent);
   }
 }
@@ -687,31 +688,32 @@ void MetaPrinter::PrintHelpOptions(const Command& command) const {
       first_option = false;
       if (!command.parent && command.subcommands.empty()) {
         // Only one command level.
-        out_ << "\nOptions:";
+        *out_ << "\nOptions:";
       } else if (!command.parent) {
-        out_ << "\nCommand options:";
+        *out_ << "\nCommand options:";
       } else {
-        out_ << "\nSubcommand '" << command.info.name << "' options:";
+        *out_ << "\nSubcommand '" << command.info.name << "' options:";
       }
     }
-    out_ << "\n";
-    out_ << "  ";
+    *out_ << "\n";
+    *out_ << "  ";
     if (!option->info.short_name.empty()) {
       PrintOptionShortName(*option);
-      out_ << ", ";
+      *out_ << ", ";
     } else {
-      out_ << "    ";
+      *out_ << "    ";
     }
     PrintOptionUsage(*option);
-    out_ << "\n";
+    *out_ << "\n";
     PrintArgHelp(*option, BlockIndent);
   }
 }
 
 class Parser {
  public:
-  explicit Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
-                  const CommandInfo& command_info,
+  // `out` and `errors` must not be null.
+  explicit Parser(llvm::raw_ostream* out, llvm::raw_ostream* errors,
+                  CommandInfo command_info,
                   llvm::function_ref<void(CommandBuilder&)> build);
 
   auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args) -> ParseResult;
@@ -767,7 +769,7 @@ class Parser {
 
   // Most parsing output goes to an error stream, and we also provide an
   // error-oriented meta printer for when that is useful during parsing.
-  llvm::raw_ostream& errors_;
+  llvm::raw_ostream* errors_;
   MetaPrinter error_meta_printer_;
 
   Command root_command_;
@@ -833,13 +835,13 @@ void Parser::SetOptionDefault(const Arg& option) {
 auto Parser::ParseNegatedFlag(const Arg& flag,
                               std::optional<llvm::StringRef> value) -> bool {
   if (flag.kind != Arg::Kind::Flag) {
-    errors_ << "ERROR: Cannot use a negated flag name by prefixing it with "
-               "'no-' when it isn't a boolean flag argument.\n";
+    *errors_ << "ERROR: Cannot use a negated flag name by prefixing it with "
+                "'no-' when it isn't a boolean flag argument.\n";
     return false;
   }
   if (value) {
-    errors_ << "ERROR: Cannot specify a value when using a flag name prefixed "
-               "with 'no-' -- that prefix implies a value of 'false'.\n";
+    *errors_ << "ERROR: Cannot specify a value when using a flag name prefixed "
+                "with 'no-' -- that prefix implies a value of 'false'.\n";
     return false;
   }
   *flag.flag_storage = false;
@@ -854,8 +856,8 @@ auto Parser::ParseFlag(const Arg& flag, std::optional<llvm::StringRef> value)
   } else if (*value == "false") {
     *flag.flag_storage = false;
   } else {
-    errors_ << "ERROR: Invalid value specified for the boolean flag '--"
-            << flag.info.name << "': " << *value << "\n";
+    *errors_ << "ERROR: Invalid value specified for the boolean flag '--"
+             << flag.info.name << "': " << *value << "\n";
 
     return false;
   }
@@ -868,8 +870,8 @@ auto Parser::ParseIntegerArgValue(const Arg& arg, llvm::StringRef value)
   int integer_value;
   // Note that this method returns *true* on error!
   if (value.getAsInteger(/*Radix=*/0, integer_value)) {
-    errors_ << "ERROR: Cannot parse value for option '--" << arg.info.name
-            << "' as an integer: " << value << "\n";
+    *errors_ << "ERROR: Cannot parse value for option '--" << arg.info.name
+             << "' as an integer: " << value << "\n";
     return false;
   }
   if (!arg.is_append) {
@@ -894,18 +896,18 @@ auto Parser::ParseStringArgValue(const Arg& arg, llvm::StringRef value)
 auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf, "Incorrect kind: {0}", arg.kind);
   if (!arg.value_action(arg, value)) {
-    errors_ << "ERROR: Option '--" << arg.info.name << "=";
-    llvm::printEscapedString(value, errors_);
-    errors_ << "' has an invalid value '";
-    llvm::printEscapedString(value, errors_);
-    errors_ << "'; valid values are: ";
+    *errors_ << "ERROR: Option '--" << arg.info.name << "=";
+    llvm::printEscapedString(value, *errors_);
+    *errors_ << "' has an invalid value '";
+    llvm::printEscapedString(value, *errors_);
+    *errors_ << "'; valid values are: ";
     for (auto value_string : arg.value_strings.drop_back()) {
-      errors_ << "'" << value_string << "', ";
+      *errors_ << "'" << value_string << "', ";
     }
     if (arg.value_strings.size() > 1) {
-      errors_ << "or ";
+      *errors_ << "or ";
     }
-    errors_ << "'" << arg.value_strings.back() << "'\n";
+    *errors_ << "'" << arg.value_strings.back() << "'\n";
     return false;
   }
   return true;
@@ -944,8 +946,8 @@ auto Parser::ParseArg(const Arg& arg, bool short_spelling,
       return true;
     }
     if (!arg.has_default) {
-      errors_ << "ERROR: Option " << name
-              << " requires a value to be provided and none was.\n";
+      *errors_ << "ERROR: Option " << name
+               << " requires a value to be provided and none was.\n";
       return false;
     }
     SetOptionDefault(arg);
@@ -961,9 +963,9 @@ auto Parser::ParseArg(const Arg& arg, bool short_spelling,
     case Arg::Kind::OneOf:
       return ParseOneOfArgValue(arg, *value);
     case Arg::Kind::MetaActionOnly:
-      errors_ << "ERROR: Option " << name
-              << " cannot be used with a value, and '" << *value
-              << "' was provided.\n";
+      *errors_ << "ERROR: Option " << name
+               << " cannot be used with a value, and '" << *value
+               << "' was provided.\n";
       // TODO: improve message
       return false;
     case Arg::Kind::Flag:
@@ -995,8 +997,8 @@ auto Parser::ParseLongOption(llvm::StringRef unparsed_arg) -> bool {
 
   auto option_it = option_map_.find(unparsed_arg);
   if (option_it == option_map_.end()) {
-    errors_ << "ERROR: Unknown option '--" << (negated_name ? "no-" : "")
-            << unparsed_arg << "'\n";
+    *errors_ << "ERROR: Unknown option '--" << (negated_name ? "no-" : "")
+             << unparsed_arg << "'\n";
     // TODO: improve error
     return false;
   }
@@ -1016,11 +1018,11 @@ auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg) -> bool {
   unparsed_arg = unparsed_arg.drop_front();
   std::optional<llvm::StringRef> value = SplitValue(unparsed_arg);
   if (value && unparsed_arg.size() != 1) {
-    errors_ << "ERROR: Cannot provide a value to the group of multiple short "
-               "options '-"
-            << unparsed_arg
-            << "=...'; values must be provided to a single option, using "
-               "either the short or long spelling.\n";
+    *errors_ << "ERROR: Cannot provide a value to the group of multiple short "
+                "options '-"
+             << unparsed_arg
+             << "=...'; values must be provided to a single option, using "
+                "either the short or long spelling.\n";
     return false;
   }
 
@@ -1028,7 +1030,7 @@ auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg) -> bool {
     auto* arg_entry =
         (c < short_option_table_.size()) ? short_option_table_[c] : nullptr;
     if (!arg_entry) {
-      errors_ << "ERROR: Unknown short option '" << c << "'\n";
+      *errors_ << "ERROR: Unknown short option '" << c << "'\n";
       return false;
     }
     // Mark this argument as parsed.
@@ -1072,8 +1074,8 @@ auto Parser::FinalizeParsedOptions() -> bool {
             });
 
   for (const Arg* option : missing_options) {
-    errors_ << "ERROR: Required option '--" << option->info.name
-            << "' not provided.\n";
+    *errors_ << "ERROR: Required option '--" << option->info.name
+             << "' not provided.\n";
   }
 
   return false;
@@ -1082,11 +1084,11 @@ auto Parser::FinalizeParsedOptions() -> bool {
 auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool {
   if (static_cast<size_t>(positional_arg_index_) >=
       command_->positional_args.size()) {
-    errors_ << "ERROR: Completed parsing all "
-            << command_->positional_args.size()
-            << " configured positional arguments, and found an additional "
-               "positional argument: '"
-            << unparsed_arg << "'\n";
+    *errors_ << "ERROR: Completed parsing all "
+             << command_->positional_args.size()
+             << " configured positional arguments, and found an additional "
+                "positional argument: '"
+             << unparsed_arg << "'\n";
     return false;
   }
 
@@ -1108,10 +1110,10 @@ auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool {
 auto Parser::ParseSubcommand(llvm::StringRef unparsed_arg) -> bool {
   auto subcommand_it = subcommand_map_.find(unparsed_arg);
   if (subcommand_it == subcommand_map_.end()) {
-    errors_ << "ERROR: Invalid subcommand '" << unparsed_arg
-            << "'. Available subcommands: ";
+    *errors_ << "ERROR: Invalid subcommand '" << unparsed_arg
+             << "'. Available subcommands: ";
     error_meta_printer_.PrintSubcommands(*command_);
-    errors_ << "\n";
+    *errors_ << "\n";
     return false;
   }
 
@@ -1157,9 +1159,9 @@ auto Parser::FinalizeParse() -> ParseResult {
     // There are un-parsed positional arguments, make sure they aren't required.
     const Arg& missing_arg = *unparsed_positional_args.front();
     if (missing_arg.is_required) {
-      errors_ << "ERROR: Not all required positional arguments were provided. "
-                 "First missing and required positional argument: '"
-              << missing_arg.info.name << "'\n";
+      *errors_ << "ERROR: Not all required positional arguments were provided. "
+                  "First missing and required positional argument: '"
+               << missing_arg.info.name << "'\n";
       return ParseResult::Error;
     }
     for (const auto& arg_ptr : unparsed_positional_args) {
@@ -1173,9 +1175,9 @@ auto Parser::FinalizeParse() -> ParseResult {
     case Command::Kind::Invalid:
       CARBON_FATAL("Should never have a parser with an invalid command!");
     case Command::Kind::RequiresSubcommand:
-      errors_ << "ERROR: No subcommand specified. Available subcommands: ";
+      *errors_ << "ERROR: No subcommand specified. Available subcommands: ";
       error_meta_printer_.PrintSubcommands(*command_);
-      errors_ << "\n";
+      *errors_ << "\n";
       return ParseResult::Error;
     case Command::Kind::Action:
       // All arguments have been successfully parsed, run any action for the
@@ -1216,7 +1218,7 @@ auto Parser::ParsePositionalSuffix(
       ++positional_arg_index_;
       if (static_cast<size_t>(positional_arg_index_) >=
           command_->positional_args.size()) {
-        errors_
+        *errors_
             << "ERROR: Completed parsing all "
             << command_->positional_args.size()
             << " configured positional arguments, but found a subsequent `--` "
@@ -1231,15 +1233,15 @@ auto Parser::ParsePositionalSuffix(
   return true;
 }
 
-Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
-               const CommandInfo& command_info,
+Parser::Parser(llvm::raw_ostream* out, llvm::raw_ostream* errors,
+               CommandInfo command_info,
                llvm::function_ref<void(CommandBuilder&)> build)
     : meta_printer_(out),
       errors_(errors),
       error_meta_printer_(errors),
       root_command_(command_info) {
   // Run the command building lambda on a builder for the root command.
-  CommandBuilder builder(root_command_, meta_printer_);
+  CommandBuilder builder(&root_command_, &meta_printer_);
   build(builder);
   builder.Finalize();
   command_ = &root_command_;
@@ -1256,16 +1258,17 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
     // positional suffix parsing without dropping this argument.
     if (unparsed_arg == "--") {
       if (command_->positional_args.empty()) {
-        errors_ << "ERROR: Cannot meaningfully end option and subcommand "
-                   "arguments with a `--` argument when there are no "
-                   "positional arguments to parse.\n";
+        *errors_ << "ERROR: Cannot meaningfully end option and subcommand "
+                    "arguments with a `--` argument when there are no "
+                    "positional arguments to parse.\n";
         return ParseResult::Error;
       }
       if (static_cast<size_t>(positional_arg_index_) >=
           command_->positional_args.size()) {
-        errors_ << "ERROR: Switched to purely positional arguments with a `--` "
-                   "argument despite already having parsed all positional "
-                   "arguments for this command.\n";
+        *errors_
+            << "ERROR: Switched to purely positional arguments with a `--` "
+               "argument despite already having parsed all positional "
+               "arguments for this command.\n";
         return ParseResult::Error;
       }
       if (!ParsePositionalSuffix(unparsed_args)) {
@@ -1298,8 +1301,8 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
         command_->positional_args.empty() || command_->subcommands.empty(),
         "Cannot have both positional arguments and subcommands!");
     if (command_->positional_args.empty() && command_->subcommands.empty()) {
-      errors_ << "ERROR: Found unexpected positional argument or subcommand: '"
-              << unparsed_arg << "'\n";
+      *errors_ << "ERROR: Found unexpected positional argument or subcommand: '"
+               << unparsed_arg << "'\n";
       return ParseResult::Error;
     }
 
@@ -1317,50 +1320,50 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   return FinalizeParse();
 }
 
-void ArgBuilder::Required(bool is_required) { arg_.is_required = is_required; }
+void ArgBuilder::Required(bool is_required) { arg_->is_required = is_required; }
 
 void ArgBuilder::HelpHidden(bool is_help_hidden) {
-  arg_.is_help_hidden = is_help_hidden;
+  arg_->is_help_hidden = is_help_hidden;
 }
 
-ArgBuilder::ArgBuilder(Arg& arg) : arg_(arg) {}
+ArgBuilder::ArgBuilder(Arg* arg) : arg_(arg) {}
 
 void FlagBuilder::Default(bool flag_value) {
-  arg_.has_default = true;
-  arg_.default_flag = flag_value;
+  arg_->has_default = true;
+  arg_->default_flag = flag_value;
 }
 
-void FlagBuilder::Set(bool* flag) { arg_.flag_storage = flag; }
+void FlagBuilder::Set(bool* flag) { arg_->flag_storage = flag; }
 
 void IntegerArgBuilder::Default(int integer_value) {
-  arg_.has_default = true;
-  arg_.default_integer = integer_value;
+  arg_->has_default = true;
+  arg_->default_integer = integer_value;
 }
 
 void IntegerArgBuilder::Set(int* integer) {
-  arg_.is_append = false;
-  arg_.integer_storage = integer;
+  arg_->is_append = false;
+  arg_->integer_storage = integer;
 }
 
 void IntegerArgBuilder::Append(llvm::SmallVectorImpl<int>* sequence) {
-  arg_.is_append = true;
-  arg_.integer_sequence = sequence;
+  arg_->is_append = true;
+  arg_->integer_sequence = sequence;
 }
 
 void StringArgBuilder::Default(llvm::StringRef string_value) {
-  arg_.has_default = true;
-  arg_.default_string = string_value;
+  arg_->has_default = true;
+  arg_->default_string = string_value;
 }
 
 void StringArgBuilder::Set(llvm::StringRef* string) {
-  arg_.is_append = false;
-  arg_.string_storage = string;
+  arg_->is_append = false;
+  arg_->string_storage = string;
 }
 
 void StringArgBuilder::Append(
     llvm::SmallVectorImpl<llvm::StringRef>* sequence) {
-  arg_.is_append = true;
-  arg_.string_sequence = sequence;
+  arg_->is_append = true;
+  arg_->string_sequence = sequence;
 }
 
 static auto IsValidName(llvm::StringRef name) -> bool {
@@ -1419,7 +1422,7 @@ void CommandBuilder::AddMetaActionOption(
 void CommandBuilder::AddIntegerPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::Integer, [build](Arg& arg) {
-    IntegerArgBuilder builder(arg);
+    IntegerArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1427,7 +1430,7 @@ void CommandBuilder::AddIntegerPositionalArg(
 void CommandBuilder::AddStringPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::String, [build](Arg& arg) {
-    StringArgBuilder builder(arg);
+    StringArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1435,7 +1438,7 @@ void CommandBuilder::AddStringPositionalArg(
 void CommandBuilder::AddOneOfPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::OneOf, [build](Arg& arg) {
-    OneOfArgBuilder builder(arg);
+    OneOfArgBuilder builder(&arg);
     build(builder);
   });
 }
@@ -1447,57 +1450,57 @@ void CommandBuilder::AddSubcommand(
   CARBON_CHECK(subcommand_names_.insert(info.name).second,
                "Added a duplicate subcommand: {0}", info.name);
   CARBON_CHECK(
-      command_.positional_args.empty(),
+      command_->positional_args.empty(),
       "Cannot add subcommands to a command with a positional argument.");
 
-  command_.subcommands.emplace_back(new Command(info, &command_));
-  CommandBuilder builder(*command_.subcommands.back(), meta_printer_);
+  command_->subcommands.emplace_back(new Command(info, command_));
+  CommandBuilder builder(command_->subcommands.back().get(), meta_printer_);
   build(builder);
   builder.Finalize();
 }
 
 void CommandBuilder::HelpHidden(bool is_help_hidden) {
-  command_.is_help_hidden = is_help_hidden;
+  command_->is_help_hidden = is_help_hidden;
 }
 
 void CommandBuilder::RequiresSubcommand() {
-  CARBON_CHECK(!command_.subcommands.empty(),
+  CARBON_CHECK(!command_->subcommands.empty(),
                "Cannot require subcommands unless there are subcommands.");
-  CARBON_CHECK(command_.positional_args.empty(),
+  CARBON_CHECK(command_->positional_args.empty(),
                "Cannot require subcommands and have a positional argument.");
-  CARBON_CHECK(command_.kind == Kind::Invalid,
+  CARBON_CHECK(command_->kind == Kind::Invalid,
                "Already established the kind of this command as: {0}",
-               command_.kind);
-  command_.kind = Kind::RequiresSubcommand;
+               command_->kind);
+  command_->kind = Kind::RequiresSubcommand;
 }
 
 void CommandBuilder::Do(ActionT action) {
-  CARBON_CHECK(command_.kind == Kind::Invalid,
+  CARBON_CHECK(command_->kind == Kind::Invalid,
                "Already established the kind of this command as: {0}",
-               command_.kind);
-  command_.kind = Kind::Action;
-  command_.action = std::move(action);
+               command_->kind);
+  command_->kind = Kind::Action;
+  command_->action = std::move(action);
 }
 
 void CommandBuilder::Meta(ActionT action) {
-  CARBON_CHECK(command_.kind == Kind::Invalid,
+  CARBON_CHECK(command_->kind == Kind::Invalid,
                "Already established the kind of this command as: {0}",
-               command_.kind);
-  command_.kind = Kind::MetaAction;
-  command_.action = std::move(action);
+               command_->kind);
+  command_->kind = Kind::MetaAction;
+  command_->action = std::move(action);
 }
 
-CommandBuilder::CommandBuilder(Command& command, MetaPrinter& meta_printer)
+CommandBuilder::CommandBuilder(Command* command, MetaPrinter* meta_printer)
     : command_(command), meta_printer_(meta_printer) {}
 
-auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg& {
+auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg* {
   CARBON_CHECK(IsValidName(info.name), "Invalid argument name: {0}", info.name);
   CARBON_CHECK(arg_names_.insert(info.name).second,
                "Added a duplicate argument name: {0}", info.name);
 
-  command_.options.emplace_back(new Arg(info));
-  Arg& arg = *command_.options.back();
-  arg.kind = kind;
+  command_->options.emplace_back(new Arg(info));
+  Arg* arg = command_->options.back().get();
+  arg->kind = kind;
   return arg;
 }
 
@@ -1505,35 +1508,35 @@ void CommandBuilder::AddPositionalArgImpl(
     const ArgInfo& info, Arg::Kind kind, llvm::function_ref<void(Arg&)> build) {
   CARBON_CHECK(IsValidName(info.name), "Invalid argument name: {0}", info.name);
   CARBON_CHECK(
-      command_.subcommands.empty(),
+      command_->subcommands.empty(),
       "Cannot add a positional argument to a command with subcommands.");
 
-  command_.positional_args.emplace_back(new Arg(info));
-  Arg& arg = *command_.positional_args.back();
+  command_->positional_args.emplace_back(new Arg(info));
+  Arg& arg = *command_->positional_args.back();
   arg.kind = kind;
   build(arg);
 
   CARBON_CHECK(!arg.is_help_hidden,
                "Cannot have a help-hidden positional argument.");
 
-  if (arg.is_required && command_.positional_args.size() > 1) {
-    CARBON_CHECK((*std::prev(command_.positional_args.end(), 2))->is_required,
+  if (arg.is_required && command_->positional_args.size() > 1) {
+    CARBON_CHECK((*std::prev(command_->positional_args.end(), 2))->is_required,
                  "A required positional argument cannot be added after an "
                  "optional one.");
   }
 }
 
 void CommandBuilder::Finalize() {
-  meta_printer_.RegisterWithCommand(command_, *this);
+  meta_printer_->RegisterWithCommand(*command_, *this);
 }
 
 auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
            llvm::raw_ostream& out, llvm::raw_ostream& errors,
-           const CommandInfo& command_info,
+           CommandInfo command_info,
            llvm::function_ref<void(CommandBuilder&)> build) -> ParseResult {
   // Build a parser, which includes building the command description provided by
   // the user.
-  Parser parser(out, errors, command_info, build);
+  Parser parser(&out, &errors, command_info, build);
 
   // Now parse the arguments provided using that parser.
   return parser.Parse(unparsed_args);
