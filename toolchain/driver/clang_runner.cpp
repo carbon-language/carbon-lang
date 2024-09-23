@@ -62,7 +62,6 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     maybe_v_arg = v_arg_storage;
   }
 
-  CARBON_CHECK(!args.empty());
   CARBON_VLOG("Running Clang driver with arguments: \n");
 
   // Render the arguments into null-terminated C-strings for use by the Clang
