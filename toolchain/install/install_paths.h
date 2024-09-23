@@ -37,11 +37,6 @@ namespace Carbon {
 // occur, the install prefix is made empty, and error() can be used for
 // diagnostics; InstallPaths remains minimally functional.
 //
-// The install path is stored as an absolute path. This addresses cases where
-// the command line uses a relative path (`./bin/carbon`) and the working
-// directory changes after initialization (for example, to Bazel's working
-// directory).
-//
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
 // - `prefix_root/bin/carbon` - the main CLI driver
@@ -111,6 +106,11 @@ class InstallPaths {
   // The computed installation prefix. This should correspond to the
   // `prefix_root` directory in Bazel's output, or to some prefix the toolchain
   // is installed into on a system such as `/usr/local` or `/home/$USER`.
+  //
+  // This will be an absolute path. We keep an absolute path for when the
+  // command line uses a relative path (`./bin/carbon`) and the working
+  // directory changes after initialization (for example, to Bazel's working
+  // directory).
   //
   // In the event of an error, this will be the empty string.
   auto prefix() const -> llvm::StringRef { return prefix_; }
