@@ -147,10 +147,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid()) << "Should not lower invalid functions.";
 
-  auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto implicit_param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
   // TODO: Include parameters corresponding to positional parameters.
-  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
   auto* return_type =
       return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
@@ -162,18 +163,17 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // demand.
   llvm::SmallVector<SemIR::InstId> param_inst_ids;
   auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
-                         implicit_param_refs.size() + param_refs.size();
+                         implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
     param_inst_ids.push_back(function.return_storage_id);
   }
-  for (auto param_ref_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
+  for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
+           implicit_param_patterns, param_patterns)) {
     auto param_type_id =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
-            .second.type_id;
+        SemIR::Function::GetTypeFromParamPatternId(sem_ir(), param_pattern_id);
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -185,7 +185,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       case SemIR::ValueRepr::Custom:
       case SemIR::ValueRepr::Pointer:
         param_types.push_back(GetType(value_rep.type_id));
-        param_inst_ids.push_back(param_ref_id);
+        param_inst_ids.push_back(param_pattern_id);
         break;
     }
   }
@@ -225,7 +225,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
-      name_id = SemIR::Function::GetNameFromParamRefId(sem_ir(), inst_id);
+      name_id = SemIR::Function::GetNameFromParamPatternId(sem_ir(), inst_id);
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }

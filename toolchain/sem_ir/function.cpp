@@ -85,6 +85,19 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   return {param_ref_id, ref.As<SemIR::Param>()};
 }
 
+auto Function::GetTypeFromParamPatternId(const File& sem_ir,
+                                         InstId param_pattern_id) -> TypeId {
+  auto param_inst = sem_ir.insts().Get(param_pattern_id);
+
+  if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
+    param_pattern_id = addr_pattern->inner_id;
+    param_inst = sem_ir.insts().Get(param_pattern_id);
+  }
+
+  auto binding_pattern = param_inst.As<AnyBindingPattern>();
+  return binding_pattern.type_id;
+}
+
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_storage_id.is_valid()) {

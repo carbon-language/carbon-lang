@@ -73,6 +73,10 @@ struct Function : public EntityWithParamsBase,
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
+  // FIXME comments
+  static auto GetTypeFromParamPatternId(const File& sem_ir,
+                                        InstId param_pattern_id) -> TypeId;
+
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `Invalid` if no return type was specified, in which
