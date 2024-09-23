@@ -189,7 +189,8 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
 
-  // TODO: Give a clearer error when .Self is not found.
+  // TODO: Give a clearer error when .Self is not found, particularly if this
+  // is a `.Member` designator expression.
   SemIR::InstId period_self_id =
       HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf).inst_id;
 
