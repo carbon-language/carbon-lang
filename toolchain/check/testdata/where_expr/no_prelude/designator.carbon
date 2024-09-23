@@ -20,17 +20,7 @@ fn PeriodSelf(T:! I where .Self == ());
 
 fn PeriodMember(U:! I where .Member = {});
 
-// --- fail_todo_type_period_self.carbon
-
-library "[[@TEST_NAME]]";
-
-interface J {}
-
-// CHECK:STDERR: fail_todo_type_period_self.carbon:[[@LINE+4]]:33: error: type `type` does not support qualified expressions
-// CHECK:STDERR: fn TypeSelfImpls(V:! type where .Self impls J);
-// CHECK:STDERR:                                 ^~~~~
-// CHECK:STDERR:
-fn TypeSelfImpls(V:! type where .Self impls J);
+fn TypeSelfImpls(V:! type where .Self impls I);
 
 // --- fail_wrong_member.carbon
 
@@ -122,7 +112,7 @@ class D {
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [template = constants.%PeriodSelf] {
 // CHECK:STDOUT:     %I.ref.loc8: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = @PeriodSelf.%.Self (constants.%.Self)]
-// CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, @I.%Self [symbolic = @PeriodSelf.%Self (constants.%Self)]
+// CHECK:STDOUT:     %.Self.ref.loc8: %.1 = name_ref .Self, %.Self.1 [symbolic = @PeriodSelf.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %.loc8: %.4 = tuple_literal ()
 // CHECK:STDOUT:     %T.loc8_15.1: %.1 = param T, runtime_param<invalid>
 // CHECK:STDOUT:     @PeriodSelf.%T.loc8: %.1 = bind_symbolic_name T 0, %T.loc8_15.1 [symbolic = @PeriodSelf.%T.1 (constants.%T)]
@@ -130,6 +120,7 @@ class D {
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
 // CHECK:STDOUT:     %I.ref.loc10: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = @PeriodMember.%.Self (constants.%.Self)]
+// CHECK:STDOUT:     %.Self.ref.loc10: %.1 = name_ref .Self, %.Self.2 [symbolic = @PeriodMember.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, @I.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc10: %.5 = struct_literal ()
 // CHECK:STDOUT:     %U.loc10_17.1: %.1 = param U, runtime_param<invalid>
@@ -150,7 +141,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8: %.1) {
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self)]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc8: %.1);
@@ -165,7 +155,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
 // CHECK:STDOUT:   %.Self => constants.%T
-// CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,9 +183,10 @@ class D {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.1] {}
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self 0 [symbolic = @TypeSelfImpls.%.Self (constants.%.Self)]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = @TypeSelfImpls.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, %J.decl [template = constants.%.1]
-// CHECK:STDOUT:     %V.loc10_18.1: type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     @TypeSelfImpls.%V.loc10: type = bind_symbolic_name V 0, %V.loc10_18.1 [symbolic = @TypeSelfImpls.%V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc6_18.1: type = param V, runtime_param<invalid>
+// CHECK:STDOUT:     @TypeSelfImpls.%V.loc6: type = bind_symbolic_name V 0, %V.loc6_18.1 [symbolic = @TypeSelfImpls.%V.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,11 +198,11 @@ class D {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc10: type) {
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc6: type) {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self)]
 // CHECK:STDOUT:   %V.1: type = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.loc10: type);
+// CHECK:STDOUT:   fn(%V.loc6: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
@@ -244,6 +234,7 @@ class D {
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [template = constants.%PeriodMismatch] {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, %J.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = @PeriodMismatch.%.Self (constants.%.Self)]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = @PeriodMismatch.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12: %.5 = struct_literal ()
 // CHECK:STDOUT:     %W.loc12_19.1: %.1 = param W, runtime_param<invalid>
@@ -299,6 +290,7 @@ class D {
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
 // CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,6 +315,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -359,6 +352,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> @C.%return.var: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   return <error> to @C.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,6 +376,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.2 [template = constants.%.3]

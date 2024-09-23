@@ -96,10 +96,15 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
 }
 
+struct NodeAndInstIds {
+  Parse::NodeId node_id;
+  SemIR::InstId inst_id;
+};
+
 // Handle a name that is used as an expression by performing unqualified name
 // lookup.
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
-                             SemIR::NameId name_id) -> bool {
+                             SemIR::NameId name_id) -> NodeAndInstIds {
   auto result = context.LookupUnqualifiedName(node_id, name_id);
   auto value = context.insts().Get(result.inst_id);
   auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
@@ -116,10 +121,11 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                   .specific_id = result.specific_id});
   }
 
-  context.AddInstAndPush<SemIR::NameRef>(
-      node_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
-  return true;
+  SemIR::LocIdAndInst arg(node_id, SemIR::NameRef{.type_id = type_id,
+                                                  .name_id = name_id,
+                                                  .value_id = result.inst_id});
+  auto inst_id = context.AddInst(arg);
+  return {arg.loc_id.node_id(), inst_id};
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameId node_id)
@@ -139,7 +145,9 @@ auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
   if (!name_id) {
     return context.TODO(node_id, "Error recovery from keyword name.");
   }
-  return HandleNameAsExpr(context, node_id, *name_id);
+  auto result = HandleNameAsExpr(context, node_id, *name_id);
+  context.node_stack().Push(result.node_id, result.inst_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::BaseNameId node_id) -> bool {
@@ -154,7 +162,9 @@ auto HandleParseNode(Context& context, Parse::SelfTypeNameId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::SelfTypeNameExprId node_id)
     -> bool {
-  return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType);
+  auto result = HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType);
+  context.node_stack().Push(result.node_id, result.inst_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::SelfValueNameId node_id) -> bool {
@@ -164,7 +174,9 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
     -> bool {
-  return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
+  auto result = HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
+  context.node_stack().Push(result.node_id, result.inst_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
@@ -177,20 +189,17 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
 
-  // TODO: set `required` to `false` and check for not-found to give a clearer
-  // error when .Self is not found.
-  // FIXME: should this be a call to HandleNameAsExpr instead?
-  auto result = context.LookupUnqualifiedName(
-      node_id, SemIR::NameId::PeriodSelf, /*required=*/true);
-  // FIXME: probably wrong; likely needs lots of the logic from
-  // HandleNameAsExpr. Perhaps make the body of that a helper function?
-  auto period_self_id = result.inst_id;
-  if (name_id == SemIR::NameId::SelfValue) {
+  // TODO: Give a clearer error when .Self is not found.
+  SemIR::InstId period_self_id =
+      HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf).inst_id;
+
+  if (name_id == SemIR::NameId::SelfType) {
     // If this is `.Self`, result is the period_self_id we have computed.
-    // FIXME: should we generate a name reference?
     context.node_stack().Push(node_id, period_self_id);
   } else {
     // Otherwise this is `.Member`, so look up `Member` in `.Self`.
+    // FIXME: Should we avoid generating a name reference to `.Self` in this
+    // case?
     auto member_id =
         PerformMemberAccess(context, node_id, period_self_id, name_id);
     context.node_stack().Push(node_id, member_id);

@@ -47,7 +47,7 @@ import library "state_constraints";
 class C {}
 impl C as J {}
 
-// TODO: Should report that `C` does not meeet the constraint.
+// TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+13]]:3: error: cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   Impls(C);
@@ -139,6 +139,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type = fn_decl @Equal [template = constants.%Equal] {
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, %I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = @Equal.%.Self (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self.ref.loc11: %.2 = name_ref .Self, %.Self.1 [symbolic = @Equal.%.Self (constants.%.Self.1)]
 // CHECK:STDOUT:     %Member.ref.loc11: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11: %.8 = struct_literal ()
 // CHECK:STDOUT:     %T.loc11_10.1: %.2 = param T, runtime_param<invalid>
@@ -147,7 +148,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %EqualEqual.decl: %EqualEqual.type = fn_decl @EqualEqual [template = constants.%EqualEqual] {
 // CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, %I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.2: %.2 = bind_symbolic_name .Self 0 [symbolic = @EqualEqual.%.Self (constants.%.Self.1)]
-// CHECK:STDOUT:     %Self.ref.loc13: %.2 = name_ref Self, @I.%Self [symbolic = @EqualEqual.%Self (constants.%Self.2)]
+// CHECK:STDOUT:     %.Self.ref.loc13: %.2 = name_ref .Self, %.Self.2 [symbolic = @EqualEqual.%.Self (constants.%.Self.1)]
 // CHECK:STDOUT:     %.loc13: %.5 = tuple_literal ()
 // CHECK:STDOUT:     %U.loc13_15.1: %.2 = param U, runtime_param<invalid>
 // CHECK:STDOUT:     @EqualEqual.%U.loc13: %.2 = bind_symbolic_name U 0, %U.loc13_15.1 [symbolic = @EqualEqual.%U.1 (constants.%U)]
@@ -155,7 +156,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [template = constants.%Impls] {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, %J.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self.3: %.1 = bind_symbolic_name .Self 0 [symbolic = @Impls.%.Self (constants.%.Self.2)]
-// CHECK:STDOUT:     %Self.ref.loc15: %.1 = name_ref Self, @J.%Self [symbolic = @Impls.%Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.Self.ref.loc15: %.1 = name_ref .Self, %.Self.3 [symbolic = @Impls.%.Self (constants.%.Self.2)]
 // CHECK:STDOUT:     %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %V.loc15_10.1: %.1 = param V, runtime_param<invalid>
 // CHECK:STDOUT:     @Impls.%V.loc15: %.1 = bind_symbolic_name V 0, %V.loc15_10.1 [symbolic = @Impls.%V.1 (constants.%V)]
@@ -163,9 +164,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %I.ref.loc17_12: type = name_ref I, %I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.4: %.2 = bind_symbolic_name .Self 0 [symbolic = @And.%.Self (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self.ref.loc17_20: %.2 = name_ref .Self, %.Self.4 [symbolic = @And.%.Self (constants.%.Self.1)]
 // CHECK:STDOUT:     %Second.ref.loc17_20: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
 // CHECK:STDOUT:     %I.ref.loc17_34: type = name_ref I, %I.decl [template = constants.%.2]
+// CHECK:STDOUT:     %.Self.ref.loc17_40: %.2 = name_ref .Self, %.Self.4 [symbolic = @And.%.Self (constants.%.Self.1)]
 // CHECK:STDOUT:     %Member.ref.loc17: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
+// CHECK:STDOUT:     %.Self.ref.loc17_50: %.2 = name_ref .Self, %.Self.4 [symbolic = @And.%.Self (constants.%.Self.1)]
 // CHECK:STDOUT:     %Second.ref.loc17_50: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
 // CHECK:STDOUT:     %W.loc17_8.1: %.2 = param W, runtime_param<invalid>
 // CHECK:STDOUT:     @And.%W.loc17: %.2 = bind_symbolic_name W 0, %W.loc17_8.1 [symbolic = @And.%W.1 (constants.%W)]
@@ -204,7 +208,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EqualEqual(%U.loc13: %.2) {
 // CHECK:STDOUT:   %.Self: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.1)]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %U.1: %.2 = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.loc13: %.2);
@@ -212,7 +215,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(%V.loc15: %.1) {
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.2)]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %V.1: %.1 = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.loc15: %.1);
@@ -232,13 +234,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
 // CHECK:STDOUT:   %.Self => constants.%U
-// CHECK:STDOUT:   %Self => constants.%U
 // CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
 // CHECK:STDOUT:   %.Self => constants.%V
-// CHECK:STDOUT:   %Self => constants.%V
 // CHECK:STDOUT:   %V.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -265,10 +265,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//state_constraints, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//state_constraints, inst+7, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+73, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -303,6 +303,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %TypeMismatch.decl: %TypeMismatch.type = fn_decl @TypeMismatch [template = constants.%TypeMismatch] {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%.1]
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = @TypeMismatch.%.Self (constants.%.Self)]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = @TypeMismatch.%.Self (constants.%.Self)]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.8 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:     %X.loc8_17.1: %.1 = param X, runtime_param<invalid>
@@ -373,10 +374,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//state_constraints, inst+3, loaded [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.5: %Impls.type = import_ref Main//state_constraints, inst+56, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+73, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//prelude
@@ -388,7 +389,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: %.3 = import_ref Main//state_constraints, inst+5, loaded [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//state_constraints, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.8: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.10: @ImplicitAs.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.12)]
@@ -422,7 +423,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
 // CHECK:STDOUT:     %J.ref.loc28: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:     %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = @EmptyStruct.%.Self (constants.%.Self.2)]
-// CHECK:STDOUT:     %Self.ref: %.3 = name_ref Self, imports.%import_ref.7 [symbolic = @EmptyStruct.%Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self [symbolic = @EmptyStruct.%.Self (constants.%.Self.2)]
 // CHECK:STDOUT:     %.loc28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %Y.loc28_16.1: %.3 = param Y, runtime_param<invalid>
 // CHECK:STDOUT:     @EmptyStruct.%Y.loc28: %.3 = bind_symbolic_name Y 0, %Y.loc28_16.1 [symbolic = @EmptyStruct.%Y.1 (constants.%Y)]
@@ -482,7 +483,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(constants.%V: %.3) {
 // CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.1)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %V.2: %.3 = bind_symbolic_name V 0 [symbolic = %V.2 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.1: %.3);
@@ -498,7 +498,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc28: %.3) {
 // CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.2)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %Y.1: %.3 = bind_symbolic_name Y 0 [symbolic = %Y.1 (constants.%Y)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%Y.loc28: %.3);
@@ -517,7 +516,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
 // CHECK:STDOUT:   %.Self => constants.%V
-// CHECK:STDOUT:   %Self => constants.%V
 // CHECK:STDOUT:   %V.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -553,7 +551,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
 // CHECK:STDOUT:   %.Self => constants.%Y
-// CHECK:STDOUT:   %Self => constants.%Y
 // CHECK:STDOUT:   %Y.1 => constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
