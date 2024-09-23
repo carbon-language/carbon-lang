@@ -26,6 +26,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
+        "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Core",
@@ -77,6 +78,8 @@ sh_test(
 cc_library(
     name = "driver",
     srcs = [
+        "clang_subcommand.cpp",
+        "clang_subcommand.h",
         "codegen_options.cpp",
         "codegen_options.h",
         "compile_subcommand.cpp",

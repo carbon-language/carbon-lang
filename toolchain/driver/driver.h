@@ -8,11 +8,8 @@
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/driver/codegen_options.h"
-#include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
-#include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
 
