@@ -196,7 +196,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
           &context.emitter(), [&](auto& builder) {
             CARBON_DIAGNOSTIC(
                 NoPeriodSelfForDesignator, Note,
-                "Designator may only be used when `.Self` is in scope.");
+                "designator may only be used when `.Self` is in scope");
             builder.Note(SemIR::LocId::Invalid, NoPeriodSelfForDesignator);
           });
       period_self_id =
