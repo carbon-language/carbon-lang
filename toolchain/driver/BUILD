@@ -18,7 +18,7 @@ cc_library(
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
     data = [
-        "//toolchain/install:llvm_link_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     deps = [
         "//common:command_line",
@@ -94,7 +94,7 @@ cc_library(
         "driver_subcommand.h",
     ],
     data = [
-        "//toolchain/install:install_lib_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     textual_hdrs = ["flags.def"],
     deps = [
