@@ -8,6 +8,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/no_prelude/impl_forall.carbon
 
+// --- fail_todo_impl_forall.carbon
+
 class A(T:! type) {
   var n: T;
 }
@@ -23,7 +25,7 @@ impl forall [V:! type] A(V) as I(V) {
 }
 
 fn TestGeneric[W:! type](a: A(W)) -> W {
-  // CHECK:STDERR: impl_forall.carbon:[[@LINE+4]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
+  // CHECK:STDERR: fail_todo_impl_forall.carbon:[[@LINE+4]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
   // CHECK:STDERR:   return a.(I(W).F)();
   // CHECK:STDERR:          ^~~~~~~~~~
   // CHECK:STDERR:
@@ -31,13 +33,13 @@ fn TestGeneric[W:! type](a: A(W)) -> W {
 }
 
 fn TestSpecific(a: A({})) -> {} {
-  // CHECK:STDERR: impl_forall.carbon:[[@LINE+3]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
+  // CHECK:STDERR: fail_todo_impl_forall.carbon:[[@LINE+3]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
   // CHECK:STDERR:   return a.(I({}).F)();
   // CHECK:STDERR:          ^~~~~~~~~~~
   return a.(I({}).F)();
 }
 
-// CHECK:STDOUT: --- impl_forall.carbon
+// CHECK:STDOUT: --- fail_todo_impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
@@ -108,48 +110,48 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     .TestSpecific = %TestSpecific.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
-// CHECK:STDOUT:     %T.loc11_9.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_9.2: type = bind_symbolic_name T 0, %T.loc11_9.1 [symbolic = @A.%T (constants.%T)]
+// CHECK:STDOUT:     %T.loc2_9.1: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc2_9.2: type = bind_symbolic_name T 0, %T.loc2_9.1 [symbolic = @A.%T (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
-// CHECK:STDOUT:     %U.loc15_13.1: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc15_13.2: type = bind_symbolic_name U 0, %U.loc15_13.1 [symbolic = @I.%U (constants.%U)]
+// CHECK:STDOUT:     %U.loc6_13.1: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc6_13.2: type = bind_symbolic_name U 0, %U.loc6_13.1 [symbolic = @I.%U (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %V.loc19_14.1: type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc19_14.2: type = bind_symbolic_name V 0, %V.loc19_14.1 [symbolic = @impl.%V (constants.%V)]
-// CHECK:STDOUT:     %A.ref.loc19: %A.type = name_ref A, %A.decl [template = constants.%A.1]
-// CHECK:STDOUT:     %V.ref.loc19_26: type = name_ref V, %V.loc19_14.2 [symbolic = @impl.%V (constants.%V)]
-// CHECK:STDOUT:     %A.loc19: type = class_type @A, @A(constants.%V) [symbolic = @impl.%A (constants.%A.3)]
+// CHECK:STDOUT:     %V.loc10_14.1: type = param V, runtime_param<invalid>
+// CHECK:STDOUT:     %V.loc10_14.2: type = bind_symbolic_name V 0, %V.loc10_14.1 [symbolic = @impl.%V (constants.%V)]
+// CHECK:STDOUT:     %A.ref.loc10: %A.type = name_ref A, %A.decl [template = constants.%A.1]
+// CHECK:STDOUT:     %V.ref.loc10_26: type = name_ref V, %V.loc10_14.2 [symbolic = @impl.%V (constants.%V)]
+// CHECK:STDOUT:     %A.loc10: type = class_type @A, @A(constants.%V) [symbolic = @impl.%A (constants.%A.3)]
 // CHECK:STDOUT:     %I.ref: %I.type = name_ref I, %I.decl [template = constants.%I]
-// CHECK:STDOUT:     %V.ref.loc19_34: type = name_ref V, %V.loc19_14.2 [symbolic = @impl.%V (constants.%V)]
-// CHECK:STDOUT:     %.loc19: type = interface_type @I, @I(constants.%V) [symbolic = @impl.%.1 (constants.%.8)]
+// CHECK:STDOUT:     %V.ref.loc10_34: type = name_ref V, %V.loc10_14.2 [symbolic = @impl.%V (constants.%V)]
+// CHECK:STDOUT:     %.loc10: type = interface_type @I, @I(constants.%V) [symbolic = @impl.%.1 (constants.%.8)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGeneric.decl: %TestGeneric.type = fn_decl @TestGeneric [template = constants.%TestGeneric] {
-// CHECK:STDOUT:     %W.loc25_16.1: type = param W, runtime_param<invalid>
-// CHECK:STDOUT:     @TestGeneric.%W.loc25: type = bind_symbolic_name W 0, %W.loc25_16.1 [symbolic = @TestGeneric.%W.1 (constants.%W)]
-// CHECK:STDOUT:     %A.ref.loc25: %A.type = name_ref A, %A.decl [template = constants.%A.1]
-// CHECK:STDOUT:     %W.ref.loc25_31: type = name_ref W, @TestGeneric.%W.loc25 [symbolic = @TestGeneric.%W.1 (constants.%W)]
-// CHECK:STDOUT:     %A.loc25: type = class_type @A, @A(constants.%W) [symbolic = @TestGeneric.%A (constants.%A.4)]
-// CHECK:STDOUT:     %a.loc25_26.1: @TestGeneric.%A (%A.4) = param a, runtime_param0
-// CHECK:STDOUT:     @TestGeneric.%a: @TestGeneric.%A (%A.4) = bind_name a, %a.loc25_26.1
-// CHECK:STDOUT:     %W.ref.loc25_38: type = name_ref W, @TestGeneric.%W.loc25 [symbolic = @TestGeneric.%W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc16_16.1: type = param W, runtime_param<invalid>
+// CHECK:STDOUT:     @TestGeneric.%W.loc16: type = bind_symbolic_name W 0, %W.loc16_16.1 [symbolic = @TestGeneric.%W.1 (constants.%W)]
+// CHECK:STDOUT:     %A.ref.loc16: %A.type = name_ref A, %A.decl [template = constants.%A.1]
+// CHECK:STDOUT:     %W.ref.loc16_31: type = name_ref W, @TestGeneric.%W.loc16 [symbolic = @TestGeneric.%W.1 (constants.%W)]
+// CHECK:STDOUT:     %A.loc16: type = class_type @A, @A(constants.%W) [symbolic = @TestGeneric.%A (constants.%A.4)]
+// CHECK:STDOUT:     %a.loc16_26.1: @TestGeneric.%A (%A.4) = param a, runtime_param0
+// CHECK:STDOUT:     @TestGeneric.%a: @TestGeneric.%A (%A.4) = bind_name a, %a.loc16_26.1
+// CHECK:STDOUT:     %W.ref.loc16_38: type = name_ref W, @TestGeneric.%W.loc16 [symbolic = @TestGeneric.%W.1 (constants.%W)]
 // CHECK:STDOUT:     @TestGeneric.%return: ref @TestGeneric.%W.1 (%W) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestSpecific.decl: %TestSpecific.type = fn_decl @TestSpecific [template = constants.%TestSpecific] {
-// CHECK:STDOUT:     %A.ref.loc33: %A.type = name_ref A, %A.decl [template = constants.%A.1]
-// CHECK:STDOUT:     %.loc33_23: %.23 = struct_literal ()
-// CHECK:STDOUT:     %.loc33_21: type = converted %.loc33_23, constants.%.23 [template = constants.%.23]
-// CHECK:STDOUT:     %A.loc33: type = class_type @A, @A(constants.%.23) [template = constants.%A.5]
-// CHECK:STDOUT:     %a.loc33_17.1: %A.5 = param a, runtime_param0
-// CHECK:STDOUT:     @TestSpecific.%a: %A.5 = bind_name a, %a.loc33_17.1
-// CHECK:STDOUT:     %.loc33_31.1: %.23 = struct_literal ()
-// CHECK:STDOUT:     %.loc33_31.2: type = converted %.loc33_31.1, constants.%.23 [template = constants.%.23]
+// CHECK:STDOUT:     %A.ref.loc24: %A.type = name_ref A, %A.decl [template = constants.%A.1]
+// CHECK:STDOUT:     %.loc24_23: %.23 = struct_literal ()
+// CHECK:STDOUT:     %.loc24_21: type = converted %.loc24_23, constants.%.23 [template = constants.%.23]
+// CHECK:STDOUT:     %A.loc24: type = class_type @A, @A(constants.%.23) [template = constants.%A.5]
+// CHECK:STDOUT:     %a.loc24_17.1: %A.5 = param a, runtime_param0
+// CHECK:STDOUT:     @TestSpecific.%a: %A.5 = bind_name a, %a.loc24_17.1
+// CHECK:STDOUT:     %.loc24_31.1: %.23 = struct_literal ()
+// CHECK:STDOUT:     %.loc24_31.2: type = converted %.loc24_31.1, constants.%.23 [template = constants.%.23]
 // CHECK:STDOUT:     @TestSpecific.%return: ref %.23 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(file.%U.loc15_13.2: type) {
+// CHECK:STDOUT: generic interface @I(file.%U.loc6_13.2: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -163,25 +165,25 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = %F (constants.%F.1)] {
-// CHECK:STDOUT:       %.loc16_14.1: @F.1.%.1 (%.5) = specific_constant %Self.1, @I(constants.%U) [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.ref: @F.1.%.1 (%.5) = name_ref Self, %.loc16_14.1 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:       %.loc16_14.2: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:       %.loc16_14.3: type = converted %Self.ref, %.loc16_14.2 [symbolic = @F.1.%Self (constants.%Self)]
-// CHECK:STDOUT:       %self.loc16_8.1: @F.1.%Self (%Self) = param self, runtime_param0
-// CHECK:STDOUT:       %self.loc16_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc16_8.1
-// CHECK:STDOUT:       %U.ref: type = name_ref U, file.%U.loc15_13.2 [symbolic = @F.1.%U (constants.%U)]
+// CHECK:STDOUT:       %.loc7_14.1: @F.1.%.1 (%.5) = specific_constant %Self.1, @I(constants.%U) [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref: @F.1.%.1 (%.5) = name_ref Self, %.loc7_14.1 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc7_14.2: type = facet_type_access %Self.ref [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc7_14.3: type = converted %Self.ref, %.loc7_14.2 [symbolic = @F.1.%Self (constants.%Self)]
+// CHECK:STDOUT:       %self.loc7_8.1: @F.1.%Self (%Self) = param self, runtime_param0
+// CHECK:STDOUT:       %self.loc7_8.2: @F.1.%Self (%Self) = bind_name self, %self.loc7_8.1
+// CHECK:STDOUT:       %U.ref: type = name_ref U, file.%U.loc6_13.2 [symbolic = @F.1.%U (constants.%U)]
 // CHECK:STDOUT:       %return.var: ref @F.1.%U (%U) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc16_26: @I.%.2 (%.6) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.7)]
+// CHECK:STDOUT:     %.loc7_26: @I.%.2 (%.6) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .F = %.loc16_26
+// CHECK:STDOUT:     .F = %.loc7_26
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(file.%V.loc19_14.2: type) {
+// CHECK:STDOUT: generic impl @impl(file.%V.loc10_14.2: type) {
 // CHECK:STDOUT:   %V: type = bind_symbolic_name V 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.3)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%V) [symbolic = %.1 (constants.%.8)]
@@ -189,20 +191,20 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   impl: %A.3 as %.8 {
 // CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%A.3 [symbolic = @F.2.%A (constants.%A.3)]
-// CHECK:STDOUT:       %self.loc20_8.1: @F.2.%A (%A.3) = param self, runtime_param0
-// CHECK:STDOUT:       %self.loc20_8.2: @F.2.%A (%A.3) = bind_name self, %self.loc20_8.1
-// CHECK:STDOUT:       %V.ref: type = name_ref V, file.%V.loc19_14.2 [symbolic = @F.2.%V (constants.%V)]
+// CHECK:STDOUT:       %self.loc11_8.1: @F.2.%A (%A.3) = param self, runtime_param0
+// CHECK:STDOUT:       %self.loc11_8.2: @F.2.%A (%A.3) = bind_name self, %self.loc11_8.1
+// CHECK:STDOUT:       %V.ref: type = name_ref V, file.%V.loc10_14.2 [symbolic = @F.2.%V (constants.%V)]
 // CHECK:STDOUT:       %return.var: ref @F.2.%V (%V) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.11]
+// CHECK:STDOUT:     %.loc10: <witness> = interface_witness (%F.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = %.loc19
+// CHECK:STDOUT:     witness = %.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @A(file.%T.loc11_9.2: type) {
+// CHECK:STDOUT: generic class @A(file.%T.loc2_9.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -212,42 +214,42 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness @A.%.2 (%.3) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc11_9.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:     %.loc12: @A.%.1 (%.2) = field_decl n, element0 [template]
-// CHECK:STDOUT:     %.loc13: <witness> = complete_type_witness %.3 [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc2_9.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc3: @A.%.1 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc4: <witness> = complete_type_witness %.3 [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.2
-// CHECK:STDOUT:     .n = %.loc12
+// CHECK:STDOUT:     .n = %.loc3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(file.%U.loc15_13.2: type, @I.%Self.1: @I.%.1 (%.5)) {
+// CHECK:STDOUT: generic fn @F.1(file.%U.loc6_13.2: type, @I.%Self.1: @I.%.1 (%.5)) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%U) [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@I.%self.loc16_8.2: @F.1.%Self (%Self)]() -> @F.1.%U (%U);
+// CHECK:STDOUT:   fn[@I.%self.loc7_8.2: @F.1.%Self (%Self)]() -> @F.1.%U (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(file.%V.loc19_14.2: type) {
+// CHECK:STDOUT: generic fn @F.2(file.%V.loc10_14.2: type) {
 // CHECK:STDOUT:   %V: type = bind_symbolic_name V 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @F.2.%A (%A.3), @F.2.%V (%V) [symbolic = %.1 (constants.%.12)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@impl.%self.loc20_8.2: @F.2.%A (%A.3)]() -> @F.2.%V (%V) {
+// CHECK:STDOUT:   fn[@impl.%self.loc11_8.2: @F.2.%A (%A.3)]() -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @F.2.%A (%A.3) = name_ref self, @impl.%self.loc20_8.2
-// CHECK:STDOUT:     %n.ref: @F.2.%.1 (%.12) = name_ref n, @A.%.loc12 [template = @A.%.loc12]
-// CHECK:STDOUT:     %.loc21_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
-// CHECK:STDOUT:     %.loc21_16.2: @F.2.%V (%V) = bind_value %.loc21_16.1
-// CHECK:STDOUT:     return %.loc21_16.2
+// CHECK:STDOUT:     %self.ref: @F.2.%A (%A.3) = name_ref self, @impl.%self.loc11_8.2
+// CHECK:STDOUT:     %n.ref: @F.2.%.1 (%.12) = name_ref n, @A.%.loc3 [template = @A.%.loc3]
+// CHECK:STDOUT:     %.loc12_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
+// CHECK:STDOUT:     %.loc12_16.2: @F.2.%V (%V) = bind_value %.loc12_16.1
+// CHECK:STDOUT:     return %.loc12_16.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TestGeneric(%W.loc25: type) {
+// CHECK:STDOUT: generic fn @TestGeneric(%W.loc16: type) {
 // CHECK:STDOUT:   %W.1: type = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%W.1) [symbolic = %A (constants.%A.4)]
 // CHECK:STDOUT:
@@ -264,21 +266,21 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %Self.5: @I.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.5 (constants.%Self)]
 // CHECK:STDOUT:     %Self.5: @I.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.5 (constants.%Self)]
 // CHECK:STDOUT:     %Self.5: @I.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.5 (constants.%Self)]
-// CHECK:STDOUT:     @I.%self.loc16_8.1: @F.1.%Self (%Self) = param self, runtime_param0
-// CHECK:STDOUT:     @I.%self.loc16_8.2: @F.1.%Self (%Self) = bind_name self, @I.%self.loc16_8.1
+// CHECK:STDOUT:     @I.%self.loc7_8.1: @F.1.%Self (%Self) = param self, runtime_param0
+// CHECK:STDOUT:     @I.%self.loc7_8.2: @F.1.%Self (%Self) = bind_name self, @I.%self.loc7_8.1
 // CHECK:STDOUT:     %U.2: type = bind_symbolic_name U 0 [symbolic = %U.2 (constants.%U)]
 // CHECK:STDOUT:     @I.%return.var: ref @F.1.%U (%U) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.4: @TestGeneric.%.2 (%.21) = assoc_entity element0, %F.decl [symbolic = %.4 (constants.%.22)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%W.loc25: type](%a: @TestGeneric.%A (%A.4)) -> @TestGeneric.%W.1 (%W) {
+// CHECK:STDOUT:   fn[%W.loc16: type](%a: @TestGeneric.%A (%A.4)) -> @TestGeneric.%W.1 (%W) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%A (%A.4) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I]
-// CHECK:STDOUT:     %W.ref: type = name_ref W, %W.loc25 [symbolic = %W.1 (constants.%W)]
-// CHECK:STDOUT:     %.loc30_14: type = interface_type @I, @I(constants.%W) [symbolic = %.1 (constants.%.20)]
-// CHECK:STDOUT:     %.loc30_17: @TestGeneric.%.2 (%.21) = specific_constant @I.%.loc16_26, @I(constants.%W) [symbolic = %.4 (constants.%.22)]
-// CHECK:STDOUT:     %F.ref: @TestGeneric.%.2 (%.21) = name_ref F, %.loc30_17 [symbolic = %.4 (constants.%.22)]
+// CHECK:STDOUT:     %W.ref: type = name_ref W, %W.loc16 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %.loc21_14: type = interface_type @I, @I(constants.%W) [symbolic = %.1 (constants.%.20)]
+// CHECK:STDOUT:     %.loc21_17: @TestGeneric.%.2 (%.21) = specific_constant @I.%.loc7_26, @I(constants.%W) [symbolic = %.4 (constants.%.22)]
+// CHECK:STDOUT:     %F.ref: @TestGeneric.%.2 (%.21) = name_ref F, %.loc21_17 [symbolic = %.4 (constants.%.22)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -287,11 +289,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A.5 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I]
-// CHECK:STDOUT:   %.loc37_16: %.23 = struct_literal ()
-// CHECK:STDOUT:   %.loc37_14.1: type = converted %.loc37_16, constants.%.23 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc37_14.2: type = interface_type @I, @I(constants.%.23) [template = constants.%.29]
-// CHECK:STDOUT:   %.loc37_18: %.30 = specific_constant @I.%.loc16_26, @I(constants.%.23) [template = constants.%.31]
-// CHECK:STDOUT:   %F.ref: %.30 = name_ref F, %.loc37_18 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc28_16: %.23 = struct_literal ()
+// CHECK:STDOUT:   %.loc28_14.1: type = converted %.loc28_16, constants.%.23 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc28_14.2: type = interface_type @I, @I(constants.%.23) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc28_18: %.30 = specific_constant @I.%.loc7_26, @I(constants.%.23) [template = constants.%.31]
+// CHECK:STDOUT:   %F.ref: %.30 = name_ref F, %.loc28_18 [template = constants.%.31]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
