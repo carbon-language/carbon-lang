@@ -1673,7 +1673,8 @@ class ImportRefResolver {
     CARBON_CHECK(!new_impl.param_refs_id.is_valid());
     SetGenericData(import_impl.generic_id, new_impl.generic_id, generic_data);
     new_impl.self_id = context_.GetTypeIdForTypeConstant(self_const_id);
-    new_impl.constraint_id = context_.GetTypeIdForTypeConstant(constraint_const_id);
+    new_impl.constraint_id =
+        context_.GetTypeIdForTypeConstant(constraint_const_id);
 
     if (import_impl.is_defined()) {
       auto witness_id = AddImportRef(

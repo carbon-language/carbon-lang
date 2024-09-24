@@ -71,9 +71,7 @@ class ImplStore {
   }
 
   // Adds the specified impl to the store. Does not add it to impl lookup.
-  auto Add(Impl impl) -> ImplId {
-    return values_.Add(impl);
-  }
+  auto Add(Impl impl) -> ImplId { return values_.Add(impl); }
 
   // Returns a mutable value for an ID.
   auto Get(ImplId id) -> Impl& { return values_.Get(id); }

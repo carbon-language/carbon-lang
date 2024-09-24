@@ -192,13 +192,10 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
 
 // Returns false if a param differs for a redeclaration. The caller is expected
 // to provide a diagnostic.
-static auto CheckRedeclParam(Context& context,
-                             llvm::StringLiteral param_diag_label,
-                             int32_t param_index,
-                             SemIR::InstId new_param_ref_id,
-                             SemIR::InstId prev_param_ref_id,
-                             SemIR::SpecificId prev_specific_id,
-                             bool diagnose) -> bool {
+static auto CheckRedeclParam(
+    Context& context, llvm::StringLiteral param_diag_label, int32_t param_index,
+    SemIR::InstId new_param_ref_id, SemIR::InstId prev_param_ref_id,
+    SemIR::SpecificId prev_specific_id, bool diagnose) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -264,8 +261,8 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_refs_id,
                               llvm::StringLiteral param_diag_label,
-                              SemIR::SpecificId prev_specific_id,
-                              bool diagnose) -> bool {
+                              SemIR::SpecificId prev_specific_id, bool diagnose)
+    -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -350,8 +347,7 @@ static auto CheckRedeclParamSyntax(Context& context,
                                    Parse::NodeId new_last_param_node_id,
                                    Parse::NodeId prev_first_param_node_id,
                                    Parse::NodeId prev_last_param_node_id,
-                                   bool diagnose)
-    -> bool {
+                                   bool diagnose) -> bool {
   // Parse nodes may not always be available to compare.
   // TODO: Support cross-file syntax checks. Right now imports provide invalid
   // nodes, and we'll need to follow the declaration to its original file to

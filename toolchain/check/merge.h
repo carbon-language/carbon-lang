@@ -99,8 +99,7 @@ auto CheckRedeclParamsMatch(
     Context& context, const DeclParams& new_entity,
     const DeclParams& prev_entity,
     SemIR::SpecificId prev_specific_id = SemIR::SpecificId::Invalid,
-    bool check_syntax = true,
-    bool diagnose = true) -> bool;
+    bool check_syntax = true, bool diagnose = true) -> bool;
 
 }  // namespace Carbon::Check
 
