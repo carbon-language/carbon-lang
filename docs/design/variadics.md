@@ -160,8 +160,11 @@ a[:1:] += x[:1:] * y[:1:];
 a[:2:] += x[:2:] * y[:2:];
 ```
 
-Here we are using `[::]` as a hypothetical pack indexing operator for purposes
+Here we are using `[:N:]` as a hypothetical pack indexing operator for purposes
 of illustration; packs cannot actually be indexed in Carbon code.
+
+> **Future work:** We're open to eventually adding indexing of variadics,
+> but that remains future work and will need its own proposal.
 
 `...and` and `...or` behave like chains of the corresponding boolean operator,
 so `...and F(each x, each y)` behaves like
