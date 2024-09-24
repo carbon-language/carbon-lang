@@ -224,13 +224,6 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
     }
   }
 
-  // If compile time bindings were declared after a suspended function body,
-  // advance the compile time index to reflect that.
-  if (scope.entry.next_compile_time_bind_index.index <
-      static_cast<int32_t>(compile_time_binding_stack_.all_values_size())) {
-    scope.entry.next_compile_time_bind_index.index =
-        compile_time_binding_stack_.all_values_size();
-  }
   // Still verify the index isn't too high.
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 

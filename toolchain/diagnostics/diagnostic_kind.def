@@ -255,6 +255,7 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
+CARBON_DIAGNOSTIC_KIND(LetCompileTimeBindingUnsupported)
 
 // Qualified declaration name checking.
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsidePackage)
