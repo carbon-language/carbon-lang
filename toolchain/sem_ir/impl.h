@@ -62,9 +62,11 @@ class ImplStore {
   // there to be more than one ImplId per bucket.
   using IdVector = llvm::SmallVector<ImplId, 1>;
 
-  // Looks up the list of impls with this self type and constraint. This only
-  // includes impls from the current file and its API file.
-  auto LookupBucket(TypeId self_id, TypeId constraint_id) -> IdVector& {
+  // Returns the lookup bucket containing the list of impls with this self type
+  // and constraint, or adds a new bucket if this is the first time we've seen
+  // an impl of this kind. The lookup bucket only includes impls from the
+  // current file and its API file.
+  auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id) -> IdVector& {
     return lookup_
         .Insert(std::pair{self_id, constraint_id}, [] { return IdVector(); })
         .value();

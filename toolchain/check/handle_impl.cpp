@@ -274,8 +274,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   // TODO: Does lookup in an impl file need to look for a prior impl declaration
   // in the api file?
-  auto& impl_lookup =
-      context.impls().LookupBucket(impl_info.self_id, impl_info.constraint_id);
+  auto& impl_lookup = context.impls().GetOrAddLookupBucket(
+      impl_info.self_id, impl_info.constraint_id);
   for (auto prev_impl_id : impl_lookup) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
       impl_decl.impl_id = prev_impl_id;

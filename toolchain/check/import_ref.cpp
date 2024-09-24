@@ -1688,7 +1688,7 @@ class ImportRefResolver {
     // in the current file.
     if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
       context_.impls()
-          .LookupBucket(new_impl.self_id, new_impl.constraint_id)
+          .GetOrAddLookupBucket(new_impl.self_id, new_impl.constraint_id)
           .push_back(impl_id);
     }
 

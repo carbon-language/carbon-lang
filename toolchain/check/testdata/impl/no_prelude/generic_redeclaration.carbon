@@ -282,18 +282,18 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl.1 {
-// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
-// CHECK:STDOUT:     %C.ref.loc8_7: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc8_10: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc8_11.1: %.4 = tuple_literal (%C.ref.loc8_7, %C.ref.loc8_10)
-// CHECK:STDOUT:     %.loc8_13: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:     %tuple: %.4 = tuple_value (%C.ref.loc8_7, %C.ref.loc8_10) [template = constants.%tuple]
-// CHECK:STDOUT:     %.loc8_11.2: %.4 = converted %.loc8_11.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:     %.loc8_12: type = tuple_access %.loc8_11.2, element0 [template = constants.%C]
-// CHECK:STDOUT:     %I.ref.loc8: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc14_11.1: %.4 = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
+// CHECK:STDOUT:     %.loc14_13: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:     %tuple: %.4 = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_11.2: %.4 = converted %.loc14_11.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_12: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
+// CHECK:STDOUT:     %I.ref.loc14: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -306,17 +306,17 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C as %.1 {
-// CHECK:STDOUT:   %.loc7: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc7
+// CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C as %.1 {
-// CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc8
+// CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
