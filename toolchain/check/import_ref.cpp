@@ -1670,7 +1670,7 @@ class ImportRefResolver {
     new_impl.parent_scope_id = parent_scope_id;
     new_impl.implicit_param_refs_id = GetLocalParamRefsId(
         import_impl.implicit_param_refs_id, implicit_param_const_ids);
-    CARBON_CHECK(!new_impl.param_refs_id.is_valid());
+    CARBON_CHECK(!import_impl.param_refs_id.is_valid() && !new_impl.param_refs_id.is_valid());
     SetGenericData(import_impl.generic_id, new_impl.generic_id, generic_data);
     new_impl.self_id = context_.GetTypeIdForTypeConstant(self_const_id);
     new_impl.constraint_id =

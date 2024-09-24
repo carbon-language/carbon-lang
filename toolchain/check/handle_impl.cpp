@@ -267,7 +267,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   SemIR::Impl impl_info = {
       name_context.MakeEntityWithParamsBase(name, impl_decl_id,
-                                            /* is_extern=*/false,
+                                            /*is_extern=*/false,
                                             SemIR::LibraryNameId::Invalid),
       {.self_id = self_type_id, .constraint_id = constraint_type_id}};
 
