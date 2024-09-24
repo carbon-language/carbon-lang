@@ -1659,8 +1659,8 @@ class ImportRefResolver {
     auto implicit_param_const_ids =
         GetLocalParamConstantIds(import_impl.implicit_param_refs_id);
     auto generic_data = GetLocalGenericData(import_impl.generic_id);
-    auto constraint_const_id = GetLocalConstantId(import_impl.constraint_id);
     auto self_const_id = GetLocalConstantId(import_impl.self_id);
+    auto constraint_const_id = GetLocalConstantId(import_impl.constraint_id);
 
     if (HasNewWork()) {
       return Retry(impl_const_id);
