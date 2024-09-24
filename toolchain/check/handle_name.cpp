@@ -182,18 +182,26 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
 
-  // TODO: Give a clearer error when .Self is not found, particularly if this
-  // is a `.Member` designator expression.
-  SemIR::InstId period_self_id =
-      HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);
-
   if (name_id == SemIR::NameId::SelfType) {
-    // If this is `.Self`, result is the period_self_id we have computed.
+    // Look up `.Self`.
+    SemIR::InstId period_self_id =
+        HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);
     context.node_stack().Push(node_id, period_self_id);
   } else {
-    // Otherwise this is `.Member`, so look up `Member` in `.Self`.
-    // FIXME: Should we avoid generating a name reference to `.Self` in this
-    // case?
+    // Otherwise this is `.Member`, so look up `.Self` and then `Member` in
+    // `.Self`.
+    SemIR::InstId period_self_id = SemIR::InstId::Invalid;
+    {
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context.emitter(), [&](auto& builder) {
+            CARBON_DIAGNOSTIC(
+                NoPeriodSelfForDesignator, Note,
+                "Designator may only be used when `.Self` is in scope.");
+            builder.Note(SemIR::LocId::Invalid, NoPeriodSelfForDesignator);
+          });
+      period_self_id =
+          HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);
+    }
     auto member_id =
         PerformMemberAccess(context, node_id, period_self_id, name_id);
     context.node_stack().Push(node_id, member_id);
