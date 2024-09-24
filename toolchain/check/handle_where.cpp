@@ -30,7 +30,6 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId /*node_id*/)
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.decl_name_stack().PeekParentScopeId(),
        .bind_index = context.scope_stack().AddCompileTimeBinding()});
-  // FIXME: should this have a location associated with `node_id`?
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
