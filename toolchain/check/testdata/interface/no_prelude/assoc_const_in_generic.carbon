@@ -108,16 +108,7 @@ fn H() {
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T.1) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.1) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @G.%.1 (%.2), @G.%F.type (%F.type) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 2, @F.%U.param [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:   %F.decl: @G.%F.type (%F.type) = fn_decl @F [symbolic = @G.%F.decl (constants.%F)] {
-// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 2
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     @G.%U: type = bind_symbolic_name U 2, %U.param [symbolic = @G.%U (constants.%U)]
-// CHECK:STDOUT:     @G.%U: type = bind_symbolic_name U 2, %U.param [symbolic = @G.%U (constants.%U)]
-// CHECK:STDOUT:     %return: ref @F.%U.1 (%U) = var <return slot>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.3: @G.%.2 (%.3) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   %.3: @G.%.2 (%.3) = assoc_entity element0, @I.%F.decl [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc15: type) {
 // CHECK:STDOUT:   !entry:

@@ -387,8 +387,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             scope_id, scope.insts.AllocateName(
                           *this, sem_ir_.insts().GetLocId(inst_id), name)};
       } else {
-        //CARBON_CHECK(old_scope_id == scope_id,
-        //             "Attempting to name inst in multiple scopes");
+        CARBON_CHECK(old_scope_id == scope_id,
+                     "Attempting to name inst in multiple scopes");
       }
     };
     auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
