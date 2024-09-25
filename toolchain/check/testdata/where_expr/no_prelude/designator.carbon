@@ -45,7 +45,7 @@ fn Foo() -> () {
   // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error: name `.Self` not found
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_designator_matches_var.carbon: note: Designator may only be used when `.Self` is in scope.
+  // CHECK:STDERR: fail_designator_matches_var.carbon: note: designator may only be used when `.Self` is in scope
   // CHECK:STDERR:
   return .x;
 }
@@ -58,7 +58,7 @@ fn Bar() -> () {
   // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+5]]:10: error: name `.Self` not found
   // CHECK:STDERR:   return .undef;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_unknown_designator.carbon: note: Designator may only be used when `.Self` is in scope.
+  // CHECK:STDERR: fail_unknown_designator.carbon: note: designator may only be used when `.Self` is in scope
   // CHECK:STDERR:
   return .undef;
 }

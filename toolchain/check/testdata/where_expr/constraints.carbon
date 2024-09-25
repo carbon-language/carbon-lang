@@ -419,12 +419,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %J.ref.loc28: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
+// CHECK:STDOUT:     %J.ref.loc26: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:     %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = @EmptyStruct.%.Self (constants.%.Self.2)]
 // CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self [symbolic = @EmptyStruct.%.Self (constants.%.Self.2)]
-// CHECK:STDOUT:     %.loc28: %.1 = struct_literal ()
-// CHECK:STDOUT:     %Y.loc28_16.1: %.3 = param Y, runtime_param<invalid>
-// CHECK:STDOUT:     @EmptyStruct.%Y.loc28: %.3 = bind_symbolic_name Y 0, %Y.loc28_16.1 [symbolic = @EmptyStruct.%Y.1 (constants.%Y)]
+// CHECK:STDOUT:     %.loc26: %.1 = struct_literal ()
+// CHECK:STDOUT:     %Y.loc26_16.1: %.3 = param Y, runtime_param<invalid>
+// CHECK:STDOUT:     @EmptyStruct.%Y.loc26: %.3 = bind_symbolic_name Y 0, %Y.loc26_16.1 [symbolic = @EmptyStruct.%Y.1 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {}
 // CHECK:STDOUT: }
@@ -472,10 +472,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.5 [template = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc25_8.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc25_8.2: %.10 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%.3) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc25_8.2 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc25_8.3: %.3 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_8.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc23_8.2: %.10 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%.3) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc23_8.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc23_8.3: %.3 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -494,21 +494,21 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc28: %.3) {
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26: %.3) {
 // CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.2)]
 // CHECK:STDOUT:   %Y.1: %.3 = bind_symbolic_name Y 0 [symbolic = %Y.1 (constants.%Y)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Y.loc28: %.3);
+// CHECK:STDOUT:   fn(%Y.loc26: %.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [template = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc41_14.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc41_14.2: %.10 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%.3) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc41_14.2 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc41_14.3: %.3 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc39_14.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc39_14.2: %.10 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%.3) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc39_14.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc39_14.3: %.3 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

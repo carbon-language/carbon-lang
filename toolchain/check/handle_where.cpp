@@ -57,7 +57,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
+auto HandleParseNode(Context& context, Parse::RequirementEquaEquallId node_id)
     -> bool {
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
