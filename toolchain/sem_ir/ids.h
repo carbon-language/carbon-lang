@@ -513,6 +513,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId SelfValue;
   // The name of `Self`.
   static const NameId SelfType;
+  // The name of `.Self`.
+  static const NameId PeriodSelf;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
   // The name of `package`.
@@ -549,6 +551,8 @@ struct NameId : public IdBase, public Printable<NameId> {
       out << "SelfValue";
     } else if (*this == SelfType) {
       out << "SelfType";
+    } else if (*this == PeriodSelf) {
+      out << "PeriodSelf";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
     } else if (*this == PackageNamespace) {
@@ -565,10 +569,11 @@ struct NameId : public IdBase, public Printable<NameId> {
 constexpr NameId NameId::Invalid = NameId(InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
-constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 3);
-constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 4);
-constexpr NameId NameId::Base = NameId(InvalidIndex - 5);
-constexpr int NameId::NonIndexValueCount = 6;
+constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
+constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
+constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
+constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
+constexpr int NameId::NonIndexValueCount = 7;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 
