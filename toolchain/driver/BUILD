@@ -10,7 +10,10 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    data = glob([
+        "testdata/**/*.carbon",
+        "testdata/**/*.cpp",
+    ]),
 )
 
 cc_library(

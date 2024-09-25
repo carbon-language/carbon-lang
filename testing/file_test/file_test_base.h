@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <functional>
+#include <mutex>
 
 #include "common/error.h"
 #include "common/ostream.h"
@@ -64,7 +65,8 @@ class FileTestBase : public testing::Test {
     llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
   };
 
-  explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}
+  explicit FileTestBase(std::mutex* output_mutex, llvm::StringRef test_name)
+      : output_mutex_(output_mutex), test_name_(test_name) {}
 
   // Implemented by children to run the test. For example, TestBody validates
   // stdout and stderr. Children should use fs for file content, and may add
@@ -149,12 +151,16 @@ class FileTestBase : public testing::Test {
     // The location of the autoupdate marker, for autoupdated files.
     std::optional<int> autoupdate_line_number;
 
+    // Whether to capture stderr and stdout that would head to console,
+    // generated from SET-CAPTURE-CONSOLE-OUTPUT.
+    bool capture_console_output = false;
+
     // Whether checks are a subset, generated from SET-CHECK-SUBSET.
     bool check_subset = false;
 
-    // Output is typically captured for tests and autoupdate, but not when
-    // dumping to console.
-    bool capture_output = true;
+    // Whether `--dump_output` is specified, causing `Run` output to go to the
+    // console. Output is typically captured for tests and autoupdate.
+    bool dump_output = false;
 
     // stdout and stderr based on CHECK lines in the file.
     llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
@@ -182,6 +188,11 @@ class FileTestBase : public testing::Test {
   // Runs the FileTestAutoupdater, returning the result.
   auto RunAutoupdater(const TestContext& context, bool dry_run) -> bool;
 
+  // An optional mutex for output. If provided, it will be locked during `Run`
+  // when stderr/stdout are being captured (SET-CAPTURE-CONSOLE-OUTPUT), in
+  // order to avoid output conflicts.
+  std::mutex* output_mutex_;
+
   llvm::StringRef test_name_;
 };
 
@@ -190,8 +201,10 @@ struct FileTestFactory {
   // The test fixture name.
   const char* name;
 
-  // A factory function for tests.
+  // A factory function for tests. The output_mutex is optional; see
+  // `FileTestBase::output_mutex_`.
   std::function<FileTestBase*(llvm::StringRef exe_path,
+                              std::mutex* output_mutex,
                               llvm::StringRef test_name)>
       factory_fn;
 };
@@ -207,11 +220,12 @@ struct FileTestFactory {
 extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
-#define CARBON_FILE_TEST_FACTORY(Name)                                       \
-  auto GetFileTestFactory() -> FileTestFactory {                             \
-    return {#Name, [](llvm::StringRef exe_path, llvm::StringRef test_name) { \
-              return new Name(exe_path, test_name);                          \
-            }};                                                              \
+#define CARBON_FILE_TEST_FACTORY(Name)                                    \
+  auto GetFileTestFactory() -> FileTestFactory {                          \
+    return {#Name, [](llvm::StringRef exe_path, std::mutex* output_mutex, \
+                      llvm::StringRef test_name) {                        \
+              return new Name(exe_path, output_mutex, test_name);         \
+            }};                                                           \
   }
 
 }  // namespace Carbon::Testing

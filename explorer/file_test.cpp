@@ -19,8 +19,8 @@ namespace {
 class ExplorerFileTest : public FileTestBase {
  public:
   explicit ExplorerFileTest(llvm::StringRef /*exe_path*/,
-                            llvm::StringRef test_name)
-      : FileTestBase(test_name),
+                            std::mutex* output_mutex, llvm::StringRef test_name)
+      : FileTestBase(output_mutex, test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok(), "{0}", prelude_line_re_.error());

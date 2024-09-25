@@ -149,6 +149,19 @@ Supported comment markers are:
     is responsible for providing default arguments.
 
 -   ```
+    // SET-CAPTURE-CONSOLE-OUTPUT
+    ```
+
+    By default, stderr and stdout are expected to be piped through provided
+    streams. Adding this causes the test's own stderr and stdout to be captured
+    and added as well.
+
+    This should be avoided because weare partly ensuring that streams are an
+    API, but is helpful when wrapping Clang, where stderr is used directly.
+
+    SET-CAPTURE-CONSOLE-OUTPUT can be specified at most once.
+
+-   ```
     // SET-CHECK-SUBSET
     ```
 

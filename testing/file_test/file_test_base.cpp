@@ -18,6 +18,7 @@
 #include "common/error.h"
 #include "common/exe_path.h"
 #include "common/init_llvm.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CrashRecoveryContext.h"
@@ -44,6 +45,13 @@ ABSL_FLAG(bool, dump_output, false,
           "to stderr.");
 
 namespace Carbon::Testing {
+
+// While these are marked as "internal" APIs, they seem to work and be pretty
+// widely used for their exact documented behavior.
+using ::testing::internal::CaptureStderr;
+using ::testing::internal::CaptureStdout;
+using ::testing::internal::GetCapturedStderr;
+using ::testing::internal::GetCapturedStdout;
 
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
@@ -248,7 +256,7 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
 
 auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
   TestContext context;
-  context.capture_output = false;
+  context.dump_output = true;
   std::string banner(79, '=');
   banner.append("\n");
   llvm::errs() << banner << "= " << test_name_ << "\n";
@@ -316,6 +324,26 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
+  // Conditionally capture console output. We use a scope exit to ensure the
+  // captures terminate even on run failures.
+  std::unique_ptr<std::unique_lock<std::mutex>> console_lock;
+  if (context.capture_console_output) {
+    if (output_mutex_) {
+      console_lock =
+          std::make_unique<std::unique_lock<std::mutex>>(*output_mutex_);
+    }
+    CaptureStderr();
+    CaptureStdout();
+  }
+  auto add_output_on_exit = llvm::make_scope_exit([&]() {
+    if (context.capture_console_output) {
+      // No need to flush stderr.
+      llvm::outs().flush();
+      context.stdout += GetCapturedStdout();
+      context.stderr += GetCapturedStderr();
+    }
+  });
+
   // Prepare string streams to capture output. In order to address casting
   // constraints, we split calls to Run as a ternary based on whether we want to
   // capture output.
@@ -323,9 +351,9 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::raw_svector_ostream stderr(context.stderr);
   CARBON_ASSIGN_OR_RETURN(
       context.run_result,
-      context.capture_output
-          ? Run(test_args_ref, fs, stdout, stderr)
-          : Run(test_args_ref, fs, llvm::outs(), llvm::errs()));
+      context.dump_output ? Run(test_args_ref, fs, llvm::outs(), llvm::errs())
+                          : Run(test_args_ref, fs, stdout, stderr));
+
   return Success();
 }
 
@@ -780,17 +808,17 @@ static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
   return true;
 }
 
-// Processes SET-CHECK-SUBSET lines when found. Returns true if the line is
-// consumed.
-static auto TryConsumeSetCheckSubset(llvm::StringRef line_trimmed,
-                                     bool* check_subset) -> ErrorOr<bool> {
-  if (line_trimmed != "// SET-CHECK-SUBSET") {
+// Processes SET-* lines when found. Returns true if the line is consumed.
+static auto TryConsumeSetFlag(llvm::StringRef line_trimmed,
+                              llvm::StringLiteral flag_name, bool* flag)
+    -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// ") || line_trimmed != flag_name) {
     return false;
   }
-  if (*check_subset) {
-    return ErrorBuilder() << "SET-CHECK-SUBSET was specified multiple times";
+  if (*flag) {
+    return ErrorBuilder() << flag_name << " was specified multiple times";
   }
-  *check_subset = true;
+  *flag = true;
   return true;
 }
 
@@ -866,7 +894,14 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
     }
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
-        TryConsumeSetCheckSubset(line_trimmed, &context.check_subset));
+        TryConsumeSetFlag(line_trimmed, "SET-CAPTURE-CONSOLE-OUTPUT",
+                          &context.capture_console_output));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(is_consumed,
+                            TryConsumeSetFlag(line_trimmed, "SET-CHECK-SUBSET",
+                                              &context.check_subset));
     if (is_consumed) {
       continue;
     }
@@ -944,7 +979,7 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
       crc.DumpStackAndCleanupOnFailure = true;
       bool thread_crashed = !crc.RunSafely([&] {
         std::unique_ptr<FileTestBase> test(
-            test_factory.factory_fn(exe_path, test_name));
+            test_factory.factory_fn(exe_path, &mutex, test_name));
         auto result = test->Autoupdate();
 
         std::unique_lock<std::mutex> lock(mutex);
@@ -1014,7 +1049,7 @@ static auto Main(int argc, char** argv) -> int {
   } else if (absl::GetFlag(FLAGS_dump_output)) {
     for (const auto& test_name : tests) {
       std::unique_ptr<FileTestBase> test(
-          test_factory.factory_fn(exe_path, test_name));
+          test_factory.factory_fn(exe_path, nullptr, test_name));
       auto result = test->DumpOutput();
       if (!result.ok()) {
         llvm::errs() << "\n" << result.error().message() << "\n";
@@ -1028,7 +1063,7 @@ static auto Main(int argc, char** argv) -> int {
           test_factory.name, test_name.data(), nullptr, test_name.data(),
           __FILE__, __LINE__,
           [&test_factory, &exe_path, test_name = test_name]() {
-            return test_factory.factory_fn(exe_path, test_name);
+            return test_factory.factory_fn(exe_path, nullptr, test_name);
           });
     }
     return RUN_ALL_TESTS();
