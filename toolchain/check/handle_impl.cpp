@@ -31,7 +31,9 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
 
-  // Push a pattern block for the signature.
+  // Push a pattern block for the signature of the `forall` (if any).
+  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
+  // and only push a pattern block in `forall` case.
   context.pattern_block_stack().Push();
 
   return true;
