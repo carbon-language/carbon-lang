@@ -288,15 +288,21 @@ If the resulting SemIR needs a new instruction:
 -   Add a new `case` to the `CARBON_KIND_SWITCH` in `TryEvalInstInContext` in
     [`check/eval.cpp`](/toolchain/check/eval.cpp). This should FIXME.
 
--   Add a case to `GetExprCategory` or `StringifyTypeExprImpl` (instructions
-    producing types only?) in [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
-    FIXME
+-   Add a `case` to `StringifyTypeExprImpl` (non-instructions producing types
+    can be added to the last set of cases) in
+    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp). FIXME
 
--   Define `BuildValueReprForInst` in
+-   Add a `case` to `GetExprCategory` in
+    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp). FIXME
+
+If the instruction produces a type:
+
+-   Define an overload for `BuildValueReprForInst` in
     [`check/context.cpp`](/toolchain/check/context.cpp). FIXME
+-   Define an overload for ``BuildTypeForInst` in
+    [`lower/file_context.cpp`](/toolchain/lower/file_context.cpp). FIXME
 
-Adding an instruction will also require a handler in the Lower step. FIXME:
-`BuildTypeForInst` in `toolchain/lower/file_context.cpp`
+Adding an instruction will also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
 formatter.
