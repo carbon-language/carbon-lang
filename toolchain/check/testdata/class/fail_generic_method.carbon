@@ -18,7 +18,7 @@ class Class(T:! type) {
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Class(T:! type) {
 // CHECK:STDERR:             ^
 // CHECK:STDERR:

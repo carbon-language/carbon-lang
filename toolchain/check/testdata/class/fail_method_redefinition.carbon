@@ -13,7 +13,7 @@ class Class {
   // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: error: redefinition of `fn F`
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: previously defined here
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: note: previously defined here
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
   fn F() {}

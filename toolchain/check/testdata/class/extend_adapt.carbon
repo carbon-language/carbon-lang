@@ -51,10 +51,10 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `SomeClassAdapter` to `SomeClass`
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: type `SomeClassAdapter` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note: type `SomeClassAdapter` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: initializing `self` parameter of method declared here
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing `self` parameter of method declared here
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
@@ -78,7 +78,7 @@ fn F(a: SomeClassAdapter) -> i32 {
   // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `SomeClassAdapter` to `SomeClass`
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: type `SomeClassAdapter` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: note: type `SomeClassAdapter` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:

@@ -12,7 +12,7 @@ fn F();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with parameter count of 0
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 0
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn G(x: ());
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 0
 // CHECK:STDERR: fn G() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with parameter count of 1
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 1
 // CHECK:STDERR: fn G(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -39,7 +39,7 @@ fn I();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `()`
 // CHECK:STDERR: fn I() -> () { return (); }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with no return type
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with no return type
 // CHECK:STDERR: fn I();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -49,7 +49,7 @@ fn J() -> ();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because no return type is provided
 // CHECK:STDERR: fn J() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with return type `()`
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with return type `()`
 // CHECK:STDERR: fn J() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -59,7 +59,7 @@ fn K() -> ();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: error: function redeclaration differs because return type is `{}`
 // CHECK:STDERR: fn K() -> {} { return {}; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: previously declared with return type `()`
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with return type `()`
 // CHECK:STDERR: fn K() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn K() -> {} { return {}; }

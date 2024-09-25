@@ -15,7 +15,7 @@ impl i32 as I {}
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `impl i32 as I`
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: previous definition was here
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 impl i32 as I {}

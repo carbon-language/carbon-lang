@@ -70,23 +70,19 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+12]]:1: in import
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+8]]:1: in import
 // CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+6]]:1: in import
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: name is previously declared here
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
 import Other library "other_fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: in name lookup for `F`
+  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: note: in name lookup for `F`
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -104,23 +100,19 @@ import Other library "other_fn_conflict";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+12]]:1: in import
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import
 // CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+6]]:1: in import
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: name is previously declared here
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
 import Other library "other_fn_conflict";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: in name lookup for `F`
+  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: note: in name lookup for `F`
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -132,25 +124,21 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 import library "main_other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import
-// CHECK:STDERR: import library "main_other_ns";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: main_other_ns.carbon:4:1: name is previously declared here
+// CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: error: redeclaration of `fn F` is redundant
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: previously declared here
+// CHECK:STDERR: other_fn.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -165,7 +153,7 @@ import Other library "other_fn";
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: name is previously declared here
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -183,7 +171,7 @@ import Other library "other_fn";
 // CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: error: imported packages cannot be used for declarations
 // CHECK:STDERR: namespace Other.Nested;
 // CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: package imported here
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: note: package imported here
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -201,7 +189,7 @@ import Other library "other_fn";
 // CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+7]]:4: error: imported packages cannot be used for declarations
 // CHECK:STDERR: fn Other.G() {}
 // CHECK:STDERR:    ^~~~~
-// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: package imported here
+// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: note: package imported here
 // CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:

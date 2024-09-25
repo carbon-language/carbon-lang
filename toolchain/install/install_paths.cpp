@@ -44,6 +44,11 @@ auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
   llvm::sys::path::remove_filename(paths.prefix_);
   llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix, "../");
 
+  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
+    paths.SetError(error.message());
+    return paths;
+  }
+
   paths.CheckMarkerFile();
   return paths;
 }
@@ -66,6 +71,11 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   llvm::sys::path::remove_filename(paths.prefix_);
   llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
                           "../../");
+
+  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
+    paths.SetError(error.message());
+    return paths;
+  }
 
   paths.CheckMarkerFile();
   CARBON_CHECK(!paths.error(), "{0}", *paths.error());
@@ -125,6 +135,10 @@ auto InstallPaths::SetError(llvm::Twine message) -> void {
 }
 
 auto InstallPaths::CheckMarkerFile() -> void {
+  if (!llvm::sys::path::is_absolute(prefix_)) {
+    SetError(llvm::Twine("Not an absolute path: ") + prefix_);
+  }
+
   llvm::SmallString<256> path(prefix_);
   llvm::sys::path::append(path, llvm::sys::path::Style::posix, MarkerPath);
   if (!llvm::sys::fs::exists(path)) {

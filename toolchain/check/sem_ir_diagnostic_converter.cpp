@@ -47,7 +47,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
     // TODO: Add an "In implicit import of prelude." note for the case where we
     // don't have a location.
     if (import_loc_id.is_valid()) {
-      CARBON_DIAGNOSTIC(InImport, Note, "in import");
+      // TODO: Include the name of the imported library in the diagnostic.
+      CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
       context_fn(in_import_loc, InImport);
     }
 

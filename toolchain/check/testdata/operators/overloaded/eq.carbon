@@ -65,10 +65,10 @@ fn TestRhsBad(a: C, b: D) -> bool {
   // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:10: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: note: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Equal[self: C](other: C) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

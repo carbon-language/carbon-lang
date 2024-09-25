@@ -18,8 +18,12 @@
 namespace Carbon {
 
 enum class DiagnosticLevel : int8_t {
-  // A note, not indicating an error on its own, but possibly providing context
-  // for an error.
+  // Information about the location of another diagnostic, showing how we
+  // reached that location. This is currently only used for the "in import"
+  // message.
+  LocationInfo,
+  // A note, not indicating an error on its own, but possibly providing
+  // additional information for an error or warning.
   Note,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,

@@ -14,7 +14,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `T`
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32`
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: type `<error>` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `<error>` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
   return x;

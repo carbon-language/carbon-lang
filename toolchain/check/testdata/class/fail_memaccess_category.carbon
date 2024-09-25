@@ -21,7 +21,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:8: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:13: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:13: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
   b.a.F();

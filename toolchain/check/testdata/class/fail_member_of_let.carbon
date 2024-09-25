@@ -20,7 +20,7 @@ let T: type = Class;
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn T.F() {}
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: referenced non-scope entity declared here
+// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: note: referenced non-scope entity declared here
 // CHECK:STDERR: let T: type = Class;
 // CHECK:STDERR:     ^
 fn T.F() {}

@@ -40,7 +40,7 @@ class Foo(a:! C);
 // CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here
 // CHECK:STDERR: class Foo(a:! (C)) {}
 // CHECK:STDERR:               ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:15: comparing with previous declaration here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
@@ -83,7 +83,7 @@ class Foo(a:! C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:11: error: redeclaration differs at parameter 1
 // CHECK:STDERR: class Foo(b:! D) {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:11: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:11: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -100,7 +100,7 @@ class Foo(a:! C);
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here
 // CHECK:STDERR: class Foo(a:! D) {}
 // CHECK:STDERR:               ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:15: comparing with previous declaration here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here
 // CHECK:STDERR: class Foo(a:! C);
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
@@ -117,7 +117,7 @@ class Foo[a:! C]();
 // CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:15: error: redeclaration syntax differs here
 // CHECK:STDERR: class Foo[a:! D]() {}
 // CHECK:STDERR:               ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:15: comparing with previous declaration here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here
 // CHECK:STDERR: class Foo[a:! C]();
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
@@ -153,7 +153,7 @@ class Foo(a:! const C);
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:21: error: redeclaration syntax differs here
 // CHECK:STDERR: class Foo(a:! const (const C)) {}
 // CHECK:STDERR:                     ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:21: comparing with previous declaration here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:21: note: comparing with previous declaration here
 // CHECK:STDERR: class Foo(a:! const C);
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
@@ -172,7 +172,7 @@ base class Base {
 // CHECK:STDERR: fail_self_type.carbon:[[@LINE+6]]:22: error: redeclaration syntax differs here
 // CHECK:STDERR: fn Base.F[addr self: Base*]() {
 // CHECK:STDERR:                      ^~~~
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:19: comparing with previous declaration here
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:19: note: comparing with previous declaration here
 // CHECK:STDERR:   fn F[addr self: Self*]();
 // CHECK:STDERR:                   ^~~~
 fn Base.F[addr self: Base*]() {

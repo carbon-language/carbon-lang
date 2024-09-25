@@ -61,7 +61,7 @@ var bad_return_type: [i32; BadReturnType(1)];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 2 argument(s) passed to function expecting 1 argument(s).
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: calling function declared here
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here
 // CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -71,7 +71,7 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: note: calling function declared here
   // CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -82,7 +82,7 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: note: calling function declared here
   // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -93,7 +93,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 2 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note: calling function declared here
   // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

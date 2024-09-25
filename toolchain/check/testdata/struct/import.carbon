@@ -30,13 +30,11 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+10]]:14: error: missing value for field `a` in struct initialization
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: missing value for field `a` in struct initialization
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-4]]:6: in import
-// CHECK:STDERR: impl package Implicit;
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: implicit.carbon:8:9: initializing generic parameter `S` declared here
+// CHECK:STDERR: implicit.carbon:8:9: note: initializing generic parameter `S` declared here
 // CHECK:STDERR: class C(S:! {.a: i32, .b: i32}) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
@@ -48,7 +46,7 @@ impl package Implicit;
 // CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C` to `C`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: type `C` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();
@@ -424,9 +422,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_28: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_29: %.7 = struct_literal (%.loc13_20, %.loc13_28)
+// CHECK:STDOUT:   %.loc11_20: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_28: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_29: %.7 = struct_literal (%.loc11_20, %.loc11_28)
 // CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
@@ -447,8 +445,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc13: ref %C.3 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc13
+// CHECK:STDOUT:   %.loc11: ref %C.3 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc11
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

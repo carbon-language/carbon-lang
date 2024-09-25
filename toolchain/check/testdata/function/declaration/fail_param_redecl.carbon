@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: name is previously declared here
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: note: name is previously declared here
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:      ^
 fn F(n: i32, n: i32);

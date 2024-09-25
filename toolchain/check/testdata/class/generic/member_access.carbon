@@ -42,7 +42,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
   // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `Class` to `Class`
   // CHECK:STDERR:   return Class(T).Make();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+3]]:3: type `Class` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+3]]:3: note: type `Class` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return Class(T).Make();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   return Class(T).Make();

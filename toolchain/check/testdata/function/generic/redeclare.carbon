@@ -27,7 +27,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `U*`
 // CHECK:STDERR: fn F(T:! type, U:! type) -> U* {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-5]]:1: previously declared with return type `T*`
+// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-5]]:1: note: previously declared with return type `T*`
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -35,7 +35,7 @@ fn F(T:! type, U:! type) -> U* {
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: calling function declared here
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: note: calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -51,7 +51,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:6: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn F(U:! type, T:! type) -> T* {
 // CHECK:STDERR:      ^
-// CHECK:STDERR: fail_reorder.carbon:[[@LINE-5]]:6: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_reorder.carbon:[[@LINE-5]]:6: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
@@ -59,7 +59,7 @@ fn F(U:! type, T:! type) -> T* {
   // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: calling function declared here
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: note: calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -75,7 +75,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:6: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn F(U:! type, T:! type) -> U* {
 // CHECK:STDERR:      ^
-// CHECK:STDERR: fail_rename.carbon:[[@LINE-5]]:6: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_rename.carbon:[[@LINE-5]]:6: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
@@ -83,7 +83,7 @@ fn F(U:! type, T:! type) -> U* {
   // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: calling function declared here
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: note: calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(T);

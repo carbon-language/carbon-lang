@@ -24,13 +24,11 @@ import library "a";
 
 // TODO: This diagnostic doesn't clearly explain the problem. We should instead
 // say something like: Only namespace-scope names can be exported.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:8: error: name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: export C.n;
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_b.carbon:[[@LINE-7]]:1: in import
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: referenced non-scope entity declared here
+// CHECK:STDERR: a.carbon:4:1: note: referenced non-scope entity declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 export C.n;
