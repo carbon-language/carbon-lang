@@ -281,8 +281,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     }
   }
 
-  bool is_new_impl = !impl_decl.impl_id.is_valid();
-  if (is_new_impl) {
+  // Create a new impl if this isn't a valid redeclaration.
+  if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket.push_back(impl_decl.impl_id);
