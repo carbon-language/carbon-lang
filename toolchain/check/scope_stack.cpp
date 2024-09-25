@@ -224,7 +224,6 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
     }
   }
 
-  // Still verify the index isn't too high.
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
   if (scope.entry.scope_id.is_valid()) {
