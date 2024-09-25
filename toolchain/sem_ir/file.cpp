@@ -514,6 +514,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case Namespace::Kind:
+      case RequirementEquivalent::Kind:
+      case RequirementImpls::Kind:
+      case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:

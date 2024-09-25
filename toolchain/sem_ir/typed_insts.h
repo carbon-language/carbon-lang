@@ -827,6 +827,39 @@ struct ReturnExpr {
   InstId dest_id;
 };
 
+// An `expr == expr` clause in a `where` expression or `require` declaration.
+struct RequirementEquivalent {
+  static constexpr auto Kind =
+      InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
+          {.ir_name = "requirement_equivalent", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An `expr impls expr` clause in a `where` expression or `require` declaration.
+struct RequirementImpls {
+  static constexpr auto Kind =
+      InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
+          {.ir_name = "requirement_impls", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// A `.M = expr` clause in a `where` expression or `require` declaration.
+struct RequirementRewrite {
+  static constexpr auto Kind =
+      InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
+          {.ir_name = "requirement_rewrite", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
 // Given an instruction with a constant value that depends on a generic
 // parameter, selects a version of that instruction with the constant value
 // corresponding to a particular specific.
@@ -1070,6 +1103,18 @@ struct VarStorage {
 
   TypeId type_id;
   NameId name_id;
+};
+
+// An `expr where requirements` expression.
+struct WhereExpr {
+  static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(
+      {.ir_name = "where_expr",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Conditional});
+
+  TypeId type_id;
+  TypeId lhs_id;
+  InstBlockId requirements_id;
 };
 
 // These concepts are an implementation detail of the library, not public API.

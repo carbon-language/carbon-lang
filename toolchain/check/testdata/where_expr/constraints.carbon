@@ -49,16 +49,14 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+13]]:3: error: cannot implicitly convert from `type` to `J`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1: in import
-  // CHECK:STDERR: import library "state_constraints";
-  // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: state_constraints.carbon:15:10: initializing generic parameter `V` declared here
+  // CHECK:STDERR: state_constraints.carbon:15:10: note: initializing generic parameter `V` declared here
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
   // CHECK:STDERR:          ^
   // CHECK:STDERR:
@@ -72,10 +70,10 @@ fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note: type `type` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:16: initializing generic parameter `Y` declared here
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:16: note: initializing generic parameter `Y` declared here
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
   // CHECK:STDERR:                ^
   EmptyStruct(C);

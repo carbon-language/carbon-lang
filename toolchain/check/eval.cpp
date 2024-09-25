@@ -1445,6 +1445,9 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ImplDecl::Kind:
     case SemIR::ImportDecl::Kind:
     case SemIR::Param::Kind:
+    case SemIR::RequirementEquivalent::Kind:
+    case SemIR::RequirementImpls::Kind:
+    case SemIR::RequirementRewrite::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
