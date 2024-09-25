@@ -272,11 +272,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       {.self_id = self_type_id, .constraint_id = constraint_type_id}};
 
   // Add the impl declaration.
-  // TODO: Does lookup in an impl file need to look for a prior impl declaration
-  // in the api file?
-  auto& impl_lookup = context.impls().GetOrAddLookupBucket(
+  auto& lookup_bucket = context.impls().GetOrAddLookupBucket(
       impl_info.self_id, impl_info.constraint_id);
-  for (auto prev_impl_id : impl_lookup) {
+  for (auto prev_impl_id : lookup_bucket) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
       impl_decl.impl_id = prev_impl_id;
       break;
@@ -287,7 +285,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (is_new_impl) {
     impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
-    impl_lookup.push_back(impl_decl.impl_id);
+    lookup_bucket.push_back(impl_decl.impl_id);
   } else {
     FinishGenericRedecl(context, impl_decl_id,
                         context.impls().Get(impl_decl.impl_id).generic_id);
