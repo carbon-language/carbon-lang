@@ -54,21 +54,25 @@ class Class {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %a.loc16_13.1: %.1 = param a, runtime_param0
-// CHECK:STDOUT:     %a.loc16_13.2: %.1 = bind_name a, %a.loc16_13.1
+// CHECK:STDOUT:     %a.param: %.1 = param a, runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %b.loc21_13.1: %.1 = param b, runtime_param0
-// CHECK:STDOUT:     %b.loc21_13.2: %.1 = bind_name b, %b.loc21_13.1
+// CHECK:STDOUT:     %b.param: %.1 = param b, runtime_param0
+// CHECK:STDOUT:     %b: %.1 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -78,7 +82,7 @@ class Class {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[@Class.%a.loc16_13.2: %.1]();
+// CHECK:STDOUT: fn @F[%a: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Class.%b.loc21_13.2: %.1);
+// CHECK:STDOUT: fn @G(%b: %.1);
 // CHECK:STDOUT:

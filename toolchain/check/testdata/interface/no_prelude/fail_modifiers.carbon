@@ -51,10 +51,10 @@ protected interface Protected;
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%.1] {}
-// CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%.2] {}
-// CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%.3] {}
-// CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%.4] {}
+// CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%.4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {

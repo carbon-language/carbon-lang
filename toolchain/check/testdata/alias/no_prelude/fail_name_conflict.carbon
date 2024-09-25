@@ -46,7 +46,7 @@ alias b = C;
 // CHECK:STDOUT:     .a = %a.loc13
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.loc13: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]

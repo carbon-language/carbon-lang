@@ -28,6 +28,9 @@ struct Impl : public Printable<Impl> {
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
 
+  // A block containing the pattern insts for the `impl forall` parameters,
+  // if any.
+  InstBlockId pattern_block_id = InstBlockId::Invalid;
   // TODO: Track the generic parameters for `impl forall`.
   // The type for which the impl is implementing a constraint.
   TypeId self_id;

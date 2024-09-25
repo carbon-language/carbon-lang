@@ -30,6 +30,12 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // consistent to imagine that it does. This also gives us a scope for implicit
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
+
+  // Push a pattern block for the signature of the `forall` (if any).
+  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
+  // and only push a pattern block in `forall` case.
+  context.pattern_block_stack().Push();
+
   return true;
 }
 
@@ -213,6 +219,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Does lookup in an impl file need to look for a prior impl declaration
   // in the api file?
   auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
+  context.impls().Get(impl_id).pattern_block_id =
+      context.pattern_block_stack().Pop();
   SemIR::ImplDecl impl_decl = {.impl_id = impl_id,
                                .decl_block_id = decl_block_id};
   auto impl_decl_id = context.AddInst(node_id, impl_decl);

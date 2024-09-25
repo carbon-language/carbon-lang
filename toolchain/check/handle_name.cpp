@@ -175,6 +175,10 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
 auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
     -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
+  // Push a pattern block for the signature (if any) of the next NameComponent.
+  // TODO: Instead use a separate parse node kind for an identifier that's
+  // followed by a pattern, and push a pattern block when handling it.
+  context.pattern_block_stack().Push();
   return true;
 }
 

@@ -219,11 +219,11 @@ private export C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NSC = %NSC.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NSC.decl: type = class_decl @NSC [template = constants.%NSC] {}
+// CHECK:STDOUT:   %NSC.decl: type = class_decl @NSC [template = constants.%NSC] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -639,7 +639,7 @@ private export C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Local = %Local.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Local.decl: type = class_decl @Local [template = constants.%Local] {}
+// CHECK:STDOUT:   %Local.decl: type = class_decl @Local [template = constants.%Local] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Local {

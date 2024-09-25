@@ -57,9 +57,9 @@ fn Bar() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc14: %Baz.type.1 = fn_decl @Baz.1 [template = constants.%Baz.1] {}
-// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.2 = fn_decl @Baz.2 [template = constants.%Baz.2] {}
-// CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {}
+// CHECK:STDOUT:   %Baz.decl.loc14: %Baz.type.1 = fn_decl @Baz.1 [template = constants.%Baz.1] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.2 = fn_decl @Baz.2 [template = constants.%Baz.2] {} {}
+// CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {

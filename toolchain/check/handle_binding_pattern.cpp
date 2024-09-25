@@ -167,6 +167,20 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
+      auto entity_name_id =
+          context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+      if (is_generic) {
+        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      } else {
+        context.AddPatternInst<SemIR::BindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      }
+      // TODO: use the pattern insts to generate the pattern-match insts
+      // at the end of the full pattern, instead of eagerly generating them
+      // here.
       break;
     }
 

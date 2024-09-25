@@ -49,8 +49,8 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {
-// CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
+// CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {} {
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

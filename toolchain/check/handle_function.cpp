@@ -35,6 +35,8 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // The function is potentially generic.
   StartGenericDecl(context);
+  // Start a new pattern block for the signature.
+  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -213,8 +215,6 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto decl_block_id = context.inst_block_stack().Pop();
-
   auto return_storage_id = SemIR::InstId::Invalid;
   if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
@@ -260,6 +260,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Add the function declaration.
+  auto decl_block_id = context.inst_block_stack().Pop();
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
   auto decl_id =

@@ -52,8 +52,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc13: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
-// CHECK:STDOUT:   %Baz.decl.loc22: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
+// CHECK:STDOUT:   %Baz.decl.loc13: %Baz.type = fn_decl @Baz [template = constants.%Baz] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc22: %Baz.type = fn_decl @Baz [template = constants.%Baz] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

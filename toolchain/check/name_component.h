@@ -33,13 +33,16 @@ struct NameComponent {
   // The explicit parameter list.
   Parse::NodeId params_loc_id;
   SemIR::InstBlockId params_id;
+
+  // The pattern block.
+  SemIR::InstBlockId pattern_block_id;
 };
 
-// Pop a name component from the node stack.
+// Pop a name component from the node stack and pattern block stack.
 auto PopNameComponent(Context& context) -> NameComponent;
 
-// Pop the name of a declaration from the node stack, and diagnose if it has
-// parameters.
+// Pop the name of a declaration from the node stack and pattern block stack,
+// and diagnose if it has parameters.
 auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
     -> NameComponent;
 
