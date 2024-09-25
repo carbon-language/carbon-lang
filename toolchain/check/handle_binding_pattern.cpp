@@ -208,10 +208,8 @@ auto HandleParseNode(Context& context,
     auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
     if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
         !scope_inst.Is<SemIR::FunctionDecl>()) {
-      CARBON_DIAGNOSTIC(LetCompileTimeBindingUnsupported, Error,
-                        "`let` compile time bindings require function or "
-                        "interface (may be supported later)");
-      context.emitter().Emit(node_id, LetCompileTimeBindingUnsupported);
+      context.TODO(node_id,
+                   "`let` compile time binding outside function or interface");
       is_generic = false;
     }
   }
