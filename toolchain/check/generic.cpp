@@ -295,6 +295,10 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   return context.inst_block_stack().Pop();
 }
 
+auto DiscardGenericDecl(Context& context) -> void {
+  context.generic_region_stack().Pop();
+}
+
 auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   auto all_bindings =
