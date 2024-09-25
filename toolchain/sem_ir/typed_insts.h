@@ -287,6 +287,36 @@ struct BindValue {
   InstId value_id;
 };
 
+// Common representation for various `*binding_pattern` nodes.
+struct AnyBindingPattern {
+  // TODO: Also handle TemplateBindingPattern once it exists.
+  static constexpr InstKind Kinds[] = {InstKind::BindingPattern,
+                                       InstKind::SymbolicBindingPattern};
+
+  InstKind kind;
+  TypeId type_id;
+  EntityNameId entity_name_id;
+};
+
+// Represents a non-symbolic binding pattern.
+struct BindingPattern {
+  static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
+      {.ir_name = "binding_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+};
+
+// Represents a symbolic binding pattern.
+struct SymbolicBindingPattern {
+  static constexpr auto Kind =
+      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "symbolic_binding_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+};
+
 // Reads an argument from `BranchWithArg`.
 struct BlockArg {
   static constexpr auto Kind =

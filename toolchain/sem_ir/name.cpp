@@ -17,6 +17,8 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "self";
     case NameId::SelfType.index:
       return "Self";
+    case NameId::PeriodSelf.index:
+      return ".Self";
     case NameId::ReturnSlot.index:
       return for_ir ? "return" : "<return slot>";
     case NameId::PackageNamespace.index:

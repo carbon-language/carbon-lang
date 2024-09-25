@@ -19,7 +19,7 @@ class AdaptWithBase {
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: `base` declaration is here
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: note: `base` declaration is here
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -35,7 +35,7 @@ class AdaptWithField {
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: note: first field declaration is here
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -47,7 +47,7 @@ class AdaptWithFields {
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~~~~~~
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: first field declaration is here
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: note: first field declaration is here
   // CHECK:STDERR:   var a: i32;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ class AdaptWithBaseAndFields {
   // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter with base class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: `base` declaration is here
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: note: `base` declaration is here
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   adapt {};
@@ -110,8 +110,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     .AdaptWithBase = %AdaptWithBase.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %AdaptWithBase.decl: type = class_decl @AdaptWithBase [template = constants.%AdaptWithBase] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %AdaptWithBase.decl: type = class_decl @AdaptWithBase [template = constants.%AdaptWithBase] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -171,8 +171,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     .AdaptWithFields = %AdaptWithFields.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %AdaptWithField.decl: type = class_decl @AdaptWithField [template = constants.%AdaptWithField] {}
-// CHECK:STDOUT:   %AdaptWithFields.decl: type = class_decl @AdaptWithFields [template = constants.%AdaptWithFields] {}
+// CHECK:STDOUT:   %AdaptWithField.decl: type = class_decl @AdaptWithField [template = constants.%AdaptWithField] {} {}
+// CHECK:STDOUT:   %AdaptWithFields.decl: type = class_decl @AdaptWithFields [template = constants.%AdaptWithFields] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithField {
@@ -254,8 +254,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:     .AdaptWithBaseAndFields = %AdaptWithBaseAndFields.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.decl: type = class_decl @AdaptWithBaseAndFields [template = constants.%AdaptWithBaseAndFields] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.decl: type = class_decl @AdaptWithBaseAndFields [template = constants.%AdaptWithBaseAndFields] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

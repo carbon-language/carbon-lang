@@ -14,7 +14,7 @@ fn Run() {
   // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `f64` to `i32`
   // CHECK:STDERR:   var x: i32 = Foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3: type `f64` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3: note: type `f64` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   var x: i32 = Foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   var x: i32 = Foo();
@@ -66,14 +66,14 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+32, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+35, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.3: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,14 +83,14 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {} {
 // CHECK:STDOUT:     %.loc11_13.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
 // CHECK:STDOUT:     %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
-// CHECK:STDOUT:     @Foo.%return: ref f64 = var <return slot>
+// CHECK:STDOUT:     %return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
@@ -116,8 +116,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: f64 = float_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc11
+// CHECK:STDOUT:   %.loc11_26: f64 = float_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

@@ -17,21 +17,21 @@ class Class {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:15: error: `default` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:23: error: `final` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:                       ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -63,7 +63,7 @@ extern alias C = Class;
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %A: type = bind_alias A, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %Class.ref.loc44: type = name_ref Class, %Class.decl [template = constants.%Class]

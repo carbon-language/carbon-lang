@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: error: duplicated field name `abc` in struct type literal
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                      ^~~
 // CHECK:STDERR:
@@ -20,7 +20,7 @@ fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:19: error: duplicated field name `a` in struct type literal
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: note: field with the same name here
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
@@ -29,7 +29,7 @@ let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:26: error: duplicated field name `def` in struct literal
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: note: field with the same name here
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
@@ -38,7 +38,7 @@ let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:30: error: duplicated field name `a` in struct literal
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                              ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
@@ -47,7 +47,7 @@ var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: error: duplicated field name `b` in struct literal
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: note: field with the same name here
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                               ^
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
@@ -94,7 +94,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc18_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_16.1: type = value_of_initializer %int.make_type_32.loc18_16 [template = i32]
 // CHECK:STDOUT:     %.loc18_16.2: type = converted %int.make_type_32.loc18_16, %.loc18_16.1 [template = i32]
@@ -110,7 +110,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %int.make_type_32.loc18_56: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_56.1: type = value_of_initializer %int.make_type_32.loc18_56 [template = i32]
 // CHECK:STDOUT:     %.loc18_56.2: type = converted %int.make_type_32.loc18_56, %.loc18_56.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc27_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_13.1: type = value_of_initializer %int.make_type_32.loc27_13 [template = i32]

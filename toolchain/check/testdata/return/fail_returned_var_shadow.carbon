@@ -14,7 +14,7 @@ fn SameScope() -> i32 {
     // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+7]]:18: error: cannot declare a `returned var` in the scope of another `returned var`
     // CHECK:STDERR:     returned var w: i32 = 1;
     // CHECK:STDERR:                  ^
-    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: `returned var` was declared here
+    // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-4]]:18: note: `returned var` was declared here
     // CHECK:STDERR:     returned var v: i32 = 0;
     // CHECK:STDERR:                  ^
     // CHECK:STDERR:
@@ -30,7 +30,7 @@ fn DifferentScopes() -> i32 {
       // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE+6]]:20: error: cannot declare a `returned var` in the scope of another `returned var`
       // CHECK:STDERR:       returned var w: i32 = 1;
       // CHECK:STDERR:                    ^
-      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: `returned var` was declared here
+      // CHECK:STDERR: fail_returned_var_shadow.carbon:[[@LINE-5]]:18: note: `returned var` was declared here
       // CHECK:STDERR:     returned var v: i32 = 0;
       // CHECK:STDERR:                  ^
       returned var w: i32 = 1;
@@ -76,17 +76,17 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     .DifferentScopes = %DifferentScopes.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %SameScope.decl: %SameScope.type = fn_decl @SameScope [template = constants.%SameScope] {
+// CHECK:STDOUT:   %SameScope.decl: %SameScope.type = fn_decl @SameScope [template = constants.%SameScope] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11, %.loc11_19.1 [template = i32]
-// CHECK:STDOUT:     @SameScope.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %DifferentScopes.decl: %DifferentScopes.type = fn_decl @DifferentScopes [template = constants.%DifferentScopes] {
+// CHECK:STDOUT:   %DifferentScopes.decl: %DifferentScopes.type = fn_decl @DifferentScopes [template = constants.%DifferentScopes] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc26_25.1: type = value_of_initializer %int.make_type_32.loc26 [template = i32]
 // CHECK:STDOUT:     %.loc26_25.2: type = converted %int.make_type_32.loc26, %.loc26_25.1 [template = i32]
-// CHECK:STDOUT:     @DifferentScopes.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -40,7 +40,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {

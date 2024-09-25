@@ -72,31 +72,33 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %bool.make_type.loc11: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
-// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11, %.loc11_11.1 [template = bool]
-// CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type, %.loc11_11.1 [template = bool]
+// CHECK:STDOUT:     %return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %bool.make_type.loc12: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
-// CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type.loc12, %.loc12_11.1 [template = bool]
-// CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type, %.loc12_11.1 [template = bool]
+// CHECK:STDOUT:     %return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
-// CHECK:STDOUT:     %bool.make_type.loc14: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
-// CHECK:STDOUT:     %.loc14_13.2: type = converted %bool.make_type.loc14, %.loc14_13.1 [template = bool]
-// CHECK:STDOUT:     @And.%return: ref bool = var <return slot>
+// CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {} {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %bool.make_type, %.loc14_13.1 [template = bool]
+// CHECK:STDOUT:     %return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {}
+// CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
+// CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
 // CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
-// CHECK:STDOUT:     %x.loc25_20.1: bool = param x, runtime_param0
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc25_20.1
+// CHECK:STDOUT:     %x.param: bool = param x, runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,14 +106,14 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc11
+// CHECK:STDOUT:   %.loc11_25: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc11_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc12
+// CHECK:STDOUT:   %.loc12_25: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc12_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
@@ -277,9 +279,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   if %.loc26_19.2 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc26_30.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc26_30.2: type = converted %bool.make_type, %.loc26_30.1 [template = bool]
+// CHECK:STDOUT:   %bool.make_type.loc26: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %.loc26_30.1: type = value_of_initializer %bool.make_type.loc26 [template = bool]
+// CHECK:STDOUT:   %.loc26_30.2: type = converted %bool.make_type.loc26, %.loc26_30.1 [template = bool]
 // CHECK:STDOUT:   br !if.expr.result(%.loc26_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:

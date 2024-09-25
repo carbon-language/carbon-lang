@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_not_type.carbon:[[@LINE+6]]:19: error: cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: note: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: let n: i32 = 1 as 2;
 // CHECK:STDERR:                   ^
 let n: i32 = 1 as 2;
@@ -56,12 +56,12 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

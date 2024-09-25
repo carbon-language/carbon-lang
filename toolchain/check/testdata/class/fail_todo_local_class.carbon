@@ -40,7 +40,7 @@ class A {
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

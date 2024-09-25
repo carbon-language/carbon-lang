@@ -12,7 +12,7 @@ interface I {
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   let T:! type = 42;
@@ -57,12 +57,12 @@ interface I {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -71,7 +71,7 @@ interface I {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

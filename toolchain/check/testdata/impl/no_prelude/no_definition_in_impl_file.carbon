@@ -91,11 +91,11 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,12 +129,12 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc4_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %A.ref.loc4: type = name_ref A, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %A.ref.loc6: type = name_ref A, imports.%import_ref.1 [template = constants.%.1]
@@ -148,10 +148,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.2 as %.1 {
-// CHECK:STDOUT:   %.loc6: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc6
+// CHECK:STDOUT:   witness = %.loc6_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
@@ -201,11 +201,11 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl: type = interface_decl @B [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %B.decl: type = interface_decl @B [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%.1]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,11 +260,11 @@ impl () as D;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = interface_decl @C [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %C.decl: type = interface_decl @C [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc8_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%.1]
@@ -332,11 +332,11 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %D.decl: type = interface_decl @D [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %D.decl: type = interface_decl @D [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc9_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%.1]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -81,7 +81,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.loc16_8.2: type = converted %int.make_type_32.loc16, %.loc16_8.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
 // CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_32.loc23, %.loc23_8.1 [template = i32]

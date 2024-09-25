@@ -29,11 +29,11 @@ impl true as I {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc16_6.1: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %.loc16_6.1, <error> [template = <error>]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,9 +46,9 @@ impl true as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as %.1 {
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16_16: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc16
+// CHECK:STDOUT:   witness = %.loc16_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

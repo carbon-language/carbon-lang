@@ -51,18 +51,20 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
+// CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {} {}
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc15_14.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15_14.2: type = bind_symbolic_name T 0, %T.loc15_14.1 [symbolic = @impl.%T (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = @impl.%T (constants.%T)]
-// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc15: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -71,11 +73,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(file.%T.loc15_14.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic impl @impl(%T.loc15: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T as %.1 {
-// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {}
+// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -89,7 +91,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(file.%T.loc15_14.2: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc15: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -101,7 +103,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}

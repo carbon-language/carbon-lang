@@ -798,21 +798,35 @@ class FormatterImpl {
 
   auto FormatInstRHS(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.function_id));
+    FormatTrailingBlock(
+        sem_ir_.functions().Get(inst.function_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.class_id));
+    FormatTrailingBlock(sem_ir_.classes().Get(inst.class_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.impl_id));
+    FormatTrailingBlock(sem_ir_.impls().Get(inst.impl_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.interface_id));
+    FormatTrailingBlock(
+        sem_ir_.interfaces().Get(inst.interface_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 

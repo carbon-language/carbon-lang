@@ -13,7 +13,7 @@ interface I {
     // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: error: `extend impl` requires a definition for interface `I`
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: interface is currently being defined
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
     extend impl as I;
@@ -50,12 +50,12 @@ interface I {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -72,7 +72,7 @@ interface I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     impl_decl @impl {
+// CHECK:STDOUT:     impl_decl @impl {} {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]

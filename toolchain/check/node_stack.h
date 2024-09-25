@@ -443,11 +443,14 @@ class NodeStack {
           return Id::KindFor<SemIR::InterfaceId>();
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
+        case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
         case Parse::NodeKind::DefaultLibrary:
         case Parse::NodeKind::LibraryName:
           return Id::KindFor<SemIR::LibraryNameId>();
+        case Parse::NodeKind::WhereOperand:
+          return Id::KindFor<SemIR::TypeId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:
@@ -623,7 +626,6 @@ class NodeStack {
         case Parse::NodeKind::RequirementEqualEqual:
         case Parse::NodeKind::RequirementImpls:
         case Parse::NodeKind::ReturnStatement:
-        case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfTypeNameExpr:
         case Parse::NodeKind::SelfValueNameExpr:
         case Parse::NodeKind::ShortCircuitOperatorAnd:
@@ -643,7 +645,6 @@ class NodeStack {
         case Parse::NodeKind::VariableDecl:
         case Parse::NodeKind::VirtualModifier:
         case Parse::NodeKind::WhereExpr:
-        case Parse::NodeKind::WhereOperand:
         case Parse::NodeKind::WhileStatement:
           return Id::Kind::Invalid;
       }

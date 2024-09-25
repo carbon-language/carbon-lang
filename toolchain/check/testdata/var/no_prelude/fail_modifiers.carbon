@@ -17,7 +17,7 @@ protected var b: ();
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private protected var c: ();
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here
 // CHECK:STDERR: private protected var c: ();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -30,7 +30,7 @@ private protected var c: ();
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `protected` repeated on declaration
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `protected` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `protected` previously appeared here
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

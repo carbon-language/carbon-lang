@@ -17,7 +17,7 @@ interface Interface { }
 // CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: previously defined here
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: note: previously defined here
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -34,7 +34,7 @@ interface Interface {}
 // CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: previously defined here
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: note: previously defined here
 // CHECK:STDERR: interface Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -51,7 +51,7 @@ fn Function();
 // CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: name is previously declared here
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -64,7 +64,7 @@ class Class;
 // CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: name is previously declared here
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface Class { }
@@ -87,8 +87,8 @@ interface Class { }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -101,7 +101,7 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc14: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -135,8 +135,8 @@ interface Class { }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -150,24 +150,26 @@ interface Class { }
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Self.ref: %.2 = name_ref Self, %Self [symbolic = @F.%Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = @F.%Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = @F.%Self (constants.%Self.2)]
-// CHECK:STDOUT:     %self.loc14_8.1: @F.%Self (%Self.2) = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc14_8.2: @F.%Self (%Self.2) = bind_name self, %self.loc14_8.1
+// CHECK:STDOUT:     %self.patt: @F.%Self (%Self.2) = binding_pattern self
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Self.ref: %.2 = name_ref Self, @.1.%Self [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:     %self.param: @F.%Self (%Self.2) = param self, runtime_param0
+// CHECK:STDOUT:     %self: @F.%Self (%Self.2) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_21: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc14_21
+// CHECK:STDOUT:   .F = %.loc14
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@.1.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[@.1.%self.loc14_8.2: @F.%Self (%Self.2)]();
+// CHECK:STDOUT:   fn[%self: @F.%Self (%Self.2)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self.2) {
@@ -187,8 +189,8 @@ interface Class { }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Function = %Function.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {}
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
@@ -207,8 +209,8 @@ interface Class { }
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.1] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {

@@ -28,7 +28,7 @@ extern fn F();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ extern fn F();
 // CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -76,7 +76,7 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -127,8 +127,8 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -145,8 +145,8 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -168,15 +168,17 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc13_15.1: %C = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc13_15.2: %C = bind_name self, %self.loc13_15.1
+// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -188,5 +190,5 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@C.%self.loc13_15.2: %C]();
+// CHECK:STDOUT: fn @G[%self: %C]();
 // CHECK:STDOUT:

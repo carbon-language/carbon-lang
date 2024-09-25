@@ -35,6 +35,11 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
 
   // This might be a generic impl.
   StartGenericDecl(context);
+
+  // Push a pattern block for the signature of the `forall` (if any).
+  // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
+  // and only push a pattern block in `forall` case.
+  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -202,6 +207,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
       .params_id = SemIR::InstBlockId::Invalid,
+      .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
 

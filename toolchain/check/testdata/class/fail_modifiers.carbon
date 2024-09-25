@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: error: `private` repeated on declaration
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR:                  ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -20,7 +20,7 @@ private abstract private class DuplicatePrivate;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:14: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -29,7 +29,7 @@ private base protected class TwoAccess {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `abstract` repeated on declaration
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -46,7 +46,7 @@ abstract abstract class TwoAbstract;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error: `base` not allowed on declaration with `virtual`
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: `virtual` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: note: `virtual` previously appeared here
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
@@ -55,7 +55,7 @@ protected virtual base class Virtual {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `protected` must appear before `abstract`
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -64,7 +64,7 @@ abstract protected class WrongOrder;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
 abstract base class AbstractAndBase {}
@@ -106,12 +106,12 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {}
-// CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {}
-// CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {}
-// CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {}
-// CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {}
-// CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {}
+// CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {} {}
+// CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {} {}
+// CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {} {}
+// CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {} {}
+// CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {} {}
+// CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;

@@ -13,7 +13,7 @@ class Incomplete;
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: error: Variable has incomplete type `{.a: Incomplete}`
 // CHECK:STDERR: var s: {.a: Incomplete};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: class was forward declared here
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var s: {.a: Incomplete};
@@ -34,7 +34,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     .s = %s
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc19: type = struct_type {.a: %Incomplete} [template = constants.%.1]
 // CHECK:STDOUT:   %s.var: ref <error> = var s

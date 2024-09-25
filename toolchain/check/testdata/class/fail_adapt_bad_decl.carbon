@@ -16,7 +16,7 @@ class Bad {
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ class Bad {
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ class MultipleAdapts {
   // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ class MultipleAdaptsSameType {
   // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -140,12 +140,12 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,11 +155,13 @@ class C {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc19_8.1: %Bad = param b, runtime_param0
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc19_8.1
+// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %b.param: %Bad = param b, runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,12 +280,12 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -293,11 +295,13 @@ class C {
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {}
+// CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
-// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, %Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.loc16_8.1: %Bad = param b, runtime_param0
-// CHECK:STDOUT:     @Use.%b: %Bad = bind_name b, %b.loc16_8.1
+// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %b.param: %Bad = param b, runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -409,8 +413,8 @@ class C {
 // CHECK:STDOUT:     .MultipleAdaptsSameType = %MultipleAdaptsSameType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [template = constants.%MultipleAdapts] {}
-// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [template = constants.%MultipleAdaptsSameType] {}
+// CHECK:STDOUT:   %MultipleAdapts.decl: type = class_decl @MultipleAdapts [template = constants.%MultipleAdapts] {} {}
+// CHECK:STDOUT:   %MultipleAdaptsSameType.decl: type = class_decl @MultipleAdaptsSameType [template = constants.%MultipleAdaptsSameType] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdapts {
@@ -468,8 +472,8 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%.2] {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
@@ -491,7 +495,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%.3] {} {}
 // CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %.1 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

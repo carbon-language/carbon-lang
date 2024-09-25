@@ -49,10 +49,10 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
-// CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
-// CHECK:STDOUT:     %.loc15: type = bind_value %x.ref
-// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
+// CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x
+// CHECK:STDOUT:     %.loc15_13: type = bind_value %x.ref
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +60,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_24: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -41,7 +41,7 @@ extern fn F();
 // CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -55,7 +55,7 @@ fn F();
 // CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -69,7 +69,7 @@ extern fn F();
 // CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -77,7 +77,7 @@ fn F();
 // CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: previously declared here
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -91,7 +91,7 @@ fn F() {}
 // CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -142,8 +142,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc5: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc5: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -163,7 +163,7 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -186,7 +186,7 @@ extern fn F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -206,8 +206,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -227,8 +227,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -248,9 +248,9 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc20: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc20: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -270,8 +270,8 @@ extern fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -299,7 +299,7 @@ extern fn F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {

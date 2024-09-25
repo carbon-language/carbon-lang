@@ -12,7 +12,7 @@ fn While() {
   // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `String` to `bool`
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: type `String` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: note: type `String` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}
@@ -56,12 +56,12 @@ fn While() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,7 +70,7 @@ fn While() {
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {}
+// CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {

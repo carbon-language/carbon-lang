@@ -14,7 +14,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `T`
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32`
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: type `<error>` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `<error>` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
   return x;
@@ -75,12 +75,12 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,15 +90,17 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_9.1: type = value_of_initializer %int.make_type_32.loc12_9 [template = i32]
 // CHECK:STDOUT:     %.loc12_9.2: type = converted %int.make_type_32.loc12_9, %.loc12_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc12_6.1: i32 = param a, runtime_param0
-// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc12_6.1
+// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc12_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32.loc12_17 [template = i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32.loc12_17, %.loc12_17.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,9 +127,9 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32, %.loc13_21.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc13_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc21_14: i32 = int_literal 5 [template = constants.%.2]

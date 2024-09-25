@@ -66,26 +66,30 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %oi.patt: %Inner = binding_pattern oi
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:     %oi.loc17_6.1: %Inner = param oi, runtime_param0
-// CHECK:STDOUT:     @F.%oi: %Inner = bind_name oi, %oi.loc17_6.1
+// CHECK:STDOUT:     %oi.param: %Inner = param oi, runtime_param0
+// CHECK:STDOUT:     %oi: %Inner = bind_name oi, %oi.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc17_26.2: type = converted %int.make_type_32, %.loc17_26.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %Outer.ref.loc21: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %o.loc21_6.1: %Outer = param o, runtime_param0
-// CHECK:STDOUT:     @G.%o: %Outer = bind_name o, %o.loc21_6.1
+// CHECK:STDOUT:     %o.patt: %Outer = binding_pattern o
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %o.param: %Outer = param o, runtime_param0
+// CHECK:STDOUT:     %o: %Outer = bind_name o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {} {}
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

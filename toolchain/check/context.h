@@ -126,18 +126,28 @@ class Context {
   auto AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
       -> SemIR::InstId;
 
+  // Adds an instruction to the current pattern block, returning the produced
+  // ID.
+  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for AddPatternInst with typed nodes.
+  template <typename InstT>
+    requires(SemIR::Internal::HasNodeId<InstT>)
+  auto AddPatternInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      -> SemIR::InstId {
+    return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
+  }
+
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result. Only valid if the LocId is for a NodeId.
+  // result.
   template <typename InstT>
     requires(SemIR::Internal::HasNodeId<InstT>)
   auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       -> void {
-    SemIR::LocIdAndInst arg(node_id, inst);
-    auto inst_id = AddInst(arg);
-    node_stack_.Push(arg.loc_id.node_id(), inst_id);
+    node_stack_.Push(node_id, AddInst(node_id, inst));
   }
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
@@ -407,6 +417,7 @@ class Context {
   auto node_stack() -> NodeStack& { return node_stack_; }
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
+  auto pattern_block_stack() -> InstBlockStack& { return pattern_block_stack_; }
 
   auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
     return param_and_arg_refs_stack_;
@@ -548,6 +559,9 @@ class Context {
 
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
+
+  // The stack of instruction blocks that contain pattern instructions.
+  InstBlockStack pattern_block_stack_;
 
   // The stack of instruction blocks being used for param and arg ref blocks.
   ParamAndArgRefsStack param_and_arg_refs_stack_;

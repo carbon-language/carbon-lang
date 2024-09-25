@@ -16,7 +16,7 @@ class A;
 // CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: base class A {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -30,7 +30,7 @@ class B;
 // CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: abstract class B {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -44,7 +44,7 @@ base class C;
 // CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: base class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -58,7 +58,7 @@ base class D;
 // CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: abstract class D {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: base class D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -72,7 +72,7 @@ abstract class E;
 // CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: class E {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: abstract class E;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -86,7 +86,7 @@ abstract class F;
 // CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: base class F {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: abstract class F;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 base class F {}
@@ -118,8 +118,8 @@ base class F {}
 // CHECK:STDOUT:     .A = %A.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc4: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.decl.loc12: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc4: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc12: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -156,8 +156,8 @@ base class F {}
 // CHECK:STDOUT:     .B = %B.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B.decl.loc4: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %B.decl.loc4: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -194,8 +194,8 @@ base class F {}
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -232,8 +232,8 @@ base class F {}
 // CHECK:STDOUT:     .D = %D.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %D.decl.loc4: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %D.decl.loc12: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl.loc4: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc12: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -270,8 +270,8 @@ base class F {}
 // CHECK:STDOUT:     .E = %E.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %E.decl.loc4: type = class_decl @E [template = constants.%E] {}
-// CHECK:STDOUT:   %E.decl.loc12: type = class_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %E.decl.loc4: type = class_decl @E [template = constants.%E] {} {}
+// CHECK:STDOUT:   %E.decl.loc12: type = class_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -308,8 +308,8 @@ base class F {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl.loc4: type = class_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc11: type = class_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc4: type = class_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc11: type = class_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @F {
