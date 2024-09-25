@@ -11,6 +11,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Basics](#basics)
+    -   [Overview](#overview)
+    -   [Packs and each-names](#packs-and-each-names)
+    -   [Pack expansions](#pack-expansions)
+        -   [Pack expansion expressions and statements](#pack-expansion-expressions-and-statements)
+        -   [Pack expansion patterns](#pack-expansion-patterns)
     -   [Additional examples](#additional-examples)
 -   [Execution Semantics](#execution-semantics)
     -   [Expressions and statements](#expressions-and-statements)
@@ -33,6 +38,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- tocstop -->
 
 ## Basics
+
+### Overview
 
 A "pack expansion" is a syntactic unit beginning with `...`, which is a kind of
 compile-time loop over sequences called "packs". Packs are initialized and
@@ -73,6 +80,8 @@ fn Zip[... each ElementType:! type]
 }
 ```
 
+### Packs and each-names
+
 A _pack_ is a sequence of a fixed number of values called "elements", which may
 be of different types. Packs are very similar to tuple values in many ways, but
 they are not first-class values -- in particular, no run-time expression
@@ -90,6 +99,8 @@ Note that `each` is part of the name syntax, not an expression operator, so it
 binds more tightly than any expression syntax. For example, the loop condition
 `...and each iter != each vector.End()` in the implementation of `Zip` is
 equivalent to `...and (each iter) != (each vector).End()`.
+
+### Pack expansions
 
 A _pack expansion_ is an instance of one of the following syntactic forms:
 
@@ -145,6 +156,8 @@ if not all cases, an each-name that violates this rule can be changed to an
 ordinary name, because each-names are only necessary when you need to transfer a
 pack from one pack expansion to another.
 
+#### Pack expansion expressions and statements
+
 A pack expansion expression or statement can be thought of as a kind of loop
 that executes at compile time (specifically, monomorphization time), where the
 expansion body is implicitly parameterized by an integer value called the _pack
@@ -187,6 +200,8 @@ for (let i:! i32 in (0, 1, 2)) {
 elements, so `(... F(each x, each y))` is equivalent to
 `(F(x[:0:], y[:0:]), F(x[:1:], y[:1:]), F(x[:2:], y[:2:]))`. This can't be
 expressed as a loop in Carbon code, but it is still fundamentally iterative.
+
+#### Pack expansion patterns
 
 A pack expansion pattern "`...` _subpattern_" appears as part of a tuple pattern
 (or an implicit parameter list), and matches a sequence of tuple elements if
