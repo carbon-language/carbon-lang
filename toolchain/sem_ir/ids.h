@@ -86,6 +86,19 @@ constexpr InstId InstId::Invalid = InstId(InvalidIndex);
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/builtin_inst_kind.def"
 
+// An ID of an instruction that is referenced absolutely within a typed
+// instruction. This means that the instruction always represents the ID of a
+// global entity that is independent of the current context, and operations like
+// substitution into the enclosing instruction should not substitute into fields
+// with this type.
+class AbsoluteInstId : public InstId {
+ public:
+  // Implicitly converts from the base class.
+  explicit(false) constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 

@@ -1025,6 +1025,10 @@ class FormatterImpl {
     out_ << inst_namer_->GetNameFor(scope_, id);
   }
 
+  auto FormatName(AbsoluteInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
   auto FormatName(SpecificId id) -> void {
     const auto& specific = sem_ir_.specifics().Get(id);
     FormatName(specific.generic_id);
