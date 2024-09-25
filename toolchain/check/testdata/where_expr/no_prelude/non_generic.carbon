@@ -40,7 +40,7 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc12: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc14: %.5 = struct_literal ()
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param0
 // CHECK:STDOUT:     %U: %.1 = bind_name U, %U.param
 // CHECK:STDOUT:   }
