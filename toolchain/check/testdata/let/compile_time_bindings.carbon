@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -30,7 +30,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -43,7 +43,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let a:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ class C {
     var c1: ((), ()) = c;
     var d1: ((), (), ()) = d;
   }
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let d:! ((), (), ()) = ((), (), ());
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,7 +69,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -110,7 +110,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class I {
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error: `let` compile time bindings require function or interface (may be supported later)
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
@@ -126,7 +126,7 @@ class I {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:5: error: `let` compile time bindings require function or interface (may be supported later)
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:

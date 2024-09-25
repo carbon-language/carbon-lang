@@ -16,7 +16,7 @@ let x: type = i32;
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: `let` compile time bindings require function or interface (may be supported later)
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
 // CHECK:STDERR: let y:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:14: error: `let` compile time bindings require function or interface (may be supported later)
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:14: error: semantics TODO: ``let` compile time binding outside function or interface`
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:              ^~~~~~~~
 let template z:! type = i32;

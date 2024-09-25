@@ -8,46 +8,31 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/no_prelude/import.carbon
 
-// --- fail_implicit.carbon
+// --- implicit.carbon
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: `let` compile time bindings require function or interface (may be supported later)
-// CHECK:STDERR: let a:! () = ();
-// CHECK:STDERR:     ^~~~~~
-// CHECK:STDERR:
-let a:! () = ();
+let a: () = ();
 
-// --- fail_implicit.impl.carbon
+// --- implicit.impl.carbon
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:5: error: `let` compile time bindings require function or interface (may be supported later)
-// CHECK:STDERR: let b:! () = a;
-// CHECK:STDERR:     ^~~~~~
-// CHECK:STDERR:
-let b:! () = a;
+let b: () = a;
 
-// --- fail_other.carbon
+// --- other.carbon
 
 package Other;
 
-// CHECK:STDERR: fail_other.carbon:[[@LINE+4]]:5: error: `let` compile time bindings require function or interface (may be supported later)
-// CHECK:STDERR: let a:! () = ();
-// CHECK:STDERR:     ^~~~~~
-// CHECK:STDERR:
-let a:! () = ();
+let a: () = ();
 
-// --- fail_import_other.carbon
+// --- import_other.carbon
 
 import Other;
 
-// CHECK:STDERR: fail_import_other.carbon:[[@LINE+3]]:5: error: `let` compile time bindings require function or interface (may be supported later)
-// CHECK:STDERR: let b:! () = Other.a;
-// CHECK:STDERR:     ^~~~~~
-let b:! () = Other.a;
+let b: () = Other.a;
 
-// CHECK:STDOUT: --- fail_implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -58,20 +43,20 @@ let b:! () = Other.a;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_15: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_16: %.1 = converted %.loc8_15, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc8_16
+// CHECK:STDOUT:   %.loc4_15: %.1 = converted %.loc4_14, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc4_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -88,8 +73,8 @@ let b:! () = Other.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -99,7 +84,7 @@ let b:! () = Other.a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other.carbon
+// CHECK:STDOUT: --- other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -110,20 +95,20 @@ let b:! () = Other.a;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = @__global_init.%a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_15: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_16: %.1 = converted %.loc8_15, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc8_16
+// CHECK:STDOUT:   %.loc4_15: %.1 = converted %.loc4_14, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc4_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_other.carbon
+// CHECK:STDOUT: --- import_other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -143,8 +128,8 @@ let b:! () = Other.a;
 // CHECK:STDOUT:     .b = @__global_init.%b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %.loc7_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_10.2: type = converted %.loc7_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
