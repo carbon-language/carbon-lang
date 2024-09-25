@@ -560,10 +560,16 @@ class ImportRefResolver {
     if (!generic_id.is_valid()) {
       return SemIR::ConstantId::Invalid;
     }
-    return GetLocalConstantId(
-        import_ir_.insts()
-            .Get(import_ir_.generics().Get(generic_id).decl_id)
-            .type_id());
+    auto import_decl_inst_id = import_ir_.generics().Get(generic_id).decl_id;
+    auto import_decl_inst = import_ir_.insts().Get(import_decl_inst_id);
+    if (import_decl_inst.Is<SemIR::ImplDecl>()) {
+      // For an impl declaration, the imported entity can be found via the
+      // declaration.
+      return GetLocalConstantId(import_decl_inst_id);
+    }
+    // For all other kinds of declaration, the imported entity can be found via
+    // the type of the declaration.
+    return GetLocalConstantId(import_decl_inst.type_id());
   }
 
   // Gets a local generic ID given the corresponding local constant ID returned
@@ -572,9 +578,9 @@ class ImportRefResolver {
     if (!local_const_id.is_valid()) {
       return SemIR::GenericId::Invalid;
     }
-    auto type = context_.insts().Get(
+    auto inst = context_.insts().Get(
         context_.constant_values().GetInstId(local_const_id));
-    CARBON_KIND_SWITCH(type) {
+    CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::FunctionType fn_type): {
         return context_.functions().Get(fn_type.function_id).generic_id;
       }
@@ -586,8 +592,11 @@ class ImportRefResolver {
             .Get(interface_type.interface_id)
             .generic_id;
       }
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        return context_.impls().Get(impl_decl.impl_id).generic_id;
+      }
       default: {
-        CARBON_FATAL("Unexpected type for generic declaration: {0}", type);
+        CARBON_FATAL("Unexpected inst for generic declaration: {0}", inst);
       }
     }
   }
@@ -1643,8 +1652,14 @@ class ImportRefResolver {
 
     SemIR::ImplId impl_id = SemIR::ImplId::Invalid;
     if (!impl_const_id.is_valid()) {
-      // For impl loading, we can always start at the second phase. Create a
-      // forward declaration of the impl for any recursive references.
+      if (HasNewWork()) {
+        // This is the end of the first phase. Don't make a new impl yet if we
+        // already have new work.
+        return Retry();
+      }
+
+      // On the second phase, create a forward declaration of the impl for any
+      // recursive references.
       std::tie(impl_id, impl_const_id) = MakeImplDeclaration(import_impl);
     } else {
       // On the third phase, compute the impl ID from the "constant value" of
@@ -2009,9 +2024,14 @@ class ImportRefResolver {
     // Note that the individual Finish steps can add new pending work, so keep
     // going until we have no more work to do.
     while (!pending_generics_.empty() || !pending_specifics_.empty()) {
-      while (!pending_generics_.empty()) {
-        FinishPendingGeneric(pending_generics_.pop_back_val());
+      // Process generics in the order that we added them because a later
+      // generic might refer to an earlier one.
+      // TODO: Import the generic eval block rather than calling
+      // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
+      for (size_t i = 0; i != pending_generics_.size(); ++i) {
+        FinishPendingGeneric(pending_generics_[i]);
       }
+      pending_generics_.clear();
       while (!pending_specifics_.empty()) {
         FinishPendingSpecific(pending_specifics_.pop_back_val());
       }
