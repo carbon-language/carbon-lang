@@ -103,6 +103,7 @@ cc_library(
         "//common:ostream",
         "//common:version",
         "//common:vlog",
+        "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
