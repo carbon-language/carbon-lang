@@ -60,15 +60,17 @@ class ImplStore {
  public:
   // TODO: Switch to something like TinyPtrVector. We expect it to be rare for
   // there to be more than one ImplId per bucket.
-  using IdVector = llvm::SmallVector<ImplId, 1>;
+  using LookupBucket = llvm::SmallVector<ImplId, 1>;
 
   // Returns the lookup bucket containing the list of impls with this self type
   // and constraint, or adds a new bucket if this is the first time we've seen
   // an impl of this kind. The lookup bucket only includes impls from the
   // current file and its API file.
-  auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id) -> IdVector& {
+  auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id)
+      -> LookupBucket& {
     return lookup_
-        .Insert(std::pair{self_id, constraint_id}, [] { return IdVector(); })
+        .Insert(std::pair{self_id, constraint_id},
+                [] { return LookupBucket(); })
         .value();
   }
 
@@ -97,7 +99,7 @@ class ImplStore {
 
  private:
   ValueStore<ImplId> values_;
-  Map<std::pair<TypeId, TypeId>, IdVector> lookup_;
+  Map<std::pair<TypeId, TypeId>, LookupBucket> lookup_;
 };
 
 }  // namespace Carbon::SemIR
