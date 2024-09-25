@@ -23,21 +23,21 @@
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:25: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                         ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:16: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:16: note: `abstract` previously appeared here
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:30: error: `default` not allowed on declaration with `abstract`
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                              ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:16: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:16: note: `abstract` previously appeared here
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:38: error: `final` not allowed on declaration with `abstract`
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                                      ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:16: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:16: note: `abstract` previously appeared here
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:

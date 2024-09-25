@@ -147,6 +147,28 @@ these.
         although these guidelines differ slightly.
 -   Always mark constructors `explicit` unless there's a specific reason to
     support implicit or `{}` initialization.
+-   When passing an object's address as an argument, use a reference unless one
+    of the following cases applies:
+
+    -   If the parameter is optional, use a pointer and document that it may be
+        null.
+    -   If it is captured and must outlive the call expression itself, use a
+        pointer and document that it must not be null (unless it is also
+        optional).
+
+        -   When storing an object's address as a non-owned member, prefer
+            storing a pointer. For example:
+
+            ```cpp
+            class Bar {
+             public:
+              // `foo` must not be null.
+              explicit Bar(Foo* foo) : foo_(foo) {}
+             private:
+              Foo* foo_;
+            };
+            ```
+
 -   Always use braces for conditional, `switch`, and loop statements, even when
     the body is a single statement.
     -   Within a `switch` statement, use braces after a `case` label when

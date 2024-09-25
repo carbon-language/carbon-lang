@@ -16,7 +16,7 @@ class Bad {
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ class Bad {
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -53,10 +53,10 @@ library "[[@TEST_NAME]]";
 
 class MultipleAdapts {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: Multiple `adapt` declarations in class.
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: Previous `adapt` declaration is here.
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -65,10 +65,10 @@ class MultipleAdapts {
 
 class MultipleAdaptsSameType {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: Multiple `adapt` declarations in class.
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: Previous `adapt` declaration is here.
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -79,14 +79,14 @@ class MultipleAdaptsSameType {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error: `adapt` declaration can only be used in a class.
+// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error: `adapt` declaration outside class
 // CHECK:STDERR: adapt {};
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 adapt {};
 
 interface I {
-  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error: `adapt` declaration can only be used in a class.
+  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -95,7 +95,7 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration can only be used in a class.
+    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class
     // CHECK:STDERR:     adapt {};
     // CHECK:STDERR:     ^~~~~~~~~
     adapt {};

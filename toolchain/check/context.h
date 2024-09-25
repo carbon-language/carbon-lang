@@ -130,14 +130,12 @@ class Context {
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result. Only valid if the LocId is for a NodeId.
+  // result.
   template <typename InstT>
     requires(SemIR::Internal::HasNodeId<InstT>)
   auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       -> void {
-    SemIR::LocIdAndInst arg(node_id, inst);
-    auto inst_id = AddInst(arg);
-    node_stack_.Push(arg.loc_id.node_id(), inst_id);
+    node_stack_.Push(node_id, AddInst(node_id, inst));
   }
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction

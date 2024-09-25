@@ -13,7 +13,7 @@ namespace A;
 // CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope
 // CHECK:STDERR: var A: ();
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE-5]]:1: name is previously declared here
+// CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: namespace A;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ var A: ();
 // CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE+6]]:5: error: duplicate name being declared in the same scope
 // CHECK:STDERR: var A: () = ();
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE-14]]:1: name is previously declared here
+// CHECK:STDERR: fail_namespace_conflict.carbon:[[@LINE-14]]:1: note: name is previously declared here
 // CHECK:STDERR: namespace A;
 // CHECK:STDERR: ^~~~~~~~~~~~
 var A: () = ();

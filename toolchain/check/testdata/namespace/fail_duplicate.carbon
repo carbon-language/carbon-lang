@@ -16,7 +16,7 @@ fn Foo.Baz() {
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: error: redefinition of `fn Baz`
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: previously defined here
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: note: previously defined here
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn Foo.Baz() {

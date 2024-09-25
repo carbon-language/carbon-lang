@@ -38,7 +38,7 @@ class C4 {
   // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend extend adapt B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -49,7 +49,7 @@ class C5 {
   // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:   ^~~~~~
   extend base adapt B;

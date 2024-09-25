@@ -17,7 +17,7 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
@@ -26,7 +26,7 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   c.G();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-16]]:13: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-16]]:13: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
@@ -38,10 +38,10 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `Class*` to `Class`
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: type `Class*` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: note: type `Class*` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-31]]:13: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-31]]:13: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   (*p).G();

@@ -39,7 +39,7 @@ virtual let e: i32 = 1;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `final` not allowed on declaration with `default`
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ default final let f: i32 = 1;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `default` repeated on declaration
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `default` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -65,7 +65,7 @@ default default let g: i32 = 1;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `private` not allowed on declaration with `protected`
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `protected` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `protected` previously appeared here
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -78,7 +78,7 @@ protected private let h: i32 = 1;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: error: `protected` repeated on declaration
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `protected` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note: `protected` previously appeared here
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 protected protected let i: i32 = 1;

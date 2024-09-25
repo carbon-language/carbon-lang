@@ -12,7 +12,7 @@ fn A();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn A` is redundant
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn B(x: ());
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn B` is redundant
 // CHECK:STDERR: fn B(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: fn B(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ fn C();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1
 // CHECK:STDERR: fn C(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared with parameter count of 0
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 0
 // CHECK:STDERR: fn C();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ fn D() {}
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn D` is redundant
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ fn E() {}
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: error: redefinition of `fn E`
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: previously defined here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously defined here
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
 fn E() {}

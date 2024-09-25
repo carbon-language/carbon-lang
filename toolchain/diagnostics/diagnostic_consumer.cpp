@@ -27,10 +27,18 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
         *stream_ << "warning: ";
         break;
       case DiagnosticLevel::Note:
+        *stream_ << "note: ";
+        break;
+      case DiagnosticLevel::LocationInfo:
         break;
     }
     *stream_ << message.format_fn(message) << "\n";
-    message.loc.FormatSnippet(*stream_);
+    // Don't include a snippet for location information to keep this diagnostic
+    // more visually associated with the following diagnostic that it describes
+    // and to better match C++ compilers.
+    if (message.level != DiagnosticLevel::LocationInfo) {
+      message.loc.FormatSnippet(*stream_);
+    }
   }
 }
 

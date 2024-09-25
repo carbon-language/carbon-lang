@@ -20,13 +20,11 @@ package Example;
 
 import library "namespace";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import library "namespace";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: namespace.carbon:4:1: name is previously declared here
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS();

@@ -30,7 +30,7 @@ fn Run() {
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle`
   // CHECK:STDERR:   let radius: i32 = circle.radius;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: the private member `radius` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note: the private member `radius` is defined here
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -38,7 +38,7 @@ fn Run() {
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle`
   // CHECK:STDERR:   circle.radius = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: the private member `radius` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: note: the private member `radius` is defined here
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -46,7 +46,7 @@ fn Run() {
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle`
   // CHECK:STDERR:   circle.SOME_INTERNAL_CONSTANT;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: the private member `SOME_INTERNAL_CONSTANT` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: the private member `SOME_INTERNAL_CONSTANT` is defined here
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
   // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -55,7 +55,7 @@ fn Run() {
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle`
   // CHECK:STDERR:   circle.SomeInternalFunction();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: the private member `SomeInternalFunction` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: note: the private member `SomeInternalFunction` is defined here
   // CHECK:STDERR:   private fn SomeInternalFunction() -> i32 {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -74,7 +74,7 @@ fn Run() {
   // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A`
   // CHECK:STDERR:   let x: i32 = A.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: the protected member `x` is defined here
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note: the protected member `x` is defined here
   // CHECK:STDERR:   protected var x: i32;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
@@ -123,7 +123,7 @@ class A {
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A`
 // CHECK:STDERR: let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: the protected member `x` is defined here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: the protected member `x` is defined here
 // CHECK:STDERR:   protected let x: i32 = 5;
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
@@ -131,7 +131,7 @@ let x: i32 = A.x;
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A`
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: the private member `y` is defined here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: the private member `y` is defined here
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
 let y: i32 = A.y;
