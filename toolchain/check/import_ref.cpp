@@ -2026,13 +2026,16 @@ class ImportRefResolver {
     // going until we have no more work to do.
     while (!pending_generics_.empty() || !pending_specifics_.empty()) {
       // Process generics in the order that we added them because a later
-      // generic might refer to an earlier one.
+      // generic might refer to an earlier one, and the calls to
+      // RebuildGenericEvalBlock assume that the reachable SemIR is in a valid
+      // state.
       // TODO: Import the generic eval block rather than calling
       // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
       for (size_t i = 0; i != pending_generics_.size(); ++i) {
         FinishPendingGeneric(pending_generics_[i]);
       }
       pending_generics_.clear();
+
       while (!pending_specifics_.empty()) {
         FinishPendingSpecific(pending_specifics_.pop_back_val());
       }

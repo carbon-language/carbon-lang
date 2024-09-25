@@ -64,8 +64,9 @@ class ImplStore {
 
   // Returns the lookup bucket containing the list of impls with this self type
   // and constraint, or adds a new bucket if this is the first time we've seen
-  // an impl of this kind. The lookup bucket only includes impls from the
-  // current file and its API file.
+  // an impl of this kind. The lookup bucket should only include impls from the
+  // current file and its API file; impls from other files should not be added
+  // to it.
   auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id)
       -> LookupBucket& {
     return lookup_
