@@ -14,7 +14,7 @@
 
 // --- api.carbon
 
-library "api";
+library "[[@TEST_NAME]]";
 
 fn A();
 fn B(b: i32) -> i32;
@@ -26,15 +26,15 @@ fn NS.E();
 
 // --- extern_api.carbon
 
-library "extern_api";
+library "[[@TEST_NAME]]";
 
-extern fn A();
-extern fn B(b: i32) -> i32;
-extern fn C(c: (i32,)) -> {.c: i32};
-extern fn D();
+extern library "redecl_extern_api" fn A();
+extern library "redecl_extern_api" fn B(b: i32) -> i32;
+extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
+extern library "redecl_extern_api" fn D();
 
 namespace NS;
-extern fn NS.E();
+extern library "redecl_extern_api" fn NS.E();
 
 // ============================================================================
 // Test files
@@ -42,7 +42,7 @@ extern fn NS.E();
 
 // --- basics.carbon
 
-library "basics";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
@@ -52,16 +52,56 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- redecl_api.carbon
+// --- fail_redecl_api.carbon
 
-library "redecl_api";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: api.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 extern fn A();
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn B` must match use of `extern`
+// CHECK:STDERR: extern fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-14]]:1: in import
+// CHECK:STDERR: api.carbon:5:1: note: previously declared here
+// CHECK:STDERR: fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn B(b: i32) -> i32;
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn C` must match use of `extern`
+// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-23]]:1: in import
+// CHECK:STDERR: api.carbon:6:1: note: previously declared here
+// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclaration of `fn D` is redundant
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-32]]:1: in import
+// CHECK:STDERR: api.carbon:7:1: note: previously declared here
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn D();
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn E` must match use of `extern`
+// CHECK:STDERR: extern fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-41]]:1: in import
+// CHECK:STDERR: api.carbon:10:1: note: previously declared here
+// CHECK:STDERR: fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR:
 extern fn NS.E();
 
 var a: () = A();
@@ -72,7 +112,7 @@ var e: () = NS.E();
 
 // --- redecl_extern_api.carbon
 
-library "redecl_extern_api";
+library "[[@TEST_NAME]]";
 
 import library "extern_api";
 
@@ -88,72 +128,52 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- fail_todo_merge.carbon
+// --- fail_merge.carbon
 
-library "merge";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+65]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+59]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+45]]:1: in import
+// CHECK:STDERR: extern_api.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: extern library "redecl_extern_api" fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+41]]:1: in import
+// CHECK:STDERR: api.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+52]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+46]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:5:1: Name is previously declared here.
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+36]]:1: in import
+// CHECK:STDERR: extern_api.carbon:5:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+32]]:1: in import
+// CHECK:STDERR: api.carbon:5:1: note: name is previously declared here
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+39]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+33]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:6:1: Name is previously declared here.
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+27]]:1: in import
+// CHECK:STDERR: extern_api.carbon:6:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+23]]:1: in import
+// CHECK:STDERR: api.carbon:6:1: note: name is previously declared here
 // CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+26]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+20]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:7:1: Name is previously declared here.
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+18]]:1: in import
+// CHECK:STDERR: extern_api.carbon:7:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: extern library "redecl_extern_api" fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+14]]:1: in import
+// CHECK:STDERR: api.carbon:7:1: note: name is previously declared here
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+13]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+7]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:10:1: Name is previously declared here.
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+9]]:1: in import
+// CHECK:STDERR: extern_api.carbon:10:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge.carbon:[[@LINE+5]]:1: in import
+// CHECK:STDERR: api.carbon:10:1: note: name is previously declared here
 // CHECK:STDERR: fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
@@ -166,75 +186,54 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- fail_todo_merge_reverse.carbon
+// --- fail_merge_reverse.carbon
 
-library "merge_reverse";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+65]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+44]]:1: in import
+// CHECK:STDERR: api.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+59]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+40]]:1: in import
+// CHECK:STDERR: extern_api.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: extern library "redecl_extern_api" fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+52]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+35]]:1: in import
+// CHECK:STDERR: api.carbon:5:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+46]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:5:1: Name is previously declared here.
-// CHECK:STDERR: extern fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+31]]:1: in import
+// CHECK:STDERR: extern_api.carbon:5:1: note: name is previously declared here
+// CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+39]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+26]]:1: in import
+// CHECK:STDERR: api.carbon:6:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+33]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:6:1: Name is previously declared here.
-// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+22]]:1: in import
+// CHECK:STDERR: extern_api.carbon:6:1: note: name is previously declared here
+// CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+26]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+17]]:1: in import
+// CHECK:STDERR: api.carbon:7:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+20]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:7:1: Name is previously declared here.
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+13]]:1: in import
+// CHECK:STDERR: extern_api.carbon:7:1: note: name is previously declared here
+// CHECK:STDERR: extern library "redecl_extern_api" fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+13]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+8]]:1: in import
+// CHECK:STDERR: api.carbon:10:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn NS.E();
 // CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+7]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:10:1: Name is previously declared here.
-// CHECK:STDERR: extern fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: extern_api.carbon:10:1: note: name is previously declared here
+// CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import library "extern_api";
 import library "api";
 
@@ -243,128 +242,17 @@ var b: i32 = B(1);
 var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
-
-// --- decl_after_use.carbon
-
-library "decl_after_use";
-
-import library "extern_api";
-
-var a: () = A();
-
-fn A();
-
-// --- fail_redecl_mismatch_after_use.carbon
-
-library "redecl_mismatch_after_use";
-
-import library "extern_api";
-
-var a: () = A();
-
-// CHECK:STDERR: fail_redecl_mismatch_after_use.carbon:[[@LINE+10]]:1: ERROR: Function redeclaration differs because return type is `i32`.
-// CHECK:STDERR: fn A() -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_mismatch_after_use.carbon:[[@LINE-7]]:1: In import.
-// CHECK:STDERR: import library "extern_api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: Previously declared with no return type.
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn A() -> i32;
-
-// --- todo_fail_extern_after_use.carbon
-
-library "extern_after_use";
-
-import library "api";
-
-var a: () = A();
-
-extern fn A();
 
 // --- unloaded.carbon
 
-library "unloaded";
+library "[[@TEST_NAME]]";
 
 import library "api";
 
 // --- unloaded_extern.carbon
 
-library "unloaded_extern";
+library "[[@TEST_NAME]]";
 
-import library "extern_api";
-
-// --- fail_todo_loaded_merge.carbon
-
-library "loaded_merge";
-
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+64]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+58]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+51]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+45]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:5:1: Name is previously declared here.
-// CHECK:STDERR: fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+38]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+32]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:6:1: Name is previously declared here.
-// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+25]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+19]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:7:1: Name is previously declared here.
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: extern fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:10:1: Name is previously declared here.
-// CHECK:STDERR: fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~
-import library "api";
 import library "extern_api";
 
 // CHECK:STDOUT: --- api.carbon
@@ -395,6 +283,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -419,12 +308,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_6.1: i32 = param b
-// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_6.1
+// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
-// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
@@ -434,13 +323,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc6_6.1: %.3 = param c
-// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_6.1
+// CHECK:STDOUT:     %c.param: %.3 = param c, runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
 // CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     @C.%return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.4 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -489,6 +378,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -510,31 +400,31 @@ import library "extern_api";
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32.loc5_16: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_16.1: type = value_of_initializer %int.make_type_32.loc5_16 [template = i32]
-// CHECK:STDOUT:     %.loc5_16.2: type = converted %int.make_type_32.loc5_16, %.loc5_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc5_13.1: i32 = param b
-// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_13.1
-// CHECK:STDOUT:     %int.make_type_32.loc5_24: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_24.1: type = value_of_initializer %int.make_type_32.loc5_24 [template = i32]
-// CHECK:STDOUT:     %.loc5_24.2: type = converted %int.make_type_32.loc5_24, %.loc5_24.1 [template = i32]
-// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32.loc5_44: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc5_44.1: type = value_of_initializer %int.make_type_32.loc5_44 [template = i32]
+// CHECK:STDOUT:     %.loc5_44.2: type = converted %int.make_type_32.loc5_44, %.loc5_44.1 [template = i32]
+// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %int.make_type_32.loc5_52: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc5_52.1: type = value_of_initializer %int.make_type_32.loc5_52 [template = i32]
+// CHECK:STDOUT:     %.loc5_52.2: type = converted %int.make_type_32.loc5_52, %.loc5_52.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32.loc6_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc6_21.1: %.2 = tuple_literal (%int.make_type_32.loc6_17)
-// CHECK:STDOUT:     %.loc6_21.2: type = value_of_initializer %int.make_type_32.loc6_17 [template = i32]
-// CHECK:STDOUT:     %.loc6_21.3: type = converted %int.make_type_32.loc6_17, %.loc6_21.2 [template = i32]
-// CHECK:STDOUT:     %.loc6_21.4: type = converted %.loc6_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc6_13.1: %.3 = param c
-// CHECK:STDOUT:     @C.%c: %.3 = bind_name c, %c.loc6_13.1
-// CHECK:STDOUT:     %int.make_type_32.loc6_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc6_32.1: type = value_of_initializer %int.make_type_32.loc6_32 [template = i32]
-// CHECK:STDOUT:     %.loc6_32.2: type = converted %int.make_type_32.loc6_32, %.loc6_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc6_35: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     @C.%return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32.loc6_45: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_49.1: %.2 = tuple_literal (%int.make_type_32.loc6_45)
+// CHECK:STDOUT:     %.loc6_49.2: type = value_of_initializer %int.make_type_32.loc6_45 [template = i32]
+// CHECK:STDOUT:     %.loc6_49.3: type = converted %int.make_type_32.loc6_45, %.loc6_49.2 [template = i32]
+// CHECK:STDOUT:     %.loc6_49.4: type = converted %.loc6_49.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %c.param: %.3 = param c, runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
+// CHECK:STDOUT:     %int.make_type_32.loc6_60: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_60.1: type = value_of_initializer %int.make_type_32.loc6_60 [template = i32]
+// CHECK:STDOUT:     %.loc6_60.2: type = converted %int.make_type_32.loc6_60, %.loc6_60.1 [template = i32]
+// CHECK:STDOUT:     %.loc6_63: type = struct_type {.c: i32} [template = constants.%.4]
+// CHECK:STDOUT:     %return: ref %.4 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -593,6 +483,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -679,7 +570,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_api.carbon
+// CHECK:STDOUT: --- fail_redecl_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
@@ -718,6 +609,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -734,8 +626,8 @@ import library "extern_api";
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .b = %b.loc13
-// CHECK:STDOUT:     .c = %c.loc14
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
@@ -743,68 +635,68 @@ import library "extern_api";
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
-// CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
-// CHECK:STDOUT:     %b.loc7_13.2: i32 = bind_name b, %b.loc7_13.1
-// CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
-// CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32.loc23_16: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc23_16.1: type = value_of_initializer %int.make_type_32.loc23_16 [template = i32]
+// CHECK:STDOUT:     %.loc23_16.2: type = converted %int.make_type_32.loc23_16, %.loc23_16.1 [template = i32]
+// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param0
+// CHECK:STDOUT:     %b.loc23: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %int.make_type_32.loc23_24: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc23_24.1: type = value_of_initializer %int.make_type_32.loc23_24 [template = i32]
+// CHECK:STDOUT:     %.loc23_24.2: type = converted %int.make_type_32.loc23_24, %.loc23_24.1 [template = i32]
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_21.1: %.2 = tuple_literal (%int.make_type_32.loc8_17)
-// CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
-// CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
-// CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc8_13.1: %.3 = param c
-// CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.1
-// CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
-// CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc8_35: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %return.var.loc8: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %int.make_type_32.loc32_17: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc32_21.1: %.2 = tuple_literal (%int.make_type_32.loc32_17)
+// CHECK:STDOUT:     %.loc32_21.2: type = value_of_initializer %int.make_type_32.loc32_17 [template = i32]
+// CHECK:STDOUT:     %.loc32_21.3: type = converted %int.make_type_32.loc32_17, %.loc32_21.2 [template = i32]
+// CHECK:STDOUT:     %.loc32_21.4: type = converted %.loc32_21.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %c.param: %.3 = param c, runtime_param0
+// CHECK:STDOUT:     %c.loc32: %.3 = bind_name c, %c.param
+// CHECK:STDOUT:     %int.make_type_32.loc32_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc32_32.1: type = value_of_initializer %int.make_type_32.loc32_32 [template = i32]
+// CHECK:STDOUT:     %.loc32_32.2: type = converted %int.make_type_32.loc32_32, %.loc32_32.1 [template = i32]
+// CHECK:STDOUT:     %.loc32_35: type = struct_type {.c: i32} [template = constants.%.4]
+// CHECK:STDOUT:     %return.var: ref %.4 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc52_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_32.loc13, %.loc13_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
+// CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_32.loc53, %.loc53_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
-// CHECK:STDOUT:   %b.loc13: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
-// CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32.loc14, %.loc14_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_16: type = struct_type {.c: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %int.make_type_32.loc54: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_32.loc54 [template = i32]
+// CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_32.loc54, %.loc54_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:   %c.var: ref %.4 = var c
-// CHECK:STDOUT:   %c.loc14: ref %.4 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc15_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %c: ref %.4 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref %.1 = var d
 // CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc16_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc56_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref %.1 = var e
 // CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c.1: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E();
+// CHECK:STDOUT: fn @E();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -812,15 +704,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc13)
+// CHECK:STDOUT:   %.loc53: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc53)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc14_23: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_25: %.3 = tuple_literal (%.loc14_23)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc14_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_21: %.3 = converted %.loc14_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc14_21)
+// CHECK:STDOUT:   %.loc54_23: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc54_25: %.3 = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc54_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc54_21: %.3 = converted %.loc54_25, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc54_21)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -871,6 +763,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -887,8 +780,8 @@ import library "extern_api";
 // CHECK:STDOUT:     .NS = imports.%NS
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .b = %b.loc13
-// CHECK:STDOUT:     .c = %c.loc14
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
@@ -899,12 +792,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
-// CHECK:STDOUT:     %b.loc7_13.2: i32 = bind_name b, %b.loc7_13.1
+// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param0
+// CHECK:STDOUT:     %b.loc7: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
@@ -912,13 +805,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %c.loc8_13.1: %.3 = param c
-// CHECK:STDOUT:     %c.loc8_13.2: %.3 = bind_name c, %c.loc8_13.1
+// CHECK:STDOUT:     %c.param: %.3 = param c, runtime_param0
+// CHECK:STDOUT:     %c.loc8: %.3 = bind_name c, %c.param
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_35: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %return.var.loc8: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %return.var: ref %.4 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
@@ -930,13 +823,13 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_32.loc13, %.loc13_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
-// CHECK:STDOUT:   %b.loc13: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32.loc14, %.loc14_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_16: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:   %c.var: ref %.4 = var c
-// CHECK:STDOUT:   %c.loc14: ref %.4 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %.4 = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc15_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref %.1 = var d
@@ -951,9 +844,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%c.1: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -985,7 +878,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_merge.carbon
+// CHECK:STDOUT: --- fail_merge.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -1028,6 +921,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1051,27 +945,27 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc72_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc72_9.2: type = converted %.loc72_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc52_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc73: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc73_8.1: type = value_of_initializer %int.make_type_32.loc73 [template = i32]
-// CHECK:STDOUT:   %.loc73_8.2: type = converted %int.make_type_32.loc73, %.loc73_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
+// CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_32.loc53, %.loc53_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int.make_type_32.loc74: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc74_13.1: type = value_of_initializer %int.make_type_32.loc74 [template = i32]
-// CHECK:STDOUT:   %.loc74_13.2: type = converted %int.make_type_32.loc74, %.loc74_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc74_16: type = struct_type {.c: i32} [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc54: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_32.loc54 [template = i32]
+// CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_32.loc54, %.loc54_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %c.var: ref %.3 = var c
 // CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc75_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc75_9.2: type = converted %.loc75_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref %.1 = var d
 // CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc76_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc76_9.2: type = converted %.loc76_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc56_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref %.1 = var e
 // CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
 // CHECK:STDOUT: }
@@ -1094,15 +988,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc73: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc73)
+// CHECK:STDOUT:   %.loc53: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc53)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc74_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc74_25: %.4 = tuple_literal (%.loc74_23)
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc74_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc74_21: %.4 = converted %.loc74_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc74_21)
+// CHECK:STDOUT:   %.loc54_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc54_25: %.4 = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc54_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc54_21: %.4 = converted %.loc54_25, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc54_21)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -1114,7 +1008,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_merge_reverse.carbon
+// CHECK:STDOUT: --- fail_merge_reverse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -1157,6 +1051,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1180,27 +1075,27 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc72_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc72_9.2: type = converted %.loc72_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc51_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc51_9.2: type = converted %.loc51_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref %.1 = var a
 // CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc73: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc73_8.1: type = value_of_initializer %int.make_type_32.loc73 [template = i32]
-// CHECK:STDOUT:   %.loc73_8.2: type = converted %int.make_type_32.loc73, %.loc73_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc52: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc52_8.1: type = value_of_initializer %int.make_type_32.loc52 [template = i32]
+// CHECK:STDOUT:   %.loc52_8.2: type = converted %int.make_type_32.loc52, %.loc52_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int.make_type_32.loc74: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc74_13.1: type = value_of_initializer %int.make_type_32.loc74 [template = i32]
-// CHECK:STDOUT:   %.loc74_13.2: type = converted %int.make_type_32.loc74, %.loc74_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc74_16: type = struct_type {.c: i32} [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc53_13.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
+// CHECK:STDOUT:   %.loc53_13.2: type = converted %int.make_type_32.loc53, %.loc53_13.1 [template = i32]
+// CHECK:STDOUT:   %.loc53_16: type = struct_type {.c: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %c.var: ref %.3 = var c
 // CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc75_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc75_9.2: type = converted %.loc75_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc54_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc54_9.2: type = converted %.loc54_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref %.1 = var d
 // CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc76_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc76_9.2: type = converted %.loc76_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref %.1 = var e
 // CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
 // CHECK:STDOUT: }
@@ -1223,15 +1118,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc73: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc73)
+// CHECK:STDOUT:   %.loc52: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc52)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc74_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc74_25: %.4 = tuple_literal (%.loc74_23)
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc74_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc74_21: %.4 = converted %.loc74_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc74_21)
+// CHECK:STDOUT:   %.loc53_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc53_25: %.4 = tuple_literal (%.loc53_23)
+// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc53_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc53_21: %.4 = converted %.loc53_25, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc53_21)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -1240,195 +1135,6 @@ import library "extern_api";
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, imports.%import_ref.6 [template = constants.%E]
 // CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_after_use.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
-// CHECK:STDOUT:     .E = %import_ref.6
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+50, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
-// CHECK:STDOUT:     .NS = imports.%NS
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_mismatch_after_use.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
-// CHECK:STDOUT:     .E = %import_ref.6
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+50, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.7
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.1
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
-// CHECK:STDOUT:     .NS = imports.%NS
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc18_11.2: type = converted %int.make_type_32, %.loc18_11.1 [template = i32]
-// CHECK:STDOUT:     @.1.%return: ref i32 = var <return slot>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() -> i32;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_extern_after_use.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
-// CHECK:STDOUT:     .E = %import_ref.6
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+50, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
-// CHECK:STDOUT:     .NS = imports.%NS
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1449,6 +1155,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1485,47 +1192,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.1
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
-// CHECK:STDOUT:     .NS = imports.%NS
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_loaded_merge.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
-// CHECK:STDOUT:     .E = %import_ref.6
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+50, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+50, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

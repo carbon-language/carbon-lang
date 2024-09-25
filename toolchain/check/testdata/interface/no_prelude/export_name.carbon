@@ -14,13 +14,13 @@
 
 // --- base.carbon
 
-library "base";
+library "[[@TEST_NAME]]";
 
 interface I {}
 
 // --- export.carbon
 
-library "export";
+library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -32,7 +32,7 @@ export I;
 
 // --- use_export.carbon
 
-library "use_export";
+library "[[@TEST_NAME]]";
 
 import library "export";
 
@@ -111,8 +111,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     %i.patt: %.1 = binding_pattern i
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %i.loc6_13.1: %.1 = param i
-// CHECK:STDOUT:     @UseEmpty.%i: %.1 = bind_name i, %i.loc6_13.1
+// CHECK:STDOUT:     %i.param: %.1 = param i, runtime_param0
+// CHECK:STDOUT:     %i: %.1 = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

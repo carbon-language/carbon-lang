@@ -8,15 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_type.carbon
 
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+7]]:8: ERROR: Cannot dereference operand of non-pointer type `type`.
+// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+7]]:8: error: cannot dereference operand of non-pointer type `type`
 // CHECK:STDERR: var p: *i32;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+4]]:8: To form a pointer type, write the `*` after the pointee type.
+// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+4]]:8: note: to form a pointer type, write the `*` after the pointee type
 // CHECK:STDERR: var p: *i32;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 var p: *i32;
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+3]]:12: ERROR: Cannot apply `->` operator to non-pointer type `type`.
+// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+3]]:12: error: cannot apply `->` operator to non-pointer type `type`
 // CHECK:STDERR: var p2: i32->foo;
 // CHECK:STDERR:            ^~
 var p2: i32->foo;
@@ -36,6 +36,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

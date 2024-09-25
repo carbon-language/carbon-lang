@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
 
 fn Mismatch() -> i32 {
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: ERROR: Type `f64` of `returned var` does not match return type of enclosing function.
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: error: type `f64` of `returned var` does not match return type of enclosing function
   // CHECK:STDERR:   returned var v: f64 = 0.0;
   // CHECK:STDERR:                   ^~~
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: Return type of function is `i32`.
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: note: return type of function is `i32`
   // CHECK:STDERR: fn Mismatch() -> i32 {
   // CHECK:STDERR:               ^~~~~~
   returned var v: f64 = 0.0;
@@ -41,6 +41,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -59,7 +60,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_32, %.loc11_18.1 [template = i32]
-// CHECK:STDOUT:     @Mismatch.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

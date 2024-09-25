@@ -20,27 +20,27 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: ERROR: Missing object argument in method call.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: Calling function declared here.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: Calling function declared here.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note: calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: ERROR: Missing object argument in method call.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error: missing object argument in method call
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: Calling function declared here.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   A();
@@ -56,7 +56,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.type: type = fn_type @WithSelf [template]
 // CHECK:STDOUT:   %WithSelf: %WithSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -67,6 +68,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -82,15 +84,15 @@ fn F(c: Class) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %A: %WithSelf.type = bind_alias A, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc18_6.1: %Class = param c
-// CHECK:STDOUT:     @F.%c: %Class = bind_name c, %c.loc18_6.1
+// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.param: %Class = param c, runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,9 +102,10 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc13_15.1: %Class = param self
-// CHECK:STDOUT:     %self.loc13_15.2: %Class = bind_name self, %self.loc13_15.1
+// CHECK:STDOUT:     %self.param: %Class = param self, runtime_param0
+// CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -112,7 +115,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc13_15.2: %Class]();
+// CHECK:STDOUT: fn @WithSelf[%self: %Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: %Class) {
 // CHECK:STDOUT: !entry:
@@ -132,7 +135,6 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc38: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, %c
-// CHECK:STDOUT:   %WithSelf.call.loc38: init %.1 = call %WithSelf.ref.loc38(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: %WithSelf.type = name_ref A, file.%A [template = constants.%WithSelf]
 // CHECK:STDOUT:   %WithSelf.call.loc46: init %.1 = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

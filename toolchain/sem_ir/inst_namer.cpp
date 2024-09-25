@@ -22,7 +22,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     : tokenized_buffer_(tokenized_buffer),
       parse_tree_(parse_tree),
       sem_ir_(sem_ir) {
-  insts_.resize(sem_ir.insts().size());
+  insts_.resize(sem_ir.insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir.inst_blocks().size());
   scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
   generic_scopes_.resize(sem_ir.generics().size(), ScopeId::None);
@@ -39,7 +39,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each function scope.
   for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
-    auto fn_id = FunctionId(i);
+    FunctionId fn_id(i);
     auto fn_scope = GetScopeFor(fn_id);
     // TODO: Provide a location for the function for use as a
     // disambiguator.
@@ -68,7 +68,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each class scope.
   for (auto [i, class_info] : llvm::enumerate(sem_ir.classes().array_ref())) {
-    auto class_id = ClassId(i);
+    ClassId class_id(i);
     auto class_scope = GetScopeFor(class_id);
     // TODO: Provide a location for the class for use as a disambiguator.
     auto class_loc = Parse::NodeId::Invalid;
@@ -83,7 +83,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   // Build each interface scope.
   for (auto [i, interface_info] :
        llvm::enumerate(sem_ir.interfaces().array_ref())) {
-    auto interface_id = InterfaceId(i);
+    InterfaceId interface_id(i);
     auto interface_scope = GetScopeFor(interface_id);
     // TODO: Provide a location for the interface for use as a disambiguator.
     auto interface_loc = Parse::NodeId::Invalid;
@@ -98,7 +98,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
 
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir.impls().array_ref())) {
-    auto impl_id = ImplId(i);
+    ImplId impl_id(i);
     auto impl_scope = GetScopeFor(impl_id);
     // TODO: Provide a location for the impl for use as a disambiguator.
     auto impl_loc = Parse::NodeId::Invalid;
@@ -206,7 +206,7 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
 
 auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   llvm::StringMapEntry<NameResult>* value = value_;
-  CARBON_CHECK(value) << "cannot print a null name";
+  CARBON_CHECK(value, "cannot print a null name");
   while (value->second.ambiguous && value->second.fallback) {
     value = value->second.fallback.value_;
   }
@@ -381,9 +381,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
 
     auto untyped_inst = sem_ir_.insts().Get(inst_id);
     auto add_inst_name = [&](std::string name) {
-      insts_[inst_id.index] = {
-          scope_id, scope.insts.AllocateName(
-                        *this, sem_ir_.insts().GetLocId(inst_id), name)};
+      ScopeId old_scope_id = insts_[inst_id.index].first;
+      if (old_scope_id == ScopeId::None) {
+        insts_[inst_id.index] = {
+            scope_id, scope.insts.AllocateName(
+                          *this, sem_ir_.insts().GetLocId(inst_id), name)};
+      } else {
+        CARBON_CHECK(old_scope_id == scope_id,
+                     "Attempting to name inst in multiple scopes");
+      }
     };
     auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
       add_inst_name(
@@ -446,8 +452,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(ClassDecl inst): {
         const auto& class_info = sem_ir_.classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
-        CollectNamesInBlock(scope_id, class_info.pattern_block_id);
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        auto class_scope_id = GetScopeFor(inst.class_id);
+        CollectNamesInBlock(class_scope_id, class_info.pattern_block_id);
+        CollectNamesInBlock(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -457,8 +464,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(FunctionDecl inst): {
         const auto& function_info = sem_ir_.functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
-        CollectNamesInBlock(scope_id, function_info.pattern_block_id);
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        auto function_scope_id = GetScopeFor(inst.function_id);
+        CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
+        CollectNamesInBlock(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -476,9 +484,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
-        CollectNamesInBlock(scope_id,
+        auto impl_scope_id = GetScopeFor(inst.impl_id);
+        CollectNamesInBlock(impl_scope_id,
                             sem_ir_.impls().Get(inst.impl_id).pattern_block_id);
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        CollectNamesInBlock(impl_scope_id, inst.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -508,8 +517,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& interface_info =
             sem_ir_.interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
-        CollectNamesInBlock(scope_id, interface_info.pattern_block_id);
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        auto interface_scope_id = GetScopeFor(inst.interface_id);
+        CollectNamesInBlock(interface_scope_id,
+                            interface_info.pattern_block_id);
+        CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {
@@ -522,7 +533,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(Param inst): {
-        add_inst_name_id(inst.name_id);
+        add_inst_name_id(inst.name_id, ".param");
         continue;
       }
       case CARBON_KIND(SpliceBlock inst): {

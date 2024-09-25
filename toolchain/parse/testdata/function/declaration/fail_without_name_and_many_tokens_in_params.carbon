@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_without_name_and_many_tokens_in_params.carbon
 
-// CHECK:STDERR: fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+3]]:4: error: `fn` introducer should be followed by a name
 // CHECK:STDERR: fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDERR:    ^
 fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);

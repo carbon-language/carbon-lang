@@ -24,6 +24,8 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -45,11 +47,26 @@ struct LookupResult {
   SemIR::InstId inst_id;
 };
 
+// Information about an access.
+struct AccessInfo {
+  // The constant being accessed.
+  SemIR::ConstantId constant_id;
+
+  // The highest allowed access for a lookup. For example, `Protected` allows
+  // access to `Public` and `Protected` names, but not `Private`.
+  SemIR::AccessKind highest_allowed_access;
+};
+
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+  // A function that forms a diagnostic for some kind of problem. The
+  // DiagnosticBuilder is returned rather than emitted so that the caller can
+  // add contextual notes as appropriate.
+  using BuildDiagnosticFn =
+      llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
@@ -68,18 +85,23 @@ class Context {
   auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Convenience for AddInst with typed nodes.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> SemIR::InstId {
-    return AddInst(SemIR::LocIdAndInst(node_id, inst));
+  template <typename InstT, typename LocT>
+  auto AddInst(LocT loc, InstT inst)
+      -> decltype(AddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return AddInst(SemIR::LocIdAndInst(loc, inst));
   }
 
-  // Convenience for AddInst when reusing a location, which any instruction can
-  // do.
+  // Returns a LocIdAndInst for an instruction with an imported location. Checks
+  // that the imported location is compatible with the kind of instruction being
+  // created.
   template <typename InstT>
-  auto AddInstReusingLoc(SemIR::LocId loc_id, InstT inst) -> SemIR::InstId {
-    return AddInst(SemIR::LocIdAndInst::ReusingLoc<InstT>(loc_id, inst));
+    requires SemIR::Internal::HasNodeId<InstT>
+  auto MakeImportedLocAndInst(SemIR::ImportIRInstId imported_loc_id, InstT inst)
+      -> SemIR::LocIdAndInst {
+    if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
+      CheckCompatibleImportedNodeKind(imported_loc_id, InstT::Kind);
+    }
+    return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
   }
 
   // Adds an instruction in no block, returning the produced ID. Should be used
@@ -87,18 +109,10 @@ class Context {
   auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Convenience for AddInstInNoBlock with typed nodes.
-  template <typename InstT>
-    requires(SemIR::Internal::HasNodeId<InstT>)
-  auto AddInstInNoBlock(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      -> SemIR::InstId {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(node_id, inst));
-  }
-
-  // Convenience for AddInstInNoBlock on imported instructions.
-  template <typename InstT>
-  auto AddInstInNoBlock(SemIR::ImportIRInstId import_ir_inst_id, InstT inst)
-      -> SemIR::InstId {
-    return AddInstInNoBlock(SemIR::LocIdAndInst(import_ir_inst_id, inst));
+  template <typename InstT, typename LocT>
+  auto AddInstInNoBlock(LocT loc, InstT inst)
+      -> decltype(AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst))) {
+    return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
@@ -128,14 +142,12 @@ class Context {
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result. Only valid if the LocId is for a NodeId.
+  // result.
   template <typename InstT>
     requires(SemIR::Internal::HasNodeId<InstT>)
   auto AddInstAndPush(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       -> void {
-    SemIR::LocIdAndInst arg(node_id, inst);
-    auto inst_id = AddInst(arg);
-    node_stack_.Push(arg.loc_id.node_id(), inst_id);
+    node_stack_.Push(node_id, AddInst(node_id, inst));
   }
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
@@ -174,20 +186,22 @@ class Context {
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
-      -> LookupResult;
+  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
+                             bool required = true) -> LookupResult;
 
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
-                              const SemIR::NameScope& scope) -> SemIR::InstId;
+                              const SemIR::NameScope& scope)
+      -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
-                           LookupScope scope, bool required = true)
+  auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+                           LookupScope scope, bool required = true,
+                           std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
@@ -289,8 +303,7 @@ class Context {
   // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
-      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
-          std::nullopt) -> bool;
+      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -300,14 +313,12 @@ class Context {
   // complete before they are fully defined.
   auto TryToDefineType(
       SemIR::TypeId type_id,
-      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
-          std::nullopt) -> bool;
+      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType.
-  auto AsCompleteType(SemIR::TypeId type_id,
-                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser) ? type_id
                                                  : SemIR::TypeId::Error;
@@ -329,12 +340,15 @@ class Context {
   // Gets a generic class type, which is the type of a name of a generic class,
   // such as the type of `Vector` given `class Vector(T:! type)`. The returned
   // type will be complete.
-  auto GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+  auto GetGenericClassType(SemIR::ClassId class_id,
+                           SemIR::SpecificId enclosing_specific_id)
+      -> SemIR::TypeId;
 
   // Gets a generic interface type, which is the type of a name of a generic
   // interface, such as the type of `AddWith` given
   // `interface AddWith(T:! type)`. The returned type will be complete.
-  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id)
+  auto GetGenericInterfaceType(SemIR::InterfaceId interface_id,
+                               SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
@@ -362,8 +376,7 @@ class Context {
   // Sets the total number of IRs which exist. This is used to prepare a map
   // from IR to imported IR.
   auto SetTotalIRCount(int num_irs) -> void {
-    CARBON_CHECK(check_ir_map_.empty())
-        << "SetTotalIRCount is only called once";
+    CARBON_CHECK(check_ir_map_.empty(), "SetTotalIRCount is only called once");
     check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
   }
 
@@ -512,6 +525,11 @@ class Context {
    private:
     SemIR::TypeId type_id_;
   };
+
+  // Checks that the provided imported location has a node kind that is
+  // compatible with that of the given instruction.
+  auto CheckCompatibleImportedNodeKind(SemIR::ImportIRInstId imported_loc_id,
+                                       SemIR::InstKind kind) -> void;
 
   // Finish producing an instruction. Set its constant value, and register it in
   // any applicable instruction lists.

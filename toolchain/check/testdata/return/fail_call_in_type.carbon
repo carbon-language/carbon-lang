@@ -11,7 +11,7 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression
 // CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
 // CHECK:STDERR:             ^~~~~~~~~~~~
 fn Six() -> ReturnType() { return 6; }
@@ -36,6 +36,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -51,14 +52,14 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ReturnType.decl: %ReturnType.type = fn_decl @ReturnType [template = constants.%ReturnType] {} {
-// CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
-// CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, %ReturnType.decl [template = constants.%ReturnType]
+// CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [template = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc17_24.2: type = converted %ReturnType.call, %.loc17_24.1
-// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,7 +75,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17_35: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

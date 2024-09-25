@@ -261,7 +261,25 @@ class FormatterImpl {
   // Formats a full function.
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
-    FormatEntityStart(fn.is_extern ? "extern fn" : "fn", fn.generic_id, id);
+    std::string function_start;
+    switch (fn.virtual_modifier) {
+      case FunctionFields::VirtualModifier::Virtual:
+        function_start += "virtual ";
+        break;
+      case FunctionFields::VirtualModifier::Abstract:
+        function_start += "abstract ";
+        break;
+      case FunctionFields::VirtualModifier::Impl:
+        function_start += "impl ";
+        break;
+      case FunctionFields::VirtualModifier::None:
+        break;
+    }
+    if (fn.is_extern) {
+      function_start += "extern ";
+    }
+    function_start += "fn";
+    FormatEntityStart(function_start, fn.generic_id, id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -643,6 +661,16 @@ class FormatterImpl {
     // By default, an instruction has a comma-separated argument list.
     using Info = Internal::InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
+      // Several instructions have a second operand that's a specific ID. We
+      // don't include it in the argument list if there is no corresponding
+      // specific, that is, when we're not in a generic context.
+      if constexpr (std::is_same_v<typename Info::template ArgType<1>,
+                                   SemIR::SpecificId>) {
+        if (!Info::template Get<1>(inst).is_valid()) {
+          FormatArgs(Info::template Get<0>(inst));
+          return;
+        }
+      }
       FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
       FormatArgs(Info::template Get<0>(inst));
@@ -769,52 +797,36 @@ class FormatterImpl {
 
   auto FormatInstRHS(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.function_id));
     FormatTrailingBlock(
         sem_ir_.functions().Get(inst.function_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(FunctionType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.function_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.function_id);
-    }
-  }
-
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.class_id));
     FormatTrailingBlock(sem_ir_.classes().Get(inst.class_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(ClassType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.class_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.class_id);
-    }
-  }
-
   auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.impl_id));
     FormatTrailingBlock(sem_ir_.impls().Get(inst.impl_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.interface_id));
     FormatTrailingBlock(
         sem_ir_.interfaces().Get(inst.interface_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
-  }
-
-  auto FormatInstRHS(InterfaceType inst) -> void {
-    if (inst.specific_id.is_valid()) {
-      FormatArgs(inst.interface_id, inst.specific_id);
-    } else {
-      FormatArgs(inst.interface_id);
-    }
   }
 
   auto FormatInstRHS(IntLiteral inst) -> void {
@@ -906,10 +918,12 @@ class FormatterImpl {
       out_ << "Main";
     }
     out_ << "//";
-    if (import_ir.library_id().is_valid()) {
-      out_ << import_ir.string_literal_values().Get(import_ir.library_id());
-    } else {
+    CARBON_CHECK(import_ir.library_id().is_valid());
+    if (import_ir.library_id() == LibraryNameId::Default) {
       out_ << "default";
+    } else {
+      out_ << import_ir.string_literal_values().Get(
+          import_ir.library_id().AsStringLiteralValueId());
     }
   }
 
@@ -940,6 +954,8 @@ class FormatterImpl {
   }
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
+
+  auto FormatArg(RuntimeParamIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     OpenBrace();

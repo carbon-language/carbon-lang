@@ -10,13 +10,13 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: Imports from the current package must omit the package name.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name
 // CHECK:STDERR: import Main;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: Imports from the current package must omit the package name.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name
 // CHECK:STDERR: import Main library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -26,13 +26,13 @@ import Main library "lib";
 
 package NotMain;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: ERROR: Cannot import `Main` from other packages.
+// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages
 // CHECK:STDERR: import Main;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: ERROR: Cannot import `Main` from other packages.
+// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages
 // CHECK:STDERR: import Main library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ import Main library "lib";
 
 package This;
 
-// CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: error: file cannot import itself
 // CHECK:STDERR: import This;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -50,15 +50,15 @@ import This;
 
 // --- fail_this_lib.carbon
 
-package This library "lib";
+package This library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
-// CHECK:STDERR: import library "lib";
+// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: error: file cannot import itself
+// CHECK:STDERR: import library "this_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
-import library "lib";
+import library "this_lib";
 
-// --- implicit_api.carbon
+// --- implicit.carbon
 
 package Implicit;
 
@@ -66,30 +66,30 @@ package Implicit;
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import
 // CHECK:STDERR: import Implicit;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 import Implicit;
 
-// --- implicit_lib_api.carbon
+// --- implicit_lib.carbon
 
-package Implicit library "lib";
+package Implicit library "[[@TEST_NAME]]";
 
 // --- fail_implicit_lib.impl.carbon
 
-impl package Implicit library "lib";
+impl package Implicit library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
-// CHECK:STDERR: import Implicit library "lib";
+// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import
+// CHECK:STDERR: import Implicit library "implicit_lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
-import Implicit library "lib";
+import Implicit library "implicit_lib";
 
 // --- fail_not_found.carbon
 package NotFound;
 
-// CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:1: ERROR: Imported API 'ImportNotFound' not found.
+// CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:1: error: imported API 'ImportNotFound' not found
 // CHECK:STDERR: import ImportNotFound;
 // CHECK:STDERR: ^~~~~~
 import ImportNotFound;
@@ -102,6 +102,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -123,6 +124,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -144,6 +146,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -165,6 +168,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -178,7 +182,7 @@ import ImportNotFound;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_api.carbon
+// CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -186,6 +190,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -207,6 +212,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -222,7 +228,7 @@ import ImportNotFound;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_lib_api.carbon
+// CHECK:STDOUT: --- implicit_lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -230,6 +236,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -251,6 +258,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -274,6 +282,7 @@ import ImportNotFound;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

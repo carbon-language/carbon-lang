@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/packages/fail_duplicate_api.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_duplicate_api.carbon
-// CHECK:STDERR: fail_main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
+// CHECK:STDERR: fail_main2.carbon: error: `Main//default` previously provided by `main1.carbon`
 // CHECK:STDERR:
 
 // --- main1.carbon
@@ -20,7 +20,7 @@ library "lib";
 
 // --- fail_main_lib2.carbon
 
-// CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
+// CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `main_lib1.carbon`
 // CHECK:STDERR: library "lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ package Package;
 
 // --- fail_package2.carbon
 
-// CHECK:STDERR: fail_package2.carbon:[[@LINE+4]]:1: ERROR: Library's API previously provided by `package1.carbon`.
+// CHECK:STDERR: fail_package2.carbon:[[@LINE+4]]:1: error: library's API previously provided by `package1.carbon`
 // CHECK:STDERR: package Package;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -44,7 +44,7 @@ package Package library "lib";
 
 // --- fail_package_lib2.carbon
 
-// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
+// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+3]]:1: error: library's API previously provided by `package_lib1.carbon`
 // CHECK:STDERR: package Package library "lib";
 // CHECK:STDERR: ^~~~~~~
 package Package library "lib";
@@ -57,6 +57,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -78,6 +79,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -99,6 +101,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -120,6 +123,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -141,6 +145,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -162,6 +167,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -183,6 +189,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -204,6 +211,7 @@ package Package library "lib";
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

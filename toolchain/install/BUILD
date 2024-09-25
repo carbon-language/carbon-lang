@@ -2,12 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
+load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
-load("symlink_filegroup.bzl", "symlink_filegroup")
+load("run_tool.bzl", "run_tool")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -15,99 +13,6 @@ package(default_visibility = ["//visibility:public"])
 #
 # This populates a synthetic Carbon toolchain installation under the
 # `prefix_root` directory. For details on its layout, see `install_paths.h`.
-
-# A marker of a valid Carbon install. All filegroups in the install should
-# include this one.
-write_file(
-    name = "install_marker",
-    out = "prefix_root/lib/carbon/carbon_install.txt",
-    content = [
-        "// Part of the Carbon Language project, under the Apache License v2.0 with LLVM",
-        "// Exceptions. See /LICENSE for license information.",
-        "// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception",
-        "",
-        "This marks a valid Carbon install tree.",
-    ],
-)
-
-# Create symlinks for the core library. Note that this should *not* be depended
-# on directly, use `:core_data` instead.
-symlink_filegroup(
-    name = "symlink_core",
-    srcs = ["//core:prelude"],
-    out_prefix = "prefix_root/lib/carbon/",
-    visibility = ["//visibility:private"],
-)
-
-# The filegroup to get the core library.
-filegroup(
-    name = "core_data",
-    srcs = [
-        ":install_marker",
-        ":symlink_core",
-    ],
-)
-
-# Copy Clang and LLVM toolchain files into a synthetic LLVM installation under
-# `prefix_root/lib/carbon/llvm` so that parts of Clang that expect to find an LLVM
-# installation at relative paths work correctly without exposing these in an
-# installed 'bin' directory where it might get added to a user's PATH.
-binary_alias(
-    name = "prefix_root/lib/carbon/llvm/bin/lld",
-    binary = "@llvm-project//lld:lld",
-)
-
-lld_bin_names = [
-    "ld.lld",
-    "ld64.lld",
-    "lld-link",
-    "wasm-ld",
-]
-
-[
-    binary_alias(
-        name = "prefix_root/lib/carbon/llvm/bin/" + bin_name,
-        binary = "@llvm-project//lld:lld",
-    )
-    for bin_name in lld_bin_names
-]
-
-filegroup(
-    name = "llvm_link_data",
-    srcs = [
-        "prefix_root/lib/carbon/llvm/bin/lld",
-        ":install_marker",
-    ] + [
-        "prefix_root/lib/carbon/llvm/bin/" + bin_name
-        for bin_name in lld_bin_names
-    ],
-)
-
-# All of the install data except for the user-facing binaries. This is typically
-# a reasonable data dependency for libraries and the user-facing binaries
-# without creating a cycle.
-filegroup(
-    name = "install_lib_data",
-    srcs = [
-        ":core_data",
-        ":install_marker",
-        ":llvm_link_data",
-    ],
-)
-
-binary_alias(
-    name = "prefix_root/bin/carbon",
-    binary = "//toolchain/driver:carbon",
-)
-
-filegroup(
-    name = "install_data",
-    srcs = [
-        "prefix_root/bin/carbon",
-        ":install_lib_data",
-        ":install_marker",
-    ],
-)
 
 # A library for computing install paths for the toolchain. Note that this
 # library does *not* include the data itself, as that would form a dependency
@@ -152,51 +57,53 @@ cc_test(
     ],
 )
 
-# Build rules to construct packaged versions of the toolchain's install.
-
-pkg_files(
-    name = "packaging_exe_files",
-    # We break out the driver and LLD here because we can't easily use file
-    # groups that contain symlinks, so those are manually handled below. Other
-    # file groups should be directly included.
-    srcs = [
-        "prefix_root/bin/carbon",
-        "prefix_root/lib/carbon/llvm/bin/lld",
+cc_library(
+    name = "install_paths_test_helpers",
+    testonly = 1,
+    srcs = ["install_paths_test_helpers.cpp"],
+    hdrs = ["install_paths_test_helpers.h"],
+    deps = [
+        ":install_paths",
+        "//testing/base:global_exe_path",
+        "@llvm-project//llvm:Support",
     ],
-    attributes = pkg_attributes(mode = "0755"),
-    strip_prefix = strip_prefix.from_pkg("prefix_root"),
 )
 
-# Currently, `rules_pkg` can't replicate symlinks from the main tree. To an
-# extent, this is reasonable because we want to be much more explicit about the
-# symlink structure in the package where as for the filegroups we're comfortable
-# with whatever "just works" for development and testing.
-[
-    pkg_mklink(
-        name = "packaging_link_lld_alias_" + bin_name,
-        link_name = "lib/carbon/llvm/bin/" + bin_name,
-        target = "lld",
-    )
-    for bin_name in lld_bin_names
+lld_aliases = [
+    "ld.lld",
+    "ld64.lld",
+    "lld-link",
+    "wasm-ld",
 ]
 
-pkg_files(
-    name = "packaging_data_files",
-    srcs = [
-        ":core_data",
+install_dirs = {
+    "bin": [
+        install_target(
+            "carbon",
+            "//toolchain/driver:carbon",
+            executable = True,
+            is_driver = True,
+        ),
     ],
-    strip_prefix = strip_prefix.from_pkg("prefix_root"),
-)
+    "lib/carbon": [
+        install_target("carbon_install.txt", "carbon_install.txt"),
+        install_filegroup("core", "//core:prelude"),
+    ],
+    "lib/carbon/llvm/bin": [
+        install_target(
+            "lld",
+            "@llvm-project//lld:lld",
+            executable = True,
+        ),
+    ] + [install_symlink(name, "lld") for name in lld_aliases],
+}
 
-pkg_filegroup(
-    name = "packaging_files",
-    srcs = [
-        ":packaging_data_files",
-        ":packaging_exe_files",
-    ] + [
-        ":packaging_link_lld_alias_" + bin_name
-        for bin_name in lld_bin_names
-    ],
+make_install_filegroups(
+    name = "install_data",
+    install_dirs = install_dirs,
+    no_driver_name = "install_data.no_driver",
+    pkg_name = "pkg_data",
+    prefix = "prefix_root",
 )
 
 pkg_naming_variables(
@@ -207,7 +114,7 @@ pkg_naming_variables(
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
 pkg_tar_and_test(
-    srcs = [":packaging_files"],
+    srcs = [":pkg_data"],
     name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
@@ -216,5 +123,15 @@ pkg_tar_and_test(
     test_data = [
         ":install_data",
     ],
-    test_install_marker = ":install_marker",
+    # TODO: This is used to make sure that tar files are in install_data (one
+    # direction). Replace with a check that the files in install_data and tar
+    # match (bidirectional).
+    test_install_marker = "prefix_root/lib/carbon/carbon_install.txt",
+)
+
+# Support `bazel run` on specific binaries.
+run_tool(
+    name = "run_carbon",
+    data = [":install_data"],
+    tool = "prefix_root/bin/carbon",
 )

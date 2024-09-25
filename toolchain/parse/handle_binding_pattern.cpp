@@ -25,15 +25,14 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&]() {
-    CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
-                      "Expected binding pattern.");
-    context.emitter().Emit(*context.position(), ExpectedBindingPattern);
-    // Add a placeholder for the type.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-    state.has_error = true;
-    context.PushState(state, State::BindingPatternFinishAsRegular);
+  auto on_error = [&](llvm::StringLiteral expected) {
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
+                        "expected {0} in binding pattern", llvm::StringLiteral);
+      context.emitter().Emit(*context.position(), ExpectedBindingPattern,
+                             expected);
+      state.has_error = true;
+    }
   };
 
   // The first item should be an identifier or `self`.
@@ -52,8 +51,7 @@ auto HandleBindingPattern(Context& context) -> void {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                         /*has_error=*/true);
-    on_error();
-    return;
+    on_error("name");
   }
 
   if (auto kind = context.PositionKind();
@@ -66,8 +64,11 @@ auto HandleBindingPattern(Context& context) -> void {
     context.PushState(state);
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
-    on_error();
-    return;
+    on_error("`:` or `:!`");
+    // Add a placeholder for the type.
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
+    context.PushState(state, State::BindingPatternFinishAsRegular);
   }
 }
 

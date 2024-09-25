@@ -35,6 +35,9 @@ struct DeclIntroducerState {
 
   // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet();
+
+  // If there's an `extern library` in use, the library name.
+  SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::Invalid;
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration
@@ -71,9 +74,8 @@ class DeclIntroducerStateStack {
   template <Lex::TokenKind::RawEnumType Kind>
     requires(IsDeclIntroducer<Kind>())
   auto Pop() -> DeclIntroducerState {
-    CARBON_CHECK(stack_.back().kind == Kind)
-        << "Found: " << stack_.back().kind
-        << " expected: " << Lex::TokenKind::Make(Kind);
+    CARBON_CHECK(stack_.back().kind == Kind, "Found: {0} expected: {1}",
+                 stack_.back().kind, Lex::TokenKind::Make(Kind));
     return stack_.pop_back_val();
   }
 

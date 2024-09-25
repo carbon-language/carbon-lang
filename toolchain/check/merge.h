@@ -11,14 +11,28 @@
 
 namespace Carbon::Check {
 
+// Diagnoses an `extern` declaration that was not preceded by a declaration in
+// the API file.
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+    -> void;
+
 // Information on new and previous declarations for CheckIsAllowedRedecl.
 struct RedeclInfo {
+  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
+                      bool is_definition)
+      : loc(loc),
+        is_definition(is_definition),
+        is_extern(params.is_extern),
+        extern_library_id(params.extern_library_id) {}
+
   // The associated diagnostic location.
   SemIRLoc loc;
   // True if a definition.
   bool is_definition;
   // True if an `extern` declaration.
   bool is_extern;
+  // The library name in `extern library`, or invalid if not present.
+  SemIR::LibraryNameId extern_library_id;
 };
 
 // Checks if a redeclaration is allowed prior to merging. This may emit a

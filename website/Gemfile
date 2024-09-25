@@ -1,0 +1,14 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+source 'https://rubygems.org'
+
+gem "jekyll", "4.3.3"
+gem "just-the-docs", "0.8.2"
+
+group :jekyll_plugins do
+  gem "jekyll-default-layout", "0.1.5"
+  gem "jekyll-readme-index", "0.3.0"
+  gem "jekyll-relative-links", "0.7.0"
+end

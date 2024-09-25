@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_error_in_type.carbon
 
-// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+3]]:13: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+3]]:13: error: name `x` not found
 // CHECK:STDERR: fn Six() -> x;
 // CHECK:STDERR:             ^
 fn Six() -> x;
@@ -27,6 +27,7 @@ fn Six() -> x;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -41,7 +42,7 @@ fn Six() -> x;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

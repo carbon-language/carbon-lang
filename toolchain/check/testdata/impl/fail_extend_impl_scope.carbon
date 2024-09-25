@@ -10,7 +10,7 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: ERROR: `extend impl` can only be used in a class.
+// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: error: `extend impl` can only be used in a class
 // CHECK:STDERR: extend impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 extend impl i32 as I {}
@@ -33,6 +33,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -51,7 +52,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32, %.loc16_13.1 [template = i32]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,10 +65,10 @@ extend impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16_22: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc16_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

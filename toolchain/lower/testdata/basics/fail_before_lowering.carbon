@@ -9,11 +9,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/basics/fail_before_lowering.carbon
 
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+7]]:1: ERROR: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+7]]:1: error: unrecognized declaration introducer
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `HandleInvalidParseStart`.
+// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: error: semantics TODO: `HandleInvalidParseStart`
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 a;

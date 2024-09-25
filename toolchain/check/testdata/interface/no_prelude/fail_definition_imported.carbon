@@ -10,22 +10,20 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 interface I;
 
 // --- fail_b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: a.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface I {}

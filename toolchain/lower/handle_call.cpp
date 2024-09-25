@@ -30,7 +30,7 @@ static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
     case SemIR::BuiltinFunctionKind::IntGreaterEq:
       return is_signed ? llvm::CmpInst::ICMP_SGE : llvm::CmpInst::ICMP_UGE;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind " << builtin_kind;
+      CARBON_FATAL("Unexpected builtin kind {0}", builtin_kind);
   }
 }
 
@@ -52,7 +52,7 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
     case SemIR::BuiltinFunctionKind::FloatGreaterEq:
       return llvm::CmpInst::FCMP_OGE;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind " << builtin_kind;
+      CARBON_FATAL("Unexpected builtin kind {0}", builtin_kind);
   }
 }
 
@@ -74,7 +74,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
   // TODO: Move the instruction names here into InstNamer.
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
-      CARBON_FATAL() << "No callee in function call.";
+      CARBON_FATAL("No callee in function call.");
 
     case SemIR::BuiltinFunctionKind::PrintInt: {
       llvm::Type* char_type[] = {llvm::PointerType::get(
@@ -287,7 +287,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     }
   }
 
-  CARBON_FATAL() << "Unsupported builtin call.";
+  CARBON_FATAL("Unsupported builtin call.");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

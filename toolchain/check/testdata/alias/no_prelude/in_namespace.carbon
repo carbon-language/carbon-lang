@@ -26,7 +26,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.v: %.1} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -46,12 +47,12 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %a.ref.loc16: type = name_ref a, %a [template = constants.%C]
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
+// CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = constants.%C]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
-// CHECK:STDOUT:     %NS.ref.loc18: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:     %a.ref.loc18: type = name_ref a, %a [template = constants.%C]
-// CHECK:STDOUT:     @F.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
+// CHECK:STDOUT:     %a.ref: type = name_ref a, file.%a [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -59,6 +60,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc11_19.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_16: %.2 = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc11_22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

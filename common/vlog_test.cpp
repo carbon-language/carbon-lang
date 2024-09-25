@@ -24,7 +24,8 @@ class VLogger {
     }
   }
 
-  void VLog() { CARBON_VLOG() << "Test\n"; }
+  void VLog() { CARBON_VLOG("Test\n"); }
+  void VLogFormatArgs() { CARBON_VLOG("Test {0} {1} {2}\n", 1, 2, 3); }
 
   auto TakeStr() -> std::string { return buffer_.TakeStr(); }
 
@@ -38,6 +39,8 @@ TEST(VLogTest, Enabled) {
   VLogger vlog(/*enable=*/true);
   vlog.VLog();
   EXPECT_THAT(vlog.TakeStr(), StrEq("Test\n"));
+  vlog.VLogFormatArgs();
+  EXPECT_THAT(vlog.TakeStr(), StrEq("Test 1 2 3\n"));
 }
 
 TEST(VLogTest, Disabled) {
@@ -45,6 +48,14 @@ TEST(VLogTest, Disabled) {
   vlog.VLog();
   EXPECT_THAT(vlog.TakeStr(), IsEmpty());
 }
+
+TEST(VLogTest, To) {
+  TestRawOstream buffer;
+  CARBON_VLOG_TO(&buffer, "Test");
+  EXPECT_THAT(buffer.TakeStr(), "Test");
+}
+
+TEST(VLogTest, ToNull) { CARBON_VLOG_TO(nullptr, "Unused"); }
 
 }  // namespace
 }  // namespace Carbon::Testing

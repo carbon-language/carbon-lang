@@ -41,6 +41,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -62,13 +63,13 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32.loc11_11, %.loc11_11.1 [template = i32]
-// CHECK:STDOUT:     %a.loc11_8.1: i32 = param a
-// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc11_8.1
+// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc11_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11_19 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32.loc11_19, %.loc11_19.1 [template = i32]
-// CHECK:STDOUT:     %b.loc11_16.1: i32 = param b
-// CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc11_16.1
+// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
@@ -97,7 +98,7 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_index %x.ref, %.loc16_9
+// CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %.loc16_12: i32 = int_literal 6 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_8.2: i32 = bind_value %.loc16_8.1
 // CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_8.2, %.loc16_12)

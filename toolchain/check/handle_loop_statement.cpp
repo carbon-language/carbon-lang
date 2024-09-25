@@ -97,7 +97,7 @@ auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
     CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
-                      "`break` can only be used in a loop.");
+                      "`break` can only be used in a loop");
     context.emitter().Emit(node_id, BreakOutsideLoop);
   } else {
     context.AddInst<SemIR::Branch>(node_id,
@@ -122,7 +122,7 @@ auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
     CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
-                      "`continue` can only be used in a loop.");
+                      "`continue` can only be used in a loop");
     context.emitter().Emit(node_id, ContinueOutsideLoop);
   } else {
     context.AddInst<SemIR::Branch>(node_id,

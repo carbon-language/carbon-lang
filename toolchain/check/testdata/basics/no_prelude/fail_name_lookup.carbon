@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/fail_name_lookup.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: ERROR: Name `x` not found.
+  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: error: name `x` not found
   // CHECK:STDERR:   x;
   // CHECK:STDERR:   ^
   x;

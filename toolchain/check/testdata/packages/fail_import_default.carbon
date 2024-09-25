@@ -12,7 +12,7 @@
 
 package A;
 
-// CHECK:STDERR: fail_default_api.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_default_api.carbon:[[@LINE+4]]:1: error: file cannot import itself
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ import library default;
 
 impl package A;
 
-// CHECK:STDERR: fail_default.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_default.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -30,7 +30,7 @@ import library default;
 
 // --- fail_main_import_default.carbon
 
-// CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -38,9 +38,9 @@ import library default;
 
 // --- fail_main_lib_import_default.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main//default`.
+// CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+3]]:1: error: cannot import `Main//default`
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
 import library default;
@@ -53,6 +53,7 @@ import library default;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -74,6 +75,7 @@ import library default;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -97,6 +99,7 @@ import library default;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -118,6 +121,7 @@ import library default;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

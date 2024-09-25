@@ -18,8 +18,12 @@
 namespace Carbon {
 
 enum class DiagnosticLevel : int8_t {
-  // A note, not indicating an error on its own, but possibly providing context
-  // for an error.
+  // Information about the location of another diagnostic, showing how we
+  // reached that location. This is currently only used for the "in import"
+  // message.
+  LocationInfo,
+  // A note, not indicating an error on its own, but possibly providing
+  // additional information for an error or warning.
   Note,
   // A warning diagnostic, indicating a likely problem with the program.
   Warning,
@@ -28,8 +32,8 @@ enum class DiagnosticLevel : int8_t {
 };
 
 // Provides a definition of a diagnostic. For example:
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
+//   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "invalid code!");
+//   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "found {0}, expected {1}",
 //                     std::string, std::string);
 //
 // Arguments are passed to llvm::formatv; see:
@@ -58,11 +62,12 @@ struct DiagnosticLoc {
   llvm::StringRef filename;
   // A reference to the line of the error.
   llvm::StringRef line;
-  // 1-based line number.
+  // 1-based line number. -1 indicates unknown; other values are unused.
   int32_t line_number = -1;
-  // 1-based column number.
+  // 1-based column number. -1 indicates unknown; other values are unused.
   int32_t column_number = -1;
-  // A location can represent a range of text if set to >1 value.
+  // The number of characters corresponding to the location in the line,
+  // starting at column_number. Should always be at least 1.
   int32_t length = 1;
 };
 

@@ -122,7 +122,7 @@ static auto BuildBenchMetadata() -> llvm::ArrayRef<BenchMetadata> {
 
     for (ssize_t g_index : llvm::seq<ssize_t>(0, BenchSize)) {
       // Start by filling the group with random bytes.
-      auto group_bytes = llvm::MutableArrayRef(
+      llvm::MutableArrayRef group_bytes(
           &metadata_storage[bm_index][g_index * GroupSize], GroupSize);
       for (uint8_t& b : group_bytes) {
         b = absl::Uniform<uint8_t>(gen) | MetadataGroup::PresentMask;

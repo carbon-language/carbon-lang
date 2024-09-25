@@ -17,6 +17,7 @@ cc_library(
     hdrs = ["lower.h"],
     deps = [
         ":context",
+        "//toolchain/check:sem_ir_diagnostic_converter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
@@ -31,6 +32,8 @@ cc_library(
         "constant.h",
         "file_context.cpp",
         "function_context.cpp",
+        "mangler.cpp",
+        "mangler.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -45,6 +48,7 @@ cc_library(
         "//common:map",
         "//common:vlog",
         "//toolchain/base:kind_switch",
+        "//toolchain/check:sem_ir_diagnostic_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -53,5 +57,6 @@ cc_library(
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TransformUtils",
     ],
 )

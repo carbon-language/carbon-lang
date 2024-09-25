@@ -20,7 +20,7 @@
 namespace Carbon::SemIR {
 
 File::File(CheckIRId check_ir_id, IdentifierId package_id,
-           StringLiteralValueId library_id, SharedValueStores& value_stores,
+           LibraryNameId library_id, SharedValueStores& value_stores,
            std::string filename)
     : check_ir_id_(check_ir_id),
       package_id_(package_id),
@@ -49,9 +49,9 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
                       : TypeId::TypeType,                         \
        .builtin_inst_kind = BuiltinInstKind::Name}));
 #include "toolchain/sem_ir/builtin_inst_kind.def"
-  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount)
-      << "Builtins should produce " << BuiltinInstKind::ValidCount
-      << " insts, actual: " << insts_.size();
+  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
+               "Builtins should produce {0} insts, actual: {1}",
+               BuiltinInstKind::ValidCount, insts_.size());
   for (auto i : llvm::seq(BuiltinInstKind::ValidCount)) {
     auto builtin_id = SemIR::InstId(i);
     constant_values_.Set(builtin_id,
@@ -176,8 +176,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  CARBON_CHECK(kind.is_type() != InstIsType::Never)
-      << "Only called for kinds which can define a type.";
+  CARBON_CHECK(kind.is_type() != InstIsType::Never,
+               "Only called for kinds which can define a type.");
   if (kind == ConstType::Kind) {
     return -1;
   }
@@ -435,6 +435,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ClassDecl::Kind:
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
+      case CompleteTypeWitness::Kind:
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
@@ -464,7 +465,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Temporary::Kind:
       case TemporaryStorage::Kind:
       case TupleAccess::Kind:
-      case TupleIndex::Kind:
       case TupleLiteral::Kind:
       case TupleInit::Kind:
       case TupleValue::Kind:
@@ -573,6 +573,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoundMethod::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
+      case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
@@ -631,11 +632,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(TupleAccess inst): {
-        inst_id = inst.tuple_id;
-        continue;
-      }
-
-      case CARBON_KIND(TupleIndex inst): {
         inst_id = inst.tuple_id;
         continue;
       }

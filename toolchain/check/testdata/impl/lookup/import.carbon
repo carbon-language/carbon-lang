@@ -42,9 +42,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -53,6 +54,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -69,8 +71,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, %HasF.decl [template = constants.%.1]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,14 +89,16 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10: <witness> = interface_witness (%F.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
@@ -118,19 +122,20 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = interface_type @HasF [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %.2, %F.type.1 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.8 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %.3, %F.type.1 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -139,6 +144,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -150,11 +156,11 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Impl//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Impl//default, inst+12, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Impl//default, inst+12, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+23, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+25, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+3, loaded [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,10 +175,10 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
+// CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
-// CHECK:STDOUT:     %c.loc4_6.1: %C = param c
-// CHECK:STDOUT:     @G.%c: %C = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     %c.param: %C = param c, runtime_param0
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,7 +189,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.2 {
+// CHECK:STDOUT: impl @impl: %C as %.3 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%import_ref.5
 // CHECK:STDOUT: }
@@ -196,15 +202,15 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: fn @G(%c: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %Impl.ref: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
-// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.2]
-// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.3 [template = constants.%.6]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %.3 = call %.1()
+// CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
+// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, imports.%import_ref.3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc5: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.4 = call %.loc5()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %.2) {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %.3) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

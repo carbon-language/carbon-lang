@@ -15,7 +15,7 @@ static const InstallPaths* install_paths = nullptr;
 
 // NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
 extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
-  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  CARBON_CHECK(*argc >= 1, "Need the `argv[0]` value to initialize!");
   install_paths = new InstallPaths(
       InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
   return 0;

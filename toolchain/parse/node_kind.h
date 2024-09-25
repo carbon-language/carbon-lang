@@ -34,9 +34,10 @@ class NodeCategory : public Printable<NodeCategory> {
     Pattern = 1 << 6,
     Statement = 1 << 7,
     IntConst = 1 << 8,
+    Requirement = 1 << 9,
     None = 0,
 
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/IntConst)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Requirement)
   };
 
   // Support implicit conversion so that the difference with the member enum is
@@ -170,7 +171,7 @@ class NodeKind::Definition : public NodeKind {
   // Returns the bracketing node kind for the current node kind. Requires that
   // has_bracket is true.
   constexpr auto bracket() const -> NodeKind {
-    CARBON_CHECK(has_bracket()) << *this;
+    CARBON_CHECK(has_bracket(), "{0}", *this);
     return bracket_;
   }
 
@@ -180,7 +181,7 @@ class NodeKind::Definition : public NodeKind {
   // Returns the number of children that the node must have, often 0. Requires
   // that has_child_count is true.
   constexpr auto child_count() const -> int32_t {
-    CARBON_CHECK(has_child_count()) << *this;
+    CARBON_CHECK(has_child_count(), "{0}", *this);
     return child_count_;
   }
 
@@ -193,8 +194,7 @@ class NodeKind::Definition : public NodeKind {
   // This is factored out and non-constexpr to improve the compile-time error
   // message if the check below fails.
   auto MustSpecifyEitherBracketingNodeOrChildCount() {
-    CARBON_FATAL()
-        << "Must specify either bracketing node or fixed child count.";
+    CARBON_FATAL("Must specify either bracketing node or fixed child count.");
   }
 
   constexpr explicit Definition(NodeKind kind, DefinitionArgs args)

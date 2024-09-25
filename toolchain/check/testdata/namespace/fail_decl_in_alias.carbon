@@ -13,10 +13,10 @@ namespace NS;
 alias ns = NS;
 
 // Aliases can't be used when declaring names.
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: ERROR: Name qualifiers are only allowed for entities that provide a scope.
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: Referenced non-scope entity declared here.
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here
 // CHECK:STDERR: alias ns = NS;
 // CHECK:STDERR:       ^~
 fn ns.A() -> i32 { return 0; }
@@ -39,6 +39,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -60,7 +61,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc22_14.2: type = converted %int.make_type_32, %.loc22_14.1 [template = i32]
-// CHECK:STDOUT:     @.1.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +69,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc22
+// CHECK:STDOUT:   %.loc22_27: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc22_27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

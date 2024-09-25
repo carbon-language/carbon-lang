@@ -10,13 +10,13 @@
 
 // --- fail_add_base.carbon
 
-library "fail_add_base";
+library "[[@TEST_NAME]]";
 
 class A;
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: base class A {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -24,13 +24,13 @@ base class A {}
 
 // --- fail_add_abstract.carbon
 
-library "fail_add_abstract";
+library "[[@TEST_NAME]]";
 
 class B;
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: abstract class B {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -38,13 +38,13 @@ abstract class B {}
 
 // --- fail_remove_base.carbon
 
-library "fail_remove_base";
+library "[[@TEST_NAME]]";
 
 base class C;
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: base class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,13 +52,13 @@ class C {}
 
 // --- fail_base_to_abstract.carbon
 
-library "fail_base_to_abstract";
+library "[[@TEST_NAME]]";
 
 base class D;
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: abstract class D {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: base class D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -66,13 +66,13 @@ abstract class D {}
 
 // --- fail_remove_abstract.carbon
 
-library "fail_remove_abstract";
+library "[[@TEST_NAME]]";
 
 abstract class E;
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: class E {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: abstract class E;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -80,13 +80,13 @@ class E {}
 
 // --- fail_abstract_to_base.carbon
 
-library "fail_abstract_to_base";
+library "[[@TEST_NAME]]";
 
 abstract class F;
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: base class F {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: abstract class F;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 base class F {}
@@ -96,6 +96,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,6 +105,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -121,6 +123,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
@@ -130,6 +134,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -138,6 +143,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -155,6 +161,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
@@ -164,6 +172,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -172,6 +181,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -189,6 +199,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
@@ -198,6 +210,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -206,6 +219,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -223,6 +237,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
@@ -232,6 +248,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %E: type = class_type @E [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -240,6 +257,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -257,6 +275,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT: }
@@ -266,6 +286,7 @@ base class F {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F: type = class_type @F [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -274,6 +295,7 @@ base class F {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -291,6 +313,8 @@ base class F {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @F {
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%F
 // CHECK:STDOUT: }

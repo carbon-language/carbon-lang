@@ -332,6 +332,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 auto FileTestBase::DoArgReplacements(
     llvm::SmallVector<std::string>& test_args,
     const llvm::SmallVector<TestFile>& test_files) -> ErrorOr<Success> {
+  auto replacements = GetArgReplacements();
   for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
     auto percent = it->find("%");
     if (percent == std::string::npos) {
@@ -360,6 +361,21 @@ auto FileTestBase::DoArgReplacements(
         char* tmpdir = getenv("TEST_TMPDIR");
         CARBON_CHECK(tmpdir != nullptr);
         it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
+        break;
+      }
+      case '{': {
+        auto end_brace = it->find('}', percent);
+        if (end_brace == std::string::npos) {
+          return ErrorBuilder() << "%{ without closing }: " << *it;
+        }
+        llvm::StringRef substr(&*(it->begin() + percent + 2),
+                               end_brace - percent - 2);
+        auto replacement = replacements.find(substr);
+        if (replacement == replacements.end()) {
+          return ErrorBuilder()
+                 << "unknown substitution: %{" << substr << "}: " << *it;
+        }
+        it->replace(percent, end_brace - percent + 1, replacement->second);
         break;
       }
       default:
@@ -427,7 +443,7 @@ struct SplitState {
   auto has_splits() const -> bool { return file_index > 0; }
 
   auto add_content(llvm::StringRef line) -> void {
-    content.append(line);
+    content.append(line.str());
     content.append("\n");
   }
 
@@ -446,13 +462,63 @@ struct SplitState {
   int file_index = 0;
 };
 
+// Replaces the content keywords.
+//
+// TEST_NAME is the only content keyword at present, but we do validate that
+// other names are reserved.
+static auto ReplaceContentKeywords(llvm::StringRef filename,
+                                   std::string* content) -> ErrorOr<Success> {
+  static constexpr llvm::StringLiteral Prefix = "[[@";
+
+  auto keyword_pos = content->find(Prefix);
+  // Return early if not finding anything.
+  if (keyword_pos == std::string::npos) {
+    return Success();
+  }
+
+  // Construct the test name by getting the base name without the extension,
+  // then removing any "fail_" or "todo_" prefixes.
+  llvm::StringRef test_name = filename;
+  if (auto last_slash = test_name.rfind("/");
+      last_slash != llvm::StringRef::npos) {
+    test_name = test_name.substr(last_slash + 1);
+  }
+  if (auto ext_dot = test_name.find("."); ext_dot != llvm::StringRef::npos) {
+    test_name = test_name.substr(0, ext_dot);
+  }
+  // Note this also handles `fail_todo_` and `todo_fail_`.
+  test_name.consume_front("todo_");
+  test_name.consume_front("fail_");
+  test_name.consume_front("todo_");
+
+  while (keyword_pos != std::string::npos) {
+    static constexpr llvm::StringLiteral TestName = "[[@TEST_NAME]]";
+    auto keyword = llvm::StringRef(*content).substr(keyword_pos);
+    if (keyword.starts_with(TestName)) {
+      content->replace(keyword_pos, TestName.size(), test_name);
+      keyword_pos += test_name.size();
+    } else if (keyword.starts_with("[[@LINE")) {
+      // Just move past the prefix to find the next one.
+      keyword_pos += Prefix.size();
+    } else {
+      return ErrorBuilder()
+             << "Unexpected use of `[[@` at `" << keyword.substr(0, 5) << "`";
+    }
+    keyword_pos = content->find(Prefix, keyword_pos);
+  }
+  return Success();
+}
+
 // Adds a file. Used for both split and unsplit test files.
 static auto AddTestFile(llvm::StringRef filename, std::string* content,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
-    -> void {
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
+
   test_files->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();
+  return Success();
 }
 
 // Process file split ("---") lines when found. Returns true if the line is
@@ -484,7 +550,8 @@ static auto TryConsumeSplit(
 
   // On a file split, add the previous file, then start a new one.
   if (split->has_splits()) {
-    AddTestFile(split->filename, &split->content, test_files);
+    CARBON_RETURN_IF_ERROR(
+        AddTestFile(split->filename, &split->content, test_files));
   } else {
     split->content.clear();
     if (split->found_code_pre_split) {
@@ -630,14 +697,14 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
 // Once all content is processed, do any remaining split processing.
 static auto FinishSplit(llvm::StringRef test_name, SplitState* split,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
-    -> void {
+    -> ErrorOr<Success> {
   if (split->has_splits()) {
-    AddTestFile(split->filename, &split->content, test_files);
+    return AddTestFile(split->filename, &split->content, test_files);
   } else {
     // If no file splitting happened, use the main file as the test file.
     // There will always be a `/` unless tests are in the repo root.
-    AddTestFile(test_name.drop_front(test_name.rfind("/") + 1), &split->content,
-                test_files);
+    return AddTestFile(test_name.drop_front(test_name.rfind("/") + 1),
+                       &split->content, test_files);
   }
 }
 
@@ -810,7 +877,7 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
   }
 
   context.has_splits = split.has_splits();
-  FinishSplit(test_name_, &split, &context.test_files);
+  CARBON_RETURN_IF_ERROR(FinishSplit(test_name_, &split, &context.test_files));
 
   // Assume there is always a suffix `\n` in output.
   if (!context.expected_stdout.empty()) {
@@ -833,10 +900,10 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
   }
 
   // Extracts tests from the target file.
-  CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty())
-      << "Missing --test_targets_file.";
+  CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty(),
+               "Missing --test_targets_file.");
   auto content = ReadFile(absl::GetFlag(FLAGS_test_targets_file));
-  CARBON_CHECK(content.ok()) << content.error();
+  CARBON_CHECK(content.ok(), "{0}", content.error());
   llvm::SmallVector<std::string> all_tests;
   for (llvm::StringRef file_ref : llvm::split(*content, "\n")) {
     if (file_ref.empty()) {

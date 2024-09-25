@@ -10,49 +10,49 @@
 
 class Class;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:4: ERROR: Cannot declare a member of incomplete class `Class`.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:4: error: cannot declare a member of incomplete class `Class`
 // CHECK:STDERR: fn Class.Function() {}
 // CHECK:STDERR:    ^~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn Class.Function() {}
 
 fn CallClassFunction() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: ERROR: Member access into incomplete class `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: member access into incomplete class `Class`
   // CHECK:STDERR:   Class.Function();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-15]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-15]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
   Class.Function();
 }
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: ERROR: Variable has incomplete type `Class`.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: Variable has incomplete type `Class`
 // CHECK:STDERR: var global_var: Class;
 // CHECK:STDERR:                 ^~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-25]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-25]]:1: note: class was forward declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 var global_var: Class;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:24: ERROR: Function returns incomplete type `Class`.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:24: error: function returns incomplete type `Class`
 // CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
 // CHECK:STDERR:                        ^~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-34]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-34]]:1: note: class was forward declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn ConvertFromStruct() -> Class { return {}; }
 
 fn G(p: Class*) -> i32 {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: ERROR: Member access into object of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: error: member access into object of incomplete type `Class`
   // CHECK:STDERR:   return p->n;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-44]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-44]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -60,20 +60,20 @@ fn G(p: Class*) -> i32 {
 }
 
 fn MemberAccess(p: Class*) -> i32 {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:11: ERROR: Member access into object of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:11: error: member access into object of incomplete type `Class`
   // CHECK:STDERR:   return (*p).n;
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-55]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-55]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
   return (*p).n;
 }
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:20: ERROR: Function returns incomplete type `Class`.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:20: error: function returns incomplete type `Class`
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
 // CHECK:STDERR:                    ^~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-65]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-65]]:1: note: class was forward declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -82,10 +82,10 @@ fn Copy(p: Class*) -> Class {
 }
 
 fn Let(p: Class*) {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: ERROR: `let` binding has incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: error: `let` binding has incomplete type `Class`
   // CHECK:STDERR:   let c: Class = *p;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-77]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-77]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -97,25 +97,25 @@ fn TakeIncomplete(c: Class);
 fn ReturnIncomplete() -> Class;
 
 fn CallTakeIncomplete(p: Class*) {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: ERROR: Forming value of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `Class`
   // CHECK:STDERR:   TakeIncomplete(*p);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-92]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-92]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:1: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:1: note: initializing parameter 1 of function declared here
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TakeIncomplete(*p);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: ERROR: Forming value of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `Class`
   // CHECK:STDERR:   TakeIncomplete({});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-104]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-104]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:1: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:1: note: initializing parameter 1 of function declared here
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -123,13 +123,13 @@ fn CallTakeIncomplete(p: Class*) {
 }
 
 fn CallReturnIncomplete() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:3: ERROR: Function returns incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Class`
   // CHECK:STDERR:   ReturnIncomplete();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-118]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-118]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-35]]:23: Return type declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-35]]:23: note: return type declared here
   // CHECK:STDERR: fn ReturnIncomplete() -> Class;
   // CHECK:STDERR:                       ^~~~~~~~
   ReturnIncomplete();
@@ -175,6 +175,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -202,73 +203,73 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT:   %CallClassFunction.decl: %CallClassFunction.type = fn_decl @CallClassFunction [template = constants.%CallClassFunction] {} {}
-// CHECK:STDOUT:   %Class.ref.loc40: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
 // CHECK:STDOUT:   %global_var: ref <error> = bind_name global_var, %global_var.var
 // CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [template = constants.%ConvertFromStruct] {} {
-// CHECK:STDOUT:     %Class.ref.loc49: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     @ConvertFromStruct.%return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %p.patt.loc51: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc51: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc51_14: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc51_6.1: %.4 = param p
-// CHECK:STDOUT:     @G.%p: %.4 = bind_name p, %p.loc51_6.1
-// CHECK:STDOUT:     %int.make_type_32.loc51: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc51_20.1: type = value_of_initializer %int.make_type_32.loc51 [template = i32]
-// CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32.loc51, %.loc51_20.1 [template = i32]
-// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %p.param: %.4 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc51_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc51_20.2: type = converted %int.make_type_32, %.loc51_20.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
-// CHECK:STDOUT:     %p.patt.loc62: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc62: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc62_25: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc62_17.1: %.4 = param p
-// CHECK:STDOUT:     @MemberAccess.%p: %.4 = bind_name p, %p.loc62_17.1
-// CHECK:STDOUT:     %int.make_type_32.loc62: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc62_31.1: type = value_of_initializer %int.make_type_32.loc62 [template = i32]
-// CHECK:STDOUT:     %.loc62_31.2: type = converted %int.make_type_32.loc62, %.loc62_31.1 [template = i32]
-// CHECK:STDOUT:     @MemberAccess.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %p.param: %.4 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc62_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc62_31.2: type = converted %int.make_type_32, %.loc62_31.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [template = constants.%Copy] {
-// CHECK:STDOUT:     %p.patt.loc80: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc80_12: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc80_12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc80: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc80_9.1: %.4 = param p
-// CHECK:STDOUT:     @Copy.%p: %.4 = bind_name p, %p.loc80_9.1
-// CHECK:STDOUT:     %Class.ref.loc80_23: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     @Copy.%return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %p.param: %.4 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %Class.ref.loc80_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {
-// CHECK:STDOUT:     %p.patt.loc84: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc84: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc84: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc84: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc84_8.1: %.4 = param p
-// CHECK:STDOUT:     @Let.%p: %.4 = bind_name p, %p.loc84_8.1
+// CHECK:STDOUT:     %p.param: %.4 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeIncomplete.decl: %TakeIncomplete.type = fn_decl @TakeIncomplete [template = constants.%TakeIncomplete] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc95: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.loc95_19.1: %Class = param c
-// CHECK:STDOUT:     @TakeIncomplete.%c: %Class = bind_name c, %c.loc95_19.1
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.param: %Class = param c, runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnIncomplete.decl: %ReturnIncomplete.type = fn_decl @ReturnIncomplete [template = constants.%ReturnIncomplete] {} {
-// CHECK:STDOUT:     %Class.ref.loc97: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     @ReturnIncomplete.%return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTakeIncomplete.decl: %CallTakeIncomplete.type = fn_decl @CallTakeIncomplete [template = constants.%CallTakeIncomplete] {
-// CHECK:STDOUT:     %p.patt.loc99: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc99: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc99: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %p.loc99_23.1: %.4 = param p
-// CHECK:STDOUT:     @CallTakeIncomplete.%p: %.4 = bind_name p, %p.loc99_23.1
+// CHECK:STDOUT:     %p.param: %.4 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallReturnIncomplete.decl: %CallReturnIncomplete.type = fn_decl @CallReturnIncomplete [template = constants.%CallReturnIncomplete] {} {}
 // CHECK:STDOUT: }
@@ -318,7 +319,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let(%p: %.4) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc92: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc92: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>

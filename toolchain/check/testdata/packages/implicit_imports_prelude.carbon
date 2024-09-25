@@ -12,13 +12,13 @@
 
 // --- lib.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 var a: i32 = 0;
 
 // --- lib.impl.carbon
 
-impl library "lib";
+impl library "[[@TEST_NAME]]";
 
 var b: i32 = a;
 
@@ -38,6 +38,7 @@ var b: i32 = a;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -83,6 +84,7 @@ var b: i32 = a;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

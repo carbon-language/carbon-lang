@@ -19,6 +19,7 @@ namespace Carbon::Lower {
 class FunctionContext {
  public:
   explicit FunctionContext(FileContext& file_context, llvm::Function* function,
+                           llvm::DISubprogram* di_subprogram,
                            llvm::raw_ostream* vlog_stream);
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -52,14 +53,18 @@ class FunctionContext {
     if (auto result = locals_.Lookup(inst_id)) {
       return result.value();
     }
+
+    if (auto result = file_context_->global_variables().Lookup(inst_id)) {
+      return result.value();
+    }
     return file_context_->GetGlobal(inst_id);
   }
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
     bool added = locals_.Insert(inst_id, value).is_inserted();
-    CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
-                        << sem_ir().insts().Get(inst_id);
+    CARBON_CHECK(added, "Duplicate local insert: {0} {1}", inst_id,
+                 sem_ir().insts().Get(inst_id));
   }
 
   // Gets a callable's function.
@@ -144,6 +149,8 @@ class FunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<llvm::ConstantFolder, Inserter> builder_;
+
+  llvm::DISubprogram* di_subprogram_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

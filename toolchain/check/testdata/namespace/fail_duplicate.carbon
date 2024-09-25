@@ -13,10 +13,10 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn Baz`.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: error: redefinition of `fn Baz`
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Previously defined here.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: note: previously defined here
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn Foo.Baz() {
@@ -36,6 +36,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

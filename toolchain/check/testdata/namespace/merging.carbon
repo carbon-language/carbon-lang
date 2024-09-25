@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-package Example library "a";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 
@@ -18,7 +18,7 @@ fn NS.A() {}
 
 // --- b.carbon
 
-package Example library "b";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 
@@ -30,7 +30,7 @@ fn NS.B2() {}
 
 // --- c.carbon
 
-package Example library "c";
+package Example library "[[@TEST_NAME]]";
 
 import library "a";
 import library "b";
@@ -60,6 +60,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -99,6 +100,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -165,6 +167,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

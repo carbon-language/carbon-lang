@@ -36,7 +36,7 @@ adapt i32;
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:11: ERROR: `adapt` declarations must end with a `;`.
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:11: error: `adapt` declarations must end with a `;`
   // CHECK:STDERR:   adapt 1 trailing_token;
   // CHECK:STDERR:           ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -44,7 +44,7 @@ class A {
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:8: ERROR: Expected expression.
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:8: error: expected expression
   // CHECK:STDERR:   adapt;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
@@ -53,14 +53,14 @@ class B {
 
 class C {
   adapt
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:1: ERROR: Expected expression.
+// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:1: error: expected expression
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: ERROR: Expected expression.
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: error: expected expression
   // CHECK:STDERR:   adapt class;
   // CHECK:STDERR:         ^~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ class D {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+3]]:3: ERROR: Expected expression.
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+3]]:3: error: expected expression
   // CHECK:STDERR:   adapt i32;
   // CHECK:STDERR:   ^~~~~
   adapt i32;

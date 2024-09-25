@@ -10,13 +10,13 @@
 
 // --- decl_in_api_definition_in_impl.carbon
 
-library "decl_in_api_definition_in_impl";
+library "[[@TEST_NAME]]";
 
 class A;
 
 // --- decl_in_api_definition_in_impl.impl.carbon
 
-impl library "decl_in_api_definition_in_impl";
+impl library "[[@TEST_NAME]]";
 
 class A;
 
@@ -24,35 +24,35 @@ class A {}
 
 // --- use_decl_in_api.carbon
 
-library "use_decl_in_api";
+library "[[@TEST_NAME]]";
 
 // --- use_decl_in_api.impl.carbon
 
-impl library "use_decl_in_api";
+impl library "[[@TEST_NAME]]";
 
 import library "decl_in_api_definition_in_impl";
 
 // --- decl_only_in_api.carbon
 
-library "decl_only_in_api";
+library "[[@TEST_NAME]]";
 
 class B;
 
 // --- decl_only_in_api.impl.carbon
 
-impl library "decl_only_in_api";
+impl library "[[@TEST_NAME]]";
 
 // --- decl_in_api_decl_in_impl.carbon
 
-library "decl_in_api_decl_in_impl";
+library "[[@TEST_NAME]]";
 
 class C;
 
 // --- fail_decl_in_api_decl_in_impl.impl.carbon
 
-impl library "decl_in_api_decl_in_impl";
+impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -60,13 +60,13 @@ class C;
 
 // --- decl_only_in_impl.carbon
 
-library "decl_only_in_impl";
+library "[[@TEST_NAME]]";
 
 // --- fail_decl_only_in_impl.impl.carbon
 
-impl library "decl_only_in_impl";
+impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: class D;
 // CHECK:STDERR: ^~~~~~~~
 class D;
@@ -91,6 +91,7 @@ class D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -108,6 +109,8 @@ class D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }

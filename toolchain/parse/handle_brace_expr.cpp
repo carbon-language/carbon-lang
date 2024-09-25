@@ -26,7 +26,7 @@ static auto HandleBraceExprParamError(Context& context,
   bool is_value = param_finish_state == State::BraceExprParamFinishAsValue;
   bool is_unknown = param_finish_state == State::BraceExprParamFinishAsUnknown;
   CARBON_CHECK(is_type || is_value || is_unknown);
-  CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
+  CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "expected {0}{1}{2}",
                     llvm::StringLiteral, llvm::StringLiteral,
                     llvm::StringLiteral);
   context.emitter().Emit(

@@ -14,7 +14,7 @@ package ApiOnly;
 
 // --- api_only_lib.carbon
 
-package ApiOnly library "lib";
+package ApiOnly library "[[@TEST_NAME]]";
 
 // --- with_impl.carbon
 
@@ -31,21 +31,21 @@ impl package WithImpl;
 
 // --- with_impl_lib.carbon
 
-package WithImpl library "lib";
+package WithImpl library "[[@TEST_NAME]]";
 
 // --- with_impl_lib.impl.carbon
 
-impl package WithImpl library "lib";
+impl package WithImpl library "[[@TEST_NAME]]";
 
 // --- main.carbon
 
 // --- main_lib.carbon
 
-library "lib";
+library "[[@TEST_NAME]]";
 
 // --- main_lib.impl.carbon
 
-impl library "lib";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- api_only.carbon
 // CHECK:STDOUT:

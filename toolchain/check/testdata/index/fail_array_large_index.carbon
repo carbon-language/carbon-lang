@@ -10,13 +10,13 @@
 
 var a: [i32; 1] = (12,);
 
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+4]]:16: ERROR: Array index `1` is past the end of type `[i32; 1]`.
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+4]]:16: error: array index `1` is past the end of type `[i32; 1]`
 // CHECK:STDERR: var b: i32 = a[1];
 // CHECK:STDERR:                ^
 // CHECK:STDERR:
 var b: i32 = a[1];
 
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:16: ERROR: Array index `2147483647` is past the end of type `[i32; 1]`.
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:16: error: array index `2147483647` is past the end of type `[i32; 1]`
 // CHECK:STDERR: var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDERR:                ^~~~~~~~~~~
 var c: i32 = a[0x7FFF_FFFF];
@@ -44,6 +44,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_type_mismatch.carbon
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:20: ERROR: Missing value for field `a` in struct initialization.
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:20: error: missing value for field `a` in struct initialization
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDERR:                    ^~~~~~~~~~
 var x: {.a: i32} = {.b = 1.0};
@@ -31,6 +31,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

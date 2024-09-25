@@ -10,19 +10,25 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 extern fn F();
+
+// --- basic_use.carbon
+
+import library "basic";
+
+var x: () = F();
 
 // --- fail_redecl.carbon
 
-library "redecl";
+library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -30,13 +36,13 @@ extern fn F();
 
 // --- fail_redecl_extern.carbon
 
-library "redecl_extern";
+library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -44,29 +50,19 @@ fn F();
 
 // --- fail_member_extern.carbon
 
-library "member_extern";
+library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `fn` declaration that is a member
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: error: `extern` not allowed on `fn` declaration that is a member
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR:
   extern fn G[self: Self]();
 }
-
-// --- fail_todo_extern_library.carbon
-
-library "extern_library";
-
-// CHECK:STDERR: fail_todo_extern_library.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `extern library syntax`.
-// CHECK:STDERR: extern library "foo" fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-extern library "foo" fn F();
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -84,6 +80,40 @@ extern library "foo" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- basic_use.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//basic, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = imports.%import_ref
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %x.var: ref %.1 = var x
+// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl.carbon
 // CHECK:STDOUT:
@@ -113,13 +143,13 @@ extern library "foo" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_extern.carbon
 // CHECK:STDOUT:
@@ -131,6 +161,7 @@ extern library "foo" fn F();
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -146,9 +177,10 @@ extern library "foo" fn F();
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc14_15.1: %C = param self
-// CHECK:STDOUT:     %self.loc14_15.2: %C = bind_name self, %self.loc14_15.1
+// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -158,9 +190,5 @@ extern library "foo" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@C.%self.loc14_15.2: %C]();
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_extern_library.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: fn @G[%self: %C]();
 // CHECK:STDOUT:

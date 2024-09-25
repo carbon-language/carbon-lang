@@ -40,3 +40,6 @@
 
 # Ignore .DS_Store files
 .DS_Store
+
+# Ignore the .gdb_history that's created next to the project-specific .gdbinit
+.gdb_history

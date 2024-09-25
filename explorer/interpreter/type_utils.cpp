@@ -81,7 +81,7 @@ auto IsType(Nonnull<const Value*> value) -> bool {
 }
 
 auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
-  CARBON_CHECK(IsType(type)) << "expected a type, but found " << *type;
+  CARBON_CHECK(IsType(type), "expected a type, but found {0}", *type);
 
   switch (type->kind()) {
     case Value::Kind::IntValue:
@@ -108,7 +108,7 @@ auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::MixinPseudoType:
-      CARBON_FATAL() << "non-type value";
+      CARBON_FATAL("non-type value");
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:

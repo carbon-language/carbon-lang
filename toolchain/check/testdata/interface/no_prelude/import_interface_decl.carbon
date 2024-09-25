@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/import_interface_decl.carbon
 
 // --- a.carbon
-library "a";
+library "[[@TEST_NAME]]";
 interface A;
 impl () as A;
 
 
 // --- a.impl.carbon
-impl library "a";
+impl library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
@@ -32,7 +32,7 @@ impl library "a";
 // CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %.loc3_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

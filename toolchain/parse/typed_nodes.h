@@ -1016,6 +1016,68 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
+// A `where` expression (TODO: `require` and `observe` declarations)
+
+// The `Self` in a context where it is treated as a name rather than an
+// expression, such as `.Self`.
+using SelfTypeName =
+    LeafNode<NodeKind::SelfTypeName, Lex::SelfTypeIdentifierTokenIndex>;
+
+// `.Member` or `.Self` in an expression context, used in `where` and `require`
+// clauses.
+// TODO: Do we want to support `.1`, a designator for accessing a tuple member?
+struct DesignatorExpr {
+  static constexpr auto Kind = NodeKind::DesignatorExpr.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::PeriodTokenIndex token;
+  NodeIdOneOf<IdentifierName, SelfTypeName> name;
+};
+
+struct RequirementEqual {
+  static constexpr auto Kind = NodeKind::RequirementEqual.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  DesignatorExprId lhs;
+  Lex::EqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct RequirementEqualEqual {
+  static constexpr auto Kind = NodeKind::RequirementEqualEqual.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyExprId lhs;
+  Lex::EqualEqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct RequirementImpls {
+  static constexpr auto Kind = NodeKind::RequirementImpls.Define(
+      {.category = NodeCategory::Requirement, .child_count = 2});
+  AnyExprId lhs;
+  Lex::ImplsTokenIndex token;
+  AnyExprId rhs;
+};
+
+// An `and` token separating requirements in a `where` expression.
+using RequirementAnd = LeafNode<NodeKind::RequirementAnd, Lex::AndTokenIndex>;
+
+struct WhereOperand {
+  static constexpr auto Kind =
+      NodeKind::WhereOperand.Define({.child_count = 1});
+  AnyExprId type;
+  // This is a virtual token. The `where` token is owned by the
+  // WhereExpr node.
+  Lex::WhereTokenIndex token;
+};
+
+struct WhereExpr {
+  static constexpr auto Kind = NodeKind::WhereExpr.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = WhereOperand::Kind});
+  WhereOperandId introducer;
+  Lex::WhereTokenIndex token;
+  CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
+};
+
 // Choice nodes
 // ------------
 

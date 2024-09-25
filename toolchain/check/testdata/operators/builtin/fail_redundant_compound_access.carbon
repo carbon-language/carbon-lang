@@ -12,12 +12,12 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `i32` in compound member access is not an instance member or an interface member
   // CHECK:STDERR:   a = a.(a);
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: ERROR: Member name of type `<type of F>` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member
   // CHECK:STDERR:   a = a.(F)();
   // CHECK:STDERR:       ^~~~~
   a = a.(F)();
@@ -44,6 +44,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -62,7 +63,7 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
@@ -71,8 +72,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc11
+// CHECK:STDOUT:   %.loc11_24: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc11_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

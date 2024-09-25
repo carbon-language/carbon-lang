@@ -9,88 +9,88 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/type_literals.carbon
 
 // --- iN.carbon
-library "iN";
+library "[[@TEST_NAME]]";
 
 var test_i8: i8;
 var test_i16: i16;
 var test_i64: i64;
 
 // --- fail_iN_bad_width.carbon
-library "fail_iN_bad_width";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `i0` not found.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: name `i0` not found
 // CHECK:STDERR: var test_i0: i0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_i0: i0;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Bit width of integer type literal must be a multiple of 8. Use `Core.Int(1)` instead.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(1)` instead
 // CHECK:STDERR: var test_i1: i1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_i1: i1;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: ERROR: Bit width of integer type literal must be a multiple of 8. Use `Core.Int(15)` instead.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead
 // CHECK:STDERR: var test_i15: i15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_i15: i15;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported width of 8388608.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
 var test_i1000000000: i1000000000;
 // TODO: This diagnostic is not very good.
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:33: ERROR: Integer literal with value 10000000000000000000 does not fit in i32.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:33: error: integer literal with value 10000000000000000000 does not fit in i32
 // CHECK:STDERR: var test_i10000000000000000000: i10000000000000000000;
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var test_i10000000000000000000: i10000000000000000000;
 
 // --- uN.carbon
-library "uN";
+library "[[@TEST_NAME]]";
 
 var test_u8: u8;
 var test_u16: u16;
 var test_u64: u64;
 
 // --- fail_uN_bad_width.carbon
-library "fail_uN_bad_width";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `u0` not found.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: name `u0` not found
 // CHECK:STDERR: var test_u0: u0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_u0: u0;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Bit width of integer type literal must be a multiple of 8. Use `Core.UInt(1)` instead.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(1)` instead
 // CHECK:STDERR: var test_u1: u1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_u1: u1;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: ERROR: Bit width of integer type literal must be a multiple of 8. Use `Core.UInt(15)` instead.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead
 // CHECK:STDERR: var test_u15: u15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_u15: u15;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported width of 8388608.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
 var test_u1000000000: u1000000000;
 // TODO: This diagnostic is not very good.
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:33: ERROR: Integer literal with value 10000000000000000000 does not fit in i32.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:33: error: integer literal with value 10000000000000000000 does not fit in i32
 // CHECK:STDERR: var test_u10000000000000000000: u10000000000000000000;
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var test_u10000000000000000000: u10000000000000000000;
 
 // --- fail_fN_bad_width.carbon
-library "fail_fN_bad_width";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `f0` not found.
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: error: name `f0` not found
 // CHECK:STDERR: var test_f0: f0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_f0: f0;
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Semantics TODO: `Currently only f64 is allowed`.
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: error: semantics TODO: `Currently only f64 is allowed`
 // CHECK:STDERR: var test_f1: f1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
@@ -101,10 +101,10 @@ var test_f1000000000: f1000000000;
 var test_f1000000000000: f1000000000000;
 
 // --- fail_fN_todo_unsupported.carbon
-library "fail_fN_todo_unsupported";
+library "[[@TEST_NAME]]";
 
 // TODO: Some or all of these should eventually work.
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+3]]:15: ERROR: Semantics TODO: `Currently only f64 is allowed`.
+// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+3]]:15: error: semantics TODO: `Currently only f64 is allowed`
 // CHECK:STDERR: var test_f16: f16;
 // CHECK:STDERR:               ^~~
 var test_f16: f16;
@@ -132,6 +132,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -189,6 +190,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -257,6 +259,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -314,6 +317,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -1,0 +1,14 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// This is modifying the builtin scss, particularly:
+// https://github.com/just-the-docs/just-the-docs/blob/main/_sass/color_schemes/light.scss
+// https://github.com/just-the-docs/just-the-docs/blob/main/_sass/support/_variables.scss
+
+// Prefer wider content.
+$nav-width: 20rem;
+$content-width: 60rem;
+
+$code-background-color: #f6f8fa;
+$body-text-color: #1f2328;

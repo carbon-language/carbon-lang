@@ -33,9 +33,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %.2: type = ptr_type %C [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %C, %.2 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.field: %.2} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -44,6 +45,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -61,10 +63,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.patt: %.2 = binding_pattern ptr
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %ptr.loc16_8.1: %.2 = param ptr
-// CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_name ptr, %ptr.loc16_8.1
+// CHECK:STDOUT:     %ptr.param: %.2 = param ptr, runtime_param0
+// CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,12 +75,13 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc12_13.1: %C = param self
-// CHECK:STDOUT:     %self.loc12_13.2: %C = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_12: %.3 = field_decl field, element0 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -86,7 +89,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .field = %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member[@C.%self.loc12_13.2: %C]();
+// CHECK:STDOUT: fn @Member[%self: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr: %.2) {
 // CHECK:STDOUT: !entry:

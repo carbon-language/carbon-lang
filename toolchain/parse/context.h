@@ -97,10 +97,14 @@ class Context {
 
   // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error = false)
-      -> void;
+      -> void {
+    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+  }
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void;
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void {
+    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+  }
 
   // Replaces the placeholder node at the indicated position with a leaf node.
   //
@@ -154,7 +158,12 @@ class Context {
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex>;
+  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
+    if (!PositionIs(kind)) {
+      return std::nullopt;
+    }
+    return Consume();
+  }
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
@@ -225,14 +234,14 @@ class Context {
   // Pops the state and keeps the value for inspection.
   auto PopState() -> StateStackEntry {
     auto back = state_stack_.pop_back_val();
-    CARBON_VLOG() << "Pop " << state_stack_.size() << ": " << back << "\n";
+    CARBON_VLOG("Pop {0}: {1}\n", state_stack_.size(), back);
     return back;
   }
 
   // Pops the state and discards it.
   auto PopAndDiscardState() -> void {
-    CARBON_VLOG() << "PopAndDiscard " << state_stack_.size() - 1 << ": "
-                  << state_stack_.back() << "\n";
+    CARBON_VLOG("PopAndDiscard {0}: {1}\n", state_stack_.size() - 1,
+                state_stack_.back());
     state_stack_.pop_back();
   }
 
@@ -265,10 +274,10 @@ class Context {
 
   // Pushes a constructed state onto the stack.
   auto PushState(StateStackEntry state) -> void {
-    CARBON_VLOG() << "Push " << state_stack_.size() << ": " << state << "\n";
+    CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
     state_stack_.push_back(state);
-    CARBON_CHECK(state_stack_.size() < (1 << 20))
-        << "Excessive stack size: likely infinite loop";
+    CARBON_CHECK(state_stack_.size() < (1 << 20),
+                 "Excessive stack size: likely infinite loop");
   }
 
   // Pushes a constructed state onto the stack, with a different parse state.

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/impl_library.carbon
 
-impl package Geometry library "Shapes";
+impl package Geometry library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: impl_library.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -16,7 +16,7 @@ impl package Geometry library "Shapes";
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"Shapes"'},
+// CHECK:STDOUT:         {kind: 'LibraryName', text: '"impl_library"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

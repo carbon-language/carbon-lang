@@ -26,9 +26,9 @@ void Matcher::AddReplacement(clang::CharSourceRange range,
     return;
   }
 
-  auto rep = clang::tooling::Replacement(
-      source_manager, source_manager.getExpansionRange(range),
-      replacement_text);
+  clang::tooling::Replacement rep(source_manager,
+                                  source_manager.getExpansionRange(range),
+                                  replacement_text);
   auto entry = replacements->find(std::string(rep.getFilePath()));
   if (entry == replacements->end()) {
     // The replacement was in a file which isn't being updated, such as a system

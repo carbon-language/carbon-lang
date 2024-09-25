@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 #define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 
+#include "common/error.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -31,10 +32,10 @@ namespace Carbon {
 //   - MakeForBazelRunfiles for locating through Bazel's runfile tree.
 //   - Make for an explicit path, for example in tests.
 //
-// When locating an install, we verify it by
-// looking for the `carbon_install.txt` marker file at a specific location
-// below. When errors occur, the install prefix is made empty, and error() can
-// be used for diagnostics; InstallPaths remains minimally functional.
+// When locating an install, we verify it by looking for the
+// `carbon_install.txt` marker file at a specific location below. When errors
+// occur, the install prefix is made empty, and error() can be used for
+// diagnostics; InstallPaths remains minimally functional.
 //
 // Within this prefix, we expect a hierarchy on Unix-y platforms:
 //
@@ -59,6 +60,10 @@ namespace Carbon {
 // TODO: Need to check the installation structure of LLVM on Windows and figure
 // out what Carbon's should be within a Windows prefix and how much of the
 // structure we can share with the Unix-y layout of the prefix.
+//
+// TODO: InstallPaths is typically called from places using a VFS (both tests
+// and the Driver), but does not use a VFS itself. It currently only supports
+// using the real filesystem, but should probably support a VFS.
 class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
@@ -78,9 +83,14 @@ class InstallPaths {
   // fails for any reason, it will `CARBON_CHECK` fail with the error message.
   static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
 
-  // Provide an explicit install paths prefix. This is useful for testing or for
-  // using Carbon in an environment with an unusual path to the installed files.
+  // Provide an explicit install paths prefix, which must be absolute. This is
+  // useful for testing or for using Carbon in an environment with an unusual
+  // path to the installed files.
   static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
+
+  // Returns the contents of the prelude manifest file. This is the list of
+  // files that define the prelude, and will always be non-empty on success.
+  auto ReadPreludeManifest() const -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // Check for an error detecting the install paths correctly.
   //
@@ -96,6 +106,11 @@ class InstallPaths {
   // The computed installation prefix. This should correspond to the
   // `prefix_root` directory in Bazel's output, or to some prefix the toolchain
   // is installed into on a system such as `/usr/local` or `/home/$USER`.
+  //
+  // This will be an absolute path. We keep an absolute path for when the
+  // command line uses a relative path (`./bin/carbon`) and the working
+  // directory changes after initialization (for example, to Bazel's working
+  // directory).
   //
   // In the event of an error, this will be the empty string.
   auto prefix() const -> llvm::StringRef { return prefix_; }

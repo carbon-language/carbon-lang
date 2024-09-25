@@ -23,10 +23,21 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/LLVMDriver.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
+
+// Defined in:
+// https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
+//
+// While not in a header, this is the API used by llvm-driver.cpp for
+// busyboxing.
+//
+// NOLINTNEXTLINE(readability-identifier-naming)
+auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
+    -> int;
 
 namespace Carbon {
 
@@ -51,8 +62,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     maybe_v_arg = v_arg_storage;
   }
 
-  CARBON_CHECK(!args.empty());
-  CARBON_VLOG() << "Running Clang driver with arguments: \n";
+  CARBON_VLOG("Running Clang driver with arguments: \n");
 
   // Render the arguments into null-terminated C-strings for use by the Clang
   // driver. Command lines can get quite long in build systems so this tries to
@@ -82,10 +92,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     ++i;
   }
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
-    CARBON_VLOG() << "    '" << cstr_arg << "'\n";
+    CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
-  CARBON_VLOG() << "Preparing Clang driver...\n";
+  CARBON_VLOG("Preparing Clang driver...\n");
 
   // Create the diagnostic options and parse arguments controlling them out of
   // our arguments.
@@ -111,20 +121,34 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // above. This makes it appear that our binary was in the installed binaries
   // directory, and allows finding tools relative to it.
   driver.Dir = installation_->llvm_install_bin();
-  CARBON_VLOG() << "Setting bin directory to: " << driver.Dir << "\n";
+  CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
 
-  // TODO: Directly run in-process rather than using a subprocess. This is both
-  // more efficient and makes debugging (much) easier. Needs code like:
-  // driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) {};
+  // When there's only one command being run, this will run it in-process.
+  // However, a `clang` invocation may cause multiple `cc1` invocations, which
+  // still subprocess. See `InProcess` comment at:
+  // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
+  //
+  // TODO: It would be nice to find a way to set up the driver's understanding
+  // of the executable name in a way that causes the multiple `cc1` invocations
+  // to actually result in `carbon clang -- ...` invocations (even if as
+  // subprocesses). This may dovetail with having symlinks that redirect to a
+  // busybox of LLD as well, and having even the subprocesses consistently run
+  // the Carbon install toolchain and not a system toolchain whenever possible.
+  driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) -> int {
+    llvm::ToolContext tool_context;
+    return clang_main(argv.size(), const_cast<char**>(argv.data()),
+                      tool_context);
+  };
+
   std::unique_ptr<clang::driver::Compilation> compilation(
       driver.BuildCompilation(cstr_args));
-  CARBON_CHECK(compilation) << "Should always successfully allocate!";
+  CARBON_CHECK(compilation, "Should always successfully allocate!");
   if (compilation->containsError()) {
     // These should have been diagnosed by the driver.
     return false;
   }
 
-  CARBON_VLOG() << "Running Clang driver...\n";
+  CARBON_VLOG("Running Clang driver...\n");
 
   llvm::SmallVector<std::pair<int, const clang::driver::Command*>>
       failing_commands;
@@ -134,10 +158,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // failures.
   diagnostic_client.finish();
 
-  CARBON_VLOG() << "Execution result code: " << result << "\n";
+  CARBON_VLOG("Execution result code: {0}\n", result);
   for (const auto& [command_result, failing_command] : failing_commands) {
-    CARBON_VLOG() << "Failing command '" << failing_command->getExecutable()
-                  << "' with code '" << command_result << "' was:\n";
+    CARBON_VLOG("Failing command '{0}' with code '{1}' was:\n",
+                failing_command->getExecutable(), command_result);
     if (vlog_stream_) {
       failing_command->Print(*vlog_stream_, "\n\n", /*Quote=*/true);
     }

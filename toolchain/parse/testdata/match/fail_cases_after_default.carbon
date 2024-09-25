@@ -12,17 +12,17 @@ fn f() -> i32 {
   var x: i32 = 3;
   match (x) {
     default => { return 1; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: ERROR: Unreachable case; `case` occurs after the `default`
+    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: error: unreachable case; `case` occurs after the `default`
     // CHECK:STDERR:     case a: i32 => { return 2; }
     // CHECK:STDERR:     ^~~~
     // CHECK:STDERR:
     case a: i32 => { return 2; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: ERROR: Unreachable case; `default` occurs after the `default`
+    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: error: unreachable case; `default` occurs after the `default`
     // CHECK:STDERR:     default => { return 3; }
     // CHECK:STDERR:     ^~~~~~~
     // CHECK:STDERR:
     default => { return 3; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+3]]:5: ERROR: Unreachable case; `case` occurs after the `default`
+    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+3]]:5: error: unreachable case; `case` occurs after the `default`
     // CHECK:STDERR:     case (a: i32) if (a == 4) => { return 4; }
     // CHECK:STDERR:     ^~~~
     case (a: i32) if (a == 4) => { return 4; }

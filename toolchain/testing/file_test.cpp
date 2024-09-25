@@ -29,14 +29,14 @@ class ToolchainFileTest : public FileTestBase {
         component_(GetComponent(test_name)),
         installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
+  auto GetArgReplacements() -> llvm::StringMap<std::string> override {
+    return {{"core_package_dir", installation_.core_package()}};
+  }
+
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    auto prelude =
-        Driver::FindPreludeFiles(installation_.core_package(), stderr);
-    if (prelude.empty()) {
-      return Error("Could not find prelude");
-    }
+    CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
     for (const auto& file : prelude) {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }
@@ -71,8 +71,8 @@ class ToolchainFileTest : public FileTestBase {
     } else if (component_ == "lower") {
       args.push_back("--dump-llvm-ir");
     } else {
-      CARBON_FATAL() << "Unexpected test component " << component_ << ": "
-                     << test_name();
+      CARBON_FATAL("Unexpected test component {0}: {1}", component_,
+                   test_name());
     }
 
     // For `lex` and `parse`, we don't need to import the prelude; exclude it to
@@ -136,10 +136,11 @@ class ToolchainFileTest : public FileTestBase {
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
         llvm::MemoryBuffer::getFile(path);
     if (file.getError()) {
-      return ErrorBuilder() << file.getError().message();
+      return ErrorBuilder()
+             << "Getting `" << path << "`: " << file.getError().message();
     }
     if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
-      return ErrorBuilder() << "Duplicate file: " << path;
+      return ErrorBuilder() << "Duplicate file: `" << path << "`";
     }
     return Success();
   }
@@ -149,7 +150,7 @@ class ToolchainFileTest : public FileTestBase {
     // This handles cases where the toolchain directory may be copied into a
     // repository that doesn't put it at the root.
     auto pos = test_name.find("toolchain/");
-    CARBON_CHECK(pos != llvm::StringRef::npos) << test_name;
+    CARBON_CHECK(pos != llvm::StringRef::npos, "{0}", test_name);
     test_name = test_name.drop_front(pos + strlen("toolchain/"));
     test_name = test_name.take_front(test_name.find("/"));
     return test_name;

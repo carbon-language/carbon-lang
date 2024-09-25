@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_access_into_invalid.carbon
 
 
-// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+3]]:10: ERROR: Name `a` not found.
+// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+3]]:10: error: name `a` not found
 // CHECK:STDERR: fn F() { a.b; }
 // CHECK:STDERR:          ^
 fn F() { a.b; }
@@ -28,6 +28,7 @@ fn F() { a.b; }
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

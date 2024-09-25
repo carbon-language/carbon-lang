@@ -66,25 +66,21 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
   }
 
   if (!specific_id.is_valid()) {
-    // TODO: We have a generic constant but no specific. Investigate whether we
-    // can CHECK-fail here. For now, produce the canonical value of the
-    // constant.
+    // We have a generic constant but no specific. We treat as a request for the
+    // canonical value of the constant.
     return sem_ir.constant_values().Get(symbolic.inst_id);
   }
 
   const auto& specific = sem_ir.specifics().Get(specific_id);
-  if (specific.generic_id != symbolic.generic_id) {
-    // TODO: Given an specific for the wrong generic. If the symbolic constant
-    // is from an enclosing generic, take the value from the corresponding
-    // specific. Otherwise, CHECK-fail.
-    return sem_ir.constant_values().Get(symbolic.inst_id);
-  }
+  CARBON_CHECK(specific.generic_id == symbolic.generic_id,
+               "Given a specific for the wrong generic");
 
   auto value_block_id = specific.GetValueBlock(symbolic.index.region());
-  CARBON_CHECK(value_block_id.is_valid())
-      << "Queried " << symbolic.index << " in " << specific_id << " for "
-      << sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id)
-      << " before it was resolved.";
+  CARBON_CHECK(
+      value_block_id.is_valid(),
+      "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
+      specific_id,
+      sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));
   return sem_ir.constant_values().Get(
       sem_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()]);
 }

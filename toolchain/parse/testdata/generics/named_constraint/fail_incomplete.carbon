@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/named_constraint/fail_incomplete.carbon
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:12: ERROR: `constraint` introducer should be followed by a name.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:12: error: `constraint` introducer should be followed by a name
 // CHECK:STDERR: constraint "Foo"
 // CHECK:STDERR:            ^~~~~
 // CHECK:STDERR:
 constraint "Foo"
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:1: ERROR: `constraint` introducer should be followed by a name.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:1: error: `constraint` introducer should be followed by a name
 // CHECK:STDERR: constraint
 // CHECK:STDERR: ^~~~~~~~~~
 constraint

@@ -8,68 +8,32 @@
 
 namespace Carbon::Parse {
 
-namespace {
-enum PrecedenceLevel : int8_t {
-  // Sentinel representing the absence of any operator.
-  Highest,
-  // Terms.
-  TermPrefix,
-  // Numeric.
-  IncrementDecrement,
-  NumericPrefix,
-  Modulo,
-  Multiplicative,
-  Additive,
-  // Bitwise.
-  BitwisePrefix,
-  BitwiseAnd,
-  BitwiseOr,
-  BitwiseXor,
-  BitShift,
-  // Type formation.
-  TypePrefix,
-  TypePostfix,
-  // Casts.
-  As,
-  // Logical.
-  LogicalPrefix,
-  Relational,
-  LogicalAnd,
-  LogicalOr,
-  // Conditional.
-  If,
-  // Assignment.
-  Assignment,
-  // Sentinel representing a context in which any operator can appear.
-  Lowest,
-};
-constexpr int8_t NumPrecedenceLevels = Lowest + 1;
+constexpr int8_t PrecedenceGroup::NumPrecedenceLevels = Lowest + 1;
 
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
-struct OperatorPriorityTable {
+struct PrecedenceGroup::OperatorPriorityTable {
   constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
     MarkHigherThan({Highest}, {TermPrefix, LogicalPrefix});
     MarkHigherThan({TermPrefix},
                    {NumericPrefix, BitwisePrefix, IncrementDecrement});
-    MarkHigherThan({NumericPrefix, BitwisePrefix},
+    MarkHigherThan({NumericPrefix, BitwisePrefix, TypePostfix},
                    {As, Multiplicative, Modulo, BitwiseAnd, BitwiseOr,
                     BitwiseXor, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan(
-        {As, Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
-        {Relational});
+        {Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {Relational, Where});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan({LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({As, LogicalAnd, LogicalOr, Where}, {If});
     MarkHigherThan({If}, {Assignment});
     MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
     // Types are mostly a separate precedence graph.
     MarkHigherThan({Highest}, {TypePrefix});
     MarkHigherThan({TypePrefix}, {TypePostfix});
-    MarkHigherThan({TypePostfix}, {As});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -125,8 +89,8 @@ struct OperatorPriorityTable {
     for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
         if (table[a][b] == OperatorPriority::LeftFirst) {
-          CARBON_CHECK(table[b][a] != OperatorPriority::LeftFirst)
-              << "inconsistent lookup table entries";
+          CARBON_CHECK(table[b][a] != OperatorPriority::LeftFirst,
+                       "inconsistent lookup table entries");
           table[b][a] = OperatorPriority::RightFirst;
         }
       }
@@ -162,38 +126,19 @@ struct OperatorPriorityTable {
     for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
       if (level != Highest) {
         CARBON_CHECK(table[Highest][level] == OperatorPriority::LeftFirst &&
-                     table[level][Highest] == OperatorPriority::RightFirst)
-            << "Highest is not highest priority";
+                         table[level][Highest] == OperatorPriority::RightFirst,
+                     "Highest is not highest priority");
       }
       if (level != Lowest) {
         CARBON_CHECK(table[Lowest][level] == OperatorPriority::RightFirst &&
-                     table[level][Lowest] == OperatorPriority::LeftFirst)
-            << "Lowest is not lowest priority";
+                         table[level][Lowest] == OperatorPriority::LeftFirst,
+                     "Lowest is not lowest priority");
       }
     }
   }
 
   OperatorPriority table[NumPrecedenceLevels][NumPrecedenceLevels];
 };
-}  // namespace
-
-auto PrecedenceGroup::ForPostfixExpr() -> PrecedenceGroup {
-  return PrecedenceGroup(Highest);
-}
-
-auto PrecedenceGroup::ForTopLevelExpr() -> PrecedenceGroup {
-  return PrecedenceGroup(If);
-}
-
-auto PrecedenceGroup::ForExprStatement() -> PrecedenceGroup {
-  return PrecedenceGroup(Lowest);
-}
-
-auto PrecedenceGroup::ForType() -> PrecedenceGroup { return ForTopLevelExpr(); }
-
-auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
-  return PrecedenceGroup(As);
-}
 
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     -> std::optional<PrecedenceGroup> {
@@ -289,6 +234,10 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     // Cast operator.
     case Lex::TokenKind::As:
       return Trailing{.level = As, .is_binary = true};
+
+    // Requirement operator.
+    case Lex::TokenKind::Where:
+      return Trailing{.level = Where, .is_binary = true};
 
     // Prefix-only operators.
     case Lex::TokenKind::Const:

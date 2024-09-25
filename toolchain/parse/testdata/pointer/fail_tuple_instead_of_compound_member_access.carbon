@@ -9,49 +9,49 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/fail_tuple_instead_of_compound_member_access.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:6: ERROR: Expected expression.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:6: error: expected expression
   // CHECK:STDERR:   x.();
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
   x.();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: error: expected `)`
   // CHECK:STDERR:   y.(1,);
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   y.(1,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: error: expected `)`
   // CHECK:STDERR:   z.(a, b);
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   z.(a, b);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: error: expected `)`
   // CHECK:STDERR:   w.(c d e ());
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   w.(c d e ());
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: ERROR: Expected expression.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:7: error: expected expression
   // CHECK:STDERR:   v->();
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   v->();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: error: expected `)`
   // CHECK:STDERR:   u->(f,);
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   u->(f,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+4]]:8: error: expected `)`
   // CHECK:STDERR:   t->(2, 3);
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   t->(2, 3);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+3]]:9: ERROR: Expected `)`.
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+3]]:9: error: expected `)`
   // CHECK:STDERR:   s->(g h i ());
   // CHECK:STDERR:         ^
   s->(g h i ());

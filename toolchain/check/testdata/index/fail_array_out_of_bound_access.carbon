@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_out_of_bound_access.carbon
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:16: ERROR: Array index `1` is past the end of type `[i32; 1]`.
+// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:16: error: array index `1` is past the end of type `[i32; 1]`
 // CHECK:STDERR: var b: i32 = a[1];
 // CHECK:STDERR:                ^
 var b: i32 = a[1];
@@ -36,6 +36,7 @@ var b: i32 = a[1];
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

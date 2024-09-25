@@ -10,13 +10,13 @@
 
 // --- types.carbon
 
-library "types";
+library "[[@TEST_NAME]]";
 
 fn Float(size: i32) -> type = "float.make_type";
 
 // --- use_types.carbon
 
-library "uses_types";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -28,18 +28,18 @@ fn GetFloat(dyn_size: i32) -> type {
 
 // --- fail_invalid_size.carbon
 
-library "invalid_size";
+library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: ERROR: Bit width must be 64.
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: bit width must be 64
 // CHECK:STDERR: var invalid_float: Float(32);
 // CHECK:STDERR:                    ^~~~~~
 // CHECK:STDERR:
 var invalid_float: Float(32);
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression
 // CHECK:STDERR: var dyn: Float(dyn_size);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 var dyn: Float(dyn_size);
@@ -61,6 +61,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -80,9 +81,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_32, %.loc4_16.1 [template = i32]
-// CHECK:STDOUT:     %size.loc4_10.1: i32 = param size
-// CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %size.loc4_10.1
-// CHECK:STDOUT:     @Float.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %size.param: i32 = param size, runtime_param0
+// CHECK:STDOUT:     %size: i32 = bind_name size, %size.param
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,6 +113,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -141,9 +143,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32, %.loc8_23.1 [template = i32]
-// CHECK:STDOUT:     %dyn_size.loc8_13.1: i32 = param dyn_size
-// CHECK:STDOUT:     @GetFloat.%dyn_size: i32 = bind_name dyn_size, %dyn_size.loc8_13.1
-// CHECK:STDOUT:     @GetFloat.%return: ref type = var <return slot>
+// CHECK:STDOUT:     %dyn_size.param: i32 = param dyn_size, runtime_param0
+// CHECK:STDOUT:     %dyn_size: i32 = bind_name dyn_size, %dyn_size.param
+// CHECK:STDOUT:     %return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,6 +190,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

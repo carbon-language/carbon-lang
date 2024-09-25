@@ -180,7 +180,7 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.(carbon|c|json|proto|ypp)(\.tmpl)?$'
+          - '\.(carbon|c|json|proto|scss|ypp)(\.tmpl)?$'
           - ''
           - '// '
           - ''
@@ -216,6 +216,8 @@ repos:
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              website/.ruby-version|
+              website/Gemfile.lock|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|

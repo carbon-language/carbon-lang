@@ -10,7 +10,7 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `impl of interface with associated constant`.
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant`
 // CHECK:STDERR: impl bool as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 impl bool as I {}
@@ -34,6 +34,7 @@ impl bool as I {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -52,7 +53,7 @@ impl bool as I {}
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type, %.loc16_6.1 [template = bool]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

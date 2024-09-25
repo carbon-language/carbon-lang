@@ -39,8 +39,7 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   //   comptime fn F(n: i32) -> type { return [i32; n]; }
   auto bound_inst = context.constant_values().Get(bound_inst_id);
   if (!bound_inst.is_constant()) {
-    CARBON_DIAGNOSTIC(InvalidArrayExpr, Error,
-                      "Array bound is not a constant.");
+    CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;

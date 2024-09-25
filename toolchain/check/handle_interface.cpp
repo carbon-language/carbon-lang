@@ -58,7 +58,8 @@ static auto BuildInterfaceDecl(Context& context,
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, interface_decl));
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
-      name, interface_decl_id, /*is_extern=*/false)};
+      name, interface_decl_id, /*is_extern=*/false,
+      SemIR::LibraryNameId::Invalid)};
   RequireGenericParams(context, interface_info.implicit_param_refs_id);
   RequireGenericParams(context, interface_info.param_refs_id);
 
@@ -79,15 +80,12 @@ static auto BuildInterfaceDecl(Context& context,
         // TODO: This should be refactored a little, particularly for
         // prev_import_ir_id. See similar logic for classes and functions, which
         // might also be refactored to merge.
-        CheckIsAllowedRedecl(context, Lex::TokenKind::Interface,
-                             existing_interface.name_id,
-                             {.loc = node_id,
-                              .is_definition = is_definition,
-                              .is_extern = false},
-                             {.loc = existing_interface.latest_decl_id(),
-                              .is_definition = existing_interface.is_defined(),
-                              .is_extern = false},
-                             /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
+        CheckIsAllowedRedecl(
+            context, Lex::TokenKind::Interface, existing_interface.name_id,
+            RedeclInfo(interface_info, node_id, is_definition),
+            RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
+                       existing_interface.is_defined()),
+            /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
 
         // Can't merge interface definitions due to the generic requirements.
         // TODO: Should this also be mirrored to classes/functions for generics?
@@ -115,8 +113,8 @@ static auto BuildInterfaceDecl(Context& context,
     interface_info.generic_id = FinishGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
-      interface_decl.type_id =
-          context.GetGenericInterfaceType(interface_decl.interface_id);
+      interface_decl.type_id = context.GetGenericInterfaceType(
+          interface_decl.interface_id, context.scope_stack().PeekSpecificId());
     }
   } else {
     FinishGenericRedecl(
@@ -143,8 +141,8 @@ auto HandleParseNode(Context& context,
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  CARBON_CHECK(!interface_info.is_defined())
-      << "Can't merge with defined interfaces.";
+  CARBON_CHECK(!interface_info.is_defined(),
+               "Can't merge with defined interfaces.");
   interface_info.definition_id = interface_decl_id;
   interface_info.scope_id =
       context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
