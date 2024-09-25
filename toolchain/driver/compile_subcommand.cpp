@@ -666,13 +666,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
-    // When crashing, flush diagnostics. If sorting diagnostics, they go to the
-    // crash stream; if streaming, the original stream is flushed.
+    // When crashing, flush diagnostics. If sorting diagnostics, they can be
+    // redirected to the crash stream; if streaming, the original stream is
+    // flushed.
     // TODO: Eventually we'll want to limit the count.
     if (options_.stream_errors) {
       out << "Flushing diagnostics\n";
     } else {
-      out << "Pending diagnostics\n";
+      out << "Pending diagnostics:\n";
       stream_consumer.set_stream(&out);
     }
 
