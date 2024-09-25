@@ -411,6 +411,18 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case CARBON_KIND(WhereExpr inst): {
+        if (step.index == 0) {
+          out << "<where restriction on ";
+          steps.push_back(step.Next());
+          push_inst_id(sem_ir.types().GetInstId(inst.lhs_id));
+          // TODO: also output restrictions from the inst block
+          // inst.requirements_id
+        } else {
+          out << ">";
+        }
+        break;
+      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -452,6 +464,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case IntLiteral::Kind:
       case Namespace::Kind:
       case Param::Kind:
+      case RequirementEquivalent::Kind:
+      case RequirementImpls::Kind:
+      case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case SpliceBlock::Kind:
@@ -597,6 +612,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
+      case WhereExpr::Kind:
         return value_category;
 
       case CARBON_KIND(BuiltinInst inst): {
