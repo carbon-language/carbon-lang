@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parse](#parse)
     -   [Typed parse node metadata implementation](#typed-parse-node-metadata-implementation)
 -   [Check](#check)
+    -   [Adding a new SemIR instruction](#adding-a-new-semir-instruction)
     -   [SemIR typed instruction metadata implementation](#semir-typed-instruction-metadata-implementation)
 -   [Lower](#lower)
 -   [Tests and debugging](#tests-and-debugging)
@@ -232,24 +233,30 @@ Note: this is broadly similar to
 Each parse node kind requires adding a `Handle<kind>` function in a
 `check/handle_*.cpp` file.
 
+### Adding a new SemIR instruction
+
 If the resulting SemIR needs a new instruction:
 
--   add a new kind to [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def)
+-   Add a new kind to [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def).
+
     -   Add a `CARBON_SEM_IR_INST_KIND(NewInstKindName)` line in alphabetical
         order
--   a new struct definition to
+
+-   Add a new struct definition to
     [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h), such as:
 
     ```cpp
     struct NewInstKindName {
-        static constexpr auto Kind = InstKind::NewInstKindName.Define(
-            // the name used in textual IR
-            "new_inst_kind_name"
-            // Optional: , TerminatorKind::KindOfTerminator
+        static constexpr auto Kind =
+            // `Parse::SomeId` should be some type from `parse/node_ids.h`,
+            // specifying the kind of parse nodes for this instruction.
+            // - `Parse::NodeId` if it can be any kind of parse node.
+            // - `Parse::InvalidNodeId` if no associated parse node.
+            InstKind::NewInstKindName.Define<Parse::SomeId>(
+               // the name used in textual IR
+              {.ir_name = "new_inst_kind_name"}
+               // Other parameters have defaults
             );
-
-        // Optional: omit if not associated with a parse node.
-        Parse::Node parse_node;
 
         // Optional: omit if this sem_ir instruction does not produce a value.
         TypeId type_id;
@@ -261,7 +268,35 @@ If the resulting SemIR needs a new instruction:
     };
     ```
 
-Adding an instruction will also require a handler in the Lower step.
+    -   [`sem_ir/inst_kind.h`](/toolchain/sem_ir/inst_kind.h) documents the
+        different options when defining a new instruction, as well as their
+        defaults, see `InstKind::DefinitionInfo`.
+    -   If an instruction doesn't have a `type_id`, it won't produce a value,
+        and so won't be given a label when formatted, and can't be the argument
+        of another instruction.
+    -   If an instruction always produces a type, so it sets
+        `.is_type = InstIsType::Always`, then its `type_id` field will be set to
+        `SemIR::TypeId::TypeType`.
+    -   If an instruction produces a value, but not one that can be used in an
+        expression, you can make a new builtin type for its output. For example,
+        we have builtin types for bound methods, namespaces, and witnesses.
+        These are defined in
+        [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
+        To get a type id for one of these builtin type, use something like
+        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`.
+
+-   Add a new `case` to the `CARBON_KIND_SWITCH` in `TryEvalInstInContext` in
+    [`check/eval.cpp`](/toolchain/check/eval.cpp). This should FIXME.
+
+-   Add a case to `GetExprCategory` or `StringifyTypeExprImpl` (instructions
+    producing types only?) in [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
+    FIXME
+
+-   Define `BuildValueReprForInst` in
+    [`check/context.cpp`](/toolchain/check/context.cpp). FIXME
+
+Adding an instruction will also require a handler in the Lower step. FIXME:
+`BuildTypeForInst` in `toolchain/lower/file_context.cpp`
 
 Most new instructions will automatically be formatted reasonably by the SemIR
 formatter.
