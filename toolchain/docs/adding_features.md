@@ -285,30 +285,35 @@ If the resulting SemIR needs a new instruction:
         To get a type id for one of these builtin type, use something like
         `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`.
 
+Once those are added, a rebuild will give errors showing what needs to be
+updated. The updates needed, can depend on whether the instruction produces a
+type.
+
+<!-- DO NOT SUBMIT
+
 -   Add a new `case` to the `CARBON_KIND_SWITCH` in `TryEvalInstInContext` in
-    [`check/eval.cpp`](/toolchain/check/eval.cpp). This should FIXME.
-
--   Add a `case` to `StringifyTypeExprImpl` (non-instructions producing types
-    can be added to the last set of cases) in
-    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp). FIXME
-
+    [`check/eval.cpp`](/toolchain/check/eval.cpp).
+-   Add a `case` to `StringifyTypeExprImpl` in
+    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
 -   Add a `case` to `GetExprCategory` in
-    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp). FIXME
+    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
+-   For instructions outputting types, define an overload for `BuildValueReprForInst` in
+    [`check/context.cpp`](/toolchain/check/context.cpp).
+-   For instructions outputting types, define an overload for `BuildTypeForInst` in
+    [`lower/file_context.cpp`](/toolchain/lower/file_context.cpp).
 
-If the instruction produces a type:
+-->
 
--   Define an overload for `BuildValueReprForInst` in
-    [`check/context.cpp`](/toolchain/check/context.cpp). FIXME
--   Define an overload for ``BuildTypeForInst` in
-    [`lower/file_context.cpp`](/toolchain/lower/file_context.cpp). FIXME
+Look to the comments on those functions for instructions on what is needed.
 
 Adding an instruction will also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
-formatter.
+formatter. If not, then add an `FormatInst` overload to
+[`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp).
 
 If the resulting SemIR needs a new built-in, add it to
-[builtin_inst_kind.def](/toolchain/sem_ir/builtin_inst_kind.def).
+[`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
 
 ### SemIR typed instruction metadata implementation
 
