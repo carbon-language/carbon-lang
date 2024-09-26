@@ -10,6 +10,12 @@
 class Simple {};
 base class AdaptWithVirtual {
   virtual fn F();
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+6]]:3: error: adapter with virtual function
+  // CHECK:STDERR:   adapt Simple;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here
+  // CHECK:STDERR:   virtual fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   adapt Simple;
 }
 
@@ -24,7 +30,6 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %Simple [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -62,7 +67,6 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:   adapt_decl %Simple
-// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %Simple [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithVirtual
