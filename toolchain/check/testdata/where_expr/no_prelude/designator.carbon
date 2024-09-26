@@ -120,8 +120,8 @@ class D {
 // CHECK:STDOUT:     %T.patt: %.1 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.loc8: %.4 = tuple_literal ()
 // CHECK:STDOUT:     %T.param: %.1 = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8: %.1 = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
@@ -130,8 +130,8 @@ class D {
 // CHECK:STDOUT:     %U.patt: %.1 = symbolic_binding_pattern U 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, @I.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc10: %.5 = struct_literal ()
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param<invalid>
@@ -140,8 +140,8 @@ class D {
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.2)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
 // CHECK:STDOUT:     %V.loc12: type = bind_symbolic_name V 0, %V.param [symbolic = %V.1 (constants.%V)]
@@ -160,38 +160,32 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8: %.1) {
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc8: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodMember(%U.loc10: %.1) {
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:   %U.1: %.1 = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.loc10: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12: type) {
-// CHECK:STDOUT:   %.Self.2: type = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
 // CHECK:STDOUT:   %V.1: type = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.loc12: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
-// CHECK:STDOUT:   %.Self.2 => constants.%T
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %.Self.2 => constants.%U
 // CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %.Self.2 => constants.%V
 // CHECK:STDOUT:   %V.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,8 +214,8 @@ class D {
 // CHECK:STDOUT:     %W.patt: %.1 = symbolic_binding_pattern W 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.1]
-// CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self)]
-// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self)]
+// CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12: %.5 = struct_literal ()
 // CHECK:STDOUT:     %W.param: %.1 = param W, runtime_param<invalid>
@@ -241,14 +235,12 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12: %.1) {
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self)]
 // CHECK:STDOUT:   %W.1: %.1 = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.loc12: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMismatch(constants.%W) {
-// CHECK:STDOUT:   %.Self.2 => constants.%W
 // CHECK:STDOUT:   %W.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
