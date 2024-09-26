@@ -95,11 +95,16 @@ auto CheckMethodModifiersOnFunction(
     std::optional<SemIR::Inst> parent_scope_inst) -> void {
   if (parent_scope_inst) {
     if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
-      auto inheritance_kind =
-          context.classes().Get(class_decl->class_id).inheritance_kind;
+      auto& class_def = context.classes().Get(class_decl->class_id);
+      auto inheritance_kind = class_def.inheritance_kind;
       if (inheritance_kind == SemIR::Class::Final) {
         ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Virtual,
                               " in a non-abstract non-base `class` definition",
+                              context.insts().GetLocId(parent_scope_inst_id));
+      }
+      if (class_def.adapt_id.is_valid()) {
+        ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Virtual,
+                              " in an adapter definition",
                               context.insts().GetLocId(parent_scope_inst_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {

@@ -10,6 +10,12 @@
 class Simple {};
 base class AdaptWithVirtual {
   adapt Simple;
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+6]]:3: error: `virtual` not allowed on `fn` declaration in an adapter definition
+  // CHECK:STDERR:   virtual fn F();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-5]]:1: note: containing definition here
+  // CHECK:STDERR: base class AdaptWithVirtual {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   virtual fn F();
 }
 
@@ -52,7 +58,7 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Simple {
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Simple
@@ -62,12 +68,12 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:   adapt_decl %Simple
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %Simple [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %Simple [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithVirtual
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F();
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
