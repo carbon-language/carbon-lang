@@ -94,7 +94,8 @@ constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 class AbsoluteInstId : public InstId {
  public:
   // Implicitly converts from the base class.
-  explicit(false) constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
