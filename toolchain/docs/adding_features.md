@@ -287,24 +287,8 @@ If the resulting SemIR needs a new instruction:
 
 Once those are added, a rebuild will give errors showing what needs to be
 updated. The updates needed, can depend on whether the instruction produces a
-type.
-
-<!-- DO NOT SUBMIT
-
--   Add a new `case` to the `CARBON_KIND_SWITCH` in `TryEvalInstInContext` in
-    [`check/eval.cpp`](/toolchain/check/eval.cpp).
--   Add a `case` to `StringifyTypeExprImpl` in
-    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
--   Add a `case` to `GetExprCategory` in
-    [`sem_ir/file.cpp`](/toolchain/sem_ir/file.cpp).
--   For instructions outputting types, define an overload for `BuildValueReprForInst` in
-    [`check/context.cpp`](/toolchain/check/context.cpp).
--   For instructions outputting types, define an overload for `BuildTypeForInst` in
-    [`lower/file_context.cpp`](/toolchain/lower/file_context.cpp).
-
--->
-
-Look to the comments on those functions for instructions on what is needed.
+type. Look to the comments on those functions for instructions on what is
+needed.
 
 Adding an instruction will also require a handler in the Lower step.
 
