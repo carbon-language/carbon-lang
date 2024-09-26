@@ -220,7 +220,6 @@ def _configure_clang_toolchain_impl(repository_ctx):
             "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
             "{CLANG_VERSION}": str(clang_version),
             "{LLVM_BINDIR}": str(ar_path.dirname),
-            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{SYSROOT}": str(sysroot_dir),
         },
         executable = False,

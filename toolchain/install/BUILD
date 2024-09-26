@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env", "llvm_symbolizer")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("run_tool.bzl", "run_tool")
@@ -132,6 +133,10 @@ pkg_tar_and_test(
 # Support `bazel run` on specific binaries.
 run_tool(
     name = "run_carbon",
-    data = [":install_data"],
+    data = [
+        ":install_data",
+        llvm_symbolizer,
+    ],
+    env = cc_env(),
     tool = "prefix_root/bin/carbon",
 )
