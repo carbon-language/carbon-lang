@@ -571,6 +571,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(inst.name_id, ".var");
         continue;
       }
+      case CARBON_KIND(WhereExpr inst): {
+        CollectNamesInBlock(scope_id, inst.requirements_id);
+        continue;
+      }
       default: {
         break;
       }

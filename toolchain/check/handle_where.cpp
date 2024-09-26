@@ -15,6 +15,10 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // `MyInterface where .Member = i32`.
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id);
+  // TODO: Validate that `self_type_id` represents a facet type. Only facet
+  // types may have `where` restrictions.
+
+  // FIXME: Should we save the self_id here instead?
   context.node_stack().Push(node_id, self_type_id);
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
@@ -53,6 +57,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
   // TODO: convert rhs to type of lhs
+
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementRewrite>(
@@ -65,6 +70,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
   // TODO: type check lhs and rhs are compatible
+
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementEquivalent>(
@@ -77,6 +83,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
   // TODO: check lhs is a facet and rhs is a facet type
+
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementImpls>(
