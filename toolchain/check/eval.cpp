@@ -1404,7 +1404,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       // TODO: This currently ignores the requirements and just produces the
       // left-hand type argument to the `where`.
-      return eval_context.GetConstantValue(typed_inst.lhs_id);
+      return eval_context.GetConstantValue(
+          eval_context.insts().Get(typed_inst.period_self_id).type_id());
     }
 
     // `not true` -> `false`, `not false` -> `true`.

@@ -858,7 +858,7 @@ class FormatterImpl {
   }
 
   auto FormatInstRHS(WhereExpr inst) -> void {
-    FormatArgs(inst.lhs_id);
+    FormatArgs(inst.period_self_id);
     FormatTrailingBlock(inst.requirements_id);
   }
 

@@ -18,9 +18,6 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // TODO: Validate that `self_type_id` represents a facet type. Only facet
   // types may have `where` restrictions.
 
-  // FIXME: Should we save the self_id here instead?
-  context.node_stack().Push(node_id, self_type_id);
-
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
   context.scope_stack().Push();
@@ -44,6 +41,10 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.is_valid());
+
+  // Save the `.Self` symbolic binding on the node stack. It will become the
+  // first argument to the `WhereExpr` instruction.
+  context.node_stack().Push(node_id, inst_id);
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other
@@ -104,12 +105,12 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();
-  SemIR::TypeId lhs_type_id =
+  SemIR::InstId period_self_id =
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
   context.AddInstAndPush<SemIR::WhereExpr>(
       node_id, {.type_id = SemIR::TypeId::TypeType,
-                .lhs_id = lhs_type_id,
+                .period_self_id = period_self_id,
                 .requirements_id = requirements_id});
   return true;
 }

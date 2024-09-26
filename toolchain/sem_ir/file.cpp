@@ -415,7 +415,8 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         if (step.index == 0) {
           out << "<where restriction on ";
           steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.lhs_id));
+          TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
+          push_inst_id(sem_ir.types().GetInstId(type_id));
           // TODO: also output restrictions from the inst block
           // inst.requirements_id
         } else {

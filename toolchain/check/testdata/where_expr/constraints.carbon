@@ -142,7 +142,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_33: %.8 = struct_literal ()
-// CHECK:STDOUT:     %.loc11_16: type = where_expr %.2 [template = constants.%.2] {
+// CHECK:STDOUT:     %.loc11_16: type = where_expr %.Self [template = constants.%.2] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc11_33
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %.2 = param T, runtime_param<invalid>
@@ -155,7 +155,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %.2 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.loc13_37: %.5 = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_21: type = where_expr %.2 [template = constants.%.2] {
+// CHECK:STDOUT:     %.loc13_21: type = where_expr %.Self [template = constants.%.2] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc13_37
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.2 = param U, runtime_param<invalid>
@@ -168,7 +168,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15: type = where_expr %.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %.loc15: type = where_expr %.Self [template = constants.%.1] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %.1 = param V, runtime_param<invalid>
@@ -186,7 +186,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
 // CHECK:STDOUT:     %.Self.ref.loc17_50: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Second.ref.loc17_50: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc17: type = where_expr %.2 [template = constants.%.2] {
+// CHECK:STDOUT:     %.loc17: type = where_expr %.Self [template = constants.%.2] {
 // CHECK:STDOUT:       requirement_impls %Second.ref.loc17_20, %I.ref.loc17_34
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, %Second.ref.loc17_50
 // CHECK:STDOUT:     }
@@ -319,7 +319,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.8 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8_39: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc8_23: type = where_expr %.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %.loc8_23: type = where_expr %.Self [template = constants.%.1] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc8_39
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: %.1 = param X, runtime_param<invalid>
@@ -440,7 +440,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.loc26_38: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc26_22: type = where_expr %.3 [template = constants.%.3] {
+// CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = constants.%.3] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Y.param: %.3 = param Y, runtime_param<invalid>

@@ -41,7 +41,7 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc14_33: %.5 = struct_literal ()
-// CHECK:STDOUT:     %.loc14_21: type = where_expr %.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%.1] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, %.loc14_33
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param0
