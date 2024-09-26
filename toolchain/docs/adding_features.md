@@ -290,6 +290,11 @@ updated. The updates needed, can depend on whether the instruction produces a
 type. Look to the comments on those functions for instructions on what is
 needed.
 
+If the instruction owns references other instructions, add a case to
+`InstNamer::CollectNamesInBlock` in
+[`sem_ir/inst_namer.cpp`](/toolchain/sem_ir/inst_namer.cpp) to visit those other
+instructions.
+
 Adding an instruction will generally also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
