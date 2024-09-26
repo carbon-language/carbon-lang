@@ -61,15 +61,19 @@ protected virtual base class Virtual {}
 // CHECK:STDERR:
 abstract protected class WrongOrder;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:20: error: `abstract` function with definition
+  // CHECK:STDERR:   abstract fn F() {}
+  // CHECK:STDERR:                    ^
   abstract fn F() {}
 }
 

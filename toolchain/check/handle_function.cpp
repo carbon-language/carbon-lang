@@ -441,6 +441,12 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   auto& function = context.functions().Get(function_id);
   FinishGenericDefinition(context, function.generic_id);
 
+  if (function.virtual_modifier == SemIR::Function::VirtualModifier::Abstract) {
+    CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
+                      "`abstract` function with definition");
+    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+  }
+
   return true;
 }
 
