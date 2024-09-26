@@ -290,7 +290,7 @@ updated. The updates needed, can depend on whether the instruction produces a
 type. Look to the comments on those functions for instructions on what is
 needed.
 
-Adding an instruction will also require a handler in the Lower step.
+Adding an instruction will generally also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
 formatter. If not, then add an `FormatInst` overload to
