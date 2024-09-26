@@ -326,11 +326,10 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 
   // Conditionally capture console output. We use a scope exit to ensure the
   // captures terminate even on run failures.
-  std::unique_ptr<std::unique_lock<std::mutex>> console_lock;
+  std::unique_lock<std::mutex> output_lock;
   if (context.capture_console_output) {
     if (output_mutex_) {
-      console_lock =
-          std::make_unique<std::unique_lock<std::mutex>>(*output_mutex_);
+      output_lock = std::unique_lock<std::mutex>(*output_mutex_);
     }
     CaptureStderr();
     CaptureStdout();

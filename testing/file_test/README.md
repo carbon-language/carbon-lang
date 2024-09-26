@@ -156,7 +156,7 @@ Supported comment markers are:
     streams. Adding this causes the test's own stderr and stdout to be captured
     and added as well.
 
-    This should be avoided because weare partly ensuring that streams are an
+    This should be avoided because we are partly ensuring that streams are an
     API, but is helpful when wrapping Clang, where stderr is used directly.
 
     SET-CAPTURE-CONSOLE-OUTPUT can be specified at most once.
