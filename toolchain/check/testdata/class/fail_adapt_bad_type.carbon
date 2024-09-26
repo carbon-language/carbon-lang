@@ -51,8 +51,8 @@ class AdaptIncomplete {
 // CHECK:STDOUT:     .AdaptIncomplete = %AdaptIncomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
-// CHECK:STDOUT:   %AdaptIncomplete.decl: type = class_decl @AdaptIncomplete [template = constants.%AdaptIncomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
+// CHECK:STDOUT:   %AdaptIncomplete.decl: type = class_decl @AdaptIncomplete [template = constants.%AdaptIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

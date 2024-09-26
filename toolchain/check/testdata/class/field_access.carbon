@@ -60,8 +60,8 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

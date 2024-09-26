@@ -74,23 +74,23 @@ interface BeingDefined {
 // CHECK:STDOUT:     .Test = %Test.decl
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%.1] {}
-// CHECK:STDOUT:   %.decl: %.type.1 = fn_decl @.1 [template = constants.%.3] {}
-// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {}
-// CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [template = constants.%.4] {}
+// CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: %.type.1 = fn_decl @.1 [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {} {}
+// CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [template = constants.%.4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.4]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc45: %.5 = assoc_entity element0, %H.decl [template = constants.%.6]
-// CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.7] {}
+// CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.7] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

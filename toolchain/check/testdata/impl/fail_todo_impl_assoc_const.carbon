@@ -50,12 +50,12 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %bool.make_type.loc16_6: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type.loc16_6 [template = bool]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type.loc16_6, %.loc16_6.1 [template = bool]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]

@@ -176,7 +176,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
+// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
@@ -198,7 +198,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}
+// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -223,7 +223,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -245,7 +245,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .O1 = %O1.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %O1.decl: type = class_decl @O1 [template = constants.%O1] {}
+// CHECK:STDOUT:   %O1.decl: type = class_decl @O1 [template = constants.%O1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 {
@@ -267,7 +267,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .O2 = %O2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %O2.decl: type = class_decl @O2 [template = constants.%O2] {}
+// CHECK:STDOUT:   %O2.decl: type = class_decl @O2 [template = constants.%O2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 {
@@ -289,7 +289,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.decl: type = class_decl @Other [template = constants.%Other] {}
+// CHECK:STDOUT:   %Other.decl: type = class_decl @Other [template = constants.%Other] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Other {

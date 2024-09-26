@@ -54,8 +54,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:     .Wiz = %Wiz.decl
 // CHECK:STDOUT:     .Baz = %Baz.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Wiz.decl: %Wiz.type = fn_decl @Wiz [template = constants.%Wiz] {}
-// CHECK:STDOUT:   %Baz.decl: %Baz.type = fn_decl @Baz [template = constants.%Baz] {}
+// CHECK:STDOUT:   %Wiz.decl: %Wiz.type = fn_decl @Wiz [template = constants.%Wiz] {} {}
+// CHECK:STDOUT:   %Baz.decl: %Baz.type = fn_decl @Baz [template = constants.%Baz] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {

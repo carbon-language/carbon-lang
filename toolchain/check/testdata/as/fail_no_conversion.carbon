@@ -58,12 +58,12 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %As.type = import_ref Core//prelude/operators/as, inst+4, loaded [template = constants.%As]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.4: @As.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+27, loaded [symbolic = @As.%.3 (constants.%.12)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.2: %As.type = import_ref Core//prelude/operators/as, inst+5, loaded [template = constants.%As]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.4: @As.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+29, loaded [symbolic = @As.%.3 (constants.%.12)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+22, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -13,6 +13,18 @@ auto ScopeStack::VerifyOnFinish() -> void {
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
 }
 
+auto ScopeStack::VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
+                                                const ScopeStackEntry& scope)
+    -> void {
+  CARBON_CHECK(
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()) ==
+          scope.next_compile_time_bind_index.index,
+      "Wrong number of entries in compile-time binding stack after {0}: have "
+      "{1}, expected {2}",
+      label, compile_time_binding_stack_.all_values_size(),
+      scope.next_compile_time_bind_index.index);
+}
+
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       SemIR::SpecificId specific_id,
                       bool lexical_lookup_has_load_error) -> void {
@@ -49,6 +61,8 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max(),
                "Ran out of scopes");
   ++next_scope_index_.index;
+
+  VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
 }
 
 auto ScopeStack::Pop() -> void {
@@ -72,13 +86,7 @@ auto ScopeStack::Pop() -> void {
     return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
   }
 
-  CARBON_CHECK(
-      scope.next_compile_time_bind_index.index ==
-          static_cast<int32_t>(compile_time_binding_stack_.all_values_size()),
-      "Wrong number of entries in compile-time binding stack, have {0}, "
-      "expected {1}",
-      compile_time_binding_stack_.all_values_size(),
-      scope.next_compile_time_bind_index.index);
+  VerifyNextCompileTimeBindIndex("Pop", scope);
   compile_time_binding_stack_.PopArray();
 }
 
@@ -216,13 +224,7 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
     }
   }
 
-  CARBON_CHECK(
-      scope.entry.next_compile_time_bind_index.index ==
-          static_cast<int32_t>(compile_time_binding_stack_.all_values_size()),
-      "Wrong number of entries in compile-time binding stack when restoring, "
-      "have {0}, expected {1}",
-      compile_time_binding_stack_.all_values_size(),
-      scope.entry.next_compile_time_bind_index.index);
+  VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
   if (scope.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back(

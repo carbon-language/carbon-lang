@@ -120,13 +120,13 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2.decl
 // CHECK:STDOUT:     .ExternOrderAndConflict = %ExternOrderAndConflict.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %WrongOrder.decl: %WrongOrder.type = fn_decl @WrongOrder [template = constants.%WrongOrder] {}
-// CHECK:STDOUT:   %DuplicateVirtual.decl: %DuplicateVirtual.type = fn_decl @DuplicateVirtual [template = constants.%DuplicateVirtual] {}
-// CHECK:STDOUT:   %TwoAccess.decl: %TwoAccess.type = fn_decl @TwoAccess [template = constants.%TwoAccess] {}
-// CHECK:STDOUT:   %ModifiersConflict.decl: %ModifiersConflict.type = fn_decl @ModifiersConflict [template = constants.%ModifiersConflict] {}
-// CHECK:STDOUT:   %InvalidModifier.decl: %InvalidModifier.type = fn_decl @InvalidModifier [template = constants.%InvalidModifier] {}
-// CHECK:STDOUT:   %ModifiersConflict2.decl: %ModifiersConflict2.type = fn_decl @ModifiersConflict2 [template = constants.%ModifiersConflict2] {}
-// CHECK:STDOUT:   %ExternOrderAndConflict.decl: %ExternOrderAndConflict.type = fn_decl @ExternOrderAndConflict [template = constants.%ExternOrderAndConflict] {}
+// CHECK:STDOUT:   %WrongOrder.decl: %WrongOrder.type = fn_decl @WrongOrder [template = constants.%WrongOrder] {} {}
+// CHECK:STDOUT:   %DuplicateVirtual.decl: %DuplicateVirtual.type = fn_decl @DuplicateVirtual [template = constants.%DuplicateVirtual] {} {}
+// CHECK:STDOUT:   %TwoAccess.decl: %TwoAccess.type = fn_decl @TwoAccess [template = constants.%TwoAccess] {} {}
+// CHECK:STDOUT:   %ModifiersConflict.decl: %ModifiersConflict.type = fn_decl @ModifiersConflict [template = constants.%ModifiersConflict] {} {}
+// CHECK:STDOUT:   %InvalidModifier.decl: %InvalidModifier.type = fn_decl @InvalidModifier [template = constants.%InvalidModifier] {} {}
+// CHECK:STDOUT:   %ModifiersConflict2.decl: %ModifiersConflict2.type = fn_decl @ModifiersConflict2 [template = constants.%ModifiersConflict2] {} {}
+// CHECK:STDOUT:   %ExternOrderAndConflict.decl: %ExternOrderAndConflict.type = fn_decl @ExternOrderAndConflict [template = constants.%ExternOrderAndConflict] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongOrder();

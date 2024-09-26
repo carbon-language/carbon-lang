@@ -291,7 +291,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -306,7 +306,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -321,7 +321,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -338,7 +338,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -361,8 +361,8 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -381,7 +381,7 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -401,8 +401,8 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -417,8 +417,8 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -436,11 +436,11 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -462,8 +462,8 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -483,8 +483,8 @@ extern class C;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -575,7 +575,7 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -595,7 +595,7 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -618,7 +618,7 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -644,7 +644,7 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -66,7 +66,7 @@ fn NS.Foo();
 // CHECK:STDOUT:     .NS = %NS.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %NS.decl: %NS.type = fn_decl @NS [template = constants.%NS] {}
+// CHECK:STDOUT:   %NS.decl: %NS.type = fn_decl @NS [template = constants.%NS] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
@@ -103,7 +103,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc14: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();

@@ -16,6 +16,11 @@ auto StartGenericDecl(Context& context) -> void;
 // Start processing a declaration or definition that might be a generic entity.
 auto StartGenericDefinition(Context& context) -> void;
 
+// Discard the information about the current generic entity. This should be
+// called instead of `FinishGenericDecl` if the corresponding `Generic` object
+// would not actually be used, or when recovering from an error.
+auto DiscardGenericDecl(Context& context) -> void;
+
 // Finish processing a potentially generic declaration and produce a
 // corresponding generic object. Returns SemIR::GenericId::Invalid if this
 // declaration is not actually generic.

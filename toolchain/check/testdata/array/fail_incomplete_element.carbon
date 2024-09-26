@@ -51,7 +51,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc19_21: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc19_22: type = array_type %.loc19_21, %Incomplete [template = constants.%.2]

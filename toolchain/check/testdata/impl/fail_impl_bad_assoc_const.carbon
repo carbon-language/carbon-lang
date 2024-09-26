@@ -48,12 +48,12 @@ impl bool as I {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
+// CHECK:STDOUT:   impl_decl @impl {} {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type, %.loc16_6.1 [template = bool]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

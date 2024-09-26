@@ -212,6 +212,13 @@ class ScopeStack {
            scope_stack_.back().lexical_lookup_has_load_error;
   }
 
+  // Checks that the provided scope's `next_compile_time_bind_index` matches the
+  // full size of the current `compile_time_binding_stack_`. The values should
+  // always match, and this is used to validate the correspondence during
+  // significant changes.
+  auto VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
+                                      const ScopeStackEntry& scope) -> void;
+
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
 

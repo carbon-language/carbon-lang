@@ -145,6 +145,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref.var: ref %.10 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
+// CHECK:STDOUT:     %X.patt: %.9 = symbolic_binding_pattern X 0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_22.1: %.6 = tuple_literal (%int.make_type_32.loc7_14, %int.make_type_32.loc7_19)
@@ -153,28 +155,28 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc7_22.4: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.5: type = converted %int.make_type_32.loc7_19, %.loc7_22.4 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.6: type = converted %.loc7_22.1, constants.%.9 [template = constants.%.9]
-// CHECK:STDOUT:     %X.loc7_9.1: %.9 = param X, runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc7_9.2: %.9 = bind_symbolic_name X 0, %X.loc7_9.1 [symbolic = @C.%X (constants.%X)]
+// CHECK:STDOUT:     %X.param: %.9 = param X, runtime_param<invalid>
+// CHECK:STDOUT:     %X.loc7: %.9 = bind_symbolic_name X 0, %X.param [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %.loc9_14: i32 = int_literal 1 [template = constants.%.15]
 // CHECK:STDOUT:     %.loc9_17: i32 = int_literal 2 [template = constants.%.16]
 // CHECK:STDOUT:     %.loc9_18: %.9 = tuple_literal (%.loc9_14, %.loc9_17)
 // CHECK:STDOUT:     %tuple: %.9 = tuple_value (%.loc9_14, %.loc9_17) [template = constants.%tuple.5]
 // CHECK:STDOUT:     %.loc9_12: %.9 = converted %.loc9_18, %tuple [template = constants.%tuple.5]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.5) [template = constants.%C.3]
-// CHECK:STDOUT:     @F.%return: ref %C.3 = var <return slot>
+// CHECK:STDOUT:     %return: ref %C.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(file.%X.loc7_9.2: %.9) {
-// CHECK:STDOUT:   %X: %.9 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT: generic class @C(%X.loc7: %.9) {
+// CHECK:STDOUT:   %X.1: %.9 = bind_symbolic_name X 0 [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %.18 [template = constants.%.19]
+// CHECK:STDOUT:     %.loc7_26: <witness> = complete_type_witness %.18 [template = constants.%.19]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
@@ -223,11 +225,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
-// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %X.1 => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5) {
-// CHECK:STDOUT:   %X => constants.%tuple.5
+// CHECK:STDOUT:   %X.1 => constants.%tuple.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -266,8 +268,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref Implicit//default, inst+17, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref Implicit//default, inst+57, loaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+121, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+104, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+122, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -280,7 +282,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Implicit//default, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Implicit//default, inst+108, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -434,8 +436,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+57, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+121, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+104, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+122, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -446,7 +448,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+107, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+108, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -546,8 +548,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+57, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+103, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+121, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+104, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+122, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
@@ -559,13 +561,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+107, unloaded
-// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+37, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.2 (%.12) = import_ref Core//prelude/operators/as, inst+59, loaded [symbolic = @ImplicitAs.%.3 (constants.%.17)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+108, unloaded
+// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.2 (%.12) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.17)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

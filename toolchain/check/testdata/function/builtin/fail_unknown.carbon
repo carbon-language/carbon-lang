@@ -40,7 +40,7 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT:     .UnknownBuiltin = %UnknownBuiltin.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {}
+// CHECK:STDOUT:   %UnknownBuiltin.decl: %UnknownBuiltin.type = fn_decl @UnknownBuiltin [template = constants.%UnknownBuiltin] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnknownBuiltin();

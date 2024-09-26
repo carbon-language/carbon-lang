@@ -1442,6 +1442,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:
+    case SemIR::BindingPattern::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
@@ -1455,6 +1456,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
+    case SemIR::SymbolicBindingPattern::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;

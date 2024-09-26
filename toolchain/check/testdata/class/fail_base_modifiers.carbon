@@ -94,11 +94,11 @@ class C4 {
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
-// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}
-// CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {}
-// CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
+// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
+// CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {} {}
+// CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

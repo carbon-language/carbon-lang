@@ -868,6 +868,7 @@ class ImportRefResolver {
         .generic_id = MakeIncompleteGeneric(decl_id, import_base.generic_id),
         .first_param_node_id = Parse::NodeId::Invalid,
         .last_param_node_id = Parse::NodeId::Invalid,
+        .pattern_block_id = SemIR::InstBlockId::Invalid,
         .implicit_param_refs_id = import_base.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty
                                       : SemIR::InstBlockId::Invalid,

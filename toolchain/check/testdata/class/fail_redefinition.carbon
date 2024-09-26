@@ -85,18 +85,18 @@ fn Class.I() {}
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.4] {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {}
-// CHECK:STDOUT:   %H.decl: %H.type.1 = fn_decl @H.1 [template = constants.%H.1] {}
-// CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.4] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.1 = fn_decl @H.1 [template = constants.%H.1] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %H.decl: %H.type.1 = fn_decl @H.1 [template = constants.%H.1] {}
-// CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.1 = fn_decl @H.1 [template = constants.%H.1] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {} {}
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -108,9 +108,9 @@ fn Class.I() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {}
-// CHECK:STDOUT:   %H.decl: %H.type.2 = fn_decl @H.2 [template = constants.%H.2] {}
-// CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {}
+// CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.2 = fn_decl @H.2 [template = constants.%H.2] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {} {}
 // CHECK:STDOUT:   %.loc28: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

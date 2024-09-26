@@ -39,7 +39,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:     .UseA = %UseA
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %I.ref.loc23: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]

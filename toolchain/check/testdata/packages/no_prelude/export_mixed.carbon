@@ -132,8 +132,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -57,11 +57,11 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc22_14.2: type = converted %int.make_type_32, %.loc22_14.1 [template = i32]
-// CHECK:STDOUT:     @.1.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +69,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   return %.loc22
+// CHECK:STDOUT:   %.loc22_27: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   return %.loc22_27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

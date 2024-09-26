@@ -83,7 +83,7 @@ fn D();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -106,8 +106,8 @@ fn D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl.loc4: %A.type = fn_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc4: %A.type = fn_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -147,7 +147,7 @@ fn D();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
@@ -178,7 +178,7 @@ fn D();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
@@ -201,7 +201,7 @@ fn D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C();
@@ -226,7 +226,7 @@ fn D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
