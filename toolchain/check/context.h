@@ -413,6 +413,12 @@ class Context {
     return param_and_arg_refs_stack_;
   }
 
+  auto params_stack() -> InstBlockStack& { return params_stack_; }
+
+  auto param_patterns_stack() -> InstBlockStack& {
+    return param_patterns_stack_;
+  }
+
   auto args_type_info_stack() -> InstBlockStack& {
     return args_type_info_stack_;
   }
@@ -552,6 +558,10 @@ class Context {
 
   // The stack of instruction blocks being used for param and arg ref blocks.
   ParamAndArgRefsStack param_and_arg_refs_stack_;
+
+  // FIXME clarify relationship with param_and_args...
+  InstBlockStack params_stack_;
+  InstBlockStack param_patterns_stack_;
 
   // The stack of instruction blocks being used for type information while
   // processing arguments. This is used in parallel with

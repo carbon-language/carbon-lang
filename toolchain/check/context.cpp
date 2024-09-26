@@ -49,8 +49,9 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
-      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_,
-                                pattern_node_stack_),
+      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
+      params_stack_("params_stack_", sem_ir, vlog_stream),
+      param_patterns_stack_("param_patterns_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
@@ -85,6 +86,8 @@ auto Context::VerifyOnFinish() -> void {
   inst_block_stack_.VerifyOnFinish();
   pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
+  params_stack_.VerifyOnFinish();
+  param_patterns_stack_.VerifyOnFinish();
   CARBON_CHECK(pattern_node_stack_.empty());
 }
 
@@ -1142,6 +1145,8 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   inst_block_stack_.PrintForStackDump(formatter, Indent, output);
   pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
   param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
+  params_stack_.PrintForStackDump(formatter, Indent, output);
+  param_patterns_stack_.PrintForStackDump(formatter, Indent, output);
   args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
 }
 
