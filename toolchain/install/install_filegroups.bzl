@@ -116,9 +116,10 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     strip_prefix = strip_prefix.from_pkg(prefix),
                 )
             elif "symlink" in entry:
+                symlink_to = "{0}/{1}/{2}".format(prefix, dir, entry["symlink"])
                 symlink_file(
                     name = prefixed_path,
-                    symlink_relative = entry["symlink"],
+                    symlink_label = symlink_to,
                 )
                 pkg_mklink(
                     name = pkg_path,

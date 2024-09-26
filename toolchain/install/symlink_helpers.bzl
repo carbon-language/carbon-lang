@@ -52,12 +52,6 @@ def _symlink_file_impl(ctx):
             output = out,
             target_file = ctx.file.symlink_label,
         )
-    elif ctx.attr.symlink_relative:
-        out = ctx.actions.declare_symlink(ctx.label.name)
-        ctx.actions.symlink(
-            output = out,
-            target_path = ctx.attr.symlink_relative,
-        )
     else:
         fail("Missing symlink target")
 
@@ -79,6 +73,5 @@ symlink_file = rule(
             cfg = "target",
         ),
         "symlink_label": attr.label(allow_single_file = True),
-        "symlink_relative": attr.string(),
     },
 )
