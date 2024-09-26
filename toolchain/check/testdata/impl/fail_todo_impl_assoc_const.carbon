@@ -10,7 +10,7 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant`
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl as non-interface`
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl bool as I where .T = bool {}
@@ -26,6 +26,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = where_expr %.1, (<unexpected>.inst+26.loc16_25) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,6 +60,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
 // CHECK:STDOUT:     %bool.make_type.loc16_27: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc16_16: type = where_expr %.1, (<unexpected>.inst+26.loc16_25) [template = constants.%.5]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,7 +75,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: bool as %.1 {
+// CHECK:STDOUT: impl @impl: bool as %.5 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

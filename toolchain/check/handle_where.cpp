@@ -87,13 +87,17 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::WhereExprId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();
-  // FIXME: Pop WhereIntroducer node with type_id from context.node_stack()
-  // auto requirements_id = context.args_type_info_stack().Pop();
-  // FIXME: AddAndPush instruction for newly formed restricted constraint type.
+  SemIR::TypeId lhs_type_id =
+      context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
+  SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
+  context.AddInstAndPush<SemIR::WhereExpr>(
+      node_id, {.type_id = SemIR::TypeId::TypeType,
+                .lhs_id = lhs_type_id,
+                .requirements_id = requirements_id});
   return true;
 }
 
