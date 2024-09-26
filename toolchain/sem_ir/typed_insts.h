@@ -745,6 +745,7 @@ struct InterfaceWitness {
        .constant_kind = InstConstantKind::Conditional,
        .is_lowered = false});
 
+  // Always the builtin witness type.
   TypeId type_id;
   InstBlockId elements_id;
 };

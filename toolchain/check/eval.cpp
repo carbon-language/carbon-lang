@@ -1226,10 +1226,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::UnboundElementType::class_type_id,
           &SemIR::UnboundElementType::element_type_id);
-    case SemIR::WhereExpr::Kind:
-      // TODO: This currently ignores the requirements.
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::WhereExpr::lhs_id);
 
     // Initializers evaluate to a value of the object representation.
     case SemIR::ArrayInit::Kind:
@@ -1404,6 +1400,11 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       // TODO: Once we start tracking the witness in the facet value, remove it
       // here. For now, we model a facet value as just a type.
       return eval_context.GetConstantValue(typed_inst.facet_id);
+    }
+    case CARBON_KIND(SemIR::WhereExpr typed_inst): {
+      // TODO: This currently ignores the requirements and just produces the
+      // left-hand type argument to the `where`.
+      return eval_context.GetConstantValue(typed_inst.lhs_id);
     }
 
     // `not true` -> `false`, `not false` -> `true`.
