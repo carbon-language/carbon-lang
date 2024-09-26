@@ -14,48 +14,23 @@ namespace Carbon {
 
 // Locates the toolchain installation and provides paths to various components.
 //
-// The Carbon toolchain expects to be installed into some install prefix. For
-// example, this is expected to be similar to the CMake install prefix:
+// The Carbon toolchain expects to be installed into some install prefix; see
+// `prefix_` for details. When locating an install, we verify it with
+// `CheckMarkerFile`. When errors occur, `SetError` makes `error()`
+// available for diagnostics and clears the install prefix (leaving things
+// minimally functional).
 //
-// - `C:/Program Files/Carbon` or similar on Windows.
-// - `/usr` or `/usr/local` on Linux and most BSDs.
-// - `/opt/homebrew` or similar on macOS with Homebrew.
-// - `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix_root`
-//   for unit tests and just-built binaries during development.
+// The factory methods locate the install prefix based on their use-case:
 //
-// See https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
-// for more details. While we don't build the toolchain with CMake, we expect
-// our installation to behave in a similar and compatible way.
-//
-// There are multiple ways of locating an install's prefix:
-//   - MakeExeRelative for command line tools in an install.
-//   - MakeForBazelRunfiles for locating through Bazel's runfile tree.
-//   - Make for an explicit path, for example in tests.
-//
-// When locating an install, we verify it by looking for the
-// `carbon_install.txt` marker file at a specific location below. When errors
-// occur, the install prefix is made empty, and error() can be used for
-// diagnostics; InstallPaths remains minimally functional.
-//
-// Within this prefix, we expect a hierarchy on Unix-y platforms:
-//
-// - `prefix_root/bin/carbon` - the main CLI driver
-// - `prefix_root/lib/carbon/carbon_install.txt` - a marker for the install
-// - `prefix_root/lib/carbon/...` - private data & binaries
-//
-// This is loosely based on the FHS (Filesystem Hierarchy Standard).
+//   - `MakeExeRelative` for command line tools in an install.
+//   - `MakeForBazelRunfiles` for locating through Bazel's runfile tree.
+//   - `Make` for an explicit path, for example in tests.
 //
 // An instance of this class provides methods that query for specific paths
 // within the install. Note that we want to abstract away any platform
-// differences in the installation layout, and so while there are some broad
-// paths available here, like the `prefix` method, those should primarily be
-// used for logging or debugging. When a specific part of the install is needed,
-// a dedicated accessor should be added that computes the path for that
-// component.
-//
-// Path accessor methods on the class return `llvm::StringRef` for any paths
-// that are stored in the class, and a `std::string` for any that are computed
-// on demand.
+// differences in the installation layout. When a specific part of the install
+// is needed, a dedicated accessor should be added that computes the path for
+// that component.
 //
 // TODO: Need to check the installation structure of LLVM on Windows and figure
 // out what Carbon's should be within a Windows prefix and how much of the
@@ -103,23 +78,15 @@ class InstallPaths {
     return error_;
   }
 
-  // The computed installation prefix. This should correspond to the
-  // `prefix_root` directory in Bazel's output, or to some prefix the toolchain
-  // is installed into on a system such as `/usr/local` or `/home/$USER`.
-  //
-  // This will be an absolute path. We keep an absolute path for when the
-  // command line uses a relative path (`./bin/carbon`) and the working
-  // directory changes after initialization (for example, to Bazel's working
-  // directory).
-  //
-  // In the event of an error, this will be the empty string.
-  auto prefix() const -> llvm::StringRef { return prefix_; }
-
-  auto driver() const -> std::string;
+  // The directory containing the `Core` package. Computed on demand.
   auto core_package() const -> std::string;
+
+  // The directory containing LLVM install binaries. Computed on demand.
   auto llvm_install_bin() const -> std::string;
 
  private:
+  friend class InstallPathsTestPeer;
+
   InstallPaths() { SetError("No prefix provided!"); }
   explicit InstallPaths(llvm::StringRef prefix) : prefix_(prefix) {}
 
@@ -127,11 +94,35 @@ class InstallPaths {
   // which should use the current working directory.
   auto SetError(llvm::Twine message) -> void;
 
-  // Check that the install paths have a marker file at the expected location,
-  // and if not calls `SetError` with the relevant error message.
+  // Check that the install paths have a marker file at
+  // `prefix()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
+  // relevant error message.
   auto CheckMarkerFile() -> void;
 
+  // The computed installation prefix. This will be an absolute path. We keep an
+  // absolute path for when the command line uses a relative path
+  // (`./bin/carbon`) and the working directory changes after initialization
+  // (for example, to Bazel's working directory). In the event of an error, this
+  // will be the empty string.
+  //
+  // When run from bazel (for example, in unit tests or development binaries)
+  // this will look like:
+  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix_root`
+  //
+  // When installed, it's expected to be similar to the CMake install prefix:
+  //
+  // - `C:/Program Files/Carbon` or similar on Windows.
+  // - `/usr` or `/usr/local` on Linux and most BSDs.
+  // - `/opt/homebrew` or similar on macOS with Homebrew.
+  //
+  // See https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
+  // for more details. While we don't build the toolchain with CMake, we expect
+  // our installation to behave in a similar and compatible way.
+  //
+  // The hierarchy of files beneath the install prefix can be found in the
+  // BUILD's `install_dirs`.
   llvm::SmallString<256> prefix_;
+
   std::optional<std::string> error_;
 };
 
