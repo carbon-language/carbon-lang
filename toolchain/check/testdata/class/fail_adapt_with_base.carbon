@@ -9,14 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_adapt_with_base.carbon
 class Simple {};
 base class AdaptWithVirtual {
-  adapt Simple;
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+6]]:3: error: `virtual` not allowed on `fn` declaration in an adapter definition
-  // CHECK:STDERR:   virtual fn F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-5]]:1: note: containing definition here
-  // CHECK:STDERR: base class AdaptWithVirtual {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   virtual fn F();
+  adapt Simple;
 }
 
 // CHECK:STDOUT: --- fail_adapt_with_base.carbon
@@ -26,10 +20,10 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AdaptWithVirtual: type = class_type @AdaptWithVirtual [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %Simple [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,15 +59,15 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithVirtual {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:   adapt_decl %Simple
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %Simple [template = constants.%.5]
+// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %Simple [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithVirtual
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: virtual fn @F();
 // CHECK:STDOUT:
