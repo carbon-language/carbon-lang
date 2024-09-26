@@ -577,9 +577,9 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
-auto MakeIntTypeResult(Context& context, SemIRLoc loc, SemIR::IntKind int_kind,
-                       SemIR::InstId width_id, Phase phase)
-    -> SemIR::ConstantId {
+static auto MakeIntTypeResult(Context& context, SemIRLoc loc,
+                              SemIR::IntKind int_kind, SemIR::InstId width_id,
+                              Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
       .type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::TypeType),
       .int_kind = int_kind,
@@ -1103,8 +1103,10 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   return SemIR::ConstantId::NotConstant;
 }
 
-auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
-                          SemIR::Inst inst) -> SemIR::ConstantId {
+// Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
+static auto TryEvalInstInContext(EvalContext& eval_context,
+                                 SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
   CARBON_KIND_SWITCH(inst) {
