@@ -2032,6 +2032,7 @@ class ImportRefResolver {
       // state.
       // TODO: Import the generic eval block rather than calling
       // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
+      // NOLINTNEXTLINE(modernize-loop-convert)
       for (size_t i = 0; i != pending_generics_.size(); ++i) {
         FinishPendingGeneric(pending_generics_[i]);
       }
