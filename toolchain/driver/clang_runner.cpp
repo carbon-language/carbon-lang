@@ -135,7 +135,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // busybox of LLD as well, and having even the subprocesses consistently run
   // the Carbon install toolchain and not a system toolchain whenever possible.
   driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) -> int {
-    llvm::ToolContext tool_context;
+    // TODO: Try to a better path for argv[0] (maybe in the LLVM install paths).
+    // This works for now.
+    llvm::ToolContext tool_context = {
+        .Path = argv[0], .PrependArg = "clang", .NeedsPrependArg = true};
     return clang_main(argv.size(), const_cast<char**>(argv.data()),
                       tool_context);
   };
