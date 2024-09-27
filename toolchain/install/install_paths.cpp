@@ -146,13 +146,6 @@ auto InstallPaths::CheckMarkerFile() -> void {
   }
 }
 
-auto InstallPaths::driver() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
-  // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix, "bin/carbon");
-  return path.str().str();
-}
-
 auto InstallPaths::core_package() const -> std::string {
   llvm::SmallString<256> path(prefix_);
   // TODO: Adjust this to work equally well on Windows.

@@ -111,6 +111,9 @@ build:linux --define=pfm=1
 # Enable TCMalloc on Linux as well.
 build:linux --custom_malloc=@tcmalloc//tcmalloc
 
+# Disables `actions.declare_symlink`. Done for cross-environment support.
+build --allow_unresolved_symlinks=false
+
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
 try-import %workspace%/user.bazelrc
