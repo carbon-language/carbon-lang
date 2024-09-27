@@ -5,7 +5,7 @@
 """Provides helpers for cc rules. Intended for general consumption."""
 
 # The hermetic llvm-symbolizer target.
-llvm_symbolizer = "@llvm-project//llvm:llvm-symbolizer"
+_llvm_symbolizer = "@llvm-project//llvm:llvm-symbolizer"
 
 def cc_env():
     """Returns standard environment settings for a cc_binary.
@@ -13,11 +13,11 @@ def cc_env():
     In use, this should set both `data` and `env`, as in:
 
     ```
-    load("//bazel/cc_toolchains:defs.bzl", "cc_env", "llvm_symbolizer")
+    load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
 
     cc_binary(
       ...
-      data = [llvm_symbolizer],
+      data = cc_env_data(),
       env = cc_env(),
     )
     ```
@@ -25,7 +25,7 @@ def cc_env():
     We're currently setting this on a target-by-target basis, mainly because
     it's difficult to modify default behaviors.
     """
-    env = {"LLVM_SYMBOLIZER_PATH": "$(location {0})".format(llvm_symbolizer)}
+    env = {"LLVM_SYMBOLIZER_PATH": "$(location {0})".format(_llvm_symbolizer)}
 
     # On macOS, there's a nano zone allocation warning due to asan (arises
     # in fastbuild/dbg). This suppresses the warning in `bazel run`.
@@ -37,3 +37,10 @@ def cc_env():
         "//bazel/cc_toolchains:macos_asan": env.update({"MallocNanoZone": "0"}),
         "//conditions:default": env,
     })
+
+def cc_env_data():
+    """Returns data needed for cc_env().
+
+    Set up as a function mainly for parity, and in case we need future changes.
+    """
+    return [_llvm_symbolizer]

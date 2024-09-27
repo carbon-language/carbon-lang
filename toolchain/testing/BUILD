@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env", "llvm_symbolizer")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -12,7 +12,7 @@ file_test(
     name = "file_test",
     size = "small",
     srcs = ["file_test.cpp"],
-    data = [llvm_symbolizer],
+    data = cc_env_data(),
     env = cc_env(),
     tests = [
         "//toolchain/check:testdata",
