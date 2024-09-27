@@ -68,13 +68,13 @@ impl library "foo";
 
 // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+10]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE-5]]:6: In import.
 // CHECK:STDERR: impl library "foo";
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: foo.carbon:4:13: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: class Class(T:! type);
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
 class Class(U:! type) {
   // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+3]]:10: ERROR: Name `T` not found.
@@ -131,12 +131,14 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [template = constants.%CompleteClass.1] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc6: type = param_pattern %T.patt.loc6 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -257,9 +259,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+8, loaded [template = constants.%Class.1]
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+18, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.2 = import_ref Main//foo, inst+60, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+9, loaded [template = constants.%Class.1]
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.1]
+// CHECK:STDOUT:   %import_ref.3: %F.type.2 = import_ref Main//foo, inst+62, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -270,9 +272,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+40, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,6 +290,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = constants.%T.patt]
+// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
@@ -421,9 +424,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+18, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+60, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.1]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+62, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
@@ -435,9 +438,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.6: @CompleteClass.%.1 (%.3) = import_ref Main//foo, inst+33, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, inst+40, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.6: @CompleteClass.%.1 (%.3) = import_ref Main//foo, inst+35, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, inst+42, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -596,9 +599,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+18, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+60, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.1]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+62, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -609,9 +612,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+40, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -726,9 +729,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+8, loaded [template = constants.%Class.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+60, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+9, loaded [template = constants.%Class.1]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+62, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -752,6 +755,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %U.patt.loc14: type = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %.loc14: type = param_pattern %U.patt.loc14 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %U.loc14: type = bind_symbolic_name U 0, %param [symbolic = %U.1 (constants.%U)]

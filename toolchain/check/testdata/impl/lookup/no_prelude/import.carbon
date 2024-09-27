@@ -143,6 +143,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Impl.import = import Impl
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc4: %C = param_pattern %c.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
@@ -168,7 +169,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   .Self = imports.%import_ref.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c.patt: %C) {
+// CHECK:STDOUT: fn @G(%.loc4: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]

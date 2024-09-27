@@ -1434,6 +1434,9 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case CARBON_KIND(SemIR::NameRef typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
+    case CARBON_KIND(SemIR::ParamPattern param_pattern): {
+      return eval_context.GetConstantValue(param_pattern.subpattern_id);
+    }
     case CARBON_KIND(SemIR::Converted typed_inst): {
       return eval_context.GetConstantValue(typed_inst.result_id);
     }

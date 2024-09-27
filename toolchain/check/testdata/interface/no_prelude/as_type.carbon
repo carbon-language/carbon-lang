@@ -30,6 +30,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %.1 = binding_pattern e
+// CHECK:STDOUT:     %.loc13: %.1 = param_pattern %e.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
@@ -45,7 +46,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%e.patt: %.1) {
+// CHECK:STDOUT: fn @F(%.loc13: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

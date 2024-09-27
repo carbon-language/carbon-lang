@@ -73,6 +73,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc23: %C = param_pattern %c.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -120,7 +121,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c.patt: %C) {
+// CHECK:STDOUT: fn @G(%.loc23: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %.3 = name_ref G, @C.%G [template = constants.%.4]

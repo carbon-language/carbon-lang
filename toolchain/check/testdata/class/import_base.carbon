@@ -83,6 +83,7 @@ fn Run() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
+// CHECK:STDOUT:     %.loc5: %Base = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %param: %Base = param
@@ -90,6 +91,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
+// CHECK:STDOUT:     %.loc6: %Base = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %param: %Base = param
@@ -122,9 +124,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.patt: %Base]();
+// CHECK:STDOUT: fn @F[%.loc5: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[%self.patt: %Base]();
+// CHECK:STDOUT: fn @Unused[%.loc6: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -155,7 +157,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+39, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+41, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -166,12 +168,12 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+9, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+17, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref Main//a, inst+29, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+40, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.11 = import_ref Main//a, inst+31, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+37, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+46, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,5 +240,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.patt: %Base]();
+// CHECK:STDOUT: fn @F[%.1: %Base]();
 // CHECK:STDOUT:

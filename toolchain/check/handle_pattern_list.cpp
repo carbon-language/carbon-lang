@@ -15,15 +15,24 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
   return true;
 }
 
+static auto ConsumeTrailingParam(Context& context) {
+  auto [node_id, param_id] = context.node_stack().PopPatternWithNodeId();
+  context.params_stack().AddInstId(param_id);
+  auto pattern_id = context.pattern_node_stack().Pop<SemIR::InstId>(node_id);
+  auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
+      node_id, {
+                   .type_id = context.insts().Get(pattern_id).type_id(),
+                   .subpattern_id = pattern_id,
+               });
+  context.param_patterns_stack().AddInstId(param_pattern_id);
+}
+
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   if (!context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
-    auto [node_id, inst_id] = context.node_stack().PopPatternWithNodeId();
-    context.params_stack().AddInstId(inst_id);
-    context.param_patterns_stack().AddInstId(
-        context.pattern_node_stack().Pop<SemIR::InstId>(node_id));
+    ConsumeTrailingParam(context);
   }
   context.node_stack().Push(node_id, context.params_stack().Pop());
   context.pattern_node_stack().Push(node_id,
@@ -43,10 +52,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
-  auto [node_id, inst_id] = context.node_stack().PopPatternWithNodeId();
-  context.params_stack().AddInstId(inst_id);
-  context.param_patterns_stack().AddInstId(
-      context.pattern_node_stack().Pop<SemIR::InstId>(node_id));
+  ConsumeTrailingParam(context);
   return true;
 }
 
@@ -54,10 +60,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   if (!context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
-    auto [node_id, inst_id] = context.node_stack().PopPatternWithNodeId();
-    context.params_stack().AddInstId(inst_id);
-    context.param_patterns_stack().AddInstId(
-        context.pattern_node_stack().Pop<SemIR::InstId>(node_id));
+    ConsumeTrailingParam(context);
   }
   context.node_stack().Push(node_id, context.params_stack().Pop());
   context.pattern_node_stack().Push(node_id,

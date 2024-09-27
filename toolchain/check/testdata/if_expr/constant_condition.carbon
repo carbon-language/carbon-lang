@@ -113,6 +113,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [template = constants.%PartiallyConstant] {
 // CHECK:STDOUT:     %t.patt: type = binding_pattern t
+// CHECK:STDOUT:     %.loc28_23: type = param_pattern %t.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %t: type = bind_name t, %param
@@ -239,7 +240,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   return %.loc25_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartiallyConstant(%t.patt: type) -> i32 {
+// CHECK:STDOUT: fn @PartiallyConstant(%.loc28_23: type) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc29_13: bool = bool_literal true [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc29_13 br !if.expr.then.loc29 else br !if.expr.else.loc29

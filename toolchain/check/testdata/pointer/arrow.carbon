@@ -60,9 +60,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.patt: %.2 = binding_pattern ptr
+// CHECK:STDOUT:     %.loc16_11: %.2 = param_pattern %ptr.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc16_14: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %param: %.2 = param
 // CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %param
 // CHECK:STDOUT:   }
@@ -71,6 +72,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %.loc12: %C = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -86,9 +88,9 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .field = %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member[%self.patt: %C]();
+// CHECK:STDOUT: fn @Member[%.loc12: %C]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%ptr.patt: %.2) {
+// CHECK:STDOUT: fn @Foo(%.loc16_11: %.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ptr.ref.loc17: %.2 = name_ref ptr, %ptr
 // CHECK:STDOUT:   %.loc17_4.1: ref %C = deref %ptr.ref.loc17

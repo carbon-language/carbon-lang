@@ -68,7 +68,9 @@ interface Interface {
 // CHECK:STDOUT:   %.loc16: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc21_17: i32 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc21_25: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
@@ -107,7 +109,7 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.patt: i32, %b.patt: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%.loc21_17: i32, %.loc21_25: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

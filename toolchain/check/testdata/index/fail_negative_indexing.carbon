@@ -63,11 +63,11 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+79, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+81, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.9 = import_ref Core//prelude/operators/arithmetic, inst+98, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+93, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+84, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+86, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.9 = import_ref Core//prelude/operators/arithmetic, inst+104, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+99, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+99, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -120,7 +120,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.8) {
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.patt: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
+// CHECK:STDOUT:   fn[%.1: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

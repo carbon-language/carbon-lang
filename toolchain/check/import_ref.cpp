@@ -683,7 +683,10 @@ class ImportRefResolver {
           GetLocalConstantId(import_ir_.insts().Get(pattern_id).type_id());
       // If the parameter is a symbolic binding, build the
       // SymbolicBindingPattern constant.
-      auto binding_id = pattern_id;
+      auto param_id = pattern_id;
+      auto param_inst = import_ir_.insts().GetAs<SemIR::ParamPattern>(param_id);
+      auto binding_id = param_inst.subpattern_id;
+      CARBON_CHECK(binding_id.is_valid()) << param_inst.type_id;
       auto binding_inst = import_ir_.insts().Get(binding_id);
       if (auto addr = binding_inst.TryAs<SemIR::AddrPattern>()) {
         binding_id = addr->inner_id;
@@ -778,7 +781,7 @@ class ImportRefResolver {
   }
 
   // FIXME comment
-  // FIXME code duplication
+  // FIXME code duplication?
   auto GetLocalParamPatternsId(SemIR::InstBlockId param_patterns_id,
                                const llvm::SmallVector<ParamData>& params_data)
       -> SemIR::InstBlockId {
@@ -789,15 +792,19 @@ class ImportRefResolver {
     const auto& param_patterns =
         import_ir_.inst_blocks().Get(param_patterns_id);
     llvm::SmallVector<SemIR::InstId> new_patterns;
-    for (auto [pattern_id, param_data] :
+    for (auto [param_pattern_id, param_data] :
          llvm::zip(param_patterns, params_data)) {
       // Figure out the param structure. This echoes
       // Function::GetParamFromParamRefId.
       // TODO: Consider a different parameter handling to simplify import logic.
-      auto inst = import_ir_.insts().Get(pattern_id);
+      auto param_pattern =
+          import_ir_.insts().GetAs<SemIR::ParamPattern>(param_pattern_id);
+
+      auto addr_pattern_id = param_pattern.subpattern_id;
+      auto inst = import_ir_.insts().Get(addr_pattern_id);
       auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
 
-      auto binding_id = pattern_id;
+      auto binding_id = addr_pattern_id;
 
       if (addr_inst) {
         binding_id = addr_inst->inner_id;
@@ -844,9 +851,12 @@ class ImportRefResolver {
       }
       if (addr_inst) {
         new_param_id = context_.AddInstInNoBlock<SemIR::AddrPattern>(
-            AddImportIRInst(pattern_id),
+            AddImportIRInst(addr_pattern_id),
             {.type_id = type_id, .inner_id = new_param_id});
       }
+      new_param_id = context_.AddInstInNoBlock<SemIR::ParamPattern>(
+          AddImportIRInst(param_pattern_id),
+          {.type_id = type_id, .subpattern_id = new_param_id});
       new_patterns.push_back(new_param_id);
     }
     return context_.inst_blocks().Add(new_patterns);

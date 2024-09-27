@@ -83,6 +83,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %If1.decl: %If1.type = fn_decl @If1 [template = constants.%If1] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %.loc11_9: bool = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -96,6 +97,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If2.decl: %If2.type = fn_decl @If2 [template = constants.%If2] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %.loc22_9: bool = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc22_11.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -109,6 +111,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If3.decl: %If3.type = fn_decl @If3 [template = constants.%If3] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %.loc33_9: bool = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc33_11.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -126,7 +129,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If1(%b.patt: bool) -> i32 {
+// CHECK:STDOUT: fn @If1(%.loc11_9: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -141,7 +144,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If2(%b.patt: bool) -> i32 {
+// CHECK:STDOUT: fn @If2(%.loc22_9: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -156,7 +159,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If3(%b.patt: bool) -> i32 {
+// CHECK:STDOUT: fn @If3(%.loc33_9: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

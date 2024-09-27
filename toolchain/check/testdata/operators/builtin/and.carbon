@@ -92,6 +92,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
 // CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:     %.loc25_21: bool = param_pattern %x.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
@@ -263,7 +264,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartialConstant(%x.patt: bool) {
+// CHECK:STDOUT: fn @PartialConstant(%.loc25_21: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc26_13: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   %.loc26_19.1: bool = bool_literal false [template = constants.%.3]

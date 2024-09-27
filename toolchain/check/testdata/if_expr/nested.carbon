@@ -52,8 +52,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: bool = binding_pattern a
+// CHECK:STDOUT:     %.loc11_7: bool = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %.loc11_16: bool = param_pattern %b.patt
 // CHECK:STDOUT:     %c.patt: bool = binding_pattern c
+// CHECK:STDOUT:     %.loc11_25: bool = param_pattern %c.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_9: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type.loc11_9 [template = bool]
@@ -81,7 +84,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.patt: bool, %b.patt: bool, %c.patt: bool) -> i32 {
+// CHECK:STDOUT: fn @F(%.loc11_7: bool, %.loc11_16: bool, %.loc11_25: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   if %a.ref br !if.expr.then.loc12_10 else br !if.expr.else.loc12_10

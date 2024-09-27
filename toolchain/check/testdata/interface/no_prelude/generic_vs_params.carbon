@@ -34,7 +34,7 @@ library "non_generic_implicit_params";
 
 // CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: ERROR: Parameters of generic types must be constant.
 // CHECK:STDERR: interface A[T: type]() {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 interface A[T: type]() {}
 
@@ -44,7 +44,7 @@ library "non_generic_params";
 
 // CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: ERROR: Parameters of generic types must be constant.
 // CHECK:STDERR: interface A(T: type) {}
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~~
 interface A(T: type) {}
 
 // CHECK:STDOUT: --- params.carbon
@@ -97,12 +97,14 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = interface_decl @NotGenericButParams [template = constants.%NotGenericButParams] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = interface_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc6: type = param_pattern %T.patt.loc6 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc8: type = param_pattern %T.patt.loc8 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -258,6 +260,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%.5] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: %GenericAndParams.type.2 = interface_decl @GenericAndParams.2 [template = constants.%GenericAndParams.2] {
 // CHECK:STDOUT:       %U.patt.loc10: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:       %.loc10: type = param_pattern %U.patt.loc10 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %param: type = param
 // CHECK:STDOUT:       %U.loc10: type = bind_symbolic_name U 1, %param [symbolic = %U.1 (constants.%U)]
@@ -351,6 +354,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:     %.loc8: type = param_pattern %T.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_name T, %param
@@ -381,6 +385,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = interface_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:     %.loc7: type = param_pattern %T.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T: type = bind_name T, %param

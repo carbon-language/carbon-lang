@@ -70,7 +70,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+35, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+38, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,7 +86,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Neq.decl: %Neq.type = fn_decl @Neq [template = constants.%Neq] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc2_9: f64 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:     %.loc2_17: f64 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_11.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_11: init type = call constants.%Float(%.loc2_11.1) [template = f64]
@@ -109,7 +111,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
+// CHECK:STDOUT:     %.loc7_11: %True = param_pattern %true_.patt
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
+// CHECK:STDOUT:     %.loc7_25: %False = param_pattern %false_.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc7: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %param.loc7_6: %True = param
@@ -120,7 +124,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc12_17: f64 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:     %.loc12_25: f64 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc12_19: init type = call constants.%Float(%.loc12_19.1) [template = f64]
@@ -151,13 +157,13 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Neq(%a.patt: f64, %b.patt: f64) -> bool = "float.neq";
+// CHECK:STDOUT: fn @Neq(%.loc2_9: f64, %.loc2_17: f64) -> bool = "float.neq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.patt: %True, %false_.patt: %False) {
+// CHECK:STDOUT: fn @F(%.loc7_11: %True, %.loc7_25: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Neq.ref.loc8: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
@@ -200,7 +206,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a.patt: f64, %b.patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%.loc12_17: f64, %.loc12_25: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -233,7 +239,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+35, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+38, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -244,7 +250,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %WrongResult.decl: %WrongResult.type = fn_decl @WrongResult [template = constants.%WrongResult] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc7_17: f64 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:     %.loc7_25: f64 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_19: init type = call constants.%Float(%.loc7_19.1) [template = f64]
@@ -266,7 +274,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongResult(%a.patt: f64, %b.patt: f64) -> f64;
+// CHECK:STDOUT: fn @WrongResult(%.loc7_17: f64, %.loc7_25: f64) -> f64;
 // CHECK:STDOUT:

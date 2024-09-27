@@ -48,6 +48,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
 // CHECK:STDOUT:     %p.patt: %.3 = binding_pattern p
+// CHECK:STDOUT:     %.loc11_19: %.3 = param_pattern %p.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
@@ -63,7 +64,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%p.patt: %.3) -> %.5 {
+// CHECK:STDOUT: fn @ConstMismatch(%.loc11_19: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
 // CHECK:STDOUT:   return <error>

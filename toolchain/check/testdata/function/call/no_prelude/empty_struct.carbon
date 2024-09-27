@@ -35,6 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
 // CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_10: %.1 = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
@@ -47,7 +48,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a.patt: %.1) -> %.1 {
+// CHECK:STDOUT: fn @Echo(%.loc11_10: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref

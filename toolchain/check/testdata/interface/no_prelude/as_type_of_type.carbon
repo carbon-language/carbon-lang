@@ -34,6 +34,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc13: %.1 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc13: %.1 = param_pattern %T.patt.loc13 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
@@ -55,7 +56,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc13: %.1) {
+// CHECK:STDOUT:   fn(%.loc13: %.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T)]

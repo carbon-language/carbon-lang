@@ -437,10 +437,11 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
       // constructing a generic based on it. Note this is updating the param
       // refs block, not the actual params block, so will not be directly
       // reflected in SemIR output.
-      inst_id = context.AddInstInNoBlock(
-          SemIR::LocIdAndInst::ReusingLoc<SemIR::Param>(
-              context.insts().GetLocId(inst_id),
-              {.type_id = SemIR::TypeId::Error}));
+      inst_id = SemIR::InstId::BuiltinError;
+#if 0
+      SemIR::LocIdAndInst dummy_inst = context.insts().GetWithLocId(inst_id);
+      dummy_inst.inst.SetType(SemIR::TypeId::Error);
+#endif
     }
   }
 }

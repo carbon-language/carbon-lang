@@ -49,12 +49,14 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [template = constants.%C1.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [template = constants.%C2.1] {
 // CHECK:STDOUT:     %T.patt.loc5: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc5: type = param_pattern %T.patt.loc5 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc5: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -100,8 +102,8 @@ export C2(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, inst+6, loaded [template = constants.%C1.1]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+16, loaded [template = constants.%C2.1]
+// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, inst+7, loaded [template = constants.%C1.1]
+// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+18, loaded [template = constants.%C2.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -58,6 +58,8 @@ auto Function::GetNameFromParamRefId(const File& sem_ir, InstId param_ref_id)
 auto Function::GetNameFromParamPatternId(const File& sem_ir,
                                          InstId param_pattern_id) -> NameId {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);
+  param_inst =
+      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
 
   if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
     param_pattern_id = addr_pattern->inner_id;
@@ -88,6 +90,8 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
 auto Function::GetTypeFromParamPatternId(const File& sem_ir,
                                          InstId param_pattern_id) -> TypeId {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);
+  param_inst =
+      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
 
   if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
     param_pattern_id = addr_pattern->inner_id;

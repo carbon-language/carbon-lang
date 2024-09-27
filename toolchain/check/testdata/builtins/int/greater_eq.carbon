@@ -85,7 +85,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GreaterEq.decl: %GreaterEq.type = fn_decl @GreaterEq [template = constants.%GreaterEq] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc2_15: i32 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc2_23: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_17.1: type = value_of_initializer %int.make_type_32.loc2_17 [template = i32]
@@ -104,6 +106,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc3_12: i32 = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc3_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_14.1: type = value_of_initializer %int.make_type_32.loc3_14 [template = i32]
@@ -119,7 +122,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
+// CHECK:STDOUT:     %.loc8_11: %True = param_pattern %true_.patt
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
+// CHECK:STDOUT:     %.loc8_25: %False = param_pattern %false_.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %param.loc8_6: %True = param
@@ -130,7 +135,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc16_17: i32 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc16_25: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16_19 [template = i32]
@@ -163,11 +170,11 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterEq(%a.patt: i32, %b.patt: i32) -> bool = "int.greater_eq";
+// CHECK:STDOUT: fn @GreaterEq(%.loc2_15: i32, %.loc2_23: i32) -> bool = "int.greater_eq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a.patt: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%.loc3_12: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.patt: %True, %false_.patt: %False) {
+// CHECK:STDOUT: fn @F(%.loc8_11: %True, %.loc8_25: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %GreaterEq.ref.loc9: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
@@ -275,7 +282,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a.patt: i32, %b.patt: i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%.loc16_17: i32, %.loc16_25: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%GreaterEq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a

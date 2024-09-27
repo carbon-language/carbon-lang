@@ -183,6 +183,15 @@ static auto CheckRedeclParam(Context& context,
     return false;
   }
 
+  new_param_pattern = context.insts().Get(
+      new_param_pattern.As<SemIR::ParamPattern>().subpattern_id);
+  prev_param_pattern = context.insts().Get(
+      prev_param_pattern.As<SemIR::ParamPattern>().subpattern_id);
+  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
+    diagnose();
+    return false;
+  }
+
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
     new_param_pattern = context.insts().Get(
         new_param_pattern.As<SemIR::AddrPattern>().inner_id);

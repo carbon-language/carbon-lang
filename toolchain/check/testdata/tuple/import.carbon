@@ -144,6 +144,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %X.patt.loc7: %.9 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %.loc7_10: %.9 = param_pattern %X.patt.loc7 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
@@ -269,8 +270,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: ref %.3 = import_ref Implicit//default, inst+17, loaded
 // CHECK:STDOUT:   %import_ref.2: ref %.9 = import_ref Implicit//default, inst+57, loaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+105, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+124, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+106, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -282,7 +283,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Implicit//default, inst+110, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Implicit//default, inst+111, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -441,8 +442,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+57, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+105, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+124, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+106, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -452,7 +453,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+110, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+111, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -542,8 +543,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+17, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+57, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+105, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+124, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+106, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+125, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -553,7 +554,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+110, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+111, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

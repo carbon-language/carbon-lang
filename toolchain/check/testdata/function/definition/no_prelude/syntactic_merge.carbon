@@ -82,10 +82,10 @@ alias D = C;
 fn Foo(a: C);
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: fn Foo(b: D) {}
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ^~~~
 // CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: Previous declaration's corresponding parameter here.
 // CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
 fn Foo(b: D) {}
 
@@ -193,6 +193,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc8: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc7: %C = param
@@ -200,6 +201,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc8: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc8: %C = param
@@ -207,6 +209,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc11: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param.loc10: %C = param
@@ -214,6 +217,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc11: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param.loc11: %C = param
@@ -226,12 +230,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
+// CHECK:STDOUT: fn @Foo(%.loc8: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.patt: %C) {
+// CHECK:STDOUT: fn @Bar(%.loc11: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -255,6 +259,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc6: %C = param
@@ -262,6 +267,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc7: %C = param
@@ -274,7 +280,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[](%a.patt: %C) {
+// CHECK:STDOUT: fn @Foo[](%.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -300,6 +306,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc6: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -307,6 +314,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc14: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -319,9 +327,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C);
+// CHECK:STDOUT: fn @Foo(%.loc6: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a.patt: %C) {
+// CHECK:STDOUT: fn @.1(%.loc14: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -345,6 +353,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc6: %C = param
@@ -352,6 +361,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc7: %C = param
@@ -364,7 +374,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
+// CHECK:STDOUT: fn @Foo(%.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -393,6 +403,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -400,6 +411,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc8: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -412,9 +424,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C);
+// CHECK:STDOUT: fn @Foo(%.loc7: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.patt: %C);
+// CHECK:STDOUT: fn @Bar(%.loc8: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.impl.carbon
 // CHECK:STDOUT:
@@ -432,8 +444,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+5, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+10, loaded [template = constants.%Foo]
-// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+18, loaded [template = constants.%Bar]
+// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+11, loaded [template = constants.%Foo]
+// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+20, loaded [template = constants.%Bar]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,6 +460,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc4: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -455,6 +468,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc5: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -467,12 +481,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
+// CHECK:STDOUT: fn @Foo(%.loc4: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.patt: %C) {
+// CHECK:STDOUT: fn @Bar(%.loc5: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -501,6 +515,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -508,6 +523,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:     %.loc15: %C = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -520,9 +536,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C);
+// CHECK:STDOUT: fn @Foo(%.loc7: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%b.patt: %C) {
+// CHECK:STDOUT: fn @.1(%.loc15: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -551,6 +567,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -558,6 +575,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc15: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -570,9 +588,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C);
+// CHECK:STDOUT: fn @Foo(%.loc7: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a.patt: %C) {
+// CHECK:STDOUT: fn @.1(%.loc15: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -601,6 +619,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc7: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -608,6 +627,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc15: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -620,9 +640,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[%a.patt: %C]();
+// CHECK:STDOUT: fn @Foo[%.loc7: %C]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%a.patt: %C]() {
+// CHECK:STDOUT: fn @.1[%.loc15: %C]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -689,6 +709,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc6: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -701,7 +722,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C);
+// CHECK:STDOUT: fn @Foo(%.loc6: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
 // CHECK:STDOUT:
@@ -716,7 +737,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+8, loaded [template = constants.%Foo]
+// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+9, loaded [template = constants.%Foo]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//alias_two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -732,6 +753,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc6: %C = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param
@@ -744,7 +766,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %C) {
+// CHECK:STDOUT: fn @Foo(%.loc6: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -771,14 +793,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %.2 = binding_pattern a
+// CHECK:STDOUT:     %.loc6_9: %.2 = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_11: type = const_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %param: %.2 = param
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %a.patt: %.2 = binding_pattern a
+// CHECK:STDOUT:     %.loc17_9: %.2 = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc17_18: type = const_type %C [template = constants.%.2]
@@ -793,9 +817,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.patt: %.2);
+// CHECK:STDOUT: fn @Foo(%.loc6_9: %.2);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a.patt: %.2) {
+// CHECK:STDOUT: fn @.1(%.loc17_9: %.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

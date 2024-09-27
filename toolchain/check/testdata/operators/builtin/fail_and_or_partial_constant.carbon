@@ -77,6 +77,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
 // CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:     %.loc4_21: bool = param_pattern %x.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
@@ -88,7 +89,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartialConstant(%x.patt: bool) {
+// CHECK:STDOUT: fn @PartialConstant(%.loc4_21: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.3]
@@ -182,6 +183,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [template = constants.%KnownValueButNonConstantCondition] {
 // CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:     %.loc4_39: bool = param_pattern %x.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
@@ -193,7 +195,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.patt: bool) {
+// CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%.loc4_39: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
 // CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.2]

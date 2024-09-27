@@ -69,7 +69,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+35, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+38, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,7 +86,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Less.decl: %Less.type = fn_decl @Less [template = constants.%Less] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc2_10: f64 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:     %.loc2_18: f64 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_12.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_12: init type = call constants.%Float(%.loc2_12.1) [template = f64]
@@ -107,6 +109,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc3_12: f64 = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%Float(%.loc3_14.1) [template = f64]
@@ -124,7 +127,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
+// CHECK:STDOUT:     %.loc8_11: %True = param_pattern %true_.patt
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
+// CHECK:STDOUT:     %.loc8_25: %False = param_pattern %false_.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %param.loc8_6: %True = param
@@ -135,7 +140,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc16_17: f64 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:     %.loc16_25: f64 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%Float(%.loc16_19.1) [template = f64]
@@ -166,15 +173,15 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less(%a.patt: f64, %b.patt: f64) -> bool = "float.less";
+// CHECK:STDOUT: fn @Less(%.loc2_10: f64, %.loc2_18: f64) -> bool = "float.less";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a.patt: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @Negate(%.loc3_12: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.patt: %True, %false_.patt: %False) {
+// CHECK:STDOUT: fn @F(%.loc8_11: %True, %.loc8_25: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref.loc9: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Less.ref.loc9: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
@@ -282,7 +289,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a.patt: f64, %b.patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%.loc16_17: f64, %.loc16_25: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

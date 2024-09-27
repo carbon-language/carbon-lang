@@ -415,6 +415,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc5_7: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
@@ -428,6 +429,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
+// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %c.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
@@ -453,9 +455,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: fn @B(%.loc5_7: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.patt: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%.loc6_7: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -509,6 +511,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc5_14: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_16.1: type = value_of_initializer %int.make_type_32.loc5_16 [template = i32]
@@ -522,6 +525,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
+// CHECK:STDOUT:     %.loc6_14: %.3 = param_pattern %c.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_21.1: %.2 = tuple_literal (%int.make_type_32.loc6_17)
@@ -547,9 +551,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%.loc5_14: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.patt: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%.loc6_14: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -579,14 +583,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+43, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+46, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+45, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+48, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+50, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+52, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -645,9 +649,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.patt: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%.1: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -704,14 +708,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+43, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+46, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+45, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+48, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+50, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+52, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -798,9 +802,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.patt: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%.1: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -857,14 +861,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+43, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+46, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+45, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+48, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+50, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+52, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -951,9 +955,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.patt: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%.1: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -1009,19 +1013,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+43, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+46, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+45, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+48, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+50, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+52, loaded [template = constants.%E]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -1080,9 +1084,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.patt: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%.1: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -1138,19 +1142,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+22, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+43, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+46, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+23, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+45, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+48, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+50, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+52, loaded [template = constants.%E]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -1209,9 +1213,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.patt: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.patt: %.4) -> %.3;
+// CHECK:STDOUT: extern fn @C(%.1: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -1253,14 +1257,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -1315,14 +1319,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -1384,14 +1388,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -1436,14 +1440,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -1472,14 +1476,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -1508,19 +1512,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+49, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+51, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+52, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+52, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

@@ -41,7 +41,9 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdd.decl: %TestAdd.type = fn_decl @TestAdd [template = constants.%TestAdd] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc5_13: i32 = param_pattern %a.patt
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %.loc5_21: i32 = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5_15 [template = i32]
@@ -62,7 +64,7 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAdd(%a.patt: i32, %b.patt: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @TestAdd(%.loc5_13: i32, %.loc5_21: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use.carbon
 // CHECK:STDOUT:
@@ -89,7 +91,7 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     import Core//test
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//test, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+22, loaded [template = constants.%TestAdd]
+// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+24, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -113,7 +115,7 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAdd(%a.patt: i32, %b.patt: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @TestAdd(%.1: i32, %.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

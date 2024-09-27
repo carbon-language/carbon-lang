@@ -47,7 +47,9 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc14_7: i32 = param_pattern %N.patt.loc14 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
+// CHECK:STDOUT:     %.loc14_16: <error> = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
@@ -71,7 +73,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc14: i32, %a.patt: <error>);
+// CHECK:STDOUT:   fn(%.loc14_7: i32, %.loc14_16: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {

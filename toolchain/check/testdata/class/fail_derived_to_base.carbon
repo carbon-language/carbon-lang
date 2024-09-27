@@ -94,6 +94,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {} {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [template = constants.%ConvertUnrelated] {
 // CHECK:STDOUT:     %p.patt: %.9 = binding_pattern p
+// CHECK:STDOUT:     %.loc28_22: %.9 = param_pattern %p.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:     %.loc28_26: type = ptr_type %B2 [template = constants.%.9]
@@ -106,6 +107,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
 // CHECK:STDOUT:     %p.patt: %.14 = binding_pattern p
+// CHECK:STDOUT:     %.loc35_23: %.14 = param_pattern %p.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc35_35: type = ptr_type %Incomplete [template = constants.%.14]
@@ -158,13 +160,13 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertUnrelated(%p.patt: %.9) -> %.10 {
+// CHECK:STDOUT: fn @ConvertUnrelated(%.loc28_22: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertIncomplete(%p.patt: %.14) -> %.15 {
+// CHECK:STDOUT: fn @ConvertIncomplete(%.loc35_23: %.14) -> %.15 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
 // CHECK:STDOUT:   return <error>

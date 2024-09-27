@@ -69,6 +69,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc21_13: i32 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_15.1: type = value_of_initializer %int.make_type_32.loc21_15 [template = i32]
@@ -91,6 +92,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc12_9: i32 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %int.make_type_32.loc12_11 [template = i32]
@@ -104,6 +106,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc21_13: i32 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32.loc16_11 [template = i32]
@@ -129,13 +132,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.patt: i32) -> i32 {
+// CHECK:STDOUT: fn @F(%.loc12_9: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.patt: i32) -> i32 {
+// CHECK:STDOUT: fn @G(%.loc21_13: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n.loc21
 // CHECK:STDOUT:   return %n.ref

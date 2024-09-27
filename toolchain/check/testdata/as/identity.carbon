@@ -71,6 +71,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [template = constants.%Value] {
 // CHECK:STDOUT:     %n.patt: %X = binding_pattern n
+// CHECK:STDOUT:     %.loc17: %X = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %param: %X = param
@@ -78,9 +79,10 @@ fn Initializing() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
+// CHECK:STDOUT:     %.loc21_15: %.4 = param_pattern %p.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.4]
+// CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.4]
 // CHECK:STDOUT:     %param: %.4 = param
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %param
 // CHECK:STDOUT:   }
@@ -96,7 +98,7 @@ fn Initializing() {
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Value(%n.patt: %X) {
+// CHECK:STDOUT: fn @Value(%.loc17: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
@@ -105,7 +107,7 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.patt: %.4) {
+// CHECK:STDOUT: fn @Reference(%.loc21_15: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.4]

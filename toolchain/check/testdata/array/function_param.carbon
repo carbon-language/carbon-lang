@@ -59,7 +59,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %arr.patt: %.3 = binding_pattern arr
+// CHECK:STDOUT:     %.loc11_9: %.3 = param_pattern %arr.patt
 // CHECK:STDOUT:     %i.patt: i32 = binding_pattern i
+// CHECK:STDOUT:     %.loc11_22: i32 = param_pattern %i.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
@@ -88,7 +90,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%arr.patt: %.3, %i.patt: i32) -> i32 {
+// CHECK:STDOUT: fn @F(%.loc11_9: %.3, %.loc11_22: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %.3 = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: i32 = name_ref i, %i

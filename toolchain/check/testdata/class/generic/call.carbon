@@ -128,7 +128,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4: i32 = symbolic_binding_pattern N 1 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc4_24: i32 = param_pattern %N.patt.loc4 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4_13: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4_13 [symbolic = %T.1 (constants.%T)]
@@ -241,7 +243,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4: i32 = symbolic_binding_pattern N 1 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc4_24: i32 = param_pattern %N.patt.loc4 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4_13: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4_13 [symbolic = %T.1 (constants.%T)]
@@ -328,7 +332,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4: i32 = symbolic_binding_pattern N 1 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc4_24: i32 = param_pattern %N.patt.loc4 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4_13: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4_13 [symbolic = %T.1 (constants.%T)]
@@ -416,7 +422,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4: i32 = symbolic_binding_pattern N 1 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc4_24: i32 = param_pattern %N.patt.loc4 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4_13: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param.loc4_13 [symbolic = %T.1 (constants.%T)]
@@ -523,6 +531,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [template = constants.%Outer.1] {
 // CHECK:STDOUT:     %T.patt.loc2: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc2: type = param_pattern %T.patt.loc2 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -538,6 +547,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.decl: %Inner.type = class_decl @Inner [template = constants.%Inner.1] {
 // CHECK:STDOUT:       %U.patt.loc3: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:       %.loc3: type = param_pattern %U.patt.loc3 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %param: type = param
 // CHECK:STDOUT:       %U.loc3: type = bind_symbolic_name U 1, %param [symbolic = %U.1 (constants.%U)]

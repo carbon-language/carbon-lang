@@ -101,6 +101,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc4_9: i32 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -113,7 +114,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%.loc4_9: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -139,7 +140,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+16, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
@@ -165,6 +166,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %.3 = binding_pattern n
+// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc6_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc6_13: i32 = int_literal 64 [template = constants.%.2]
@@ -182,6 +184,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: %.5 = binding_pattern n
+// CHECK:STDOUT:     %.loc10_7: %.5 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc10_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc10_13: i32 = int_literal 13 [template = constants.%.4]
@@ -199,7 +202,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
 // CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc14_14: i32 = param_pattern %N.patt.loc14 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
+// CHECK:STDOUT:     %.loc14_23: @Symbolic.%.1 (%.6) = param_pattern %x.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -222,15 +227,15 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%.1: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.patt: %.3) -> %.3 {
+// CHECK:STDOUT: fn @F(%.loc6_7: %.3) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.patt: %.5) -> %.5 {
+// CHECK:STDOUT: fn @G(%.loc10_7: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.5 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
@@ -245,7 +250,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc14: i32, %x.patt: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
+// CHECK:STDOUT:   fn(%.loc14_14: i32, %.loc14_23: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -268,7 +273,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+16, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -297,7 +302,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%.1: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_negative_size.carbon
 // CHECK:STDOUT:
@@ -314,7 +319,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+16, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
@@ -339,6 +344,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc6_12: i32 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
@@ -365,9 +371,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%n.patt: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%.loc6_12: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%.1: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_oversized.carbon
 // CHECK:STDOUT:
@@ -379,7 +385,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+16, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -408,5 +414,5 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%.1: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:

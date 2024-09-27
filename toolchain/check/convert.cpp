@@ -1208,6 +1208,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_patterns) {
     auto implicit_param = context.insts().Get(implicit_param_id);
+    implicit_param = context.insts().Get(
+        implicit_param.As<SemIR::ParamPattern>().subpattern_id);
     bool addr_pattern = implicit_param.kind() == SemIR::InstKind::AddrPattern;
     if (SemIR::Function::GetNameFromParamPatternId(
             context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {

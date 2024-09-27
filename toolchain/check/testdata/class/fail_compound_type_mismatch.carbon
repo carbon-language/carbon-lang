@@ -67,6 +67,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [template = constants.%AccessBInA] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
+// CHECK:STDOUT:     %.loc19_16: %A = param_pattern %a.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %param: %A = param
@@ -102,7 +103,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBInA(%a.patt: %A) -> i32 {
+// CHECK:STDOUT: fn @AccessBInA(%.loc19_16: %A) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]

@@ -58,6 +58,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -79,6 +80,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
+// CHECK:STDOUT:       %.loc12: @F.%T (%T) = param_pattern %n.patt
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc12_11: type = name_ref T, @Class.%T.loc11 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %param: @F.%T (%T) = param
@@ -88,9 +90,10 @@ class Class(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = @Class.%G (constants.%G)] {
 // CHECK:STDOUT:       %self.patt: @G.%Class (%Class.2) = binding_pattern self
+// CHECK:STDOUT:       %.loc16_12: @G.%Class (%Class.2) = param_pattern %self.patt
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16 [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %.loc16_14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc16_14 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %param: @G.%Class (%Class.2) = param
 // CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %param
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11 [symbolic = %T (constants.%T)]
@@ -112,7 +115,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.patt: @F.%T (%T)) -> @F.%T (%T) {
+// CHECK:STDOUT:   fn(%.loc12: @F.%T (%T)) -> @F.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:     return %n.ref
@@ -126,7 +129,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class (%Class.2), @G.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.patt: @G.%Class (%Class.2)]() -> @G.%T (%T) {
+// CHECK:STDOUT:   fn[%.loc16_12: @G.%Class (%Class.2)]() -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @G.%.1 (%.2) = name_ref n, @Class.%.loc20 [template = @Class.%.loc20]

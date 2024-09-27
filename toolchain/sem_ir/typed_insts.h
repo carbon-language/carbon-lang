@@ -833,6 +833,17 @@ struct Param {
   TypeId type_id;
 };
 
+// A pattern that represents a parameter. It matches the same values as
+// `subpattern_id`.
+struct ParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "param_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+};
+
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
 // `x: i32*`, where `pointee_id` is `i32` and `type_id` is `type`.
 struct PointerType {

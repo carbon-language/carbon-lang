@@ -45,12 +45,14 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.5] {
 // CHECK:STDOUT:     %self.patt: @.1.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:     %.loc22_22: @.1.%Self (%Self) = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc22_6: type = param
 // CHECK:STDOUT:     %T.loc22: type = bind_symbolic_name T 0, %param.loc22_6 [symbolic = %T.1 (constants.%T)]
@@ -84,6 +86,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:       %.loc13_12: @F.%Self (%Self) = param_pattern %self.patt
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_14.1: @F.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_14: @F.%.1 (%.2) = name_ref Self, %.loc13_14.1 [symbolic = %Self (constants.%Self)]
@@ -111,7 +114,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.patt: @F.%Self (%Self)]() -> @F.%Self (%Self);
+// CHECK:STDOUT:   fn[%.loc13_12: @F.%Self (%Self)]() -> @F.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%T.loc22: type, @I.%Self.1: @I.%.1 (%.2)) {
@@ -122,7 +125,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.patt: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
+// CHECK:STDOUT:   fn[%.loc22_22: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @.1.%Self (%Self) = name_ref self, %self
 // CHECK:STDOUT:     return %self.ref

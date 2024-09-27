@@ -48,7 +48,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
-  // CHECK:STDERR:        ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~
   ws.F();
 }
 
@@ -93,6 +93,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
+// CHECK:STDOUT:     %.loc25: %Class = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc25: %Class = param
@@ -105,6 +106,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {} {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
 // CHECK:STDOUT:     %ws.patt: %WrongSelf = binding_pattern ws
+// CHECK:STDOUT:     %.loc45: %WrongSelf = param_pattern %ws.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, file.%WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %param: %WrongSelf = param
@@ -115,6 +117,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
+// CHECK:STDOUT:     %.loc25: %Class = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc16: %Class = param
@@ -134,6 +137,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @WrongSelf {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
+// CHECK:STDOUT:     %.loc42: %Class = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %param: %Class = param
@@ -145,7 +149,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.patt: %Class) {
+// CHECK:STDOUT: fn @F.1(%.loc25: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -160,9 +164,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.patt: %Class]();
+// CHECK:STDOUT: fn @F.2[%.loc42: %Class]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallWrongSelf(%ws.patt: %WrongSelf) {
+// CHECK:STDOUT: fn @CallWrongSelf(%.loc45: %WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]

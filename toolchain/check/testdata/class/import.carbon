@@ -118,6 +118,7 @@ fn Run() {
 // CHECK:STDOUT: class @ForwardDeclared {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ForwardDeclared = binding_pattern self
+// CHECK:STDOUT:     %.loc14: %ForwardDeclared = param_pattern %self.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %param: %ForwardDeclared = param
@@ -125,13 +126,14 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.5 = binding_pattern self
-// CHECK:STDOUT:     %.loc15_8.1: %.5 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_pattern %self.patt
+// CHECK:STDOUT:     %.loc15_8.1: %.5 = param_pattern %.loc15_8.2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:     %param: %.5 = param
 // CHECK:STDOUT:     %self: %.5 = bind_name self, %param
-// CHECK:STDOUT:     %.loc15_8.2: %.5 = addr_param %self
+// CHECK:STDOUT:     %.loc15_8.3: %.5 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -144,9 +146,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.patt: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F[%.loc14: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.patt: %.5]();
+// CHECK:STDOUT: fn @G[%.loc15_8.1: %.5]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -181,7 +183,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+6, loaded [template = constants.%Field]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+22, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+43, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+45, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -195,11 +197,11 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.7: %.7 = import_ref Main//a, inst+18, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+29, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+40, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+30, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+42, loaded [template = constants.%G]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+40, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -298,7 +300,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.patt: %ForwardDeclared.1]();
+// CHECK:STDOUT: fn @F[%.1: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst+91: %.9]();
+// CHECK:STDOUT: fn @G[%.1: %.9]();
 // CHECK:STDOUT:

@@ -453,6 +453,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case IntLiteral::Kind:
       case Namespace::Kind:
       case Param::Kind:
+      case ParamPattern::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case SpliceBlock::Kind:
@@ -590,6 +591,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntLiteral::Kind:
       case IntType::Kind:
       case Param::Kind:
+      case ParamPattern::Kind:
       case PointerType::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:

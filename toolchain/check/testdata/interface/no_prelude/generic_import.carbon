@@ -49,6 +49,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type = interface_decl @AddWith [template = constants.%AddWith] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -124,11 +125,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+6, loaded [template = constants.%AddWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, inst+15, loaded [symbolic = @AddWith.%F (constants.%F.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type = import_ref Main//a, inst+7, loaded [template = constants.%AddWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, inst+16, loaded [symbolic = @AddWith.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+16, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

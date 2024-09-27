@@ -48,7 +48,9 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt.loc17_6: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc17_7: i32 = param_pattern %n.patt.loc17_6
 // CHECK:STDOUT:     %n.patt.loc17_14: i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc17_15: i32 = param_pattern %n.patt.loc17_14
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc17_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_9.1: type = value_of_initializer %int.make_type_32.loc17_9 [template = i32]
@@ -65,5 +67,5 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.patt.loc17_6: i32, %n.patt.loc17_14: i32);
+// CHECK:STDOUT: fn @F(%.loc17_7: i32, %.loc17_15: i32);
 // CHECK:STDOUT:

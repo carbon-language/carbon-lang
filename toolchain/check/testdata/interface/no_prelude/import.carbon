@@ -213,6 +213,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.patt: %.1 = binding_pattern e
+// CHECK:STDOUT:     %.loc6: %.1 = param_pattern %e.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param
@@ -220,6 +221,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [template = constants.%UseBasic] {
 // CHECK:STDOUT:     %e.patt: %.3 = binding_pattern e
+// CHECK:STDOUT:     %.loc7: %.3 = param_pattern %e.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param
@@ -227,6 +229,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [template = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %f.patt: %.4 = binding_pattern f
+// CHECK:STDOUT:     %.loc8: %.4 = param_pattern %f.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%.4]
 // CHECK:STDOUT:     %param: %.4 = param
@@ -272,17 +275,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%import_ref.14, imports.%import_ref.15)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%e.patt: %.1) {
+// CHECK:STDOUT: fn @UseEmpty(%.loc6: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseBasic(%e.patt: %.3) {
+// CHECK:STDOUT: fn @UseBasic(%.loc7: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseForwardDeclared(%f.patt: %.4) {
+// CHECK:STDOUT: fn @UseForwardDeclared(%.loc8: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

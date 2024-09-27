@@ -44,6 +44,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
+// CHECK:STDOUT:     %.loc15_7: %.1 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
@@ -55,6 +56,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
+// CHECK:STDOUT:     %.loc19_9: %.1 = param_pattern %n.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_12.2: type = converted %.loc19_12.1, constants.%.1 [template = constants.%.1]
@@ -66,6 +68,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %if.patt: %.1 = binding_pattern r#if
+// CHECK:STDOUT:     %.loc23_10: %.1 = param_pattern %if.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc23_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_13.2: type = converted %.loc23_13.1, constants.%.1 [template = constants.%.1]
@@ -77,19 +80,19 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%n.patt: %.1) -> %.1 {
+// CHECK:STDOUT: fn @A(%.loc15_7: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%n.patt: %.1) -> %.1 {
+// CHECK:STDOUT: fn @B(%.loc19_9: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%if.patt: %.1) -> %.1 {
+// CHECK:STDOUT: fn @C(%.loc23_10: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %if.ref: %.1 = name_ref r#if, %if
 // CHECK:STDOUT:   return %if.ref

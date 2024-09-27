@@ -61,6 +61,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %.loc11_7: bool = param_pattern %b.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -78,7 +79,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.patt: bool) -> i32 {
+// CHECK:STDOUT: fn @F(%.loc11_7: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc12

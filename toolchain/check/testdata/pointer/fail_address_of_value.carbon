@@ -190,6 +190,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfTupleElementValue.decl: %AddressOfTupleElementValue.type = fn_decl @AddressOfTupleElementValue [template = constants.%AddressOfTupleElementValue] {} {}
 // CHECK:STDOUT:   %AddressOfParam.decl: %AddressOfParam.type = fn_decl @AddressOfParam [template = constants.%AddressOfParam] {
 // CHECK:STDOUT:     %param.patt: i32 = binding_pattern param
+// CHECK:STDOUT:     %.loc95_24: i32 = param_pattern %param.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc95: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_32.loc95 [template = i32]
@@ -284,7 +285,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddressOfParam(%param.patt: i32) {
+// CHECK:STDOUT: fn @AddressOfParam(%.loc95_24: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc99: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_32.loc99 [template = i32]

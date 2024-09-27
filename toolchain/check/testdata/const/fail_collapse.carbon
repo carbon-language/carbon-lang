@@ -56,6 +56,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
+// CHECK:STDOUT:     %.loc15_7: %.4 = param_pattern %p.patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
@@ -77,7 +78,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.patt: %.4) -> %.6 {
+// CHECK:STDOUT: fn @G(%.loc15_7: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return <error>
