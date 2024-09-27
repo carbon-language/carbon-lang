@@ -155,6 +155,7 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
 TEST(ClangRunnerTest, DashC) {
   std::filesystem::path test_file =
       WriteTestFile("test.cpp", "int test() { return 0; }");
+  std::filesystem::path test_output = WriteTestFile("test.o", "");
 
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
@@ -164,11 +165,12 @@ TEST(ClangRunnerTest, DashC) {
   ClangRunner runner(&install_paths, target, &verbose_os);
   std::string out;
   std::string err;
-  EXPECT_TRUE(
-      RunWithCapturedOutput(out, err,
-                            [&] {
-                              return runner.Run({"-c", test_file.string()});
-                            }))
+  EXPECT_TRUE(RunWithCapturedOutput(out, err,
+                                    [&] {
+                                      return runner.Run(
+                                          {"-c", test_file.string(), "-o",
+                                           test_output.string()});
+                                    }))
       << "Verbose output from runner:\n"
       << verbose_out << "\n";
 
