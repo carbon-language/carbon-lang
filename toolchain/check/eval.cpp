@@ -1403,6 +1403,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       // here. For now, we model a facet value as just a type.
       return eval_context.GetConstantValue(typed_inst.facet_id);
     }
+    case CARBON_KIND(SemIR::WhereExpr typed_inst): {
+      // TODO: This currently ignores the requirements and just produces the
+      // left-hand type argument to the `where`.
+      return eval_context.GetConstantValue(
+          eval_context.insts().Get(typed_inst.period_self_id).type_id());
+    }
 
     // `not true` -> `false`, `not false` -> `true`.
     // All other uses of unary `not` are non-constant.
@@ -1448,6 +1454,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::ImplDecl::Kind:
     case SemIR::ImportDecl::Kind:
     case SemIR::Param::Kind:
+    case SemIR::RequirementEquivalent::Kind:
+    case SemIR::RequirementImpls::Kind:
+    case SemIR::RequirementRewrite::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:

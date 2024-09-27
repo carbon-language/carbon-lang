@@ -9,16 +9,14 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context, Parse::WhereOperandId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // The expression at the top of the stack represents a constraint type that
   // is being modified by the `where` operator. It would be `MyInterface` in
   // `MyInterface where .Member = i32`.
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id);
-  // TODO: Do this instead once `WhereExpr` is ready to consume this:
-  // context.node_stack().Push(node_id, self_type_id);
-  context.node_stack().Push(self_node, self_id);
+  // TODO: Validate that `self_type_id` represents a facet type. Only facet
+  // types may have `where` restrictions.
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
@@ -43,30 +41,54 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId /*node_id*/)
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.is_valid());
+
+  // Save the `.Self` symbolic binding on the node stack. It will become the
+  // first argument to the `WhereExpr` instruction.
+  context.node_stack().Push(node_id, inst_id);
+
+  // Going to put each requirement on `args_type_info_stack`, so we can have an
+  // inst block with the varying number of requirements but keeping other
+  // instructions on the current inst block from the `inst_block_stack()`.
+  context.args_type_info_stack().Push();
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::RequirementEqualId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     -> bool {
-  // TODO: Implement
-  context.node_stack().PopExpr();
-  context.node_stack().PopExpr();
+  auto rhs = context.node_stack().PopExpr();
+  auto lhs = context.node_stack().PopExpr();
+  // TODO: convert rhs to type of lhs
+
+  // Build up the list of arguments for the `WhereExpr` inst.
+  context.args_type_info_stack().AddInstId(
+      context.AddInstInNoBlock<SemIR::RequirementRewrite>(
+          node_id, {.lhs_id = lhs, .rhs_id = rhs}));
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::RequirementEqualEqualId /*node_id*/) -> bool {
-  // TODO: Implement
-  context.node_stack().PopExpr();
-  context.node_stack().PopExpr();
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::RequirementImplsId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
     -> bool {
-  // TODO: Implement
-  context.node_stack().PopExpr();
-  context.node_stack().PopExpr();
+  auto rhs = context.node_stack().PopExpr();
+  auto lhs = context.node_stack().PopExpr();
+  // TODO: type check lhs and rhs are compatible
+
+  // Build up the list of arguments for the `WhereExpr` inst.
+  context.args_type_info_stack().AddInstId(
+      context.AddInstInNoBlock<SemIR::RequirementEquivalent>(
+          node_id, {.lhs_id = lhs, .rhs_id = rhs}));
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
+    -> bool {
+  auto rhs = context.node_stack().PopExpr();
+  auto lhs = context.node_stack().PopExpr();
+  // TODO: check lhs is a facet and rhs is a facet type
+
+  // Build up the list of arguments for the `WhereExpr` inst.
+  context.args_type_info_stack().AddInstId(
+      context.AddInstInNoBlock<SemIR::RequirementImpls>(
+          node_id, {.lhs_id = lhs, .rhs_id = rhs}));
   return true;
 }
 
@@ -76,14 +98,20 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::WhereExprId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // Discard the generic region containing `.Self` and the constraints.
   // TODO: Decide if we want to build a `Generic` object for this.
   DiscardGenericDecl(context);
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();
-  // TODO: Output instruction for newly formed restricted constraint type.
+  SemIR::InstId period_self_id =
+      context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
+  SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
+  context.AddInstAndPush<SemIR::WhereExpr>(
+      node_id, {.type_id = SemIR::TypeId::TypeType,
+                .period_self_id = period_self_id,
+                .requirements_id = requirements_id});
   return true;
 }
 

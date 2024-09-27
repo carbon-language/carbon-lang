@@ -59,6 +59,9 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
 // CHECK:STDOUT:     %bool.make_type.loc16_27: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc16_16: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref, %bool.make_type.loc16_27
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

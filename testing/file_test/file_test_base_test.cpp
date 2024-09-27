@@ -17,8 +17,9 @@ namespace {
 
 class FileTestBaseTest : public FileTestBase {
  public:
-  FileTestBaseTest(llvm::StringRef /*exe_path*/, llvm::StringRef test_name)
-      : FileTestBase(test_name) {}
+  FileTestBaseTest(llvm::StringRef /*exe_path*/, std::mutex* output_mutex,
+                   llvm::StringRef test_name)
+      : FileTestBase(output_mutex, test_name) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
@@ -105,6 +106,16 @@ static auto TestAlternatingFiles(TestParams& params)
                 << "a.carbon:2: message 4\n"
                 << "b.carbon:5: message 5\n"
                 << "unattached message 6\n";
+  return {{.success = true}};
+}
+
+// Does printing and returns expected results for capture_console_output.carbon.
+static auto TestCaptureConsoleOutput(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  llvm::errs() << "llvm::errs\n";
+  params.stderr << "params.stderr\n";
+  llvm::outs() << "llvm::outs\n";
+  params.stdout << "params.stdout\n";
   return {{.success = true}};
 }
 
@@ -225,6 +236,7 @@ auto FileTestBaseTest::Run(const llvm::SmallVector<llvm::StringRef>& test_args,
       llvm::StringSwitch<std::function<ErrorOr<RunResult>(TestParams&)>>(
           filename.string())
           .Case("alternating_files.carbon", &TestAlternatingFiles)
+          .Case("capture_console_output.carbon", &TestCaptureConsoleOutput)
           .Case("example.carbon", &TestExample)
           .Case("fail_example.carbon", &TestFailExample)
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)

@@ -858,6 +858,11 @@ class FormatterImpl {
     FormatTrailingBlock(inst.block_id);
   }
 
+  auto FormatInstRHS(WhereExpr inst) -> void {
+    FormatArgs(inst.period_self_id);
+    FormatTrailingBlock(inst.requirements_id);
+  }
+
   // StructTypeFields are formatted as part of their StructType.
   auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
 
@@ -1024,6 +1029,10 @@ class FormatterImpl {
 
   auto FormatName(InstId id) -> void {
     out_ << inst_namer_->GetNameFor(scope_, id);
+  }
+
+  auto FormatName(AbsoluteInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
   }
 
   auto FormatName(SpecificId id) -> void {
