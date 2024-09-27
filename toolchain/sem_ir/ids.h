@@ -86,14 +86,19 @@ constexpr InstId InstId::Invalid = InstId(InvalidIndex);
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/builtin_inst_kind.def"
 
-// An ID of an instruction that is referenced absolutely within a typed
-// instruction. This means that the instruction always represents the ID of a
-// global entity that is independent of the current context, and operations like
-// substitution into the enclosing instruction should not substitute into fields
-// with this type.
+// An ID of an instruction that is referenced absolutely by another instruction.
+// This should only be used as the type of a field within a typed instruction
+// class.
+//
+// When a typed instruction has a field of this type, that field represents an
+// absolute reference to another instruction that typically resides in a
+// different entity. This behaves in most respects like an InstId field, but
+// substitution into the typed instruction leaves the field unchanged rather
+// than substituting into it.
 class AbsoluteInstId : public InstId {
  public:
-  // Implicitly converts from the base class.
+  // Support implicit conversion from InstId so that InstId and AbsoluteInstId
+  // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
 
