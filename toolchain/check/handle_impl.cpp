@@ -222,6 +222,7 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
                               DeclParams(prev_impl), SemIR::SpecificId::Invalid,
                               /*check_syntax=*/true, /*diagnose=*/false)) {
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
 
