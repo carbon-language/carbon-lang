@@ -30,7 +30,7 @@ impl true as I {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %.loc16_6.1: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %.loc16_6.1, <error> [template = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]

@@ -29,7 +29,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %.loc3_7.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%.1]

@@ -734,7 +734,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoF {
-// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -744,7 +744,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FNotFunction {
-// CHECK:STDOUT:   impl_decl @impl.2 {} {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -756,7 +756,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: class @F.16;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FAlias {
-// CHECK:STDOUT:   impl_decl @impl.3 {} {
+// CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc51: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -766,7 +766,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraParam {
-// CHECK:STDOUT:   impl_decl @impl.4 {} {
+// CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc64: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -776,7 +776,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraImplicitParam {
-// CHECK:STDOUT:   impl_decl @impl.5 {} {
+// CHECK:STDOUT:   impl_decl @impl.5 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc77: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -786,7 +786,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraReturnType {
-// CHECK:STDOUT:   impl_decl @impl.6 {} {
+// CHECK:STDOUT:   impl_decl @impl.6 [template] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc91: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -796,7 +796,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingParam {
-// CHECK:STDOUT:   impl_decl @impl.7 {} {
+// CHECK:STDOUT:   impl_decl @impl.7 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc106: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -806,7 +806,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingImplicitParam {
-// CHECK:STDOUT:   impl_decl @impl.8 {} {
+// CHECK:STDOUT:   impl_decl @impl.8 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc119: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -816,7 +816,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingReturnType {
-// CHECK:STDOUT:   impl_decl @impl.9 {} {
+// CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc132: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -826,7 +826,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentParamType {
-// CHECK:STDOUT:   impl_decl @impl.10 {} {
+// CHECK:STDOUT:   impl_decl @impl.10 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc145: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -836,7 +836,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentImplicitParamType {
-// CHECK:STDOUT:   impl_decl @impl.11 {} {
+// CHECK:STDOUT:   impl_decl @impl.11 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc158: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -846,7 +846,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentReturnType {
-// CHECK:STDOUT:   impl_decl @impl.12 {} {
+// CHECK:STDOUT:   impl_decl @impl.12 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc171: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -856,7 +856,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentParamName {
-// CHECK:STDOUT:   impl_decl @impl.13 {} {
+// CHECK:STDOUT:   impl_decl @impl.13 [template] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc185: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -866,7 +866,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadParam {
-// CHECK:STDOUT:   impl_decl @impl.14 {} {
+// CHECK:STDOUT:   impl_decl @impl.14 [template] {} {
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [template = constants.%.10]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc202: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -876,7 +876,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadReturnType {
-// CHECK:STDOUT:   impl_decl @impl.15 {} {
+// CHECK:STDOUT:   impl_decl @impl.15 [template] {} {
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [template = constants.%.10]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc214: <witness> = complete_type_witness %.5 [template = constants.%.6]

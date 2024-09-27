@@ -55,7 +55,7 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc15_18.1: type = value_of_initializer @impl.%int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_18.2: type = converted @impl.%int.make_type_32, %.loc15_18.1 [template = i32]
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]

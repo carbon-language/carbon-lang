@@ -9,7 +9,6 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
-#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -196,6 +195,13 @@ static auto EmitAsConstant(ConstantContext& context,
   // TODO: For dynamic dispatch, we might want to lower witness tables as
   // constants.
   return context.GetUnusedConstant(inst.type_id);
+}
+
+static auto EmitAsConstant(ConstantContext& /*context*/,
+                           SemIR::ImplDecl /*inst*/) -> llvm::Constant* {
+  // An ImplDecl isn't a value, so this constant value won't ever be used.
+  // It also doesn't even have a type, so we can't use GetUnusedConstant.
+  return nullptr;
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)

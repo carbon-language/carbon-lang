@@ -121,7 +121,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc6: type = bind_symbolic_name U 0, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
