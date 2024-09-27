@@ -72,7 +72,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }

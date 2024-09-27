@@ -50,7 +50,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %bool.make_type.loc16_6: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type.loc16_6 [template = bool]
 // CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type.loc16_6, %.loc16_6.1 [template = bool]

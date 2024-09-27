@@ -108,29 +108,29 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, file.%NotGenericNoParams.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 {} {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, file.%NotGenericButParams.decl [template = constants.%NotGenericButParams]
 // CHECK:STDOUT:     %.loc15_30: type = interface_type @NotGenericButParams [template = constants.%.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.3 {} {
+// CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.1 = name_ref GenericAndParams, file.%GenericAndParams.decl [template = constants.%GenericAndParams.1]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc16_27: type = interface_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%.11]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.4 {} {
+// CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc17_13: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
 // CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%.5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.5 {} {
+// CHECK:STDOUT:   impl_decl @impl.5 [template] {} {
 // CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, file.%X.decl [template = constants.%X]

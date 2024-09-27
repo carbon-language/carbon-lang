@@ -70,7 +70,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
