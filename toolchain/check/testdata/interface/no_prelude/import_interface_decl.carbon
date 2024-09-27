@@ -43,8 +43,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @A [template]
+// CHECK:STDOUT:   %.1: type = interface_type @A [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -61,5 +61,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2;
+// CHECK:STDOUT: impl @impl: %.2 as %.1;
 // CHECK:STDOUT:

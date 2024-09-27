@@ -100,19 +100,24 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.2 {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %x.patt: @F.2.%T (%T) = binding_pattern x
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @impl.%T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.2.%T (%T) = param x, runtime_param0
-// CHECK:STDOUT:     %x: @F.2.%T (%T) = bind_name x, %x.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_56: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT: generic impl @impl(%T.loc19: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.1: type = interface_type @GenericInterface, @GenericInterface(%T.1) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.loc19_56
+// CHECK:STDOUT:   impl: %C as %.2 {
+// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:       %x.patt: @F.2.%T (%T) = binding_pattern x
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc19 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %x.param: @F.2.%T (%T) = param x, runtime_param0
+// CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc19_56: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     witness = %.loc19_56
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -120,10 +125,10 @@ class C {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc19: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc19_52: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc19_52: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
@@ -138,7 +143,7 @@ class C {
 // CHECK:STDOUT:   fn(%x: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc19: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -167,6 +172,15 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(@GenericInterface.%T.1) {
 // CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericInterface(@impl.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {

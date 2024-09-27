@@ -6,32 +6,16 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
 #include "common/map.h"
+#include "llvm/ADT/TinyPtrVector.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
-// An implementation of a constraint.
-struct Impl : public Printable<Impl> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
-  }
-
-  // Determines whether this impl has been fully defined. This is false until we
-  // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return witness_id.is_valid(); }
-
-  // Determines whether this impl's definition has begun but not yet ended.
-  auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
-  }
-
+struct ImplFields {
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
 
-  // A block containing the pattern insts for the `impl forall` parameters,
-  // if any.
-  InstBlockId pattern_block_id = InstBlockId::Invalid;
-  // TODO: Track the generic parameters for `impl forall`.
   // The type for which the impl is implementing a constraint.
   TypeId self_id;
   // The constraint that the impl implements.
@@ -39,8 +23,6 @@ struct Impl : public Printable<Impl> {
 
   // The following members are set at the `{` of the impl definition.
 
-  // The definition of the impl. This is an ImplDecl.
-  InstId definition_id = InstId::Invalid;
   // The impl scope.
   NameScopeId scope_id = NameScopeId::Invalid;
   // The first block of the impl body.
@@ -53,19 +35,48 @@ struct Impl : public Printable<Impl> {
   InstId witness_id = InstId::Invalid;
 };
 
+// An implementation of a constraint. See EntityWithParamsBase regarding the
+// inheritance here.
+struct Impl : public EntityWithParamsBase,
+              public ImplFields,
+              public Printable<Impl> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
+  }
+
+  // Determines whether this impl has been fully defined. This is false until we
+  // reach the `}` of the impl definition.
+  auto is_defined() const -> bool { return witness_id.is_valid(); }
+
+  // Determines whether this impl's definition has begun but not yet ended.
+  auto is_being_defined() const -> bool {
+    return definition_id.is_valid() && !is_defined();
+  }
+};
+
 // A collection of `Impl`s, which can be accessed by the self type and
 // constraint implemented.
 class ImplStore {
  public:
-  // Looks up the impl with this self type and constraint, or creates a new
-  // `Impl` if none exists.
-  // TODO: Handle parameters.
-  auto LookupOrAdd(TypeId self_id, TypeId constraint_id) -> ImplId {
-    auto result = lookup_.Insert(std::pair{self_id, constraint_id}, [&]() {
-      return values_.Add({.self_id = self_id, .constraint_id = constraint_id});
-    });
-    return result.value();
+  // TODO: Switch to something like TinyPtrVector. We expect it to be rare for
+  // there to be more than one ImplId per bucket.
+  using LookupBucket = llvm::SmallVector<ImplId, 1>;
+
+  // Returns the lookup bucket containing the list of impls with this self type
+  // and constraint, or adds a new bucket if this is the first time we've seen
+  // an impl of this kind. The lookup bucket should only include impls from the
+  // current file and its API file; impls from other files should not be added
+  // to it.
+  auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id)
+      -> LookupBucket& {
+    return lookup_
+        .Insert(std::pair{self_id, constraint_id},
+                [] { return LookupBucket(); })
+        .value();
   }
+
+  // Adds the specified impl to the store. Does not add it to impl lookup.
+  auto Add(Impl impl) -> ImplId { return values_.Add(impl); }
 
   // Returns a mutable value for an ID.
   auto Get(ImplId id) -> Impl& { return values_.Get(id); }
@@ -89,7 +100,7 @@ class ImplStore {
 
  private:
   ValueStore<ImplId> values_;
-  Map<std::pair<TypeId, TypeId>, ImplId> lookup_;
+  Map<std::pair<TypeId, TypeId>, LookupBucket> lookup_;
 };
 
 }  // namespace Carbon::SemIR

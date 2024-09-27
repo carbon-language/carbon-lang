@@ -112,14 +112,14 @@ impl () as D;
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @A [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = interface_type @A [template]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,14 +130,14 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %.loc4_7.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %A.ref.loc4: type = name_ref A, imports.%import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc4_7.1: %.2 = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %A.ref.loc4: type = name_ref A, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %.loc6_7.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %A.ref.loc6: type = name_ref A, imports.%import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_7.1: %.2 = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %A.ref.loc6: type = name_ref A, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -147,7 +147,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2 {
+// CHECK:STDOUT: impl @impl: %.2 as %.1 {
 // CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -163,9 +163,9 @@ impl () as D;
 // CHECK:STDOUT: --- use_decl_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @A [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = interface_type @A [template]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -187,7 +187,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2;
+// CHECK:STDOUT: impl @impl: %.2 as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.carbon
 // CHECK:STDOUT:
@@ -222,9 +222,9 @@ impl () as D;
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @B [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = interface_type @B [template]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -246,7 +246,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2;
+// CHECK:STDOUT: impl @impl: %.2 as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -281,13 +281,13 @@ impl () as D;
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @C [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = interface_type @C [template]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -298,9 +298,9 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %.loc8_7.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc8_7.1: %.2 = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +310,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2;
+// CHECK:STDOUT: impl @impl: %.2 as %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:

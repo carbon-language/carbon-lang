@@ -107,7 +107,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         globals_.AllocateName(*this, impl_loc, "impl");
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
-    // TODO: Collect names from the generic once we support generic impls.
+    CollectNamesInGeneric(impl_scope, impl_info.generic_id);
   }
 }
 

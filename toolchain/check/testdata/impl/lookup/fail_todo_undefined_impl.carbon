@@ -82,9 +82,9 @@ impl C as I {
 // CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl.2 {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %I.ref.loc27: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +99,9 @@ impl C as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT: impl @impl.1: %C as %.1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.2: %C as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {}
 // CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -109,8 +111,8 @@ impl C as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %I.ref.loc16: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
