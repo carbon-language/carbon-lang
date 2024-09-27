@@ -60,9 +60,10 @@ class ImplStore {
  private:
   // An ID of either a single impl or a lookup bucket.
   class ImplOrLookupBucketId : public IdBase {
-   public:
-    using IdBase::IdBase;
+   private:
+    explicit constexpr ImplOrLookupBucketId(int index) : IdBase(index) {}
 
+   public:
     // An explicitly invalid ID, corresponding to to ImplId::Invalid.
     static const ImplOrLookupBucketId Invalid;
 
