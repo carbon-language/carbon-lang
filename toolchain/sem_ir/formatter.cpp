@@ -857,6 +857,11 @@ class FormatterImpl {
     FormatTrailingBlock(inst.block_id);
   }
 
+  auto FormatInstRHS(WhereExpr inst) -> void {
+    FormatArgs(inst.period_self_id);
+    FormatTrailingBlock(inst.requirements_id);
+  }
+
   // StructTypeFields are formatted as part of their StructType.
   auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
 

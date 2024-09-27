@@ -745,6 +745,7 @@ struct InterfaceWitness {
        .constant_kind = InstConstantKind::Conditional,
        .is_lowered = false});
 
+  // Always the builtin witness type.
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -855,6 +856,39 @@ struct ReturnExpr {
   InstId expr_id;
   // The return slot, if any. Invalid if we're not returning through memory.
   InstId dest_id;
+};
+
+// An `expr == expr` clause in a `where` expression or `require` declaration.
+struct RequirementEquivalent {
+  static constexpr auto Kind =
+      InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
+          {.ir_name = "requirement_equivalent", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An `expr impls expr` clause in a `where` expression or `require` declaration.
+struct RequirementImpls {
+  static constexpr auto Kind =
+      InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
+          {.ir_name = "requirement_impls", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// A `.M = expr` clause in a `where` expression or `require` declaration.
+struct RequirementRewrite {
+  static constexpr auto Kind =
+      InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
+          {.ir_name = "requirement_rewrite", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
 };
 
 // Given an instruction with a constant value that depends on a generic
@@ -1100,6 +1134,20 @@ struct VarStorage {
 
   TypeId type_id;
   NameId name_id;
+};
+
+// An `expr where requirements` expression.
+struct WhereExpr {
+  static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(
+      {.ir_name = "where_expr",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Conditional});
+
+  TypeId type_id;
+  // This is the `.Self` symbolic binding. Its type matches the left type
+  // argument of the `where`.
+  InstId period_self_id;
+  InstBlockId requirements_id;
 };
 
 // These concepts are an implementation detail of the library, not public API.

@@ -122,7 +122,10 @@ class D {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.loc8: %.4 = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_37: %.4 = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %.1 = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8: %.1 = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -133,7 +136,10 @@ class D {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, @I.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc10_40: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc10_40
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc10: %.1 = bind_symbolic_name U 0, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
@@ -143,6 +149,9 @@ class D {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = type] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
 // CHECK:STDOUT:     %V.loc12: type = bind_symbolic_name V 0, %V.param [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:   }
@@ -217,7 +226,10 @@ class D {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc12: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_44: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, %.loc12_44
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %.1 = param W, runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc12: %.1 = bind_symbolic_name W 0, %W.param [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:   }
