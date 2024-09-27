@@ -38,8 +38,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %n: %.1 = bind_name n, %param
 // CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
@@ -47,6 +45,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %return: ref %.2 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %n: %.1 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

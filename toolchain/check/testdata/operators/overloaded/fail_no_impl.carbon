@@ -136,10 +136,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %.loc15: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -148,13 +148,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %.loc23_22: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc23_15: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_15
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc23_21: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_21
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param.loc23_15: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_15
+// CHECK:STDOUT:     %param.loc23_21: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b

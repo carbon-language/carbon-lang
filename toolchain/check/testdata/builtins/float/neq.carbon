@@ -96,18 +96,18 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc2_11: init type = call constants.%Float(%.loc2_11.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_11.2: type = value_of_initializer %float.make_type.loc2_11 [template = f64]
 // CHECK:STDOUT:     %.loc2_11.3: type = converted %float.make_type.loc2_11, %.loc2_11.2 [template = f64]
-// CHECK:STDOUT:     %param.loc2_8: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc2_8
 // CHECK:STDOUT:     %.loc2_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_19: init type = call constants.%Float(%.loc2_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_19.2: type = value_of_initializer %float.make_type.loc2_19 [template = f64]
 // CHECK:STDOUT:     %.loc2_19.3: type = converted %float.make_type.loc2_19, %.loc2_19.2 [template = f64]
-// CHECK:STDOUT:     %param.loc2_16: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc2_16
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_27.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc2_27.2: type = converted %bool.make_type, %.loc2_27.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
+// CHECK:STDOUT:     %param.loc2_8: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc2_8
+// CHECK:STDOUT:     %param.loc2_16: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc2_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {} {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
@@ -118,9 +118,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %.loc7_25: %False = param_pattern %false_.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc7: type = name_ref True, file.%True.decl [template = constants.%True]
+// CHECK:STDOUT:     %False.ref.loc7: type = name_ref False, file.%False.decl [template = constants.%False]
 // CHECK:STDOUT:     %param.loc7_6: %True = param runtime_param0
 // CHECK:STDOUT:     %true_: %True = bind_name true_, %param.loc7_6
-// CHECK:STDOUT:     %False.ref.loc7: type = name_ref False, file.%False.decl [template = constants.%False]
 // CHECK:STDOUT:     %param.loc7_19: %False = param runtime_param1
 // CHECK:STDOUT:     %false_: %False = bind_name false_, %param.loc7_19
 // CHECK:STDOUT:   }
@@ -134,18 +134,18 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc12_19: init type = call constants.%Float(%.loc12_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_19.2: type = value_of_initializer %float.make_type.loc12_19 [template = f64]
 // CHECK:STDOUT:     %.loc12_19.3: type = converted %float.make_type.loc12_19, %.loc12_19.2 [template = f64]
-// CHECK:STDOUT:     %param.loc12_16: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc12_16
 // CHECK:STDOUT:     %.loc12_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc12_27: init type = call constants.%Float(%.loc12_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_27.2: type = value_of_initializer %float.make_type.loc12_27 [template = f64]
 // CHECK:STDOUT:     %.loc12_27.3: type = converted %float.make_type.loc12_27, %.loc12_27.2 [template = f64]
-// CHECK:STDOUT:     %param.loc12_24: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc12_24
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc12_35.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc12_35.2: type = converted %bool.make_type, %.loc12_35.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
+// CHECK:STDOUT:     %param.loc12_16: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc12_16
+// CHECK:STDOUT:     %param.loc12_24: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc12_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -265,19 +265,19 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:     %float.make_type.loc7_19: init type = call constants.%Float(%.loc7_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_19.2: type = value_of_initializer %float.make_type.loc7_19 [template = f64]
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %float.make_type.loc7_19, %.loc7_19.2 [template = f64]
-// CHECK:STDOUT:     %param.loc7_16: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc7_16
 // CHECK:STDOUT:     %.loc7_27.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_27: init type = call constants.%Float(%.loc7_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_27.2: type = value_of_initializer %float.make_type.loc7_27 [template = f64]
 // CHECK:STDOUT:     %.loc7_27.3: type = converted %float.make_type.loc7_27, %.loc7_27.2 [template = f64]
-// CHECK:STDOUT:     %param.loc7_24: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc7_24
 // CHECK:STDOUT:     %.loc7_35.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_35: init type = call constants.%Float(%.loc7_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_35.2: type = value_of_initializer %float.make_type.loc7_35 [template = f64]
 // CHECK:STDOUT:     %.loc7_35.3: type = converted %float.make_type.loc7_35, %.loc7_35.2 [template = f64]
 // CHECK:STDOUT:     %return: ref f64 = var <return slot>
+// CHECK:STDOUT:     %param.loc7_16: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc7_16
+// CHECK:STDOUT:     %param.loc7_24: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc7_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

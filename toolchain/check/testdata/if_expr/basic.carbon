@@ -65,22 +65,22 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type, %.loc11_9.1 [template = bool]
-// CHECK:STDOUT:     %param.loc11_6: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_6
 // CHECK:STDOUT:     %int.make_type_32.loc11_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_32.loc11_18 [template = i32]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_32.loc11_18, %.loc11_18.1 [template = i32]
-// CHECK:STDOUT:     %param.loc11_15: i32 = param runtime_param1
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc11_15
 // CHECK:STDOUT:     %int.make_type_32.loc11_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_26.1: type = value_of_initializer %int.make_type_32.loc11_26 [template = i32]
 // CHECK:STDOUT:     %.loc11_26.2: type = converted %int.make_type_32.loc11_26, %.loc11_26.1 [template = i32]
-// CHECK:STDOUT:     %param.loc11_23: i32 = param runtime_param2
-// CHECK:STDOUT:     %m: i32 = bind_name m, %param.loc11_23
 // CHECK:STDOUT:     %int.make_type_32.loc11_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_32.loc11_34, %.loc11_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc11_6: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_6
+// CHECK:STDOUT:     %param.loc11_15: i32 = param runtime_param1
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc11_15
+// CHECK:STDOUT:     %param.loc11_23: i32 = param runtime_param2
+// CHECK:STDOUT:     %m: i32 = bind_name m, %param.loc11_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

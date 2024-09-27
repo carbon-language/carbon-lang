@@ -83,10 +83,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %.loc23_12: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,10 +103,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %.loc18: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:

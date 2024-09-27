@@ -146,10 +146,10 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_20.2: type = converted %int.make_type_32, %.loc16_20.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %self: i32 = bind_name self, %param
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return: ref %X = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.11]
 // CHECK:STDOUT:
@@ -164,12 +164,12 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %.loc20_18: %X = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %param: %X = param runtime_param0
-// CHECK:STDOUT:     %self: %X = bind_name self, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_28.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc20_28.2: type = converted %int.make_type_32, %.loc20_28.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %X = param runtime_param0
+// CHECK:STDOUT:     %self: %X = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.16]
 // CHECK:STDOUT:

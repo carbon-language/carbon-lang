@@ -110,7 +110,7 @@ class C {
 // CHECK:STDOUT:     %x.patt: @F.2.%T (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc20: @F.2.%T (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @impl.%T [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %param: @F.2.%T (%T) = param runtime_param0
 // CHECK:STDOUT:     %x: @F.2.%T (%T) = bind_name x, %param
 // CHECK:STDOUT:   }
@@ -122,14 +122,14 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = constants.%T.patt.2]
 // CHECK:STDOUT:     %.loc19_24: type = param_pattern %T.patt, runtime_param<invalid> [symbolic = constants.%T.patt.2]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc19_52: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.6 [template = constants.%.7]
@@ -145,7 +145,7 @@ class C {
 // CHECK:STDOUT:   fn(%.loc12: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T: type) {
+// CHECK:STDOUT: generic fn @F.2(@C.%T: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

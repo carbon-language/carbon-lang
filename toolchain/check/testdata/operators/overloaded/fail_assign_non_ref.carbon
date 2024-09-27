@@ -134,9 +134,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %.loc33_31: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc33_24: %C = param runtime_param0
 // CHECK:STDOUT:     %a: %C = bind_name a, %param.loc33_24
-// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc33_30: %C = param runtime_param1
 // CHECK:STDOUT:     %b: %C = bind_name b, %param.loc33_30
 // CHECK:STDOUT:   }
@@ -185,10 +185,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.4]
+// CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc19_14: %.4 = param runtime_param0
 // CHECK:STDOUT:     %self: %.4 = bind_name self, %param.loc19_14
 // CHECK:STDOUT:     %.loc19_9.3: %.4 = addr_param %self
-// CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc19_24: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_24
 // CHECK:STDOUT:   }

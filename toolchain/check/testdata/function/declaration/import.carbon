@@ -309,12 +309,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
@@ -325,13 +325,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
 // CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:     %return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -406,12 +406,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc5_44: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_44.1: type = value_of_initializer %int.make_type_32.loc5_44 [template = i32]
 // CHECK:STDOUT:     %.loc5_44.2: type = converted %int.make_type_32.loc5_44, %.loc5_44.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc5_52: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_52.1: type = value_of_initializer %int.make_type_32.loc5_52 [template = i32]
 // CHECK:STDOUT:     %.loc5_52.2: type = converted %int.make_type_32.loc5_52, %.loc5_52.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
@@ -422,13 +422,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc6_49.2: type = value_of_initializer %int.make_type_32.loc6_45 [template = i32]
 // CHECK:STDOUT:     %.loc6_49.3: type = converted %int.make_type_32.loc6_45, %.loc6_49.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_49.4: type = converted %.loc6_49.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc6_60: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_60.1: type = value_of_initializer %int.make_type_32.loc6_60 [template = i32]
 // CHECK:STDOUT:     %.loc6_60.2: type = converted %int.make_type_32.loc6_60, %.loc6_60.1 [template = i32]
 // CHECK:STDOUT:     %.loc6_63: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:     %return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -642,12 +642,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc23_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_16.1: type = value_of_initializer %int.make_type_32.loc23_16 [template = i32]
 // CHECK:STDOUT:     %.loc23_16.2: type = converted %int.make_type_32.loc23_16, %.loc23_16.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc23_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_24.1: type = value_of_initializer %int.make_type_32.loc23_24 [template = i32]
 // CHECK:STDOUT:     %.loc23_24.2: type = converted %int.make_type_32.loc23_24, %.loc23_24.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc32_17: init type = call constants.%Int32() [template = i32]
@@ -655,13 +655,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc32_21.2: type = value_of_initializer %int.make_type_32.loc32_17 [template = i32]
 // CHECK:STDOUT:     %.loc32_21.3: type = converted %int.make_type_32.loc32_17, %.loc32_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc32_21.4: type = converted %.loc32_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc32_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_32.1: type = value_of_initializer %int.make_type_32.loc32_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_32.2: type = converted %int.make_type_32.loc32_32, %.loc32_32.1 [template = i32]
 // CHECK:STDOUT:     %.loc32_35: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:     %return.var: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
@@ -796,12 +796,12 @@ import library "extern_api";
 // CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc7_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_32.loc7_24 [template = i32]
 // CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_32.loc7_24, %.loc7_24.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
@@ -809,13 +809,13 @@ import library "extern_api";
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_35: type = struct_type {.c: i32} [template = constants.%.4]
 // CHECK:STDOUT:     %return.var: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}

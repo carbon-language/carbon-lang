@@ -379,6 +379,11 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         push_inst_id(sem_ir.types().GetInstId(inst.field_type_id));
         break;
       }
+      case CARBON_KIND(SymbolicBindingPattern binding_pattern): {
+        out << sem_ir.names().GetFormatted(
+            sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id);
+        break;
+      }
       case CARBON_KIND(TupleType inst): {
         auto refs = sem_ir.type_blocks().Get(inst.elements_id);
         if (refs.empty()) {
@@ -463,7 +468,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case StructLiteral::Kind:
       case StructInit::Kind:
       case StructValue::Kind:
-      case SymbolicBindingPattern::Kind:
       case Temporary::Kind:
       case TemporaryStorage::Kind:
       case TupleAccess::Kind:
@@ -523,7 +527,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
-      case SymbolicBindingPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -597,6 +600,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:
+      case SymbolicBindingPattern::Kind:
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:

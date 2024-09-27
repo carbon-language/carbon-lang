@@ -277,9 +277,9 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.patt.loc12: @.1.%T.1 (%T) = symbolic_binding_pattern N 1 [symbolic = %N.patt.1 (constants.%N.patt.2)]
 // CHECK:STDOUT:     %.loc12_20: @.1.%T.1 (%T) = param_pattern %N.patt.loc12, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 0, %param.loc12_9 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc12_19: @.1.%T.1 (%T) = param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc12: @.1.%T.1 (%T) = bind_symbolic_name N 1, %param.loc12_19 [symbolic = %N.1 (constants.%N.2)]
 // CHECK:STDOUT:   }
@@ -377,11 +377,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %U.patt.loc12: i32 = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     %.loc12_20: i32 = param_pattern %U.patt.loc12, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 0, %param.loc12_9 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
+// CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 0, %param.loc12_9 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %param.loc12_19: i32 = param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc12: i32 = bind_symbolic_name U 1, %param.loc12_19 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }

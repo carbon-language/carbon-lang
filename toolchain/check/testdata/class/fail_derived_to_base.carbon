@@ -136,11 +136,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:     %.loc31_26: type = ptr_type %B2 [template = constants.%.11]
-// CHECK:STDOUT:     %param: %.11 = param runtime_param0
-// CHECK:STDOUT:     %p: %.11 = bind_name p, %param
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [template = constants.%A1]
 // CHECK:STDOUT:     %.loc31_34: type = ptr_type %A1 [template = constants.%.12]
 // CHECK:STDOUT:     %return: ref %.12 = var <return slot>
+// CHECK:STDOUT:     %param: %.11 = param runtime_param0
+// CHECK:STDOUT:     %p: %.11 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
@@ -149,11 +149,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.23]
-// CHECK:STDOUT:     %param: %.23 = param runtime_param0
-// CHECK:STDOUT:     %p: %.23 = bind_name p, %param
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
 // CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.24]
 // CHECK:STDOUT:     %return: ref %.24 = var <return slot>
+// CHECK:STDOUT:     %param: %.23 = param runtime_param0
+// CHECK:STDOUT:     %p: %.23 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

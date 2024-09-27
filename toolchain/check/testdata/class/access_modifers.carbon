@@ -389,12 +389,12 @@ class A {
 // CHECK:STDOUT:     %.loc7_20: %Circle = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %param: %Circle = param runtime_param0
-// CHECK:STDOUT:     %self: %Circle = bind_name self, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc7_33.2: type = converted %int.make_type_32, %.loc7_33.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %Circle = param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -407,12 +407,12 @@ class A {
 // CHECK:STDOUT:     %.loc15_18: %Circle = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %param: %Circle = param runtime_param0
-// CHECK:STDOUT:     %self: %Circle = bind_name self, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc15_31.2: type = converted %int.make_type_32, %.loc15_31.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %Circle = param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

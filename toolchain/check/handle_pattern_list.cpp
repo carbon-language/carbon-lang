@@ -10,15 +10,12 @@ namespace Carbon::Check {
 auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.params_stack().Push();
   context.param_patterns_stack().Push();
   return true;
 }
 
 static auto ConsumeTrailingParam(Context& context) {
-  auto [node_id, param_id] = context.node_stack().PopPatternWithNodeId();
-  context.params_stack().AddInstId(param_id);
-  auto pattern_id = context.pattern_node_stack().Pop<SemIR::InstId>(node_id);
+  auto [node_id, pattern_id] = context.node_stack().PopPatternWithNodeId();
   auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
       node_id, {
                    .type_id = context.insts().Get(pattern_id).type_id(),
@@ -35,9 +32,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
   if (!context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
     ConsumeTrailingParam(context);
   }
-  context.node_stack().Push(node_id, context.params_stack().Pop());
-  context.pattern_node_stack().Push(node_id,
-                                    context.param_patterns_stack().Pop());
+  context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
   return true;
@@ -46,7 +41,6 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
 auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.params_stack().Push();
   context.param_patterns_stack().Push();
   return true;
 }
@@ -63,9 +57,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   if (!context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
     ConsumeTrailingParam(context);
   }
-  context.node_stack().Push(node_id, context.params_stack().Pop());
-  context.pattern_node_stack().Push(node_id,
-                                    context.param_patterns_stack().Pop());
+  context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
   return true;
 }
 

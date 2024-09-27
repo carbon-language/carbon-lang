@@ -90,9 +90,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.7]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %param.loc19_6: %.7 = param runtime_param0
 // CHECK:STDOUT:     %s: %.7 = bind_name s, %param.loc19_6
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %param.loc19_18: %B = param runtime_param1
 // CHECK:STDOUT:     %b: %B = bind_name b, %param.loc19_18
 // CHECK:STDOUT:   }

@@ -16,7 +16,6 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
-#include "toolchain/check/pattern_node_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -417,16 +416,12 @@ class Context {
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
-  auto pattern_node_stack() -> PatternNodeStack& { return pattern_node_stack_; }
-
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
   auto pattern_block_stack() -> InstBlockStack& { return pattern_block_stack_; }
 
   auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
     return param_and_arg_refs_stack_;
   }
-
-  auto params_stack() -> InstBlockStack& { return params_stack_; }
 
   auto param_patterns_stack() -> InstBlockStack& {
     return param_patterns_stack_;
@@ -566,8 +561,6 @@ class Context {
   // The stack during Build. Will contain file-level parse nodes on return.
   NodeStack node_stack_;
 
-  PatternNodeStack pattern_node_stack_;
-
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
 
@@ -578,7 +571,6 @@ class Context {
   ParamAndArgRefsStack param_and_arg_refs_stack_;
 
   // FIXME clarify relationship with param_and_args...
-  InstBlockStack params_stack_;
   InstBlockStack param_patterns_stack_;
 
   // The stack of instruction blocks being used for type information while

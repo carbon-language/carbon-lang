@@ -161,13 +161,13 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %.loc23_16: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_12: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc23_9: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_9
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %param.loc23_15: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc23_15
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param.loc23_9: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_9
+// CHECK:STDOUT:     %param.loc23_15: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc23_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
@@ -221,13 +221,13 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %.loc17_23: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc17_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc17_9: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc17_9
 // CHECK:STDOUT:     %C.ref.loc17_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc17_18: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc17_18
 // CHECK:STDOUT:     %C.ref.loc17_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param.loc17_9: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc17_9
+// CHECK:STDOUT:     %param.loc17_18: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc17_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:
@@ -246,10 +246,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc20_21: type = ptr_type %C [template = constants.%.7]
+// CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc20_14: %.7 = param runtime_param0
 // CHECK:STDOUT:     %self: %.7 = bind_name self, %param.loc20_14
 // CHECK:STDOUT:     %.loc20_9.3: %.7 = addr_param %self
-// CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc20_24: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc20_24
 // CHECK:STDOUT:   }

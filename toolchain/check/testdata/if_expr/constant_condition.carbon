@@ -116,12 +116,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %t.patt: type = binding_pattern t
 // CHECK:STDOUT:     %.loc28_23: type = param_pattern %t.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param0
-// CHECK:STDOUT:     %t: type = bind_name t, %param
 // CHECK:STDOUT:     %int.make_type_32.loc28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_34.1: type = value_of_initializer %int.make_type_32.loc28 [template = i32]
 // CHECK:STDOUT:     %.loc28_34.2: type = converted %int.make_type_32.loc28, %.loc28_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: type = param runtime_param0
+// CHECK:STDOUT:     %t: type = bind_name t, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

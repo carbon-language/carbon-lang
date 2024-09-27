@@ -29,10 +29,10 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc18: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

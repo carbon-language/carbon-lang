@@ -49,11 +49,11 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_14: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %param
 // CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_25: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

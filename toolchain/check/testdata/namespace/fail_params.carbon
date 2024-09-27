@@ -87,9 +87,9 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %param.loc24: i32 = param runtime_param<invalid>
 // CHECK:STDOUT:   %n: i32 = bind_name n, %param.loc24
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %param.loc30_13: type = param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param.loc30_13 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %param.loc30_23: %T = param runtime_param<invalid>
 // CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}

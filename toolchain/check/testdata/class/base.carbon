@@ -94,8 +94,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_12: %Derived = param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %param: %Derived = param runtime_param0
-// CHECK:STDOUT:     %d: %Derived = bind_name d, %param
 // CHECK:STDOUT:     %int.make_type_32.loc25_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc25_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_35.1: %.16 = tuple_literal (%int.make_type_32.loc25_27, %int.make_type_32.loc25_32)
@@ -105,6 +103,8 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_35.5: type = converted %int.make_type_32.loc25_32, %.loc25_35.4 [template = i32]
 // CHECK:STDOUT:     %.loc25_35.6: type = converted %.loc25_35.1, constants.%.17 [template = constants.%.17]
 // CHECK:STDOUT:     %return: ref %.17 = var <return slot>
+// CHECK:STDOUT:     %param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %d: %Derived = bind_name d, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

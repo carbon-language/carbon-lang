@@ -67,12 +67,12 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %.loc21_16: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc21: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %param.loc21
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_29.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_29.2: type = converted %int.make_type_32.loc21, %.loc21_29.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc21: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,12 +82,12 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %.loc21_16: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc12: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %param.loc12
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %int.make_type_32.loc12, %.loc12_25.1 [template = i32]
 // CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc12: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]

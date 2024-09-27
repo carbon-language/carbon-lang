@@ -66,17 +66,17 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_15: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc7_9: @Op.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc7_21: @Op.%Self (%Self) = param runtime_param1
-// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_21
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = var <return slot>
+// CHECK:STDOUT:     %param.loc7_9: @Op.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_9
+// CHECK:STDOUT:     %param.loc7_21: @Op.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: %.3 = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -183,13 +183,13 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %.loc7_26: i32 = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %param.loc7_9: i32 = param runtime_param0
-// CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %param.loc7_21: i32 = param runtime_param1
-// CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_21
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc7_9: i32 = param runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_9
+// CHECK:STDOUT:     %param.loc7_21: i32 = param runtime_param1
+// CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:

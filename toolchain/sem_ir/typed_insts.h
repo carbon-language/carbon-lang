@@ -66,9 +66,11 @@ struct AddrOf {
 
 // The parameter-list counterpart of an `addr` pattern. Structurally, `inner_id`
 // will generally be one of `AnyBindName`.
+// FIXME remove this.
 struct AddrParam {
+  // FIXME can we re-narrow the node kind?
   static constexpr auto Kind =
-      InstKind::AddrParam.Define<Parse::AddrId>({.ir_name = "addr_param"});
+      InstKind::AddrParam.Define<Parse::NodeId>({.ir_name = "addr_param"});
 
   TypeId type_id;
   // The `self` binding.
@@ -326,8 +328,12 @@ struct BindingPattern {
 // everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
-      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "symbolic_binding_pattern", .is_lowered = false});
+      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
+          .ir_name = "symbolic_binding_pattern",
+          .is_type = InstIsType::Maybe,
+          .constant_kind = InstConstantKind::SymbolicOnly,
+          .is_lowered = false,
+      });
 
   TypeId type_id;
   EntityNameId entity_name_id;

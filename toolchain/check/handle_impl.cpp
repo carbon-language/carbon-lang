@@ -8,6 +8,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -45,9 +46,6 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(node_id, params_id);
-  context.pattern_node_stack().Push(
-      node_id,
-      context.pattern_node_stack().Pop<SemIR::InstBlockId>(params_node_id));
   return true;
 }
 
@@ -194,9 +192,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
   auto [params_node, params_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
-  if (params_id) {
-    context.pattern_node_stack().Pop<SemIR::InstBlockId>(params_node);
-  }
   auto decl_block_id = context.inst_block_stack().Pop();
   context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
@@ -218,8 +213,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // TODO: Check for an orphan `impl`.
 
-  // TODO: Check parameters. Store them on the `Impl` in some form.
-  static_cast<void>(params_id);
+  if (params_id) {
+    auto parameter_blocks =
+        ProcessSignature(context, *params_id, SemIR::InstBlockId::Invalid);
+    // TODO: Check parameters. Store them on the `Impl` in some form.
+    static_cast<void>(parameter_blocks);
+  }
 
   // Add the impl declaration.
   // TODO: Does lookup in an impl file need to look for a prior impl declaration

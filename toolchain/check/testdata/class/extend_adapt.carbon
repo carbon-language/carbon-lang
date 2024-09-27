@@ -472,12 +472,12 @@ class StructAdapter {
 // CHECK:STDOUT:     %.loc13_7: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

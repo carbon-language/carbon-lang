@@ -159,10 +159,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %param.loc10_10: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T 0, %param.loc10_10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %param.loc10_22: %T = param runtime_param0
-// CHECK:STDOUT:     %n.loc10: %T = bind_name n, %param.loc10_22
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return: ref %T = var <return slot>
+// CHECK:STDOUT:     %param.loc10_22: %T = param runtime_param0
+// CHECK:STDOUT:     %n.loc10: %T = bind_name n, %param.loc10_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %Class.2 = binding_pattern self
@@ -172,10 +172,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T 0, %param.loc14_10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc14_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, %.loc14_28 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %param.loc14_22: %Class.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc14: %Class.2 = bind_name self, %param.loc14_22
 // CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return: ref %T = var <return slot>
+// CHECK:STDOUT:     %param.loc14_22: %Class.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc14: %Class.2 = bind_name self, %param.loc14_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,10 +199,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %.loc10: %T = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, @Class.%T.loc4 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:       %param.loc5: @F.%T.1 (%T) = param runtime_param0
-// CHECK:STDOUT:       %n.loc5: @F.%T.1 (%T) = bind_name n, %param.loc5
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, @Class.%T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc5: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:       %param.loc5: @F.%T.1 (%T) = param runtime_param0
+// CHECK:STDOUT:       %n.loc5: @F.%T.1 (%T) = bind_name n, %param.loc5
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = @Class.%G (constants.%G)] {
 // CHECK:STDOUT:       %self.patt: %Class.2 = binding_pattern self
@@ -210,10 +210,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc6: type = name_ref Self, %.loc6 [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %param.loc6: @G.%Class (%Class.2) = param runtime_param0
-// CHECK:STDOUT:       %self.loc6: @G.%Class (%Class.2) = bind_name self, %param.loc6
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @Class.%T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:       %return.var.loc6: ref @G.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:       %param.loc6: @G.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %self.loc6: @G.%Class (%Class.2) = bind_name self, %param.loc6
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc7: @Class.%.1 (%.2) = field_decl n, element0 [template]
@@ -352,9 +352,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N 1, %param.loc10_18 [symbolic = constants.%N]
 // CHECK:STDOUT:     %.loc10_33: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10_33 [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %param.loc10_27: %B.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc10: %B.2 = bind_name self, %param.loc10_27
-// CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %param.loc10_39: %T = param runtime_param1
 // CHECK:STDOUT:     %a.loc10: %T = bind_name a, %param.loc10_39
 // CHECK:STDOUT:   }
@@ -403,9 +403,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = %B (constants.%B.2)]
 // CHECK:STDOUT:       %Self.ref.loc6: type = name_ref Self, %.loc6 [symbolic = %B (constants.%B.2)]
+// CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @A.%T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:       %param.loc6_10: @F.%B (%B.2) = param runtime_param0
 // CHECK:STDOUT:       %self.loc6: @F.%B (%B.2) = bind_name self, %param.loc6_10
-// CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @A.%T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:       %param.loc6_22: @F.%T.1 (%T) = param runtime_param1
 // CHECK:STDOUT:       %a.loc6: @F.%T.1 (%T) = bind_name a, %param.loc6_22
 // CHECK:STDOUT:     }

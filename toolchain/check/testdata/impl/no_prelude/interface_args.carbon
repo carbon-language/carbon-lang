@@ -773,10 +773,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %.loc4_11: %A = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %param: %A = param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %param
 // CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
 // CHECK:STDOUT:     %return: ref %B = var <return slot>
+// CHECK:STDOUT:     %param: %A = param runtime_param0
+// CHECK:STDOUT:     %a: %A = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -931,10 +931,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %.loc6: %A = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %param: %A = param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %param
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %param: %A = param runtime_param0
+// CHECK:STDOUT:     %a: %A = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -73,7 +73,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+13':         {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: TupleLiteral, arg0: empty, type: type(inst+13)}
 // CHECK:STDOUT:     'inst+15':         {kind: TupleType, arg0: type_block1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+16':         {kind: TupleLiteral, arg0: block8, type: type(inst+15)}
+// CHECK:STDOUT:     'inst+16':         {kind: TupleLiteral, arg0: block6, type: type(inst+15)}
 // CHECK:STDOUT:     'inst+17':         {kind: Converted, arg0: inst+14, arg1: inst+13, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: TupleType, arg0: type_block2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+19':         {kind: Converted, arg0: inst+16, arg1: inst+18, type: typeTypeType}
@@ -136,33 +136,33 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
-// CHECK:STDOUT:       0:               inst+2
-// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+6
-// CHECK:STDOUT:     block6:
-// CHECK:STDOUT:       0:               inst+9
-// CHECK:STDOUT:     block7:
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+11
-// CHECK:STDOUT:     block8:
+// CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+12
 // CHECK:STDOUT:       1:               inst+14
+// CHECK:STDOUT:     block7:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block8:
+// CHECK:STDOUT:       0:               inst+9
 // CHECK:STDOUT:     block9:
 // CHECK:STDOUT:       0:               inst+4
 // CHECK:STDOUT:       1:               inst+6
 // CHECK:STDOUT:       2:               inst+10
 // CHECK:STDOUT:       3:               inst+11
 // CHECK:STDOUT:     block10:
-// CHECK:STDOUT:       0:               inst+1
-// CHECK:STDOUT:       1:               inst+2
-// CHECK:STDOUT:       2:               inst+7
-// CHECK:STDOUT:       3:               inst+8
-// CHECK:STDOUT:       4:               inst+9
-// CHECK:STDOUT:       5:               inst+12
-// CHECK:STDOUT:       6:               inst+14
-// CHECK:STDOUT:       7:               inst+16
-// CHECK:STDOUT:       8:               inst+17
-// CHECK:STDOUT:       9:               inst+19
-// CHECK:STDOUT:       10:              inst+20
+// CHECK:STDOUT:       0:               inst+7
+// CHECK:STDOUT:       1:               inst+12
+// CHECK:STDOUT:       2:               inst+14
+// CHECK:STDOUT:       3:               inst+16
+// CHECK:STDOUT:       4:               inst+17
+// CHECK:STDOUT:       5:               inst+19
+// CHECK:STDOUT:       6:               inst+20
+// CHECK:STDOUT:       7:               inst+1
+// CHECK:STDOUT:       8:               inst+2
+// CHECK:STDOUT:       9:               inst+8
+// CHECK:STDOUT:       10:              inst+9
 // CHECK:STDOUT:     block11:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:     block12:

@@ -105,13 +105,13 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc8_37: @InitFromStructGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc8_26: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8_26 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_39: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_36: @InitFromStructGeneric.%T.1 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %param.loc8_36
 // CHECK:STDOUT:     %T.ref.loc8_45: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @InitFromStructGeneric.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %param.loc8_26: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8_26 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %param.loc8_36: @InitFromStructGeneric.%T.1 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %param.loc8_36
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {
 // CHECK:STDOUT:     %x.patt: i32 = binding_pattern x
@@ -120,12 +120,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc13_30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32.loc13_30 [template = i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32.loc13_30, %.loc13_30.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %x: i32 = bind_name x, %param
 // CHECK:STDOUT:     %int.make_type_32.loc13_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_38.1: type = value_of_initializer %int.make_type_32.loc13_38 [template = i32]
 // CHECK:STDOUT:     %.loc13_38.2: type = converted %int.make_type_32.loc13_38, %.loc13_38.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %x: i32 = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -300,13 +300,13 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc8_38: @InitFromAdaptedGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc8_27: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8_27 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_40: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_37: @InitFromAdaptedGeneric.%T.1 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.1 (%T) = bind_name x, %param.loc8_37
 // CHECK:STDOUT:     %T.ref.loc8_46: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @InitFromAdaptedGeneric.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %param.loc8_27: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param.loc8_27 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %param.loc8_37: @InitFromAdaptedGeneric.%T.1 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.1 (%T) = bind_name x, %param.loc8_37
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [template = constants.%InitFromAdaptedSpecific] {
 // CHECK:STDOUT:     %x.patt: i32 = binding_pattern x
@@ -315,12 +315,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc12_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_31.1: type = value_of_initializer %int.make_type_32.loc12_31 [template = i32]
 // CHECK:STDOUT:     %.loc12_31.2: type = converted %int.make_type_32.loc12_31, %.loc12_31.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %x: i32 = bind_name x, %param
 // CHECK:STDOUT:     %int.make_type_32.loc12_39: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_39.1: type = value_of_initializer %int.make_type_32.loc12_39 [template = i32]
 // CHECK:STDOUT:     %.loc12_39.2: type = converted %int.make_type_32.loc12_39, %.loc12_39.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %x: i32 = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

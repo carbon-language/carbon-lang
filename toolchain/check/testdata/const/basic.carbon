@@ -65,8 +65,6 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc11_9.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_18: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc11_19: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc11_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32.loc11_31 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_32.loc11_31, %.loc11_25.1 [template = i32]
@@ -74,6 +72,8 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc11_34: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc11_35: type = ptr_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     %return: ref %.4 = var <return slot>
+// CHECK:STDOUT:     %param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %p.patt: %.6 = binding_pattern p
@@ -84,14 +84,14 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc15_19.2: type = converted %int.make_type_32.loc15_16, %.loc15_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_19.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_9: type = const_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:     %param: %.6 = param runtime_param0
-// CHECK:STDOUT:     %p: %.6 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_26: type = const_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:     %return: ref %.6 = var <return slot>
+// CHECK:STDOUT:     %param: %.6 = param runtime_param0
+// CHECK:STDOUT:     %p: %.6 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

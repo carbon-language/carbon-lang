@@ -76,17 +76,17 @@ interface Interface {
 // CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
 // CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
-// CHECK:STDOUT:     %param.loc21_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc21_16
 // CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
 // CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
-// CHECK:STDOUT:     %param.loc21_24: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc21_24
 // CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
 // CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc21_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc21_16
+// CHECK:STDOUT:     %param.loc21_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc21_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
 // CHECK:STDOUT:
