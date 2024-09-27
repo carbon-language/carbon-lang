@@ -188,7 +188,7 @@ struct AssociatedEntity {
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
   ElementIndex index;
-  InstId decl_id;
+  AbsoluteInstId decl_id;
 };
 
 // The type of an expression that names an associated entity, such as
@@ -810,7 +810,7 @@ struct Namespace {
   NameScopeId name_scope_id;
   // If the namespace was produced by an `import` line, the associated line for
   // diagnostics.
-  InstId import_id;
+  AbsoluteInstId import_id;
 };
 
 // A parameter for a function or other parameterized block.
@@ -904,7 +904,7 @@ struct SpecificConstant {
       {.ir_name = "specific_constant", .is_lowered = false});
 
   TypeId type_id;
-  InstId inst_id;
+  AbsoluteInstId inst_id;
   SpecificId specific_id;
 };
 
