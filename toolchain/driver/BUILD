@@ -18,7 +18,7 @@ cc_library(
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
     data = [
-        "//toolchain/install:llvm_link_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     deps = [
         "//common:command_line",
@@ -26,6 +26,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
+        "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Core",
@@ -62,6 +63,7 @@ cc_binary(
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
+        "//toolchain/install:install_paths_test_helpers",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
@@ -75,15 +77,30 @@ sh_test(
 
 cc_library(
     name = "driver",
-    srcs = ["driver.cpp"],
-    hdrs = ["driver.h"],
+    srcs = [
+        "clang_subcommand.cpp",
+        "clang_subcommand.h",
+        "codegen_options.cpp",
+        "codegen_options.h",
+        "compile_subcommand.cpp",
+        "compile_subcommand.h",
+        "driver.cpp",
+        "driver_env.h",
+        "link_subcommand.cpp",
+        "link_subcommand.h",
+    ],
+    hdrs = [
+        "driver.h",
+        "driver_subcommand.h",
+    ],
     data = [
-        "//toolchain/install:install_lib_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     textual_hdrs = ["flags.def"],
     deps = [
         ":clang_runner",
         "//common:command_line",
+        "//common:ostream",
         "//common:version",
         "//common:vlog",
         "//toolchain/base:value_store",

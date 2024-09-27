@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_redecl.carbon
 
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: Name is previously declared here.
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: note: name is previously declared here
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:      ^
 fn F(n: i32, n: i32);
@@ -33,6 +33,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -48,19 +49,19 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt.loc17_6: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc17_7: i32 = param_pattern %n.patt.loc17_6
+// CHECK:STDOUT:     %.loc17_7: i32 = param_pattern %n.patt.loc17_6, runtime_param0
 // CHECK:STDOUT:     %n.patt.loc17_14: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc17_15: i32 = param_pattern %n.patt.loc17_14
+// CHECK:STDOUT:     %.loc17_15: i32 = param_pattern %n.patt.loc17_14, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc17_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_9.1: type = value_of_initializer %int.make_type_32.loc17_9 [template = i32]
 // CHECK:STDOUT:     %.loc17_9.2: type = converted %int.make_type_32.loc17_9, %.loc17_9.1 [template = i32]
-// CHECK:STDOUT:     %param.loc17_6: i32 = param
+// CHECK:STDOUT:     %param.loc17_6: i32 = param runtime_param0
 // CHECK:STDOUT:     %n.loc17_6: i32 = bind_name n, %param.loc17_6
 // CHECK:STDOUT:     %int.make_type_32.loc17_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_17.1: type = value_of_initializer %int.make_type_32.loc17_17 [template = i32]
 // CHECK:STDOUT:     %.loc17_17.2: type = converted %int.make_type_32.loc17_17, %.loc17_17.1 [template = i32]
-// CHECK:STDOUT:     %param.loc17_14: i32 = param
+// CHECK:STDOUT:     %param.loc17_14: i32 = param runtime_param1
 // CHECK:STDOUT:     %n.loc17_14: i32 = bind_name n, %param.loc17_14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

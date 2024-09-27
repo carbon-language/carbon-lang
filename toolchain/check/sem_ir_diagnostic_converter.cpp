@@ -18,9 +18,9 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
   auto follow_import_ref = [&](SemIR::ImportIRInstId import_ir_inst_id) {
     auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
     const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
-    CARBON_CHECK(import_ir.decl_id.is_valid())
-        << "If we get invalid locations here, we may need to more thoroughly "
-           "track ImportDecls.";
+    CARBON_CHECK(import_ir.decl_id.is_valid(),
+                 "If we get invalid locations here, we may need to more "
+                 "thoroughly track ImportDecls.");
 
     DiagnosticLoc in_import_loc;
     auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
@@ -37,8 +37,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
           cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id);
       auto implicit_loc_id =
           implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id);
-      CARBON_CHECK(implicit_loc_id.is_node_id())
-          << "Should only be one layer of implicit imports";
+      CARBON_CHECK(implicit_loc_id.is_node_id(),
+                   "Should only be one layer of implicit imports");
       in_import_loc =
           ConvertLocInFile(implicit_ir.sem_ir, implicit_loc_id.node_id(),
                            loc.token_only, context_fn);
@@ -47,7 +47,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
     // TODO: Add an "In implicit import of prelude." note for the case where we
     // don't have a location.
     if (import_loc_id.is_valid()) {
-      CARBON_DIAGNOSTIC(InImport, Note, "In import.");
+      // TODO: Include the name of the imported library in the diagnostic.
+      CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
       context_fn(in_import_loc, InImport);
     }
 
@@ -75,7 +76,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
     if (auto diag_loc = handle_loc(loc.loc_id)) {
       return *diag_loc;
     }
-    CARBON_CHECK(cursor_inst_id.is_valid()) << "Should have been set";
+    CARBON_CHECK(cursor_inst_id.is_valid(), "Should have been set");
   }
 
   while (true) {
@@ -113,6 +114,21 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 }
 
 auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
+  if (auto* library_name_id = llvm::any_cast<SemIR::LibraryNameId>(&arg)) {
+    std::string library_name;
+    if (*library_name_id == SemIR::LibraryNameId::Default) {
+      library_name = "default library";
+    } else if (!library_name_id->is_valid()) {
+      library_name = "library <invalid>";
+    } else {
+      llvm::raw_string_ostream stream(library_name);
+      stream << "library \"";
+      stream << sem_ir_->string_literal_values().Get(
+          library_name_id->AsStringLiteralValueId());
+      stream << "\"";
+    }
+    return library_name;
+  }
   if (auto* name_id = llvm::any_cast<SemIR::NameId>(&arg)) {
     return sem_ir_->names().GetFormatted(*name_id).str();
   }
@@ -131,7 +147,7 @@ auto SemIRDiagnosticConverter::ConvertLocInFile(const SemIR::File* sem_ir,
                                                 bool token_only,
                                                 ContextFnT context_fn) const
     -> DiagnosticLoc {
-  return node_converters_[sem_ir->check_ir_id().index]->ConvertLoc(
+  return node_converters_[sem_ir->check_ir_id().index].ConvertLoc(
       Parse::NodeLoc(node_id, token_only), context_fn);
 }
 

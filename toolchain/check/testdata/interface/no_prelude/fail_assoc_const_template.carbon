@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_template.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_template.carbon:[[@LINE+3]]:7: ERROR: Semantics TODO: `HandleTemplate`.
+  // CHECK:STDERR: fail_assoc_const_template.carbon:[[@LINE+3]]:7: error: semantics TODO: `HandleTemplate`
   // CHECK:STDERR:   let template T:! type;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
   let template T:! type;

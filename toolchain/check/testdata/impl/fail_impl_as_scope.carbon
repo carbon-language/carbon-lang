@@ -12,7 +12,7 @@ interface Simple {
   fn F();
 }
 
-// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: ERROR: `impl as` can only be used in a class.
+// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: error: `impl as` can only be used in a class
 // CHECK:STDERR: impl as Simple {
 // CHECK:STDERR:      ^~
 impl as Simple {
@@ -40,6 +40,7 @@ impl as Simple {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -71,11 +72,11 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as %.1 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %.1) {

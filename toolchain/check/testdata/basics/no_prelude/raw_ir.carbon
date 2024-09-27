@@ -58,17 +58,17 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       1:               type(inst+13)
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
-// CHECK:STDOUT:     'inst+1':          {kind: Param, type: typeTypeType}
+// CHECK:STDOUT:     'inst+1':          {kind: Param, arg0: runtime_param<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: SymbolicBindingPattern, arg0: entity_name0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: SymbolicBindingPattern, arg0: entity_name0, type: typeTypeType}
-// CHECK:STDOUT:     'inst+6':          {kind: ParamPattern, arg0: inst+4, type: typeTypeType}
+// CHECK:STDOUT:     'inst+6':          {kind: ParamPattern, arg0: inst+4, arg1: runtime_param<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
-// CHECK:STDOUT:     'inst+8':          {kind: Param, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+8':          {kind: Param, arg0: runtime_param0, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+9':          {kind: BindName, arg0: entity_name1, arg1: inst+8, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+10':         {kind: BindingPattern, arg0: entity_name1, type: type(symbolicConstant3)}
-// CHECK:STDOUT:     'inst+11':         {kind: ParamPattern, arg0: inst+10, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+11':         {kind: ParamPattern, arg0: inst+10, arg1: runtime_param0, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: TupleLiteral, arg0: empty, type: type(inst+13)}

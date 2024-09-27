@@ -10,7 +10,7 @@
 
 // --- a.carbon
 
-library "a";
+library "[[@TEST_NAME]]";
 
 interface Empty {
 }
@@ -32,7 +32,7 @@ var f_ref: {.f: ForwardDeclared};
 
 // --- b.carbon
 
-library "b";
+library "[[@TEST_NAME]]";
 
 import library "a";
 
@@ -213,26 +213,26 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.patt: %.1 = binding_pattern e
-// CHECK:STDOUT:     %.loc6: %.1 = param_pattern %e.patt
+// CHECK:STDOUT:     %.loc6: %.1 = param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %e: %.1 = bind_name e, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [template = constants.%UseBasic] {
 // CHECK:STDOUT:     %e.patt: %.3 = binding_pattern e
-// CHECK:STDOUT:     %.loc7: %.3 = param_pattern %e.patt
+// CHECK:STDOUT:     %.loc7: %.3 = param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
 // CHECK:STDOUT:     %e: %.3 = bind_name e, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [template = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %f.patt: %.4 = binding_pattern f
-// CHECK:STDOUT:     %.loc8: %.4 = param_pattern %f.patt
+// CHECK:STDOUT:     %.loc8: %.4 = param_pattern %f.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param
+// CHECK:STDOUT:     %param: %.4 = param runtime_param0
 // CHECK:STDOUT:     %f: %.4 = bind_name f, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%import_ref.2 [template = constants.%.3]

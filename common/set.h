@@ -372,7 +372,7 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
   requires std::invocable<InsertCallbackT, LookupKeyT, void*>
 {
   auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
-  CARBON_DCHECK(entry) << "Should always result in a valid index.";
+  CARBON_DCHECK(entry, "Should always result in a valid index.");
 
   if (LLVM_LIKELY(!inserted)) {
     return InsertResult(false, entry->key());

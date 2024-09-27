@@ -10,7 +10,7 @@
 
 // TODO: This should work.
 fn G(N:! i32) {
-  // CHECK:STDERR: fail_symbolic.carbon:[[@LINE+3]]:16: ERROR: Semantics TODO: `symbolic array bound`.
+  // CHECK:STDERR: fail_symbolic.carbon:[[@LINE+3]]:16: error: semantics TODO: `symbolic array bound`
   // CHECK:STDERR:   var k: [i32; N];
   // CHECK:STDERR:                ^
   var k: [i32; N];
@@ -35,6 +35,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -50,12 +51,12 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %N.patt.loc12: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %.loc12_7: i32 = param_pattern %N.patt.loc12 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc12_7: i32 = param_pattern %N.patt.loc12, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %param: i32 = param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc12: i32 = bind_symbolic_name N 0, %param [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

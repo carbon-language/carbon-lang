@@ -10,7 +10,7 @@
 
 interface Interface { }
 
-// CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:14: ERROR: Out-of-line declaration requires a declaration in scoped entity.
+// CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:14: error: out-of-line declaration requires a declaration in scoped entity
 // CHECK:STDERR: fn Interface.F() {}
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
@@ -19,13 +19,13 @@ fn Interface.F() {}
 // Nesting interfaces like this is not valid, but make sure we don't crash.
 interface Outer {
   interface Inner {
-    // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:8: ERROR: Name `Outer` not found.
+    // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:8: error: name `Outer` not found
     // CHECK:STDERR:     fn Outer.F();
     // CHECK:STDERR:        ^~~~~
     // CHECK:STDERR:
     fn Outer.F();
   }
-  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+3]]:12: ERROR: Out-of-line declaration requires a declaration in scoped entity.
+  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+3]]:12: error: out-of-line declaration requires a declaration in scoped entity
   // CHECK:STDERR:   fn Inner.F();
   // CHECK:STDERR:            ^
   fn Inner.F();

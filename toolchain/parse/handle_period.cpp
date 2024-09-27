@@ -24,7 +24,8 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`.
-  } else if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+  } else if (node_kind != NodeKind::StructFieldDesignator &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
                                              NodeKind::IntLiteral)) {
     // OK, '.42'.
   } else if (paren_state != State::Invalid &&
@@ -34,10 +35,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     context.PushState(State::OnlyParenExpr);
     return;
   } else {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
-                      "Expected identifier after `{0}`.", llvm::StringLiteral);
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
+                      "expected identifier after `{0}`", llvm::StringLiteral);
     context.emitter().Emit(
-        *context.position(), ExpectedIdentifierAfterDotOrArrow,
+        *context.position(), ExpectedIdentifierAfterPeriodOrArrow,
         is_arrow ? llvm::StringLiteral("->") : llvm::StringLiteral("."));
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?

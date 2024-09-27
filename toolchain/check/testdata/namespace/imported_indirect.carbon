@@ -10,34 +10,34 @@
 
 // --- a.carbon
 
-package Same library "a";
+package Same library "[[@TEST_NAME]]";
 
 namespace A;
 
 // --- b.carbon
 
-package Same library "b";
+package Same library "[[@TEST_NAME]]";
 import library "a";
 
 namespace A.B;
 
 // --- c.carbon
 
-package Same library "c";
+package Same library "[[@TEST_NAME]]";
 import library "b";
 
 namespace A.B.C;
 
 // --- d.carbon
 
-package Same library "d";
+package Same library "[[@TEST_NAME]]";
 import library "c";
 
 fn A.B.C.D() {};
 
 // --- e.carbon
 
-package Same library "e";
+package Same library "[[@TEST_NAME]]";
 import library "d";
 
 var e: () = A.B.C.D();
@@ -50,6 +50,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -77,6 +78,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -109,6 +111,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -151,6 +154,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -199,6 +203,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

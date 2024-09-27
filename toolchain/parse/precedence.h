@@ -58,6 +58,10 @@ class PrecedenceGroup {
   // `impl` and `as`.
   static auto ForImplAs() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse expressions in requirements
+  // after `where` or `require`.
+  static auto ForRequirements() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return std::nullopt if the given token is not a prefix operator.
   static auto ForLeading(Lex::TokenKind kind) -> std::optional<PrecedenceGroup>;
@@ -84,6 +88,11 @@ class PrecedenceGroup {
   }
 
  private:
+  enum PrecedenceLevel : int8_t;
+  struct OperatorPriorityTable;
+
+  static const int8_t NumPrecedenceLevels;
+
   // We rely on implicit conversions via `int8_t` for enumerators defined in the
   // implementation.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -101,6 +110,73 @@ struct PrecedenceGroup::Trailing {
   // unary operator.
   bool is_binary;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Only implementation details below this point.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+enum PrecedenceGroup::PrecedenceLevel : int8_t {
+  // Sentinel representing the absence of any operator.
+  Highest,
+  // Terms.
+  TermPrefix,
+  // Numeric.
+  IncrementDecrement,
+  NumericPrefix,
+  Modulo,
+  Multiplicative,
+  Additive,
+  // Bitwise.
+  BitwisePrefix,
+  BitwiseAnd,
+  BitwiseOr,
+  BitwiseXor,
+  BitShift,
+  // Type formation.
+  TypePrefix,
+  TypePostfix,
+  // `where` keyword.
+  Where,
+  // Casts.
+  As,
+  // Logical.
+  LogicalPrefix,
+  Relational,
+  LogicalAnd,
+  LogicalOr,
+  // Conditional.
+  If,
+  // Assignment.
+  Assignment,
+  // Sentinel representing a context in which any operator can appear.
+  Lowest,
+};
+
+inline auto PrecedenceGroup::ForPostfixExpr() -> PrecedenceGroup {
+  return PrecedenceGroup(Highest);
+}
+
+inline auto PrecedenceGroup::ForTopLevelExpr() -> PrecedenceGroup {
+  return PrecedenceGroup(If);
+}
+
+inline auto PrecedenceGroup::ForExprStatement() -> PrecedenceGroup {
+  return PrecedenceGroup(Lowest);
+}
+
+inline auto PrecedenceGroup::ForType() -> PrecedenceGroup {
+  return ForTopLevelExpr();
+}
+
+inline auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
+  return PrecedenceGroup(As);
+}
+
+inline auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
+  return PrecedenceGroup(Where);
+}
 
 }  // namespace Carbon::Parse
 

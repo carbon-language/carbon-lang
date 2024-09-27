@@ -10,7 +10,7 @@
 
 namespace Foo;
 
-// CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:10: ERROR: `class` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:10: error: `class` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR: class Foo->Bar {}
 // CHECK:STDERR:          ^~
 class Foo->Bar {}

@@ -127,17 +127,17 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
   // Returns whether this represents a constant. Requires is_valid.
   auto is_constant() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return *this != ConstantId::NotConstant;
   }
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index <= FirstSymbolicIndex;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
-    CARBON_CHECK(is_valid());
+    CARBON_DCHECK(is_valid());
     return index >= 0;
   }
 
@@ -174,14 +174,14 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // Requires `is_template()`. Use `ConstantValueStore::GetInstId` to get the
   // instruction ID of a `ConstantId`.
   constexpr auto template_inst_id() const -> InstId {
-    CARBON_CHECK(is_template());
+    CARBON_DCHECK(is_template());
     return InstId(index);
   }
 
   // Returns the symbolic constant index that describes this symbolic constant
   // value. Requires `is_symbolic()`.
   constexpr auto symbolic_index() const -> int32_t {
-    CARBON_CHECK(is_symbolic());
+    CARBON_DCHECK(is_symbolic());
     return FirstSymbolicIndex - index;
   }
 
@@ -228,6 +228,27 @@ struct CompileTimeBindIndex : public IndexBase,
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
+
+// The index of a runtime parameter in a function. These are allocated
+// sequentially, left-to-right, to the function parameters that will have
+// arguments passed to them at runtime. In a `call` instruction, a runtime
+// argument will have the position in the argument list corresponding to its
+// runtime parameter index.
+struct RuntimeParamIndex : public IndexBase,
+                           public Printable<RuntimeParamIndex> {
+  // An explicitly invalid index.
+  static const RuntimeParamIndex Invalid;
+
+  using IndexBase::IndexBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "runtime_param";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
+    RuntimeParamIndex(InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -426,8 +447,8 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 
   // Returns the `bool` corresponding to this `BoolValue`.
   constexpr auto ToBool() -> bool {
-    CARBON_CHECK(*this == False || *this == True)
-        << "Invalid bool value " << index;
+    CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
+                 index);
     return *this != False;
   }
 
@@ -438,7 +459,7 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
     } else if (*this == True) {
       out << "true";
     } else {
-      CARBON_FATAL() << "Invalid bool value " << index;
+      CARBON_FATAL("Invalid bool value {0}", index);
     }
   }
 };
@@ -465,7 +486,7 @@ struct IntKind : public IdBase, public Printable<IntKind> {
     } else if (*this == Signed) {
       out << "signed";
     } else {
-      CARBON_FATAL() << "Invalid int kind value " << index;
+      CARBON_FATAL("Invalid int kind value {0}", index);
     }
   }
 };
@@ -492,6 +513,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId SelfValue;
   // The name of `Self`.
   static const NameId SelfType;
+  // The name of `.Self`.
+  static const NameId PeriodSelf;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
   // The name of `package`.
@@ -510,7 +533,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (!id.is_valid()) {
       return NameId::Invalid;
     } else {
-      CARBON_FATAL() << "Unexpected identifier ID " << id;
+      CARBON_FATAL("Unexpected identifier ID {0}", id);
     }
   }
 
@@ -528,6 +551,8 @@ struct NameId : public IdBase, public Printable<NameId> {
       out << "SelfValue";
     } else if (*this == SelfType) {
       out << "SelfType";
+    } else if (*this == PeriodSelf) {
+      out << "PeriodSelf";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
     } else if (*this == PackageNamespace) {
@@ -535,7 +560,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (*this == Base) {
       out << "Base";
     } else {
-      CARBON_CHECK(!is_valid() || index >= 0) << "Unknown index " << index;
+      CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
       IdBase::Print(out);
     }
   }
@@ -544,10 +569,11 @@ struct NameId : public IdBase, public Printable<NameId> {
 constexpr NameId NameId::Invalid = NameId(InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
-constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 3);
-constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 4);
-constexpr NameId NameId::Base = NameId(InvalidIndex - 5);
-constexpr int NameId::NonIndexValueCount = 6;
+constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
+constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
+constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
+constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
+constexpr int NameId::NonIndexValueCount = 7;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 
@@ -689,11 +715,62 @@ constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
   using IndexBase::IndexBase;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "element";
     IndexBase::Print(out);
   }
 };
+
+// The ID of a library name. This is either a string literal or `default`.
+struct LibraryNameId : public IdBase, public Printable<NameId> {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // An explicitly invalid ID.
+  static const LibraryNameId Invalid;
+  // The name of `default`.
+  static const LibraryNameId Default;
+  // Track cases where the library name was set, but has been diagnosed and
+  // shouldn't be used anymore.
+  static const LibraryNameId Error;
+
+  // Returns the LibraryNameId for a library name as a string literal.
+  static auto ForStringLiteralValueId(StringLiteralValueId id)
+      -> LibraryNameId {
+    CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}",
+                 id);
+    if (id == StringLiteralValueId::Invalid) {
+      // Prior to SemIR, we use invalid to indicate `default`.
+      return LibraryNameId::Default;
+    } else {
+      return LibraryNameId(id.index);
+    }
+  }
+
+  using IdBase::IdBase;
+
+  // Converts a LibraryNameId back to a string literal.
+  auto AsStringLiteralValueId() const -> StringLiteralValueId {
+    CARBON_CHECK(index >= InvalidIndex, "{0} must be handled directly", *this);
+    return StringLiteralValueId(index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "libraryName";
+    if (*this == Default) {
+      out << "Default";
+    } else if (*this == Error) {
+      out << "<error>";
+    } else {
+      IdBase::Print(out);
+    }
+  }
+};
+
+constexpr LibraryNameId LibraryNameId::Invalid = LibraryNameId(InvalidIndex);
+constexpr LibraryNameId LibraryNameId::Default =
+    LibraryNameId(InvalidIndex - 1);
+constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(InvalidIndex - 2);
 
 // The ID of an ImportIRInst.
 struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {

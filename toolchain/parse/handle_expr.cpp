@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 
 static auto DiagnoseStatementOperatorAsSubExpr(Context& context) -> void {
   CARBON_DIAGNOSTIC(StatementOperatorAsSubExpr, Error,
-                    "Operator `{0}` can only be used as a complete statement.",
+                    "operator `{0}` can only be used as a complete statement",
                     Lex::TokenKind);
   context.emitter().Emit(*context.position(), StatementOperatorAsSubExpr,
                          context.PositionKind());
@@ -32,7 +32,7 @@ auto HandleExpr(Context& context) -> void {
           OperatorPriority::RightFirst) {
         CARBON_DIAGNOSTIC(
             UnaryOperatorRequiresParentheses, Error,
-            "Parentheses are required around this unary `{0}` operator.",
+            "parentheses are required around this unary `{0}` operator",
             Lex::TokenKind);
         context.emitter().Emit(*context.position(),
                                UnaryOperatorRequiresParentheses,
@@ -169,11 +169,49 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Period: {
+      // For periods, we look at the next token to form a designator like
+      // `.Member` or `.Self`.
+      auto period = context.Consume();
+      if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                          NodeKind::IdentifierName)) {
+        // OK, `.` identifier.
+      } else if (context.ConsumeAndAddLeafNodeIf(
+                     Lex::TokenKind::SelfTypeIdentifier,
+                     NodeKind::SelfTypeName)) {
+        // OK, `.Self`.
+      } else {
+        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
+                          "expected identifier or `Self` after `.`");
+        context.emitter().Emit(*context.position(),
+                               ExpectedIdentifierOrSelfAfterPeriod);
+        // Only consume if it is a number or word.
+        if (context.PositionKind().is_keyword()) {
+          context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
+                              /*has_error=*/true);
+        } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
+          context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
+                              /*has_error=*/true);
+        } else {
+          context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                              /*has_error=*/true);
+          // Indicate the error to the parent state so that it can avoid
+          // producing more errors. We only do this on this path where we don't
+          // consume the token after the period, where we expect further errors
+          // since we likely haven't recovered.
+          context.ReturnErrorOnState();
+        }
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::DesignatorExpr, period, state.has_error);
+      context.PushState(state);
+      break;
+    }
     default: {
       // Add a node to keep the parse tree balanced.
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                           /*has_error=*/true);
-      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "Expected expression.");
+      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
       context.emitter().Emit(*context.position(), ExpectedExpr);
       context.ReturnErrorOnState();
       break;
@@ -254,7 +292,7 @@ auto HandleExprLoop(Context& context) -> void {
         OperatorPriority::RightFirst) {
       CARBON_DIAGNOSTIC(
           OperatorRequiresParentheses, Error,
-          "Parentheses are required to disambiguate operator precedence.");
+          "parentheses are required to disambiguate operator precedence");
       context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
     } else {
       // This operator wouldn't be allowed even if parenthesized.
@@ -285,6 +323,15 @@ auto HandleExprLoop(Context& context) -> void {
         state.state = State::ExprLoopForShortCircuitOperatorAsOr;
         break;
 
+      // `where` also needs a virtual parse tree node, and parses its right
+      // argument in a mode where it can handle requirement operators like
+      // `impls` and `=`.
+      case Lex::TokenKind::Where:
+        context.AddNode(NodeKind::WhereOperand, state.token, state.has_error);
+        context.PushState(state, State::WhereFinish);
+        context.PushState(State::RequirementBegin);
+        return;
+
       default:
         state.state = State::ExprLoopForInfixOperator;
         break;
@@ -303,8 +350,8 @@ auto HandleExprLoop(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
       default:
-        CARBON_FATAL() << "Unexpected token kind for postfix operator: "
-                       << operator_kind;
+        CARBON_FATAL("Unexpected token kind for postfix operator: {0}",
+                     operator_kind);
     }
 
     context.AddNode(node_kind, state.token, state.has_error);
@@ -334,8 +381,7 @@ auto HandleExprLoopForInfixOperator(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
     default:
-      CARBON_FATAL() << "Unexpected token kind for infix operator: "
-                     << token_kind;
+      CARBON_FATAL("Unexpected token kind for infix operator: {0}", token_kind);
   }
 }
 
@@ -351,13 +397,14 @@ auto HandleExprLoopForPrefixOperator(Context& context) -> void {
 #include "toolchain/parse/node_kind.def"
 
     default:
-      CARBON_FATAL() << "Unexpected token kind for prefix operator: "
-                     << token_kind;
+      CARBON_FATAL("Unexpected token kind for prefix operator: {0}",
+                   token_kind);
   }
 }
 
 auto HandleExprLoopForShortCircuitOperatorAsAnd(Context& context) -> void {
   auto state = context.PopState();
+
   HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorAnd);
 }
 
@@ -365,70 +412,6 @@ auto HandleExprLoopForShortCircuitOperatorAsOr(Context& context) -> void {
   auto state = context.PopState();
 
   HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorOr);
-}
-
-auto HandleIfExprFinishCondition(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::IfExprIf, state.token, state.has_error);
-
-  if (context.PositionIs(Lex::TokenKind::Then)) {
-    context.PushState(State::IfExprFinishThen);
-    context.ConsumeChecked(Lex::TokenKind::Then);
-    context.PushStateForExpr(*PrecedenceGroup::ForLeading(Lex::TokenKind::If));
-  } else {
-    // TODO: Include the location of the `if` token.
-    CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
-                      "Expected `then` after `if` condition.");
-    if (!state.has_error) {
-      context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
-    }
-    // Add placeholders for `IfExprThen` and final `Expr`.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-    context.ReturnErrorOnState();
-  }
-}
-
-auto HandleIfExprFinishThen(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::IfExprThen, state.token, state.has_error);
-
-  if (context.PositionIs(Lex::TokenKind::Else)) {
-    context.PushState(State::IfExprFinishElse);
-    context.ConsumeChecked(Lex::TokenKind::Else);
-    context.PushStateForExpr(*PrecedenceGroup::ForLeading(Lex::TokenKind::If));
-  } else {
-    // TODO: Include the location of the `if` token.
-    CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
-                      "Expected `else` after `if ... then ...`.");
-    if (!state.has_error) {
-      context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
-    }
-    // Add placeholder for the final `Expr`.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-    context.ReturnErrorOnState();
-  }
-}
-
-auto HandleIfExprFinishElse(Context& context) -> void {
-  auto else_state = context.PopState();
-
-  // Propagate the location of `else`.
-  auto if_state = context.PopState();
-  if_state.token = else_state.token;
-  if_state.has_error |= else_state.has_error;
-  context.PushState(if_state);
-}
-
-auto HandleIfExprFinish(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::IfExprElse, state.token, state.has_error);
 }
 
 auto HandleExprStatementFinish(Context& context) -> void {
@@ -441,7 +424,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
 
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedExprSemi, Error,
-                      "Expected `;` after expression statement.");
+                      "expected `;` after expression statement");
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 

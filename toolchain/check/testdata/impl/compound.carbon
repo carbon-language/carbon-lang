@@ -73,6 +73,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -99,44 +100,44 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCall.decl: %NonInstanceCall.type = fn_decl @NonInstanceCall [template = constants.%NonInstanceCall] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc21_21: i32 = param_pattern %n.patt
+// CHECK:STDOUT:     %.loc21_21: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_23.2: type = converted %int.make_type_32, %.loc21_23.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc25_18: i32 = param_pattern %n.patt
+// CHECK:STDOUT:     %.loc25_18: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_20.2: type = converted %int.make_type_32, %.loc25_20.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [template = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %.8 = binding_pattern p
-// CHECK:STDOUT:     %.loc29_29: %.8 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc29_29: %.8 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc29_34.2: type = converted %int.make_type_32, %.loc29_34.1 [template = i32]
 // CHECK:STDOUT:     %.loc29_34.3: type = ptr_type i32 [template = constants.%.8]
-// CHECK:STDOUT:     %param: %.8 = param
+// CHECK:STDOUT:     %param: %.8 = param runtime_param0
 // CHECK:STDOUT:     %p: %.8 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [template = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %.8 = binding_pattern p
-// CHECK:STDOUT:     %.loc33_26: %.8 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc33_26: %.8 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc33_31.2: type = converted %int.make_type_32, %.loc33_31.1 [template = i32]
 // CHECK:STDOUT:     %.loc33_31.3: type = ptr_type i32 [template = constants.%.8]
-// CHECK:STDOUT:     %param: %.8 = param
+// CHECK:STDOUT:     %param: %.8 = param runtime_param0
 // CHECK:STDOUT:     %p: %.8 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -147,12 +148,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc12: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %.loc13_12: @G.1.%Self (%Self) = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc13_12: @G.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param: @G.1.%Self (%Self) = param
+// CHECK:STDOUT:     %param: @G.1.%Self (%Self) = param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: %.5 = assoc_entity element1, %G.decl [template = constants.%.6]
@@ -168,20 +169,20 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
-// CHECK:STDOUT:     %.loc18_12: i32 = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc18_12: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc18_14.2: type = converted %int.make_type_32, %.loc18_14.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl, %G.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16_20: <witness> = interface_witness (%F.decl, %G.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc16_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %.1) {
@@ -206,8 +207,8 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Simple.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %.2 = call %.1()
+// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access @impl.%.loc16_20, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.2 = call %.loc22()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,9 +217,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.5 = name_ref G, @Simple.%.loc13 [template = constants.%.6]
-// CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element1 [template = constants.%G.2]
-// CHECK:STDOUT:   %.loc26: <bound method> = bound_method %n.ref, %.1
-// CHECK:STDOUT:   %G.call: init %.2 = call %.loc26(%n.ref)
+// CHECK:STDOUT:   %.loc26_4.1: %G.type.1 = interface_witness_access @impl.%.loc16_20, element1 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc26_4.2: <bound method> = bound_method %n.ref, %.loc26_4.1
+// CHECK:STDOUT:   %G.call: init %.2 = call %.loc26_4.2(%n.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,9 +228,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Simple.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc30: ref i32 = deref %p.ref
-// CHECK:STDOUT:   %.1: %F.type.1 = interface_witness_access @impl.%.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %.2 = call %.1()
+// CHECK:STDOUT:   %.loc30_4.1: ref i32 = deref %p.ref
+// CHECK:STDOUT:   %.loc30_4.2: %F.type.1 = interface_witness_access @impl.%.loc16_20, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %.2 = call %.loc30_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,10 +240,10 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.5 = name_ref G, @Simple.%.loc13 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc34_4.1: ref i32 = deref %p.ref
-// CHECK:STDOUT:   %.1: %G.type.1 = interface_witness_access @impl.%.1, element1 [template = constants.%G.2]
-// CHECK:STDOUT:   %.loc34_4.2: <bound method> = bound_method %.loc34_4.1, %.1
-// CHECK:STDOUT:   %.loc34_4.3: i32 = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %G.call: init %.2 = call %.loc34_4.2(%.loc34_4.3)
+// CHECK:STDOUT:   %.loc34_4.2: %G.type.1 = interface_witness_access @impl.%.loc16_20, element1 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc34_4.3: <bound method> = bound_method %.loc34_4.1, %.loc34_4.2
+// CHECK:STDOUT:   %.loc34_4.4: i32 = bind_value %.loc34_4.1
+// CHECK:STDOUT:   %G.call: init %.2 = call %.loc34_4.3(%.loc34_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

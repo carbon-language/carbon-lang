@@ -29,7 +29,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
 auto HandleParseNode(Context& context,
                      Parse::StructFieldDesignatorId /*node_id*/) -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
-  CARBON_CHECK(context.node_stack().PeekIsName());
+  CARBON_CHECK(context.node_stack().PeekIs<SemIR::NameId>());
   return true;
 }
 
@@ -80,10 +80,10 @@ static auto DiagnoseDuplicateNames(Context& context,
     auto result = names.Insert(field_inst.name_id, field_inst_id);
     if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "Duplicated field name `{1}` in {0}.", std::string,
+                        "duplicated field name `{1}` in {0}", std::string,
                         SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
-                        "Field with the same name here.");
+                        "field with the same name here");
       context.emitter()
           .Build(field_inst_id, StructNameDuplicate, construct.str(),
                  field_inst.name_id)
@@ -125,8 +125,8 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 
-  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
-      << "{} is handled by StructLiteral.";
+  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty,
+               "{{}} is handled by StructLiteral.");
 
   if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);

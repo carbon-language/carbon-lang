@@ -11,7 +11,7 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression
 // CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
 // CHECK:STDERR:             ^~~~~~~~~~~~
 fn Six() -> ReturnType() { return 6; }
@@ -36,6 +36,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/fail_todo_param_in_type.carbon
 
-// CHECK:STDERR: fail_todo_param_in_type.carbon:[[@LINE+3]]:24: ERROR: Semantics TODO: `symbolic array bound`.
+// CHECK:STDERR: fail_todo_param_in_type.carbon:[[@LINE+3]]:24: error: semantics TODO: `symbolic array bound`
 // CHECK:STDERR: fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDERR:                        ^
 fn F(N:! i32, a: [i32; N]*);
@@ -32,6 +32,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -47,14 +48,14 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %.loc14_7: i32 = param_pattern %N.patt.loc14 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %.loc14_7: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc14_16: <error> = param_pattern %a.patt
+// CHECK:STDOUT:     %.loc14_16: <error> = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
-// CHECK:STDOUT:     %param.loc14_6: i32 = param
+// CHECK:STDOUT:     %param.loc14_6: i32 = param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N 0, %param.loc14_6 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc14 [symbolic = %N.1 (constants.%N)]
@@ -62,7 +63,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc14_15: <error> = param
+// CHECK:STDOUT:     %param.loc14_15: <error> = param runtime_param0
 // CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

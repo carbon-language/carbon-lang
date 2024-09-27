@@ -34,7 +34,7 @@ auto GlobalInit::Finalize() -> void {
   context_->inst_block_stack().Pop();
 
   auto name_id = context_->sem_ir().identifiers().Add("__global_init");
-  context_->sem_ir().functions().Add(
+  context_->sem_ir().set_global_ctor_id(context_->sem_ir().functions().Add(
       {{.name_id = SemIR::NameId::ForIdentifier(name_id),
         .parent_scope_id = SemIR::NameScopeId::Package,
         .generic_id = SemIR::GenericId::Invalid,
@@ -46,11 +46,11 @@ auto GlobalInit::Finalize() -> void {
         .param_refs_id = SemIR::InstBlockId::Empty,
         .param_patterns_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
-        .extern_library_id = StringLiteralValueId::Invalid,
+        .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
         .first_owning_decl_id = SemIR::InstId::Invalid},
        {.return_storage_id = SemIR::InstId::Invalid,
-        .body_block_ids = {SemIR::InstBlockId::GlobalInit}}});
+        .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 
 }  // namespace Carbon::Check

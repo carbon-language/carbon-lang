@@ -91,11 +91,12 @@ class DeclNameStack {
     // Combines name information to produce a base struct for entity
     // construction.
     auto MakeEntityWithParamsBase(const NameComponent& name,
-                                  SemIR::InstId decl_id, bool is_extern)
+                                  SemIR::InstId decl_id, bool is_extern,
+                                  SemIR::LibraryNameId extern_library)
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
-          .parent_scope_id = parent_scope_id_for_new_inst(),
+          .parent_scope_id = parent_scope_id,
           .generic_id = SemIR::GenericId::Invalid,
           .first_param_node_id = name.first_param_node_id,
           .last_param_node_id = name.last_param_node_id,
@@ -105,9 +106,11 @@ class DeclNameStack {
           .param_refs_id = name.params_id,
           .param_patterns_id = name.param_patterns_id,
           .is_extern = is_extern,
-          .extern_library_id = StringLiteralValueId::Invalid,
-          .non_owning_decl_id = SemIR::InstId::Invalid,
-          .first_owning_decl_id = decl_id,
+          .extern_library_id = extern_library,
+          .non_owning_decl_id =
+              extern_library.is_valid() ? decl_id : SemIR::InstId::Invalid,
+          .first_owning_decl_id =
+              extern_library.is_valid() ? SemIR::InstId::Invalid : decl_id,
       };
     }
 
@@ -119,13 +122,6 @@ class DeclNameStack {
     auto name_id_for_new_inst() -> SemIR::NameId {
       return state == State::Unresolved ? unresolved_name_id
                                         : SemIR::NameId::Invalid;
-    }
-
-    // Returns the parent_scope_id for a new instruction. This is invalid
-    // when the name resolved.
-    auto parent_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return state == State::Unresolved ? parent_scope_id
-                                        : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will

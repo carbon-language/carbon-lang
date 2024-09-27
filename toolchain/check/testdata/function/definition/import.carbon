@@ -14,7 +14,7 @@
 
 // --- fns.carbon
 
-library "fns";
+library "[[@TEST_NAME]]";
 
 fn A() {}
 fn B(b: i32) -> i32 { return b; }
@@ -23,7 +23,7 @@ fn D();
 
 // --- extern.carbon
 
-library "extern";
+library "[[@TEST_NAME]]";
 
 extern fn A();
 
@@ -33,7 +33,7 @@ extern fn A();
 
 // --- basics.carbon
 
-library "basics";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
@@ -43,55 +43,70 @@ var c: {.c: i32} = C((1,));
 
 // --- fail_def_ownership.carbon
 
-library "def_ownership";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn A` without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import library "fns";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fns.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: fns.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn B` without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error: redeclaration of `fn B` is redundant
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-16]]:1: In import.
-// CHECK:STDERR: import library "fns";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fns.carbon:5:1: Previously declared here.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-14]]:1: in import
+// CHECK:STDERR: fns.carbon:5:1: note: previously declared here
 // CHECK:STDERR: fn B(b: i32) -> i32 { return b; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
 
-// --- redecl_then_def.carbon
+// --- fail_redecl_then_def.carbon
 
-library "redecl_then_def";
+library "[[@TEST_NAME]]";
 
 import library "extern";
 
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: extern.carbon:4:1: note: previously declared here
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn A();
+
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fn A() {}
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-15]]:1: in import
+// CHECK:STDERR: extern.carbon:4:1: note: previously declared here
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn A() {}
 
 // --- fail_mix_extern_decl.carbon
 
-library "mix_extern_decl";
+library "[[@TEST_NAME]]";
 
 import library "fns";
 
-extern fn D();
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclarations of `fn D` in the same library must match use of `extern`.
-// CHECK:STDERR: fn D() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared here.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn D` must match use of `extern`
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: fns.carbon:7:1: note: previously declared here
+// CHECK:STDERR: fn D();
+// CHECK:STDERR: ^~~~~~~
+extern fn D();
+
 fn D() {}
 
 // CHECK:STDOUT: --- fns.carbon
@@ -121,6 +136,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -140,12 +156,12 @@ fn D() {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_7: i32 = param_pattern %b.patt
+// CHECK:STDOUT:     %.loc5_7: i32 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
 // CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_32.loc5_9, %.loc5_9.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
 // CHECK:STDOUT:     %b: i32 = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
@@ -154,14 +170,14 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %c.patt
+// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
 // CHECK:STDOUT:     %c: %.3 = bind_name c, %param
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
@@ -189,7 +205,7 @@ fn D() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_46: i32 = tuple_index %c.ref, %.loc6_47
+// CHECK:STDOUT:   %.loc6_46: i32 = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc6_48: %.4 = struct_literal (%.loc6_46)
 // CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc6_46)
 // CHECK:STDOUT:   %.loc6_49: %.4 = converted %.loc6_48, %struct
@@ -212,6 +228,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -258,6 +275,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -345,6 +363,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -364,14 +383,14 @@ fn D() {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc27_9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]
-// CHECK:STDOUT:     %.loc27_9.2: type = converted %int.make_type_32.loc27_9, %.loc27_9.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param
+// CHECK:STDOUT:     %int.make_type_32.loc23_9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc23_9.1: type = value_of_initializer %int.make_type_32.loc23_9 [template = i32]
+// CHECK:STDOUT:     %.loc23_9.2: type = converted %int.make_type_32.loc23_9, %.loc23_9.1 [template = i32]
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
 // CHECK:STDOUT:     %b: i32 = bind_name b, %param
-// CHECK:STDOUT:     %int.make_type_32.loc27_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc27_17.1: type = value_of_initializer %int.make_type_32.loc27_17 [template = i32]
-// CHECK:STDOUT:     %.loc27_17.2: type = converted %int.make_type_32.loc27_17, %.loc27_17.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc23_17: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc23_17.1: type = value_of_initializer %int.make_type_32.loc23_17 [template = i32]
+// CHECK:STDOUT:     %.loc23_17.2: type = converted %int.make_type_32.loc23_17, %.loc23_17.1 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -385,7 +404,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%.1: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_then_def.carbon
+// CHECK:STDOUT: --- fail_redecl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
@@ -400,6 +419,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -408,16 +428,16 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.decl.loc6
+// CHECK:STDOUT:     .A = %A.decl.loc14
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc7: %A.type = fn_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc14: %A.type = fn_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc24: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: extern fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -440,6 +460,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -456,8 +477,8 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.decl.loc6: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc15: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

@@ -116,8 +116,8 @@ auto Heap::Deallocate(AllocationId allocation) -> ErrorOr<Success> {
   if (states_[allocation.index_] != ValueState::Dead) {
     states_[allocation.index_] = ValueState::Dead;
   } else {
-    CARBON_FATAL() << "deallocating an already dead value: "
-                   << *values_[allocation.index_];
+    CARBON_FATAL("deallocating an already dead value: {0}",
+                 *values_[allocation.index_]);
   }
 
   if (trace_stream_->is_enabled()) {

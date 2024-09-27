@@ -32,12 +32,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.3: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class, %.3 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.n: i32, .next: %.3} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [template]
 // CHECK:STDOUT:   %MakeReorder: %MakeReorder.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.next: %.3, .n: i32} [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.next: %.3, .n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,6 +48,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -65,36 +67,36 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc16_10: i32 = param_pattern %n.patt
+// CHECK:STDOUT:     %.loc16_10: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
-// CHECK:STDOUT:     %.loc16_21: %.3 = param_pattern %next.patt
+// CHECK:STDOUT:     %.loc16_21: %.3 = param_pattern %next.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_12.2: type = converted %int.make_type_32, %.loc16_12.1 [template = i32]
-// CHECK:STDOUT:     %param.loc16_9: i32 = param
+// CHECK:STDOUT:     %param.loc16_9: i32 = param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc16_9
 // CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %param.loc16_17: %.3 = param
+// CHECK:STDOUT:     %param.loc16_17: %.3 = param runtime_param1
 // CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc16_17
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %return: ref %Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc20_17: i32 = param_pattern %n.patt
+// CHECK:STDOUT:     %.loc20_17: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
-// CHECK:STDOUT:     %.loc20_28: %.3 = param_pattern %next.patt
+// CHECK:STDOUT:     %.loc20_28: %.3 = param_pattern %next.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_32, %.loc20_19.1 [template = i32]
-// CHECK:STDOUT:     %param.loc20_16: i32 = param
+// CHECK:STDOUT:     %param.loc20_16: i32 = param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc20_16
 // CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %param.loc20_24: %.3 = param
+// CHECK:STDOUT:     %param.loc20_24: %.3 = param runtime_param1
 // CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc20_24
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %return: ref %Class = var <return slot>
@@ -109,6 +111,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_18: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_11: %.4 = field_decl next, element1 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -136,7 +139,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc21_31.1: %.7 = struct_literal (%next.ref, %n.ref)
+// CHECK:STDOUT:   %.loc21_31.1: %.8 = struct_literal (%next.ref, %n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc21_31.3: init i32 = initialize_from %n.ref to %.loc21_31.2
 // CHECK:STDOUT:   %.loc21_31.4: ref %.3 = class_element_access %return, element0

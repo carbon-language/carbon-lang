@@ -38,6 +38,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -54,13 +55,13 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Ptr.decl: %Ptr.type = fn_decl @Ptr [template = constants.%Ptr] {
 // CHECK:STDOUT:     %p.patt: %.2 = binding_pattern p
-// CHECK:STDOUT:     %.loc11_9: %.2 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc11_9: %.2 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11_11, %.loc11_14.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_14.3: type = ptr_type i32 [template = constants.%.2]
-// CHECK:STDOUT:     %param: %.2 = param
+// CHECK:STDOUT:     %param: %.2 = param runtime_param0
 // CHECK:STDOUT:     %p: %.2 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc11_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_32.loc11_20 [template = i32]
@@ -70,14 +71,14 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [template = constants.%ConstPtr] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
-// CHECK:STDOUT:     %.loc15_14: %.4 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc15_14: %.4 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
 // CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_32.loc15_22, %.loc15_16.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_16.3: type = const_type i32 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_25: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param
+// CHECK:STDOUT:     %param: %.4 = param runtime_param0
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]

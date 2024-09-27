@@ -12,7 +12,7 @@
 
 // --- fail_file1.carbon
 
-// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:24: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:24: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
 // CHECK:STDERR:
@@ -21,7 +21,7 @@ fn run(String program) {
 
 // --- fail_file2.carbon
 
-// CHECK:STDERR: fail_file2.carbon:[[@LINE+3]]:10: ERROR: Invalid digit 'a' in decimal numeric literal.
+// CHECK:STDERR: fail_file2.carbon:[[@LINE+3]]:10: error: invalid digit 'a' in decimal numeric literal
 // CHECK:STDERR: var x = 3a;
 // CHECK:STDERR:          ^
 var x = 3a;

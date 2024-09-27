@@ -11,14 +11,14 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "Previously declared here.");
+CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "previously declared here");
 
 // Diagnoses a redeclaration which is redundant.
 static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
                               SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) {
+                              SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(RedeclRedundant, Error,
-                    "Redeclaration of `{0} {1}` is redundant.", Lex::TokenKind,
+                    "redeclaration of `{0} {1}` is redundant", Lex::TokenKind,
                     SemIR::NameId);
   context.emitter()
       .Build(new_loc, RedeclRedundant, decl_kind, name_id)
@@ -29,10 +29,10 @@ static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
 // Diagnoses a redefinition.
 static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
                           SemIR::NameId name_id, SemIRLoc new_loc,
-                          SemIRLoc prev_loc) {
-  CARBON_DIAGNOSTIC(RedeclRedef, Error, "Redefinition of `{0} {1}`.",
+                          SemIRLoc prev_loc) -> void {
+  CARBON_DIAGNOSTIC(RedeclRedef, Error, "redefinition of `{0} {1}`",
                     Lex::TokenKind, SemIR::NameId);
-  CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "Previously defined here.");
+  CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "previously defined here");
   context.emitter()
       .Build(new_loc, RedeclRedef, decl_kind, name_id)
       .Note(prev_loc, RedeclPrevDef)
@@ -42,10 +42,9 @@ static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
 // Diagnoses an `extern` versus non-`extern` mismatch.
 static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
                                    SemIR::NameId name_id, SemIRLoc new_loc,
-                                   SemIRLoc prev_loc) {
+                                   SemIRLoc prev_loc) -> void {
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
-                    "Redeclarations of `{0} {1}` in the same library must "
-                    "match use of `extern`.",
+                    "redeclarations of `{0} {1}` must match use of `extern`",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
       .Build(new_loc, RedeclExternMismatch, decl_kind, name_id)
@@ -53,17 +52,42 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
       .Emit();
 }
 
-// Diagnoses when multiple non-`extern` declarations are found.
-static auto DiagnoseNonExtern(Context& context, Lex::TokenKind decl_kind,
-                              SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) {
-  CARBON_DIAGNOSTIC(RedeclNonExtern, Error,
-                    "Only one library can declare `{0} {1}` without `extern`.",
+// Diagnoses `extern library` declared in a library importing the owned entity.
+static auto DiagnoseExternLibraryInImporter(Context& context,
+                                            Lex::TokenKind decl_kind,
+                                            SemIR::NameId name_id,
+                                            SemIRLoc new_loc, SemIRLoc prev_loc)
+    -> void {
+  CARBON_DIAGNOSTIC(ExternLibraryInImporter, Error,
+                    "cannot declare imported `{0} {1}` as `extern library`",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
-      .Build(new_loc, RedeclNonExtern, decl_kind, name_id)
+      .Build(new_loc, ExternLibraryInImporter, decl_kind, name_id)
       .Note(prev_loc, RedeclPrevDecl)
       .Emit();
+}
+
+// Diagnoses `extern library` pointing to the wrong library.
+static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
+                                           SemIRLoc prev_loc) -> void {
+  CARBON_DIAGNOSTIC(
+      ExternLibraryIncorrect, Error,
+      "declaration in {0} doesn't match `extern library` declaration",
+      SemIR::LibraryNameId);
+  CARBON_DIAGNOSTIC(ExternLibraryExpected, Note,
+                    "previously declared with `extern library` here");
+  context.emitter()
+      .Build(new_loc, ExternLibraryIncorrect, context.sem_ir().library_id())
+      .Note(prev_loc, ExternLibraryExpected)
+      .Emit();
+}
+
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+    -> void {
+  CARBON_DIAGNOSTIC(
+      ExternRequiresDeclInApiFile, Error,
+      "`extern` entities must have a declaration in the API file");
+  context.emitter().Build(loc, ExternRequiresDeclInApiFile).Emit();
 }
 
 // Checks to see if a structurally valid redeclaration is allowed in context.
@@ -83,9 +107,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
       DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
       return;
     }
-    // `extern` definitions are prevented at creation; this is only
-    // checking for a non-`extern` definition after an `extern` declaration.
-    if (prev_decl.is_extern) {
+    if (prev_decl.is_extern != new_decl.is_extern) {
       DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
                              prev_decl.loc);
       return;
@@ -114,8 +136,30 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 
   // Check for disallowed redeclarations cross-library.
-  if (!new_decl.is_extern && !prev_decl.is_extern) {
-    DiagnoseNonExtern(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+  if (new_decl.is_extern && context.IsImplFile()) {
+    // We continue after issuing the "missing API declaration" diagnostic,
+    // because it may still be helpful to note other issues with the
+    // declarations.
+    DiagnoseExternRequiresDeclInApiFile(context, new_decl.loc);
+  }
+  if (prev_decl.is_extern != new_decl.is_extern) {
+    DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
+                           prev_decl.loc);
+    return;
+  }
+  if (!prev_decl.extern_library_id.is_valid()) {
+    if (new_decl.extern_library_id.is_valid()) {
+      DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
+                                      prev_decl.loc);
+    } else {
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
+                        prev_decl.loc);
+    }
+    return;
+  }
+  if (prev_decl.extern_library_id != SemIR::LibraryNameId::Error &&
+      prev_decl.extern_library_id != context.sem_ir().library_id()) {
+    DiagnoseExternLibraryIncorrect(context, new_decl.loc, prev_decl.loc);
     return;
   }
 }
@@ -160,10 +204,10 @@ static auto CheckRedeclParam(Context& context,
   // params.
   auto diagnose = [&]() {
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
-                      "Redeclaration differs at {0}parameter {1}.",
+                      "redeclaration differs at {0}parameter {1}",
                       llvm::StringLiteral, int32_t);
     CARBON_DIAGNOSTIC(RedeclParamPrevious, Note,
-                      "Previous declaration's corresponding {0}parameter here.",
+                      "previous declaration's corresponding {0}parameter here",
                       llvm::StringLiteral);
     context.emitter()
         .Build(new_param_pattern_id, RedeclParamDiffers, param_diag_label,
@@ -230,10 +274,10 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   // If exactly one of the parameter lists was present, they differ.
   if (new_param_patterns_id.is_valid() != prev_param_patterns_id.is_valid()) {
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
-                      "Redeclaration differs because of {1}{0}parameter list.",
+                      "redeclaration differs because of {1}{0}parameter list",
                       llvm::StringLiteral, llvm::StringLiteral);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
-                      "Previously declared with{1} {0}parameter list.",
+                      "previously declared with{1} {0}parameter list",
                       llvm::StringLiteral, llvm::StringLiteral);
     context.emitter()
         .Build(new_decl_loc, RedeclParamListDiffers, param_diag_label,
@@ -255,10 +299,10 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
   if (new_param_pattern_ids.size() != prev_param_pattern_ids.size()) {
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
-        "Redeclaration differs because of {0}parameter count of {1}.",
+        "redeclaration differs because of {0}parameter count of {1}",
         llvm::StringLiteral, int32_t);
     CARBON_DIAGNOSTIC(RedeclParamCountPrevious, Note,
-                      "Previously declared with {0}parameter count of {1}.",
+                      "previously declared with {0}parameter count of {1}",
                       llvm::StringLiteral, int32_t);
     context.emitter()
         .Build(new_decl_loc, RedeclParamCountDiffers, param_diag_label,
@@ -314,12 +358,12 @@ static auto CheckRedeclParamSyntax(Context& context,
       !prev_first_param_node_id.is_valid()) {
     return true;
   }
-  CARBON_CHECK(new_last_param_node_id.is_valid())
-      << "new_last_param_node_id.is_valid should match "
-         "new_first_param_node_id.is_valid";
-  CARBON_CHECK(prev_last_param_node_id.is_valid())
-      << "prev_last_param_node_id.is_valid should match "
-         "prev_first_param_node_id.is_valid";
+  CARBON_CHECK(new_last_param_node_id.is_valid(),
+               "new_last_param_node_id.is_valid should match "
+               "new_first_param_node_id.is_valid");
+  CARBON_CHECK(prev_last_param_node_id.is_valid(),
+               "prev_last_param_node_id.is_valid should match "
+               "prev_first_param_node_id.is_valid");
 
   auto new_range = Parse::Tree::PostorderIterator::MakeRange(
       new_first_param_node_id, new_last_param_node_id);
@@ -333,9 +377,9 @@ static auto CheckRedeclParamSyntax(Context& context,
   for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
       CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
-                        "Redeclaration syntax differs here.");
+                        "redeclaration syntax differs here");
       CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
-                        "Comparing with previous declaration here.");
+                        "comparing with previous declaration here");
       context.emitter()
           .Build(new_node_id, RedeclParamSyntaxDiffers)
           .Note(prev_node_id, RedeclParamSyntaxPrevious)

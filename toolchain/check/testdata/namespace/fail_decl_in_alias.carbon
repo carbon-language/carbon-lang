@@ -13,10 +13,10 @@ namespace NS;
 alias ns = NS;
 
 // Aliases can't be used when declaring names.
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: ERROR: Name qualifiers are only allowed for entities that provide a scope.
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: Referenced non-scope entity declared here.
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here
 // CHECK:STDERR: alias ns = NS;
 // CHECK:STDERR:       ^~
 fn ns.A() -> i32 { return 0; }
@@ -39,6 +39,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

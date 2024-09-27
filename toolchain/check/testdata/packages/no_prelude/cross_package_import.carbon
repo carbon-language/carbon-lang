@@ -14,39 +14,39 @@
 
 // --- other_fn.carbon
 
-package Other library "fn";
+package Other library "[[@TEST_NAME]]";
 
 fn F() {}
 
 // --- other_fn_extern.carbon
 
-package Other library "fn_extern";
+package Other library "[[@TEST_NAME]]";
 
 extern fn F();
 
 // --- other_fn_conflict.carbon
 
-package Other library "fn_conflict";
+package Other library "[[@TEST_NAME]]";
 
 fn F(x: ()) {}
 
 // --- other_fn2.carbon
 
-package Other library "fn2";
+package Other library "[[@TEST_NAME]]";
 
 fn F2() {}
 
 // --- other_fn_use.carbon
 
-package Other library "fn_use";
+package Other library "[[@TEST_NAME]]";
 
-import library "fn";
+import library "other_fn";
 
 fn G() { F(); }
 
 // --- main_other_ns.carbon
 
-library "other_ns";
+library "[[@TEST_NAME]]";
 
 namespace Other;
 
@@ -56,10 +56,10 @@ namespace Other;
 
 // --- main_use_other.carbon
 
-library "use_other";
+library "[[@TEST_NAME]]";
 
-import Other library "fn";
-import Other library "fn2";
+import Other library "other_fn";
+import Other library "other_fn2";
 
 fn Run() {
   Other.F();
@@ -68,25 +68,21 @@ fn Run() {
 
 // --- fail_todo_main_use_other_extern.carbon
 
-library "use_other_extern";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+8]]:1: in import
+// CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-import Other library "fn";
-import Other library "fn_extern";
+import Other library "other_fn";
+import Other library "other_fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: In name lookup for `F`.
+  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: note: in name lookup for `F`
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -95,32 +91,28 @@ fn Run() {
 
 // --- main_unused_other_ambiguous.carbon
 
-library "unused_other_ambiguous";
+library "[[@TEST_NAME]]";
 
-import Other library "fn";
-import Other library "fn_conflict";
+import Other library "other_fn";
+import Other library "other_fn_conflict";
 
 // --- fail_main_use_other_ambiguous.carbon
 
-library "use_other_ambiguous";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import
+// CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-import Other library "fn";
-import Other library "fn_conflict";
+import Other library "other_fn";
+import Other library "other_fn_conflict";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: In name lookup for `F`.
+  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: note: in name lookup for `F`
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -129,28 +121,24 @@ fn Run() {
 
 // --- fail_main_namespace_conflict.carbon
 
-library "namespace_conflict";
+library "[[@TEST_NAME]]";
 
-import library "other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: import Other library "fn";
+import library "main_other_ns";
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: In import.
-// CHECK:STDERR: import library "other_ns";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: main_other_ns.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import
+// CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-import Other library "fn";
+import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn F` without `extern`.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: redeclaration of `fn F` is redundant
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: in import
+// CHECK:STDERR: other_fn.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -158,15 +146,15 @@ fn Other.F() {}
 
 // --- fail_main_reopen_other.carbon
 
-library "reopen_other";
+library "[[@TEST_NAME]]";
 
-import Other library "fn";
+import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: Name is previously declared here.
-// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here
+// CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 namespace Other;
@@ -176,15 +164,15 @@ fn Other.G() {}
 
 // --- fail_main_reopen_other_nested.carbon
 
-library "reopen_other_nested";
+library "[[@TEST_NAME]]";
 
-import Other library "fn";
+import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: ERROR: Imported packages cannot be used for declarations.
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: error: imported packages cannot be used for declarations
 // CHECK:STDERR: namespace Other.Nested;
 // CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: Package imported here.
-// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: note: package imported here
+// CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 namespace Other.Nested;
@@ -194,26 +182,26 @@ fn Other.Nested.F() {}
 
 // --- fail_main_add_to_other.carbon
 
-library "add_to_other";
+library "[[@TEST_NAME]]";
 
-import Other library "fn";
+import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+7]]:4: ERROR: Imported packages cannot be used for declarations.
+// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+7]]:4: error: imported packages cannot be used for declarations
 // CHECK:STDERR: fn Other.G() {}
 // CHECK:STDERR:    ^~~~~
-// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: Package imported here.
-// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: note: package imported here
+// CHECK:STDERR: import Other library "other_fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 fn Other.G() {}
 
 // --- fail_use_other_fn_use.carbon
 
-library "fail_use_other_fn_use";
+library "[[@TEST_NAME]]";
 
-import Other library "fn_use";
+import Other library "other_fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:13: ERROR: Name `F` not found.
+// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+3]]:13: error: name `F` not found
 // CHECK:STDERR: fn UseF() { Other.F(); }
 // CHECK:STDERR:             ^~~~~~~
 fn UseF() { Other.F(); }
@@ -269,11 +257,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
-// CHECK:STDOUT:     %.loc4_7: %.1 = param_pattern %x.patt
+// CHECK:STDOUT:     %.loc4_7: %.1 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %x: %.1 = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -314,7 +302,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -360,11 +348,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .F = %import_ref.1
 // CHECK:STDOUT:     .F2 = %import_ref.2
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn2
+// CHECK:STDOUT:     import Other//other_fn
+// CHECK:STDOUT:     import Other//other_fn2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//fn2, inst+1, loaded [template = constants.%F2]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, inst+1, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -404,11 +392,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_extern
+// CHECK:STDOUT:     import Other//other_fn
+// CHECK:STDOUT:     import Other//other_fn_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_extern, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_fn_extern, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -434,8 +422,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_conflict
+// CHECK:STDOUT:     import Other//other_fn
+// CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,11 +447,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     import Other//fn
-// CHECK:STDOUT:     import Other//fn_conflict
+// CHECK:STDOUT:     import Other//other_fn
+// CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//fn_conflict, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_fn_conflict, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -494,12 +482,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//other_ns, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, inst+1, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref Other//fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -527,7 +515,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .G = file.%G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,7 +526,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -559,7 +547,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .Nested = file.%Nested
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -590,7 +578,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .G = file.%G.decl
-// CHECK:STDOUT:     import Other//fn
+// CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -617,7 +605,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     import Other//fn_use
+// CHECK:STDOUT:     import Other//other_fn_use
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_todo_assoc_const_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   default let T:! type = (i32, i32);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let T:! type = (i32, i32);
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier`
   // CHECK:STDERR:   default let N:! i32 = 42;
   // CHECK:STDERR:   ^~~~~~~
   default let N:! i32 = 42;
@@ -44,6 +44,7 @@ interface I {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

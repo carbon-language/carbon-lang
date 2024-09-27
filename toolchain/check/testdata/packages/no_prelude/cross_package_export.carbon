@@ -14,7 +14,7 @@
 
 // --- base.carbon
 
-package Other library "base";
+package Other library "[[@TEST_NAME]]";
 
 class C {
   var x: ();
@@ -22,31 +22,31 @@ class C {
 
 // --- conflict.carbon
 
-package Other library "conflict";
+package Other library "[[@TEST_NAME]]";
 
 fn C() {}
 
 // --- export_import.carbon
 
-package Other library "export_import";
+package Other library "[[@TEST_NAME]]";
 
 export import library "base";
 
 // --- export_import_copy.carbon
 
-package Other library "export_import_copy";
+package Other library "[[@TEST_NAME]]";
 
 export import library "base";
 
 // --- export_import_indirect.carbon
 
-package Other library "export_import_indirect";
+package Other library "[[@TEST_NAME]]";
 
 export import library "export_import";
 
 // --- export_name.carbon
 
-package Other library "export_name";
+package Other library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -54,7 +54,7 @@ export C;
 
 // --- export_name_copy.carbon
 
-package Other library "export_name_copy";
+package Other library "[[@TEST_NAME]]";
 
 import library "base";
 
@@ -62,7 +62,7 @@ export C;
 
 // --- export_name_indirect.carbon
 
-package Other library "export_name_indirect";
+package Other library "[[@TEST_NAME]]";
 
 import library "export_name";
 
@@ -74,7 +74,7 @@ export C;
 
 // --- use_export_import.carbon
 
-library "use_export_import";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 
@@ -82,7 +82,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_import_with_copy.carbon
 
-library "use_export_import_with_copy";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "export_import_copy";
@@ -91,7 +91,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_import_indirect.carbon
 
-library "use_export_import_indirect";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import_indirect";
 
@@ -99,7 +99,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name.carbon
 
-library "use_export_name";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 
@@ -107,7 +107,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name_with_copy.carbon
 
-library "use_export_name_with_copy";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 import Other library "export_name_copy";
@@ -116,7 +116,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_name_indirect.carbon
 
-library "use_export_name_indirect";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name_indirect";
 
@@ -124,7 +124,7 @@ var c: Other.C = {.x = ()};
 
 // --- use_export_all.carbon
 
-library "use_export_all";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "export_name";
@@ -137,38 +137,34 @@ var c: Other.C = {.x = ()};
 
 // --- unused_conflict_on_export_import.carbon
 
-library "unused_conflict_on_export_import";
+library "[[@TEST_NAME]]";
 
 import Other library "export_import";
 import Other library "conflict";
 
 // --- unused_conflict_on_export_name.carbon
 
-library "unused_conflict_on_export_name";
+library "[[@TEST_NAME]]";
 
 import Other library "export_name";
 import Other library "conflict";
 
 // --- fail_conflict_on_export_import.carbon
 
-library "fail_conflict_on_export_import";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+12]]:1: In import.
-// CHECK:STDERR: import Other library "export_import";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+8]]:1: in import
+// CHECK:STDERR: base.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import Other library "export_import";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: conflict.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:1: in import
+// CHECK:STDERR: conflict.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "export_import";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:11: In name lookup for `C`.
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:11: note: in name lookup for `C`
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
@@ -176,27 +172,21 @@ alias C = Other.C;
 
 // --- fail_conflict_on_export_name.carbon
 
-library "fail_conflict_on_export_name";
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+15]]:1: In import.
-// CHECK:STDERR: import Other library "export_name";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1: in import
+// CHECK:STDERR: conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1: In import.
-// CHECK:STDERR: import Other library "export_name";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: export_name.carbon:4:1: In import.
-// CHECK:STDERR: import library "base";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: base.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+5]]:1: in import
+// CHECK:STDERR: export_name.carbon:4:1: in import
+// CHECK:STDERR: base.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "export_name";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: In name lookup for `C`.
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: note: in name lookup for `C`
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
 alias C = Other.C;
@@ -208,6 +198,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,6 +212,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc5_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -292,6 +284,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -320,6 +313,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -348,12 +342,13 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -376,7 +371,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -429,7 +425,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -483,7 +480,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -537,7 +535,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -547,9 +546,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -589,7 +588,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -600,9 +600,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -642,7 +642,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -652,9 +653,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name_indirect, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name_indirect, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -694,7 +695,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%tuple) [template]
 // CHECK:STDOUT: }
@@ -710,9 +712,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -817,6 +819,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -825,9 +828,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//conflict, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

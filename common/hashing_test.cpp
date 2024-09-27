@@ -286,12 +286,11 @@ TEST(HashingTest, BasicStrings) {
 
 TEST(HashingTest, ArrayLike) {
   int c_array[] = {1, 2, 3, 4};
-  llvm::ArrayRef arr = c_array;
-  EXPECT_THAT(HashValue(c_array), Eq(HashValue(arr)));
-  EXPECT_THAT(HashValue(std::array{1, 2, 3, 4}), Eq(HashValue(arr)));
-  EXPECT_THAT(HashValue(std::vector{1, 2, 3, 4}), Eq(HashValue(arr)));
+  EXPECT_THAT(HashValue(c_array), Eq(HashValue(c_array)));
+  EXPECT_THAT(HashValue(std::array{1, 2, 3, 4}), Eq(HashValue(c_array)));
+  EXPECT_THAT(HashValue(std::vector{1, 2, 3, 4}), Eq(HashValue(c_array)));
   EXPECT_THAT(HashValue(llvm::SmallVector<int>{1, 2, 3, 4}),
-              Eq(HashValue(arr)));
+              Eq(HashValue(c_array)));
 }
 
 TEST(HashingTest, HashAPInt) {
@@ -654,7 +653,7 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
 auto CheckNoDuplicateValues(llvm::ArrayRef<HashedString> hashes) -> void {
   for (int i = 0, size = hashes.size(); i < size - 1; ++i) {
     const auto& [_, value] = hashes[i];
-    CARBON_CHECK(value != hashes[i + 1].v) << "Duplicate value: " << value;
+    CARBON_CHECK(value != hashes[i + 1].v, "Duplicate value: {0}", value);
   }
 }
 
@@ -700,7 +699,7 @@ auto ExpectNoHashCollisions(llvm::ArrayRef<HashedString> hashes) -> void {
 
 TEST(HashingTest, Collisions1ByteSized) {
   auto hashes_storage = AllByteStringsHashedAndSorted<1>();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
@@ -725,7 +724,7 @@ TEST(HashingTest, Collisions1ByteSized) {
 
 TEST(HashingTest, Collisions2ByteSized) {
   auto hashes_storage = AllByteStringsHashedAndSorted<2>();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
@@ -855,7 +854,7 @@ TYPED_TEST_SUITE(SparseHashTest, SparseHashTestParams);
 
 TYPED_TEST(SparseHashTest, Collisions) {
   auto hashes_storage = this->GetHashedByteStrings();
-  auto hashes = llvm::ArrayRef(hashes_storage);
+  llvm::ArrayRef hashes = hashes_storage;
   ExpectNoHashCollisions(hashes);
 
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);

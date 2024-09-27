@@ -35,6 +35,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -50,7 +51,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %p.patt: %.6 = binding_pattern p
-// CHECK:STDOUT:     %.loc12_7: %.6 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc12_7: %.6 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32.loc12_29 [template = i32]
@@ -60,7 +61,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %.loc12_16: type = const_type %.3 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc12_34: type = ptr_type %.4 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc12_9: type = const_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:     %param: %.6 = param
+// CHECK:STDOUT:     %param: %.6 = param runtime_param0
 // CHECK:STDOUT:     %p: %.6 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc12_47: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_41.1: type = value_of_initializer %int.make_type_32.loc12_47 [template = i32]

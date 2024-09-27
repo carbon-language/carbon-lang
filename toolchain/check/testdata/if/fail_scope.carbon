@@ -13,7 +13,7 @@ fn VarScope(b: bool) -> i32 {
     var n: i32 = 2;
     return n;
   }
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: ERROR: Name `n` not found.
+  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: error: name `n` not found
   // CHECK:STDERR:   return n;
   // CHECK:STDERR:          ^
   return n;
@@ -40,6 +40,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -56,12 +57,12 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %VarScope.decl: %VarScope.type = fn_decl @VarScope [template = constants.%VarScope] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %.loc11_14: bool = param_pattern %b.patt
+// CHECK:STDOUT:     %.loc11_14: bool = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_16.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_16.2: type = converted %bool.make_type, %.loc11_16.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param
+// CHECK:STDOUT:     %param: bool = param runtime_param0
 // CHECK:STDOUT:     %b: bool = bind_name b, %param
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]

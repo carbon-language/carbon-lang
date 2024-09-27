@@ -13,10 +13,10 @@ interface I(T:! type) {
   fn F[self: Self]() -> Self;
 }
 
-// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE-6]]:3: Name is previously declared here.
+// CHECK:STDERR: fail_todo_generic_default_fn.carbon:[[@LINE-6]]:3: note: name is previously declared here
 // CHECK:STDERR:   fn F[self: Self]() -> Self;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn I(T:! type).F[self: Self]() -> Self { return self; }
@@ -45,22 +45,22 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [symbolic = constants.%.5] {
 // CHECK:STDOUT:     %self.patt: @.1.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %.loc22_22: @.1.%Self (%Self) = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc22_22: @.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc22_6: type = param
+// CHECK:STDOUT:     %param.loc22_6: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc22: type = bind_symbolic_name T 0, %param.loc22_6 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc22_24.1: @.1.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc22_24: @.1.%.1 (%.2) = name_ref Self, %.loc22_24.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_24.2: type = facet_type_access %Self.ref.loc22_24 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc22_24.3: type = converted %Self.ref.loc22_24, %.loc22_24.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc22_18: @.1.%Self (%Self) = param
+// CHECK:STDOUT:     %param.loc22_18: @.1.%Self (%Self) = param runtime_param0
 // CHECK:STDOUT:     %self: @.1.%Self (%Self) = bind_name self, %param.loc22_18
 // CHECK:STDOUT:     %.loc22_35.1: @.1.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc22_35: @.1.%.1 (%.2) = name_ref Self, %.loc22_35.1 [symbolic = %Self (constants.%Self)]
@@ -86,13 +86,13 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %Self.1: @I.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:       %.loc13_12: @F.%Self (%Self) = param_pattern %self.patt
+// CHECK:STDOUT:       %.loc13_12: @F.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_14.1: @F.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_14: @F.%.1 (%.2) = name_ref Self, %.loc13_14.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_14.2: type = facet_type_access %Self.ref.loc13_14 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc13_14.3: type = converted %Self.ref.loc13_14, %.loc13_14.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %param: @F.%Self (%Self) = param
+// CHECK:STDOUT:       %param: @F.%Self (%Self) = param runtime_param0
 // CHECK:STDOUT:       %self: @F.%Self (%Self) = bind_name self, %param
 // CHECK:STDOUT:       %.loc13_25.1: @F.%.1 (%.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_25: @F.%.1 (%.2) = name_ref Self, %.loc13_25.1 [symbolic = %Self (constants.%Self)]

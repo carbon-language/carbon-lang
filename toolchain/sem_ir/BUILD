@@ -83,6 +83,7 @@ cc_library(
     name = "file",
     srcs = [
         "builtin_function_kind.cpp",
+        "class.cpp",
         "constant.cpp",
         "file.cpp",
         "function.cpp",

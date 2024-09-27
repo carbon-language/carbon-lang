@@ -11,14 +11,14 @@
 // --- fail_virtual_class.carbon
 
 virtual class B
-// CHECK:STDERR: fail_virtual_class.carbon:[[@LINE+4]]:1: ERROR: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_virtual_class.carbon:[[@LINE+4]]:1: error: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition
 // CHECK:STDERR:
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 
 // --- fail_impl_class.carbon
 
-// CHECK:STDERR: fail_impl_class.carbon:[[@LINE+4]]:1: ERROR: `impl` introducer should be followed by a name.
+// CHECK:STDERR: fail_impl_class.carbon:[[@LINE+4]]:1: error: `impl` introducer should be followed by a name
 // CHECK:STDERR: impl class
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
@@ -27,7 +27,7 @@ impl class
 // --- fail_extend_adapt_base.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+3]]:16: ERROR: Expected expression.
+  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+3]]:16: error: expected expression
   // CHECK:STDERR:   extend adapt base B;
   // CHECK:STDERR:                ^~~~
   extend adapt base B;

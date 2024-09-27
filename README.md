@@ -29,10 +29,9 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 
 <!--
 Don't let the text wrap too narrowly to the left of the above image.
-The `div` reduces the vertical height.
-GitHub will autolink `img`, but won't produce a link when `href="#"`.
+The `div` reduces the vertical height. The `picture` prevents autolinking.
 -->
-<div><a href="#"><img src="docs/images/bumper.png"></a></div>
+<div><picture><img src="docs/images/bumper.png" alt=""></picture></div>
 
 **Fast and works with C++**
 
@@ -282,8 +281,11 @@ download the latest nightly toolchain tar file:
 `carbon_toolchain-0.0.0-0.nightly.YYYY.MM.DD.tar.gz`. Then you can try it out:
 
 ```shell
-# A variable with the specific nightly version:
-VERSION="0.0.0-0.nightly.YYYY.MM.DD"
+# A variable with the nightly version from yesterday:
+VERSION="$(date -d yesterday +0.0.0-0.nightly.%Y.%m.%d)"
+
+# Get the release
+wget https://github.com/carbon-language/carbon-lang/releases/download/v${VERSION}/carbon_toolchain-${VERSION}.tar.gz
 
 # Unpack the toolchain:
 tar -xvf carbon_toolchain-${VERSION}.tar.gz
@@ -362,13 +364,15 @@ Carbon focused talks from the community:
 
 ### Upcoming
 
--   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://cppnorth.ca/speaker-chandler-carruth.html),
-    CppNorth, July 21-24
--   [The Carbon Language: Road to 0.1](https://ndctechtown.com/agenda/the-carbon-language-road-to-01-0sqv/0526yb03a59),
-    NDC {TechTown}, Sept. 11
+-   [Generic implementation strategies in Carbon and Clang](https://discourse.llvm.org/t/announcing-the-2024-llvm-developers-meeting-program/81108),
+    LLVM Developers' Meeting, Oct 23-24
 
 ### 2024
 
+-   [The Carbon Language: Road to 0.1](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1),
+    NDC {TechTown}
+-   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://chandlerc.blog/slides/2024-cppnorth-design-stories),
+    CppNorth
 -   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
     C++Now
 -   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)

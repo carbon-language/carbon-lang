@@ -5,6 +5,10 @@
 // ARGS: -v compile --no-prelude-import --phase=check %s
 //
 // Only checks a couple statements in order to minimize manual update churn.
+// To test this file alone, run:
+//   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/verbose.carbon
+// To dump output, run:
+//   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/verbose.carbon
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/no_prelude/fail_assign_nested.carbon
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:19: ERROR: Missing value for field `a` in struct initialization.
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:19: error: missing value for field `a` in struct initialization
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
 // CHECK:STDERR:                   ^~~~~~~~~
 var x: {.a: {}} = {.b = {}};

@@ -11,7 +11,7 @@
 fn f() -> i32 {
   match (3) {
     default =>
-  // CHECK:STDERR: fail_missing_default_statements_block.carbon:[[@LINE+3]]:3: ERROR: Expected `{` after `=>`.
+  // CHECK:STDERR: fail_missing_default_statements_block.carbon:[[@LINE+3]]:3: error: expected `{` after `=>`
   // CHECK:STDERR:   }
   // CHECK:STDERR:   ^
   }

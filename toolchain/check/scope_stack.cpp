@@ -10,7 +10,19 @@
 namespace Carbon::Check {
 
 auto ScopeStack::VerifyOnFinish() -> void {
-  CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
+  CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
+}
+
+auto ScopeStack::VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
+                                                const ScopeStackEntry& scope)
+    -> void {
+  CARBON_CHECK(
+      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()) ==
+          scope.next_compile_time_bind_index.index,
+      "Wrong number of entries in compile-time binding stack after {0}: have "
+      "{1}, expected {2}",
+      label, compile_time_binding_stack_.all_values_size(),
+      scope.next_compile_time_bind_index.index);
 }
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
@@ -41,14 +53,16 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
     // specifics, we'll need to somehow track them in lookup.
-    CARBON_CHECK(!specific_id.is_valid())
-        << "Lexical scope should not have an associated specific.";
+    CARBON_CHECK(!specific_id.is_valid(),
+                 "Lexical scope should not have an associated specific.");
   }
 
   // TODO: Handle this case more gracefully.
-  CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
-      << "Ran out of scopes";
+  CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max(),
+               "Ran out of scopes");
   ++next_scope_index_.index;
+
+  VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
 }
 
 auto ScopeStack::Pop() -> void {
@@ -56,8 +70,8 @@ auto ScopeStack::Pop() -> void {
 
   scope.names.ForEach([&](SemIR::NameId str_id) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
-    CARBON_CHECK(lexical_results.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << str_id;
+    CARBON_CHECK(lexical_results.back().scope_index == scope.index,
+                 "Inconsistent scope index for name {0}", str_id);
     lexical_results.pop_back();
   });
 
@@ -72,12 +86,7 @@ auto ScopeStack::Pop() -> void {
     return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
   }
 
-  CARBON_CHECK(
-      scope.next_compile_time_bind_index.index ==
-      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
-      << "Wrong number of entries in compile-time binding stack, have "
-      << compile_time_binding_stack_.all_values_size() << ", expected "
-      << scope.next_compile_time_bind_index.index;
+  VerifyNextCompileTimeBindIndex("Pop", scope);
   compile_time_binding_stack_.PopArray();
 }
 
@@ -85,9 +94,9 @@ auto ScopeStack::PopTo(ScopeIndex index) -> void {
   while (PeekIndex() > index) {
     Pop();
   }
-  CARBON_CHECK(PeekIndex() == index)
-      << "Scope index " << index << " does not enclose the current scope "
-      << PeekIndex();
+  CARBON_CHECK(PeekIndex() == index,
+               "Scope index {0} does not enclose the current scope {1}", index,
+               PeekIndex());
 }
 
 auto ScopeStack::LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId {
@@ -135,8 +144,8 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
     -> SemIR::InstId {
   if (!scope_stack_.back().names.Insert(name_id).is_inserted()) {
     auto existing = lexical_lookup_.Get(name_id).back().inst_id;
-    CARBON_CHECK(existing.is_valid())
-        << "Name in scope but not in lexical lookups";
+    CARBON_CHECK(existing.is_valid(),
+                 "Name in scope but not in lexical lookups");
     return existing;
   }
   ++scope_stack_.back().num_names;
@@ -144,24 +153,25 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
   // TODO: Reject if we previously performed a failed lookup for this name
   // in this scope or a scope nested within it.
   auto& lexical_results = lexical_lookup_.Get(name_id);
-  CARBON_CHECK(lexical_results.empty() ||
-               lexical_results.back().scope_index < PeekIndex())
-      << "Failed to clean up after scope nested within the current scope";
+  CARBON_CHECK(
+      lexical_results.empty() ||
+          lexical_results.back().scope_index < PeekIndex(),
+      "Failed to clean up after scope nested within the current scope");
   lexical_results.push_back({.inst_id = target_id, .scope_index = PeekIndex()});
   return SemIR::InstId::Invalid;
 }
 
 auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
     -> SemIR::InstId {
-  CARBON_CHECK(!return_scope_stack_.empty()) << "`returned var` in no function";
+  CARBON_CHECK(!return_scope_stack_.empty(), "`returned var` in no function");
   auto& returned_var = return_scope_stack_.back().returned_var;
   if (returned_var.is_valid()) {
     return returned_var;
   }
 
   returned_var = inst_id;
-  CARBON_CHECK(!scope_stack_.back().has_returned_var)
-      << "Scope has returned var but none is set";
+  CARBON_CHECK(!scope_stack_.back().has_returned_var,
+               "Scope has returned var but none is set");
   if (inst_id.is_valid()) {
     scope_stack_.back().has_returned_var = true;
   }
@@ -169,7 +179,7 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
 }
 
 auto ScopeStack::Suspend() -> SuspendedScope {
-  CARBON_CHECK(!scope_stack_.empty()) << "No scope to suspend";
+  CARBON_CHECK(!scope_stack_.empty(), "No scope to suspend");
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
                            .suspended_items = {}};
   if (result.entry.scope_id.is_valid()) {
@@ -198,8 +208,8 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
-  CARBON_CHECK(!result.entry.has_returned_var)
-      << "Should not suspend a scope with a returned var.";
+  CARBON_CHECK(!result.entry.has_returned_var,
+               "Should not suspend a scope with a returned var.");
   return result;
 }
 
@@ -214,13 +224,7 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
     }
   }
 
-  CARBON_CHECK(
-      scope.entry.next_compile_time_bind_index.index ==
-      static_cast<int32_t>(compile_time_binding_stack_.all_values_size()))
-      << "Wrong number of entries in compile-time binding stack "
-         "when restoring, have "
-      << compile_time_binding_stack_.all_values_size() << ", expected "
-      << scope.entry.next_compile_time_bind_index.index;
+  VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
   if (scope.entry.scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back(

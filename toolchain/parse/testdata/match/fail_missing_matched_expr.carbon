@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/match/fail_missing_matched_expr.carbon
 
 fn f() -> i32 {
-  // CHECK:STDERR: fail_missing_matched_expr.carbon:[[@LINE+3]]:9: ERROR: Expected `(` after `match`.
+  // CHECK:STDERR: fail_missing_matched_expr.carbon:[[@LINE+3]]:9: error: expected `(` after `match`
   // CHECK:STDERR:   match {
   // CHECK:STDERR:         ^
   match {

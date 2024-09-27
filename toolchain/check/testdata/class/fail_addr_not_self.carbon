@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_addr_not_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: ERROR: `addr` can only be applied to a `self` parameter.
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter
   // CHECK:STDERR:   fn F[addr a: Class*]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
   fn F[addr a: Class*]();
 
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: ERROR: `addr` can only be applied to a `self` parameter.
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter
   // CHECK:STDERR:   fn G(addr b: Class*);
   // CHECK:STDERR:        ^~~~
   fn G(addr b: Class*);
@@ -32,6 +32,7 @@ class Class {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -40,6 +41,7 @@ class Class {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -58,22 +60,23 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %.loc16_8: %.1 = param_pattern %a.patt
+// CHECK:STDOUT:     %.loc16_8: %.1 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %a: %.1 = bind_name a, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
-// CHECK:STDOUT:     %.loc21_8: %.1 = param_pattern %b.patt
+// CHECK:STDOUT:     %.loc21_8: %.1 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21_21: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %b: %.1 = bind_name b, %param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

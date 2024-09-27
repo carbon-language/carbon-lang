@@ -10,7 +10,7 @@
 
 fn F(T:! type, U:! type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `T` to `U`.
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let n: U = *p;
@@ -35,13 +35,13 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc11_7: type = param_pattern %T.patt.loc11 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc11_7: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc11: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:     %.loc11_17: type = param_pattern %U.patt.loc11 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %.loc11_17: type = param_pattern %U.patt.loc11, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc11_6: type = param
+// CHECK:STDOUT:     %param.loc11_6: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param.loc11_6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %param.loc11_16: type = param
+// CHECK:STDOUT:     %param.loc11_16: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U 1, %param.loc11_16 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -65,6 +65,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %p.ref: ref @F.%.1 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc16_15: @F.%.1 (%.2) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc16_14: ref @F.%T.1 (%T) = deref %.loc16_15
+// CHECK:STDOUT:     %.loc16_16: @F.%U.1 (%U) = converted %.loc16_14, <error> [template = <error>]
 // CHECK:STDOUT:     %n: @F.%U.1 (%U) = bind_name n, <error>
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

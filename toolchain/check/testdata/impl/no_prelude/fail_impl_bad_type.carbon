@@ -10,7 +10,7 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: ERROR: Cannot implicitly convert from `bool` to `type`.
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: error: package `Core` implicitly referenced here, but not found
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
 impl true as I {}
@@ -31,7 +31,8 @@ impl true as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %.loc16: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:     %.loc16_6.1: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:     %.loc16_6.2: type = converted %.loc16_6.1, <error> [template = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -45,9 +46,9 @@ impl true as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as %.1 {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16_16: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc16_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

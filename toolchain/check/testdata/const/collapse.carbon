@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/const/collapse.carbon
 
 // OK, `const (const i32)` is the same type as `const i32`.
-// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: WARNING: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: warning: `const` applied repeatedly to the same type has no additional effect
 // CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
 fn F(p: const i32**) -> const (const i32)** {
@@ -36,6 +36,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -51,7 +52,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
-// CHECK:STDOUT:     %.loc15_7: %.4 = param_pattern %p.patt
+// CHECK:STDOUT:     %.loc15_7: %.4 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_9.1: type = value_of_initializer %int.make_type_32.loc15_15 [template = i32]
@@ -59,7 +60,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc15_9.3: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_18: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_19: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param
+// CHECK:STDOUT:     %param: %.4 = param runtime_param0
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %param
 // CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]

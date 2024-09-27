@@ -35,11 +35,11 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
 // CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_10: %.1 = param_pattern %a.patt
+// CHECK:STDOUT:     %.loc11_10: %.1 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %a: %.1 = bind_name a, %param
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
 
 fn Procedure() -> i32 {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3: ERROR: `return var;` with no `returned var` in scope.
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3: error: `return var;` with no `returned var` in scope
   // CHECK:STDERR:   return var;
   // CHECK:STDERR:   ^~~~~~~~~~~
   return var;
@@ -32,6 +32,7 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -77,9 +77,10 @@ class EvalContext {
               specifics().Get(specific_id_).generic_id &&
           symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-        CARBON_CHECK(inst_id.is_valid())
-            << "Forward reference in eval block: index "
-            << symbolic_info.index.index() << " referenced before evaluation";
+        CARBON_CHECK(inst_id.is_valid(),
+                     "Forward reference in eval block: index {0} referenced "
+                     "before evaluation",
+                     symbolic_info.index.index());
         return constant_values().Get(inst_id);
       }
     }
@@ -464,14 +465,14 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
                 aggregate_id)) {
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
-      CARBON_CHECK(index < elements.size()) << "Access out of bounds.";
+      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
       // `Phase` is not used here. If this element is a template constant, then
       // so is the result of indexing, even if the aggregate also contains a
       // symbolic context.
       return eval_context.GetConstantValue(elements[index]);
     } else {
-      CARBON_CHECK(phase != Phase::Template)
-          << "Failed to evaluate template constant " << inst;
+      CARBON_CHECK(phase != Phase::Template,
+                   "Failed to evaluate template constant {0}", inst);
     }
   }
   return MakeNonConstantResult(phase);
@@ -479,9 +480,9 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
 // element.
-static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
+static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto index_inst = inst.As<SemIR::AnyAggregateIndex>();
+  auto index_inst = inst.As<SemIR::ArrayIndex>();
   Phase phase = Phase::Template;
   auto index_id = GetConstantValue(eval_context, index_inst.index_id, &phase);
 
@@ -490,8 +491,8 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
   auto index = eval_context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
   if (!index) {
-    CARBON_CHECK(phase != Phase::Template)
-        << "Template constant integer should be a literal";
+    CARBON_CHECK(phase != Phase::Template,
+                 "Template constant integer should be a literal");
     return MakeNonConstantResult(phase);
   }
 
@@ -499,7 +500,7 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetConstantValueAsType(
-      eval_context.insts().Get(index_inst.aggregate_id).type_id());
+      eval_context.insts().Get(index_inst.array_id).type_id());
   if (auto array_type =
           eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntLiteral>(
@@ -511,7 +512,7 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
               .Get(bound->int_id)
               .ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
-                          "Array index `{0}` is past the end of type `{1}`.",
+                          "array index `{0}` is past the end of type `{1}`",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
             index_inst.index_id, ArrayIndexOutOfBounds,
@@ -522,22 +523,19 @@ static auto PerformAggregateIndex(EvalContext& eval_context, SemIR::Inst inst)
   }
 
   auto aggregate_id =
-      GetConstantValue(eval_context, index_inst.aggregate_id, &phase);
+      GetConstantValue(eval_context, index_inst.array_id, &phase);
   if (!aggregate_id.is_valid()) {
     return MakeNonConstantResult(phase);
   }
   auto aggregate =
       eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
   if (!aggregate) {
-    CARBON_CHECK(phase != Phase::Template)
-        << "Unexpected representation for template constant aggregate";
+    CARBON_CHECK(phase != Phase::Template,
+                 "Unexpected representation for template constant aggregate");
     return MakeNonConstantResult(phase);
   }
 
   auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
-  // We checked this for the array case above.
-  CARBON_CHECK(index_val.ult(elements.size()))
-      << "Index out of bounds in tuple indexing";
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
@@ -555,7 +553,7 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
       (context.types().IsSignedInt(bit_width->type_id) &&
        bit_width_val.isNegative())) {
     CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
-                      "Integer type width of {0} is not positive.", TypedInt);
+                      "integer type width of {0} is not positive", TypedInt);
     context.emitter().Emit(
         loc, IntWidthNotPositive,
         {.type = bit_width->type_id, .value = bit_width_val});
@@ -566,8 +564,8 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
   constexpr int MaxIntWidth = 1 << 23;
   if (bit_width_val.ugt(MaxIntWidth)) {
     CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
-                      "Integer type width of {0} is greater than the "
-                      "maximum supported width of {1}.",
+                      "integer type width of {0} is greater than the "
+                      "maximum supported width of {1}",
                       TypedInt, int);
     context.emitter().Emit(loc, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
@@ -600,7 +598,7 @@ static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
     return true;
   }
 
-  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "Bit width must be 64.");
+  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "bit width must be 64");
   context.emitter().Emit(loc, CompileTimeFloatBitWidth);
   return false;
 }
@@ -619,7 +617,7 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
 
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
-  CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
+  CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
@@ -636,7 +634,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       if (context.types().IsSignedInt(op.type_id) &&
           op_val.isMinSignedValue()) {
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
-                          "Integer overflow in negation of {0}.", TypedInt);
+                          "integer overflow in negation of {0}", TypedInt);
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
                                {.type = op.type_id, .value = op_val});
       }
@@ -649,7 +647,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       op_val.flipAllBits();
       break;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind";
+      CARBON_FATAL("Unexpected builtin kind");
   }
 
   return MakeIntResult(context, op.type_id, std::move(op_val));
@@ -752,10 +750,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                    : llvm::StringLiteral(">>");
       if (rhs_val.uge(lhs_val.getBitWidth()) ||
           (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
-        CARBON_DIAGNOSTIC(
-            CompileTimeShiftOutOfRange, Error,
-            "Shift distance not in range [0, {0}) in {1} {2} {3}.", unsigned,
-            TypedInt, llvm::StringLiteral, TypedInt);
+        CARBON_DIAGNOSTIC(CompileTimeShiftOutOfRange, Error,
+                          "shift distance not in range [0, {0}) in {1} {2} {3}",
+                          unsigned, TypedInt, llvm::StringLiteral, TypedInt);
         context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
                                lhs_val.getBitWidth(),
                                {.type = lhs.type_id, .value = lhs_val}, op_str,
@@ -774,12 +771,12 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       break;
 
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
-                      "Integer overflow in calculation {0} {1} {2}.", TypedInt,
+                      "integer overflow in calculation {0} {1} {2}", TypedInt,
                       llvm::StringLiteral, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
                            {.type = lhs.type_id, .value = lhs_val}, op_str,
@@ -823,7 +820,7 @@ static auto PerformBuiltinIntComparison(Context& context,
       result = is_signed ? lhs_val.sge(rhs_val) : lhs_val.sge(rhs_val);
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeBoolResult(context, bool_type_id, result);
@@ -842,7 +839,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
       op_val.changeSign();
       break;
     default:
-      CARBON_FATAL() << "Unexpected builtin kind";
+      CARBON_FATAL("Unexpected builtin kind");
   }
 
   return MakeFloatResult(context, op.type_id, std::move(op_val));
@@ -875,7 +872,7 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
       result_val = lhs_val / rhs_val;
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeFloatResult(context, lhs.type_id, std::move(result_val));
@@ -912,7 +909,7 @@ static auto PerformBuiltinFloatComparison(
       result = lhs_val >= rhs_val;
       break;
     default:
-      CARBON_FATAL() << "Unexpected operation kind.";
+      CARBON_FATAL("Unexpected operation kind.");
   }
 
   return MakeBoolResult(context, bool_type_id, result);
@@ -926,7 +923,7 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
                                        Phase phase) -> SemIR::ConstantId {
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
-      CARBON_FATAL() << "Not a builtin function.";
+      CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::PrintInt: {
       // Providing a constant result would allow eliding the function call.
@@ -1103,41 +1100,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
         eval_context.inst_blocks().Get(call.args_id), phase);
   }
 
-  // Look at the type of the callee for special cases: calls to generic class
-  // and generic interface types.
-  auto type_inst = eval_context.GetConstantValueAsInst(
-      eval_context.insts().Get(call.callee_id).type_id());
-  CARBON_KIND_SWITCH(type_inst) {
-    case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      auto specific_id = MakeSpecificIfGeneric(
-          eval_context.context(),
-          eval_context.classes().Get(generic_class.class_id).generic_id,
-          call.args_id);
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::ClassType{.type_id = call.type_id,
-                           .class_id = generic_class.class_id,
-                           .specific_id = specific_id},
-          phase);
-    }
-    case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      auto specific_id =
-          MakeSpecificIfGeneric(eval_context.context(),
-                                eval_context.interfaces()
-                                    .Get(generic_interface.interface_id)
-                                    .generic_id,
-                                call.args_id);
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::InterfaceType{.type_id = call.type_id,
-                               .interface_id = generic_interface.interface_id,
-                               .specific_id = specific_id},
-          phase);
-    }
-    default: {
-      return SemIR::ConstantId::NotConstant;
-    }
-  }
+  return SemIR::ConstantId::NotConstant;
 }
 
 auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
@@ -1170,7 +1133,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
             if (eval_context.types().IsSignedInt(int_bound->type_id) &&
                 bound_val.isNegative()) {
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
-                                "Array bound of {0} is negative.", TypedInt);
+                                "array bound of {0} is negative", TypedInt);
               eval_context.emitter().Emit(
                   bound_id, ArrayBoundNegative,
                   {.type = int_bound->type_id, .value = bound_val});
@@ -1178,7 +1141,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
             }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                "Array bound of {0} is too large.", TypedInt);
+                                "array bound of {0} is too large", TypedInt);
               eval_context.emitter().Emit(
                   bound_id, ArrayBoundTooLarge,
                   {.type = int_bound->type_id, .value = bound_val});
@@ -1202,9 +1165,19 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ClassType::specific_id);
+    case SemIR::CompleteTypeWitness::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
+    case SemIR::GenericClassType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst, &SemIR::GenericClassType::enclosing_specific_id);
+    case SemIR::GenericInterfaceType::Kind:
+      return RebuildIfFieldsAreConstant(
+          eval_context, inst,
+          &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::InterfaceType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceType::specific_id);
@@ -1269,8 +1242,6 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
     case SemIR::BuiltinInst::Kind:
-    case SemIR::GenericClassType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 
@@ -1364,8 +1335,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
     case SemIR::ArrayIndex::Kind:
-    case SemIR::TupleIndex::Kind:
-      return PerformAggregateIndex(eval_context, inst);
+      return PerformArrayIndex(eval_context, inst);
 
     case CARBON_KIND(SemIR::Call call): {
       return MakeConstantForCall(eval_context, inst_id, call);
@@ -1508,8 +1478,8 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       break;
 
     case SemIR::ImportRefUnloaded::Kind:
-      CARBON_FATAL()
-          << "ImportRefUnloaded should be loaded before TryEvalInst: " << inst;
+      CARBON_FATAL("ImportRefUnloaded should be loaded before TryEvalInst: {0}",
+                   inst);
   }
   return SemIR::ConstantId::NotConstant;
 }

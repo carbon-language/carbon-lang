@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_unresolved_scope.carbon
 
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: ERROR: Name `Foo` not found.
+// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: error: name `Foo` not found
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR:    ^~~
 fn Foo.Baz() {
@@ -28,6 +28,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -10,14 +10,14 @@
 
 // --- fail_redefine_without_dependents.carbon
 
-library "redefine_without_dependents";
+library "[[@TEST_NAME]]";
 
 interface Interface { }
 
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `interface Interface`.
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: note: previously defined here
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -27,14 +27,14 @@ interface Interface {
 
 // --- fail_redefine_with_dependents.carbon
 
-library "redefine_with_dependents";
+library "[[@TEST_NAME]]";
 
 interface Interface {}
 
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `interface Interface`.
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface`
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: Previously defined here.
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: note: previously defined here
 // CHECK:STDERR: interface Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -44,14 +44,14 @@ interface Interface {
 
 // --- fail_name_conflict_with_fn.carbon
 
-library "name_conflict";
+library "[[@TEST_NAME]]";
 
 fn Function();
 
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -61,10 +61,10 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note: name is previously declared here
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface Class { }
@@ -151,12 +151,12 @@ interface Class { }
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%Self (%Self.2) = binding_pattern self
-// CHECK:STDOUT:     %.loc14_12: @F.%Self (%Self.2) = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc14_12: @F.%Self (%Self.2) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %.2 = name_ref Self, @.1.%Self [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %param: @F.%Self (%Self.2) = param
+// CHECK:STDOUT:     %param: @F.%Self (%Self.2) = param runtime_param0
 // CHECK:STDOUT:     %self: @F.%Self (%Self.2) = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: %.4 = assoc_entity element0, %F.decl [template = constants.%.5]

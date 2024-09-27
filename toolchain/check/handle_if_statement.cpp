@@ -68,7 +68,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
     }
 
     default: {
-      CARBON_FATAL() << "Unexpected parse node at start of `if`: " << kind;
+      CARBON_FATAL("Unexpected parse node at start of `if`: {0}", kind);
     }
   }
 

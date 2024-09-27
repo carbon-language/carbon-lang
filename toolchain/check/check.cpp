@@ -61,11 +61,10 @@ struct UnitInfo {
     llvm::SmallVector<Import> imports;
   };
 
-  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit)
+  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit,
+                    Parse::NodeLocConverter& converter)
       : check_ir_id(check_ir_id),
         unit(&unit),
-        converter(unit.tokens, unit.tokens->source().filename(),
-                  unit.get_parse_tree_and_subtrees),
         err_tracker(*unit.consumer),
         emitter(converter, err_tracker) {}
 
@@ -73,7 +72,6 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
-  Parse::NodeLocConverter converter;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLoc> emitter;
 
@@ -284,9 +282,10 @@ static auto ImportOtherPackages(Context& context, UnitInfo& unit_info,
         auto import_ir_inst_id = context.import_ir_insts().Add(
             {.ir_id = SemIR::ImportIRId::ApiForImpl,
              .inst_id = api_imports->import_decl_id});
-        import_decl_id = context.AddInstReusingLoc<SemIR::ImportDecl>(
-            import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
-                                    api_imports_entry.first)});
+        import_decl_id =
+            context.AddInst(context.MakeImportedLocAndInst<SemIR::ImportDecl>(
+                import_ir_inst_id, {.package_id = SemIR::NameId::ForIdentifier(
+                                        api_imports_entry.first)}));
         package_id = api_imports_entry.first;
       }
       has_load_error |= api_imports->has_load_error;
@@ -504,8 +503,8 @@ class DeferredDefinitionWorklist {
       -> void {
     worklist_.push_back(CheckSkippedDefinition{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
-    CARBON_VLOG() << VlogPrefix << "Push CheckSkippedDefinition " << index.index
-                  << "\n";
+    CARBON_VLOG("{0}Push CheckSkippedDefinition {1}\n", VlogPrefix,
+                index.index);
   }
 
   // Push a task to re-enter a function scope, so that functions defined within
@@ -520,8 +519,8 @@ class DeferredDefinitionWorklist {
     worklist_.push_back(
         EnterDeferredDefinitionScope{.suspended_name = std::nullopt,
                                      .in_deferred_definition_scope = nested});
-    CARBON_VLOG() << VlogPrefix << "Push EnterDeferredDefinitionScope "
-                  << (nested ? "(nested)" : "(non-nested)") << "\n";
+    CARBON_VLOG("{0}Push EnterDeferredDefinitionScope {1}\n", VlogPrefix,
+                nested ? "(nested)" : "(non-nested)");
   }
 
   // Suspend the current deferred definition scope, which is finished but still
@@ -536,19 +535,18 @@ class DeferredDefinitionWorklist {
       VariantMatch(
           worklist_.back(),
           [&](CheckSkippedDefinition& definition) {
-            CARBON_VLOG() << VlogPrefix << "Handle CheckSkippedDefinition "
-                          << definition.definition_index.index << "\n";
+            CARBON_VLOG("{0}Handle CheckSkippedDefinition {1}\n", VlogPrefix,
+                        definition.definition_index.index);
           },
           [&](EnterDeferredDefinitionScope& enter) {
             CARBON_CHECK(enter.in_deferred_definition_scope);
-            CARBON_VLOG() << VlogPrefix
-                          << "Handle EnterDeferredDefinitionScope (nested)\n";
+            CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (nested)\n",
+                        VlogPrefix);
           },
           [&](LeaveDeferredDefinitionScope& leave) {
             bool nested = leave.in_deferred_definition_scope;
-            CARBON_VLOG() << VlogPrefix
-                          << "Handle LeaveDeferredDefinitionScope "
-                          << (nested ? "(nested)" : "(non-nested)") << "\n";
+            CARBON_VLOG("{0}Handle LeaveDeferredDefinitionScope {1}\n",
+                        VlogPrefix, nested ? "(nested)" : "(non-nested)");
           });
     }
 
@@ -557,8 +555,8 @@ class DeferredDefinitionWorklist {
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
-    CARBON_CHECK(worklist_.empty() && entered_scopes_.empty())
-        << "Tasks left behind on worklist.";
+    CARBON_CHECK(worklist_.empty() && entered_scopes_.empty(),
+                 "Tasks left behind on worklist.");
   }
 
  private:
@@ -593,7 +591,7 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   if (start_index == worklist_.size() - 1) {
     context.decl_name_stack().PopScope();
     worklist_.pop_back();
-    CARBON_VLOG() << VlogPrefix << "Pop EnterDeferredDefinitionScope (empty)\n";
+    CARBON_VLOG("{0}Pop EnterDeferredDefinitionScope (empty)\n", VlogPrefix);
     return false;
   }
 
@@ -608,8 +606,7 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     // Enqueue a task to leave the nested scope.
     worklist_.push_back(
         LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
-    CARBON_VLOG() << VlogPrefix
-                  << "Push LeaveDeferredDefinitionScope (nested)\n";
+    CARBON_VLOG("{0}Push LeaveDeferredDefinitionScope (nested)\n", VlogPrefix);
     return false;
   }
 
@@ -618,8 +615,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   // scope and end checking deferred definitions.
   worklist_.push_back(
       LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
-  CARBON_VLOG() << VlogPrefix
-                << "Push LeaveDeferredDefinitionScope (non-nested)\n";
+  CARBON_VLOG("{0}Push LeaveDeferredDefinitionScope (non-nested)\n",
+              VlogPrefix);
 
   // We'll process the worklist in reverse index order, so reverse the part of
   // it we're about to execute so we run our tasks in the order in which they
@@ -630,11 +627,11 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   // worklist. We stay in that scope rather than suspending then immediately
   // resuming it.
   CARBON_CHECK(
-      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
-      << "Unexpected task in worklist.";
+      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()),
+      "Unexpected task in worklist.");
   worklist_.pop_back();
-  CARBON_VLOG() << VlogPrefix
-                << "Handle EnterDeferredDefinitionScope (non-nested)\n";
+  CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (non-nested)\n",
+              VlogPrefix);
   return true;
 }
 
@@ -693,8 +690,8 @@ class NodeIdTraversal {
   auto PerformTask(
       DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter)
       -> void {
-    CARBON_CHECK(enter.suspended_name)
-        << "Entering a scope with no suspension information.";
+    CARBON_CHECK(enter.suspended_name,
+                 "Entering a scope with no suspension information.");
     context_.decl_name_stack().Restore(std::move(*enter.suspended_name));
   }
 
@@ -792,7 +789,7 @@ static auto DiagnoseMissingDefinitions(Context& context,
                                        Context::DiagnosticEmitter& emitter)
     -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
-                    "No definition found for declaration in impl file");
+                    "no definition found for declaration in impl file");
   for (SemIR::InstId decl_inst_id : context.definitions_required()) {
     SemIR::Inst decl_inst = context.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context.insts().Get(decl_inst_id)) {
@@ -818,12 +815,10 @@ static auto DiagnoseMissingDefinitions(Context& context,
       case SemIR::InterfaceDecl::Kind: {
         // TODO: handle `interface` as well, once we can test it without
         // triggering https://github.com/carbon-language/carbon-lang/issues/4071
-        CARBON_FATAL()
-            << "TODO: Support interfaces in DiagnoseMissingDefinitions";
+        CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       default: {
-        CARBON_FATAL() << "Unexpected inst in definitions_required: "
-                       << decl_inst;
+        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
       }
     }
   }
@@ -834,14 +829,14 @@ static auto DiagnoseMissingDefinitions(Context& context,
 // NOLINTNEXTLINE(readability-function-size)
 static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
                            ErrorTrackingDiagnosticConsumer& err_tracker,
-                           Parse::NodeLocConverter* converter) -> bool {
+                           Parse::NodeLocConverter& converter) -> bool {
   NodeIdTraversal traversal(context, vlog_stream);
 
   Parse::NodeId node_id = Parse::NodeId::Invalid;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto loc = converter->ConvertLoc(
+    auto loc = converter.ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
     loc.FormatLocation(output);
     output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
@@ -854,14 +849,15 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
     auto parse_kind = context.parse_tree().node_kind(node_id);
 
     switch (parse_kind) {
-#define CARBON_PARSE_NODE_KIND(Name)                                         \
-  case Parse::NodeKind::Name: {                                              \
-    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {               \
-      CARBON_CHECK(err_tracker.seen_error())                                 \
-          << "Handle" #Name " returned false without printing a diagnostic"; \
-      return false;                                                          \
-    }                                                                        \
-    break;                                                                   \
+#define CARBON_PARSE_NODE_KIND(Name)                                 \
+  case Parse::NodeKind::Name: {                                      \
+    if (!HandleParseNode(context, Parse::Name##Id(node_id))) {       \
+      CARBON_CHECK(err_tracker.seen_error(),                         \
+                   "Handle" #Name                                    \
+                   " returned false without printing a diagnostic"); \
+      return false;                                                  \
+    }                                                                \
+    break;                                                           \
   }
 #include "toolchain/parse/node_kind.def"
     }
@@ -873,7 +869,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 
 // Produces and checks the IR for the provided Parse::Tree.
 static auto CheckParseTree(
-    llvm::MutableArrayRef<Parse::NodeLocConverter*> node_converters,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
   auto package_id = IdentifierId::Invalid;
@@ -883,7 +879,8 @@ static auto CheckParseTree(
     library_id = packaging->names.library_id;
   }
   unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, package_id, library_id,
+      unit_info.check_ir_id, package_id,
+      SemIR::LibraryNameId::ForStringLiteralValueId(library_id),
       *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
@@ -906,7 +903,7 @@ static auto CheckParseTree(
   ImportImpls(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
-                      &unit_info.converter)) {
+                      node_converters[unit_info.check_ir_id.index])) {
     context.sem_ir().set_has_errors(true);
     return;
   }
@@ -921,8 +918,8 @@ static auto CheckParseTree(
 
 #ifndef NDEBUG
   if (auto verify = sem_ir.Verify(); !verify.ok()) {
-    CARBON_FATAL() << sem_ir << "Built invalid semantics IR: " << verify.error()
-                   << "\n";
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir,
+                 verify.error());
   }
 #endif
 }
@@ -986,8 +983,8 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
             explicit_import_map->Insert(import_key, import.node_id);
         !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
-                        "Library imported more than once.");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
+                        "library imported more than once");
+      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
           .Note(insert_result.value(), FirstImported)
           .Emit();
@@ -1017,9 +1014,9 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     // `impl`.
     if (is_same_library) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
-                        "Explicit import of `api` from `impl` file is "
-                        "redundant with implicit import.");
-      CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
+                        "explicit import of `api` from `impl` file is "
+                        "redundant with implicit import");
+      CARBON_DIAGNOSTIC(ImportSelf, Error, "file cannot import itself");
       bool is_impl = !packaging || packaging->is_impl;
       unit_info.emitter.Emit(import.node_id,
                              is_impl ? ExplicitImportApi : ImportSelf);
@@ -1031,7 +1028,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     if (is_file_implicit_main && is_import_implicit_current_package &&
         is_import_default_library) {
       CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
-                        "Cannot import `Main//default`.");
+                        "cannot import `Main//default`");
       unit_info.emitter.Emit(import.node_id, ImportMainDefaultLibrary);
 
       return;
@@ -1043,7 +1040,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
       if (is_same_package || (is_file_implicit_main && is_explicit_main)) {
         CARBON_DIAGNOSTIC(
             ImportCurrentPackageByName, Error,
-            "Imports from the current package must omit the package name.");
+            "imports from the current package must omit the package name");
         unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
         return;
       }
@@ -1051,7 +1048,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
       // Diagnose explicit imports from `Main`.
       if (is_explicit_main) {
         CARBON_DIAGNOSTIC(ImportMainPackage, Error,
-                          "Cannot import `Main` from other packages.");
+                          "cannot import `Main` from other packages");
         unit_info.emitter.Emit(import.node_id, ImportMainPackage);
         return;
       }
@@ -1091,8 +1088,8 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
     // The imported api is missing.
     package_imports.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
-                      "Corresponding API for '{0}' not found.", std::string);
-    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API '{0}' not found.",
+                      "corresponding API for '{0}' not found", std::string);
+    CARBON_DIAGNOSTIC(ImportNotFound, Error, "imported API '{0}' not found",
                       std::string);
     unit_info.emitter.Emit(
         import.node_id,
@@ -1120,10 +1117,10 @@ static auto BuildApiMapAndDiagnosePackaging(
     // APIs.
     if (import_key.first == ExplicitMainName) {
       CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                        "`Main//default` must omit `package` declaration.");
+                        "`Main//default` must omit `package` declaration");
       CARBON_DIAGNOSTIC(
           ExplicitMainLibrary, Error,
-          "Use `library` declaration in `Main` package libraries.");
+          "use `library` declaration in `Main` package libraries");
       unit_info.emitter.Emit(packaging->names.node_id,
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
@@ -1143,13 +1140,13 @@ static auto BuildApiMapAndDiagnosePackaging(
             insert_result.value()->unit->tokens->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                            "Library's API previously provided by `{0}`.",
+                            "library's API previously provided by `{0}`",
                             std::string);
           unit_info.emitter.Emit(packaging->names.node_id, DuplicateLibraryApi,
                                  prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
-                            "Main//default previously provided by `{0}`.",
+                            "`Main//default` previously provided by `{0}`",
                             std::string);
           // Use the invalid node because there's no node to associate with.
           unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
@@ -1169,7 +1166,7 @@ static auto BuildApiMapAndDiagnosePackaging(
       auto want_ext = is_impl ? ImplExt : ApiExt;
       if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
         CARBON_DIAGNOSTIC(IncorrectExtension, Error,
-                          "File extension of `{0}` required for `{1}`.",
+                          "file extension of `{0}` required for `{1}`",
                           llvm::StringLiteral, Lex::TokenKind);
         auto diag = unit_info.emitter.Build(
             packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
@@ -1177,7 +1174,7 @@ static auto BuildApiMapAndDiagnosePackaging(
             is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
         if (is_api_with_impl_ext) {
           CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
-                            "File extension of `{0}` only allowed for `{1}`.",
+                            "file extension of `{0}` only allowed for `{1}`",
                             llvm::StringLiteral, Lex::TokenKind);
           diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote, ImplExt,
                     Lex::TokenKind::Impl);
@@ -1189,19 +1186,15 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void {
-  // Prepare diagnostic emitters in case we run into issues during package
-  // checking.
-  //
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
+    bool prelude_import, llvm::raw_ostream* vlog_stream) -> void {
   // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
   llvm::SmallVector<UnitInfo, 0> unit_infos;
   unit_infos.reserve(units.size());
-  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
-  node_converters.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
-    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
-    node_converters.push_back(&unit_infos.back().converter);
+    unit_infos.emplace_back(SemIR::CheckIRId(i), unit, node_converters[i]);
   }
 
   Map<ImportKey, UnitInfo*> api_map =
@@ -1277,8 +1270,8 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
             } else {
               // The import hasn't been checked, indicating a cycle.
               CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
-                                "Import cannot be used due to a cycle. Cycle "
-                                "must be fixed to import.");
+                                "import cannot be used due to a cycle; cycle "
+                                "must be fixed to import");
               unit_info.emitter.Emit(import_it->names.node_id,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.

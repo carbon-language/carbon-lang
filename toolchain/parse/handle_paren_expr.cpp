@@ -30,7 +30,7 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenInCompoundMemberAccess, Error,
-                        "Expected `)`.");
+                        "expected `)`");
       context.emitter().Emit(*context.position(),
                              UnexpectedTokenInCompoundMemberAccess);
       state.has_error = true;
@@ -71,8 +71,8 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
 
   // We found a comma, so switch parent state to tuple handling.
   auto finish_state = context.PopState();
-  CARBON_CHECK(finish_state.state == State::ParenExprFinish)
-      << "Unexpected parent state, found: " << finish_state.state;
+  CARBON_CHECK(finish_state.state == State::ParenExprFinish,
+               "Unexpected parent state, found: {0}", finish_state.state);
   context.PushState(finish_state, State::TupleLiteralFinish);
 
   // If the comma is not immediately followed by a close paren, push handlers

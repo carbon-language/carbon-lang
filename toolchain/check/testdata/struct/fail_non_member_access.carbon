@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_non_member_access.carbon
 
 var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: i32}` does not have a member `b`.
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:14: error: type `{.a: i32}` does not have a member `b`
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:              ^~~
 var y: i32 = x.b;
@@ -32,6 +32,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -52,17 +52,12 @@ TEST(PrecedenceTest, InfixVsPostfix) {
   EXPECT_FALSE(
       PrecedenceGroup::ForTrailing(Lex::TokenKind::Star, false)->is_binary);
 
-  // Infix `*` can appear in `+` contexts; postfix `*` cannot.
+  // Infix `*` can appear in `+` contexts.
   EXPECT_THAT(
       PrecedenceGroup::GetPriority(
           PrecedenceGroup::ForTrailing(Lex::TokenKind::Star, true)->level,
           PrecedenceGroup::ForTrailing(Lex::TokenKind::Plus, true)->level),
       Eq(OperatorPriority::LeftFirst));
-  EXPECT_THAT(
-      PrecedenceGroup::GetPriority(
-          PrecedenceGroup::ForTrailing(Lex::TokenKind::Star, false)->level,
-          PrecedenceGroup::ForTrailing(Lex::TokenKind::Plus, true)->level),
-      Eq(OperatorPriority::Ambiguous));
 }
 
 TEST(PrecedenceTest, Associativity) {

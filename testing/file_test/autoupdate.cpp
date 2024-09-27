@@ -21,8 +21,8 @@ static auto ParseLineNumber(absl::string_view matched_line_number) -> int {
   trimmed = trimmed.trim();
   // NOLINTNEXTLINE(google-runtime-int): API requirement.
   long long val;
-  CARBON_CHECK(!llvm::getAsSignedInteger(trimmed, 10, val))
-      << matched_line_number;
+  CARBON_CHECK(!llvm::getAsSignedInteger(trimmed, 10, val), "{0}",
+               matched_line_number);
   return val;
 }
 
@@ -60,7 +60,7 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
       RE2::PartialMatch(line_cursor, *replacement_->re, &matched_line_number);
     }
     if (matched_line_number.empty()) {
-      CARBON_CHECK(found_one) << line_;
+      CARBON_CHECK(found_one, "{0}", line_);
       return;
     }
     found_one = true;
@@ -195,9 +195,9 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
       absl::string_view filename;
       if (RE2::PartialMatch(line, *default_file_re_, &filename)) {
         auto it = file_to_number_map.find(filename);
-        CARBON_CHECK(it != file_to_number_map.end())
-            << "default_file_re had unexpected match in '" << line << "' (`"
-            << default_file_re_->pattern() << "`)";
+        CARBON_CHECK(it != file_to_number_map.end(),
+                     "default_file_re had unexpected match in '{0}' (`{1}`)",
+                     line, default_file_re_->pattern());
         default_file_number = it->second;
       }
     }
@@ -218,7 +218,7 @@ auto FileTestAutoupdater::AddRemappedNonCheckLine() -> void {
 }
 
 auto FileTestAutoupdater::AddTips() -> void {
-  CARBON_CHECK(tips_.empty()) << "Should only add tips once";
+  CARBON_CHECK(tips_.empty(), "Should only add tips once");
 
   tips_.reserve(4);
   // This puts commands on a single line so that they can be easily copied.
@@ -278,12 +278,12 @@ auto FileTestAutoupdater::StartSplitFile() -> void {
   // Advance the file.
   ++output_file_number_;
   output_line_number_ = 0;
-  CARBON_CHECK(output_file_number_ == non_check_line_->file_number())
-      << "Non-sequential file: " << non_check_line_->file_number();
+  CARBON_CHECK(output_file_number_ == non_check_line_->file_number(),
+               "Non-sequential file: {0}", non_check_line_->file_number());
 
   // Each following file has precisely one split line.
-  CARBON_CHECK(non_check_line_->line_number() < 1)
-      << "Expected a split line, got " << *non_check_line_;
+  CARBON_CHECK(non_check_line_->line_number() < 1,
+               "Expected a split line, got {0}", *non_check_line_);
   // The split line is ignored when calculating line counts.
   new_lines_.push_back(non_check_line_);
 
@@ -300,8 +300,8 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // Print everything until the autoupdate line.
   while (non_check_line_->line_number() != autoupdate_line_number_) {
     CARBON_CHECK(non_check_line_ != non_check_lines_.end() &&
-                 non_check_line_->file_number() == 0)
-        << "Missed autoupdate?";
+                     non_check_line_->file_number() == 0,
+                 "Missed autoupdate?");
     AddRemappedNonCheckLine();
     ++non_check_line_;
   }

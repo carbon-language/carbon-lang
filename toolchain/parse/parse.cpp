@@ -13,14 +13,15 @@
 namespace Carbon::Parse {
 
 auto HandleInvalid(Context& context) -> void {
-  CARBON_FATAL() << "The Invalid state shouldn't be on the stack: "
-                 << context.PopState();
+  CARBON_FATAL("The Invalid state shouldn't be on the stack: {0}",
+               context.PopState());
 }
 
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
   Lex::TokenDiagnosticConverter converter(&tokens);
-  Lex::TokenDiagnosticEmitter emitter(converter, consumer);
+  ErrorTrackingDiagnosticConsumer err_tracker(consumer);
+  Lex::TokenDiagnosticEmitter emitter(converter, err_tracker);
 
   // Delegate to the parser.
   Tree tree(tokens);
@@ -44,6 +45,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   }
 
   context.AddLeafNode(NodeKind::FileEnd, *context.position());
+  tree.set_has_errors(err_tracker.seen_error());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     // TODO: This is temporarily printing to stderr directly during development.
@@ -53,7 +55,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
     // hopefully comfortable copy-pasting stderr when there are bugs in tree
     // construction.
     tree.Print(llvm::errs());
-    CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
+    CARBON_FATAL("Invalid tree returned by Parse(): {0}", verify.error());
   }
   return tree;
 }

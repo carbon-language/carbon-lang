@@ -59,19 +59,19 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
 // CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %.loc7_13: @Op.%Self (%Self) = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc7_13: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
-// CHECK:STDOUT:     %.loc7_26: @Op.%Self (%Self) = param_pattern %other.patt
+// CHECK:STDOUT:     %.loc7_26: @Op.%Self (%Self) = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc7_9: @Op.%Self (%Self) = param
+// CHECK:STDOUT:     %param.loc7_9: @Op.%Self (%Self) = param runtime_param0
 // CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc7_21: @Op.%Self (%Self) = param
+// CHECK:STDOUT:     %param.loc7_21: @Op.%Self (%Self) = param runtime_param1
 // CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_21
 // CHECK:STDOUT:     %Self.ref.loc7_37: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = %Self (constants.%Self)]
@@ -157,9 +157,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc10_18: <bound method> = bound_method %.loc10_16, %.1 [template = constants.%.8]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18(%.loc10_16, %.loc10_20) [template = constants.%.9]
+// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_18.1: %Op.type.2 = interface_witness_access @impl.%.loc6_22, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc10_18.2: <bound method> = bound_method %.loc10_16, %.loc10_18.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18.2(%.loc10_16, %.loc10_20) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc10_11.2: type = converted %int.make_type_32, %.loc10_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc10_21: type = array_type %int.sadd, i32 [template = constants.%.10]
@@ -177,24 +178,24 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: impl @impl: i32 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_13: i32 = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc7_13: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
-// CHECK:STDOUT:     %.loc7_26: i32 = param_pattern %other.patt
+// CHECK:STDOUT:     %.loc7_26: i32 = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %param.loc7_9: i32 = param
+// CHECK:STDOUT:     %param.loc7_9: i32 = param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_9
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
-// CHECK:STDOUT:     %param.loc7_21: i32 = param
+// CHECK:STDOUT:     %param.loc7_21: i32 = param runtime_param1
 // CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_21
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT:   witness = %.loc6_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -213,9 +214,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_29: i32 = int_literal 4 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.12]
-// CHECK:STDOUT:   %.1: %Op.type.2 = interface_witness_access @impl.%.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc10_34: <bound method> = bound_method %.loc10_32, %.1 [template = constants.%.13]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_34(%.loc10_32, %.loc10_36) [template = constants.%.14]
+// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_34.1: %Op.type.2 = interface_witness_access @impl.%.loc6_22, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc10_34.2: <bound method> = bound_method %.loc10_32, %.loc10_34.1 [template = constants.%.13]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_34.2(%.loc10_32, %.loc10_36) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc10_37.1: %.15 = tuple_literal (%.loc10_26, %.loc10_29, %int.sadd)
 // CHECK:STDOUT:   %.loc10_37.2: i32 = int_literal 0 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc10_37.3: ref i32 = array_index file.%arr.var, %.loc10_37.2

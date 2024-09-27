@@ -10,37 +10,35 @@
 
 // --- basic.carbon
 
-library "basic";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- basic.impl.carbon
 
-impl library "basic";
+impl library "[[@TEST_NAME]]";
 
 fn A() {}
 
 // --- extern_api.carbon
 
-library "extern_api";
+library "[[@TEST_NAME]]";
 
 extern fn A();
 
 // --- fail_extern_api.impl.carbon
 
-impl library "extern_api";
+impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+14]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+12]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
-// CHECK:STDERR: impl library "extern_api";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import
+// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: ERROR: No definition found for declaration in impl file
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -48,21 +46,19 @@ fn A();
 
 // --- extern_impl.carbon
 
-library "extern_impl";
+library "[[@TEST_NAME]]";
 
 fn A();
 
 // --- fail_extern_impl.impl.carbon
 
-impl library "extern_impl";
+impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: In import.
-// CHECK:STDERR: impl library "extern_impl";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_impl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import
+// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 extern fn A();
@@ -148,7 +144,7 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_impl.carbon
 // CHECK:STDOUT:
@@ -188,5 +184,5 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:

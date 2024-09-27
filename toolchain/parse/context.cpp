@@ -59,42 +59,23 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
-  CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
+  CARBON_CHECK(position_ != end_, "Empty TokenizedBuffer");
   --end_;
-  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd)
-      << "TokenizedBuffer should end with FileEnd, ended with "
-      << tokens_->GetKind(*end_);
-}
-
-auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
-    -> void {
-  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
-}
-
-auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
-    -> void {
-  tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
+  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd,
+               "TokenizedBuffer should end with FileEnd, ended with {0}",
+               tokens_->GetKind(*end_));
 }
 
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
                                      Lex::TokenIndex token, bool has_error)
     -> void {
-  CARBON_CHECK(position >= 0 && position < tree_->size())
-      << "position: " << position << " size: " << tree_->size();
+  CARBON_CHECK(position >= 0 && position < tree_->size(),
+               "position: {0} size: {1}", position, tree_->size());
   auto* node_impl = &tree_->node_impls_[position];
   CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
   node_impl->kind = kind;
   node_impl->has_error = has_error;
   node_impl->token = token;
-  if (has_error) {
-    tree_->has_errors_ = true;
-  }
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
@@ -104,7 +85,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
     return open_paren;
   } else {
-    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
@@ -126,7 +107,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
-                      "Unexpected tokens before `{0}`.", llvm::StringLiteral);
+                      "unexpected tokens before `{0}`", llvm::StringLiteral);
     emitter_->Emit(*position_, ExpectedCloseSymbol,
                    open_token_kind.closing_symbol().fixed_spelling());
 
@@ -147,15 +128,8 @@ auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
 }
 
 auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
-  CARBON_CHECK(PositionIs(kind))
-      << "Required " << kind << ", found " << PositionKind();
-  return Consume();
-}
-
-auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
-  if (!PositionIs(kind)) {
-    return std::nullopt;
-  }
+  CARBON_CHECK(PositionIs(kind), "Required {0}, found {1}", kind,
+               PositionKind());
   return Consume();
 }
 
@@ -239,10 +213,10 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
 }
 
 auto Context::SkipTo(Lex::TokenIndex t) -> void {
-  CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
-                                << " to " << Lex::TokenIterator(t);
+  CARBON_CHECK(t >= *position_, "Tried to skip backwards from {0} to {1}",
+               position_, Lex::TokenIterator(t));
   position_ = Lex::TokenIterator(t);
-  CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
+  CARBON_CHECK(position_ != end_, "Skipped past EOF.");
 }
 
 // Determines whether the given token is considered to be the start of an
@@ -274,7 +248,7 @@ static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
 }
 
 auto Context::IsLexicallyValidInfixOperator() -> bool {
-  CARBON_CHECK(position_ != end_) << "Expected an operator token.";
+  CARBON_CHECK(position_ != end_, "Expected an operator token.");
 
   bool leading_space = tokens().HasLeadingWhitespace(*position_);
   bool trailing_space = tokens().HasTrailingWhitespace(*position_);
@@ -335,7 +309,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
       CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                        "Whitespace missing {0} binary operator.", RelativeLoc);
+                        "whitespace missing {0} binary operator", RelativeLoc);
       emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace,
                      tokens().HasLeadingWhitespace(*position_)
                          ? RelativeLoc::After
@@ -351,14 +325,14 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     if ((prefix ? tokens().HasTrailingWhitespace(*position_)
                 : tokens().HasLeadingWhitespace(*position_))) {
       CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-                        "Whitespace is not allowed {0} this unary operator.",
+                        "whitespace is not allowed {0} this unary operator",
                         RelativeLoc);
       emitter_->Emit(*position_, UnaryOperatorHasWhitespace,
                      prefix ? RelativeLoc::After : RelativeLoc::Before);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-                        "Whitespace is required {0} this unary operator.",
+                        "whitespace is required {0} this unary operator",
                         RelativeLoc);
       emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace,
                      prefix ? RelativeLoc::Before : RelativeLoc::After);
@@ -372,7 +346,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     // Don't error a second time on the same element.
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                        "Expected `,` or `{0}`.", Lex::TokenKind);
+                        "expected `,` or `{0}`", Lex::TokenKind);
       emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
@@ -380,9 +354,8 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     // Recover from the invalid token.
     auto end_of_element = FindNextOf({Lex::TokenKind::Comma, close_kind});
     // The lexer guarantees that parentheses are balanced.
-    CARBON_CHECK(end_of_element)
-        << "missing matching `" << close_kind.opening_symbol() << "` for `"
-        << close_kind << "`";
+    CARBON_CHECK(end_of_element, "missing matching `{0}` for `{1}`",
+                 close_kind.opening_symbol(), close_kind);
 
     SkipTo(*end_of_element);
   }
@@ -448,9 +421,9 @@ auto Context::ParseLibraryName(bool accept_default)
 
   CARBON_DIAGNOSTIC(
       ExpectedLibraryNameOrDefault, Error,
-      "Expected `default` or a string literal to specify the library name.");
+      "expected `default` or a string literal to specify the library name");
   CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
-                    "Expected a string literal to specify the library name.");
+                    "expected a string literal to specify the library name");
   emitter().Emit(*position(), accept_default ? ExpectedLibraryNameOrDefault
                                              : ExpectedLibraryName);
   return std::nullopt;
@@ -469,7 +442,7 @@ auto Context::ParseLibrarySpecifier(bool accept_default)
 
 auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
-                    "`{0}` declarations must end with a `;`.", Lex::TokenKind);
+                    "`{0}` declarations must end with a `;`", Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
 }
 
@@ -477,7 +450,7 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
     -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
-                    "have a `{{ ... }` block for a definition.",
+                    "have a `{{ ... }` block for a definition",
                     Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
 }

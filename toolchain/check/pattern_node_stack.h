@@ -44,8 +44,8 @@ class PatternNodeStack {
   template <typename IdT>
   auto Pop(Parse::NodeId node_id) -> IdT {
     auto entry = stack_.pop_back_val();
-    CARBON_CHECK(entry.node_id == node_id)
-        << "Expected " << node_id << ", but found " << entry.node_id;
+    CARBON_CHECK(entry.node_id == node_id, "Expected {0} but found {1}",
+                 node_id, entry.node_id);
     return IdT(entry.id);
   }
 

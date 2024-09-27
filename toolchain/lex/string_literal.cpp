@@ -213,8 +213,8 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
   if (indent.end() != content.end()) {
     CARBON_DIAGNOSTIC(
         ContentBeforeStringTerminator, Error,
-        "Only whitespace is permitted before the closing `'''` of a "
-        "multi-line string.");
+        "only whitespace is permitted before the closing `'''` of a "
+        "multi-line string");
     emitter.Emit(indent.end(), ContentBeforeStringTerminator);
   }
 
@@ -231,16 +231,16 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
   }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
     CARBON_DIAGNOSTIC(UnicodeEscapeTooLarge, Error,
-                      "Code point specified by `\\u{{...}}` escape is greater "
-                      "than 0x10FFFF.");
+                      "code point specified by `\\u{{...}}` escape is greater "
+                      "than 0x10FFFF");
     emitter.Emit(digits.begin(), UnicodeEscapeTooLarge);
     return false;
   }
 
   if (code_point >= 0xD800 && code_point < 0xE000) {
     CARBON_DIAGNOSTIC(UnicodeEscapeSurrogate, Error,
-                      "Code point specified by `\\u{{...}}` escape is a "
-                      "surrogate character.");
+                      "code point specified by `\\u{{...}}` escape is a "
+                      "surrogate character");
     emitter.Emit(digits.begin(), UnicodeEscapeSurrogate);
     return false;
   }
@@ -282,7 +282,7 @@ static auto AppendFrontOfContents(char*& buffer_cursor,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            char*& buffer_cursor) -> void {
-  CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
+  CARBON_CHECK(!content.empty(), "should have escaped closing delimiter");
   char first = content.front();
   content = content.drop_front(1);
 
@@ -310,8 +310,8 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
       if (!content.empty() && IsDecimalDigit(content.front())) {
         CARBON_DIAGNOSTIC(
             DecimalEscapeSequence, Error,
-            "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
-            "of `\\0` if the next character is a digit.");
+            "decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
+            "of `\\0` if the next character is a digit");
         emitter.Emit(content.begin(), DecimalEscapeSequence);
         return;
       }
@@ -325,8 +325,8 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
         return;
       }
       CARBON_DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
-                        "Escape sequence `\\x` must be followed by two "
-                        "uppercase hexadecimal digits, for example `\\x0F`.");
+                        "escape sequence `\\x` must be followed by two "
+                        "uppercase hexadecimal digits, for example `\\x0F`");
       emitter.Emit(content.begin(), HexadecimalEscapeMissingDigits);
       break;
     case 'u': {
@@ -344,14 +344,14 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
       }
       CARBON_DIAGNOSTIC(
           UnicodeEscapeMissingBracedDigits, Error,
-          "Escape sequence `\\u` must be followed by a braced sequence of "
-          "uppercase hexadecimal digits, for example `\\u{{70AD}}`.");
+          "escape sequence `\\u` must be followed by a braced sequence of "
+          "uppercase hexadecimal digits, for example `\\u{{70AD}}`");
       emitter.Emit(content.begin(), UnicodeEscapeMissingBracedDigits);
       break;
     }
     default:
       CARBON_DIAGNOSTIC(UnknownEscapeSequence, Error,
-                        "Unrecognized escape sequence `{0}`.", char);
+                        "unrecognized escape sequence `{0}`", char);
       emitter.Emit(content.begin() - 1, UnknownEscapeSequence, first);
       break;
   }
@@ -382,8 +382,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (!contents.starts_with("\n")) {
         CARBON_DIAGNOSTIC(
             MismatchedIndentInString, Error,
-            "Indentation does not match that of the closing `'''` in "
-            "multi-line string literal.");
+            "indentation does not match that of the closing `'''` in "
+            "multi-line string literal");
         emitter.Emit(line_start, MismatchedIndentInString);
       }
     }
@@ -424,8 +424,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        CARBON_CHECK(contents.front() != ' ')
-            << "should not have stopped at a plain space";
+        CARBON_CHECK(contents.front() != ' ',
+                     "should not have stopped at a plain space");
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
@@ -433,8 +433,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
           // `contents.begin() + after_space` in the diagnostic.
           CARBON_DIAGNOSTIC(
               InvalidHorizontalWhitespaceInString, Error,
-              "Whitespace other than plain space must be expressed with an "
-              "escape sequence in a string literal.");
+              "whitespace other than plain space must be expressed with an "
+              "escape sequence in a string literal");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
           AppendFrontOfContents(buffer_cursor, contents, after_space);
@@ -472,7 +472,7 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
   if (multi_line_ == MultiLineWithDoubleQuotes) {
     CARBON_DIAGNOSTIC(
         MultiLineStringWithDoubleQuotes, Error,
-        "Use `'''` delimiters for a multi-line string literal, not `\"\"\"`.");
+        "use `'''` delimiters for a multi-line string literal, not `\"\"\"`");
     emitter.Emit(text_.begin(), MultiLineStringWithDoubleQuotes);
   }
   llvm::StringRef indent =
@@ -487,9 +487,9 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
   auto result = ExpandEscapeSequencesAndRemoveIndent(
       emitter, content_, hash_level_, indent,
       allocator.Allocate<char>(content_.size()));
-  CARBON_CHECK(result.size() <= content_.size())
-      << "Content grew from " << content_.size() << " to " << result.size()
-      << ": `" << content_ << "`";
+  CARBON_CHECK(result.size() <= content_.size(),
+               "Content grew from {0} to {1}: `{2}`", content_.size(),
+               result.size(), content_);
   return result;
 }
 

@@ -8,11 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/no_prelude/fail_params.carbon
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: ERROR: `alias` declaration cannot have parameters.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:8: error: `alias` declaration cannot have parameters
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:21: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: fail_params.carbon:[[@LINE+3]]:21: error: alias initializer must be a name reference
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:                     ^~
 alias A(T:! type) = T*;
@@ -29,7 +29,7 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %param: type = param
+// CHECK:STDOUT:   %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc18: type = ptr_type %T [symbolic = constants.%.1]

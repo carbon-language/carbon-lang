@@ -23,6 +23,7 @@ static auto ConsumeTrailingParam(Context& context) {
       node_id, {
                    .type_id = context.insts().Get(pattern_id).type_id(),
                    .subpattern_id = pattern_id,
+                   .runtime_index = SemIR::RuntimeParamIndex::Invalid,
                });
   context.param_patterns_stack().AddInstId(param_pattern_id);
 }

@@ -4,6 +4,7 @@
 
 #include "toolchain/lex/tokenized_buffer.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "common/check.h"
@@ -19,12 +20,8 @@
 
 namespace Carbon::Lex {
 
-auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
-  return GetTokenInfo(token).kind;
-}
-
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
-  return GetTokenInfo(token).token_line;
+  return FindLineIndex(GetTokenInfo(token).byte_offset());
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
@@ -32,7 +29,9 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
 }
 
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
-  return GetTokenInfo(token).column + 1;
+  const auto& token_info = GetTokenInfo(token);
+  const auto& line_info = GetLineInfo(FindLineIndex(token_info.byte_offset()));
+  return token_info.byte_offset() - line_info.start + 1;
 }
 
 auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
@@ -56,117 +55,111 @@ auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
 
 auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
-  llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();
+  llvm::StringRef fixed_spelling = token_info.kind().fixed_spelling();
   if (!fixed_spelling.empty()) {
     return fixed_spelling;
   }
 
-  if (token_info.kind == TokenKind::Error) {
-    const auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
-    return source_->text().substr(token_start, token_info.error_length);
+  if (token_info.kind() == TokenKind::Error) {
+    return source_->text().substr(token_info.byte_offset(),
+                                  token_info.error_length());
   }
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntLiteral ||
-      token_info.kind == TokenKind::RealLiteral) {
-    const auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
+  if (token_info.kind() == TokenKind::IntLiteral ||
+      token_info.kind() == TokenKind::RealLiteral) {
     std::optional<NumericLiteral> relexed_token =
-        NumericLiteral::Lex(source_->text().substr(token_start));
-    CARBON_CHECK(relexed_token) << "Could not reform numeric literal token.";
+        NumericLiteral::Lex(source_->text().substr(token_info.byte_offset()));
+    CARBON_CHECK(relexed_token, "Could not reform numeric literal token.");
     return relexed_token->text();
   }
 
   // Refer back to the source text to find the original spelling, including
   // escape sequences etc.
-  if (token_info.kind == TokenKind::StringLiteral) {
-    const auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
+  if (token_info.kind() == TokenKind::StringLiteral) {
     std::optional<StringLiteral> relexed_token =
-        StringLiteral::Lex(source_->text().substr(token_start));
-    CARBON_CHECK(relexed_token) << "Could not reform string literal token.";
+        StringLiteral::Lex(source_->text().substr(token_info.byte_offset()));
+    CARBON_CHECK(relexed_token, "Could not reform string literal token.");
     return relexed_token->text();
   }
 
   // Refer back to the source text to avoid needing to reconstruct the
   // spelling from the size.
-  if (token_info.kind.is_sized_type_literal()) {
-    const auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
-    llvm::StringRef suffix =
-        source_->text().substr(token_start + 1).take_while(IsDecimalDigit);
+  if (token_info.kind().is_sized_type_literal()) {
+    llvm::StringRef suffix = source_->text()
+                                 .substr(token_info.byte_offset() + 1)
+                                 .take_while(IsDecimalDigit);
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::FileStart ||
-      token_info.kind == TokenKind::FileEnd) {
+  if (token_info.kind() == TokenKind::FileStart ||
+      token_info.kind() == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 
-  CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return value_stores_->identifiers().Get(token_info.ident_id);
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
+               token_info.kind());
+  return value_stores_->identifiers().Get(token_info.ident_id());
 }
 
 auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return token_info.ident_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
+               token_info.kind());
+  return token_info.ident_id();
 }
 
 auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::IntLiteral) << token_info.kind;
-  return token_info.int_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::IntLiteral, "{0}",
+               token_info.kind());
+  return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
-  return token_info.real_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::RealLiteral, "{0}",
+               token_info.kind());
+  return token_info.real_id();
 }
 
 auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
     -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return token_info.string_literal_id;
+  CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral, "{0}",
+               token_info.kind());
+  return token_info.string_literal_id();
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return token_info.int_id;
+  CARBON_CHECK(token_info.kind().is_sized_type_literal(), "{0}",
+               token_info.kind());
+  return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
     -> TokenIndex {
   const auto& opening_token_info = GetTokenInfo(opening_token);
-  CARBON_CHECK(opening_token_info.kind.is_opening_symbol())
-      << opening_token_info.kind;
-  return opening_token_info.closing_token;
+  CARBON_CHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
+               opening_token_info.kind());
+  return opening_token_info.closing_token_index();
 }
 
 auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
     -> TokenIndex {
   const auto& closing_token_info = GetTokenInfo(closing_token);
-  CARBON_CHECK(closing_token_info.kind.is_closing_symbol())
-      << closing_token_info.kind;
-  return closing_token_info.opening_token;
-}
-
-auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const -> bool {
-  auto it = TokenIterator(token);
-  return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
-}
-
-auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const -> bool {
-  return GetTokenInfo(token).has_trailing_space;
+  CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
+               closing_token_info.kind());
+  return closing_token_info.opening_token_index();
 }
 
 auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
-  return GetTokenInfo(token).is_recovery;
+  if (recovery_tokens_.empty()) {
+    return false;
+  }
+  return recovery_tokens_[token.index];
 }
 
 auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
@@ -202,7 +195,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 //
 // This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
-  CARBON_CHECK(number >= 0) << "Negative numbers are not supported.";
+  CARBON_CHECK(number >= 0, "Negative numbers are not supported.");
   if (number == 0) {
     return 1;
   }
@@ -254,6 +247,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
+  LineIndex line_index = FindLineIndex(token_info.byte_offset());
   llvm::StringRef token_text = GetTokenText(token);
 
   // Output the main chunk using one format string. We have to do the
@@ -263,15 +257,15 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       "    { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
-      llvm::right_justify(llvm::formatv("'{0}'", token_info.kind.name()).str(),
-                          widths.kind + 2),
-      llvm::format_decimal(GetLineNumber(token_info.token_line), widths.line),
+      llvm::right_justify(
+          llvm::formatv("'{0}'", token_info.kind().name()).str(),
+          widths.kind + 2),
+      llvm::format_decimal(GetLineNumber(GetLine(token)), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
-      llvm::format_decimal(GetIndentColumnNumber(token_info.token_line),
-                           widths.indent),
+      llvm::format_decimal(GetIndentColumnNumber(line_index), widths.indent),
       token_text);
 
-  switch (token_info.kind) {
+  switch (token_info.kind()) {
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
@@ -293,24 +287,49 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
                     << "`";
       break;
     default:
-      if (token_info.kind.is_opening_symbol()) {
+      if (token_info.kind().is_opening_symbol()) {
         output_stream << ", closing_token: "
                       << GetMatchedClosingToken(token).index;
-      } else if (token_info.kind.is_closing_symbol()) {
+      } else if (token_info.kind().is_closing_symbol()) {
         output_stream << ", opening_token: "
                       << GetMatchedOpeningToken(token).index;
       }
       break;
   }
 
-  if (token_info.has_trailing_space) {
-    output_stream << ", has_trailing_space: true";
+  if (token_info.has_leading_space()) {
+    output_stream << ", has_leading_space: true";
   }
-  if (token_info.is_recovery) {
+  if (IsRecoveryToken(token)) {
     output_stream << ", recovery: true";
   }
 
   output_stream << " },";
+}
+
+// Find the line index corresponding to a specific byte offset within the source
+// text for this tokenized buffer.
+//
+// This takes advantage of the lines being sorted by their starting byte offsets
+// to do a binary search for the line that contains the provided offset.
+auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
+  CARBON_DCHECK(!line_infos_.empty());
+  const auto* line_it =
+      std::partition_point(line_infos_.begin(), line_infos_.end(),
+                           [byte_offset](LineInfo line_info) {
+                             return line_info.start <= byte_offset;
+                           });
+  --line_it;
+
+  // If this isn't the first line but it starts past the end of the source, then
+  // this is a synthetic line added for simplicity of lexing. Step back one
+  // further to find the last non-synthetic line.
+  if (line_it != line_infos_.begin() &&
+      line_it->start == static_cast<int32_t>(source_->text().size())) {
+    --line_it;
+  }
+  CARBON_DCHECK(line_it->start <= byte_offset);
+  return LineIndex(line_it - line_infos_.begin());
 }
 
 auto TokenizedBuffer::GetLineInfo(LineIndex line) -> LineInfo& {
@@ -326,20 +345,6 @@ auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
-auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
-  return token_infos_[token.index];
-}
-
-auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const -> const TokenInfo& {
-  return token_infos_[token.index];
-}
-
-auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
-  token_infos_.push_back(info);
-  expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
-  return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
-}
-
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
   mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
@@ -353,42 +358,34 @@ auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
     const char* loc, ContextFnT /*context_fn*/) const -> DiagnosticLoc {
-  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
-      << "location not within buffer";
-  int64_t offset = loc - buffer_->source_->text().begin();
+  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc),
+               "location not within buffer");
+  int32_t offset = loc - buffer_->source_->text().begin();
 
-  // Find the first line starting after the given location. Note that we can't
-  // inspect `line.length` here because it is not necessarily correct for the
-  // final line during lexing (but will be correct later for the parse tree).
-  const auto* line_it = std::partition_point(
+  // Find the first line starting after the given location.
+  const auto* next_line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
-  CARBON_CHECK(line_it != buffer_->line_infos_.begin())
-      << "location precedes the start of the first line";
-  --line_it;
+  CARBON_CHECK(next_line_it != buffer_->line_infos_.begin(),
+               "location precedes the start of the first line");
+  const auto* line_it = std::prev(next_line_it);
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
-  // Start by grabbing the line from the buffer. If the line isn't fully lexed,
-  // the length will be npos and the line will be grabbed from the known start
-  // to the end of the buffer; we'll then adjust the length.
-  llvm::StringRef line =
-      buffer_->source_->text().substr(line_it->start, line_it->length);
-  if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
-    CARBON_CHECK(line.take_front(column_number).count('\n') == 0)
-        << "Currently we assume no unlexed newlines prior to the error column, "
-           "but there was one when erroring at "
-        << buffer_->source_->filename() << ":" << line_number << ":"
-        << column_number;
-    // Look for the next newline since we don't know the length. We can start at
-    // the column because prior newlines will have been lexed.
-    auto end_newline_pos = line.find('\n', column_number);
-    if (end_newline_pos != llvm::StringRef::npos) {
-      line = line.take_front(end_newline_pos);
-    }
-  }
+  // Grab the line from the buffer by slicing from this line to the next
+  // minus the newline. When on the last line, instead use the start to the end
+  // of the buffer.
+  llvm::StringRef text = buffer_->source_->text();
+  llvm::StringRef line = next_line_it != buffer_->line_infos_.end()
+                             ? text.slice(line_it->start, next_line_it->start)
+                             : text.substr(line_it->start);
+
+  // Remove a newline at the end of the line if present.
+  // TODO: This should expand to remove all vertical whitespace bytes at the
+  // tail of the line such as CR+LF, etc.
+  line.consume_back("\n");
 
   return {.filename = buffer_->source_->filename(),
           .line = line,
@@ -401,9 +398,8 @@ auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
     -> DiagnosticLoc {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
-  const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
   const char* token_start =
-      buffer_->source_->text().begin() + line_info.start + token_info.column;
+      buffer_->source_->text().begin() + token_info.byte_offset();
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token

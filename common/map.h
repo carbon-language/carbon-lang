@@ -472,7 +472,7 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Insert(
            std::invocable<InsertCallbackT, LookupKeyT, void*, void*>)
 {
   auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
-  CARBON_DCHECK(entry) << "Should always result in a valid index.";
+  CARBON_DCHECK(entry, "Should always result in a valid index.");
 
   if (LLVM_LIKELY(!inserted)) {
     return InsertKVResult(false, *entry);
@@ -538,7 +538,7 @@ MapBase<InputKeyT, InputValueT, InputKeyContextT>::Update(
            std::invocable<UpdateCallbackT, KeyT&, ValueT&>)
 {
   auto [entry, inserted] = this->InsertImpl(lookup_key, key_context);
-  CARBON_DCHECK(entry) << "Should always result in a valid index.";
+  CARBON_DCHECK(entry, "Should always result in a valid index.");
 
   if (LLVM_LIKELY(!inserted)) {
     update_cb(entry->key(), entry->value());

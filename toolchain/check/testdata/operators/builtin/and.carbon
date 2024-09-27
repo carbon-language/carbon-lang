@@ -54,6 +54,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -92,12 +93,12 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
 // CHECK:STDOUT:     %x.patt: bool = binding_pattern x
-// CHECK:STDOUT:     %.loc25_21: bool = param_pattern %x.patt
+// CHECK:STDOUT:     %.loc25_21: bool = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
 // CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param
+// CHECK:STDOUT:     %param: bool = param runtime_param0
 // CHECK:STDOUT:     %x: bool = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

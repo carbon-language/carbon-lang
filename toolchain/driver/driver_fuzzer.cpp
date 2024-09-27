@@ -20,7 +20,7 @@ static const InstallPaths* install_paths = nullptr;
 
 // NOLINTNEXTLINE(readability-non-const-parameter): External API required types.
 extern "C" auto LLVMFuzzerInitialize(int* argc, char*** argv) -> int {
-  CARBON_CHECK(*argc >= 1) << "Need the `argv[0]` value to initialize!";
+  CARBON_CHECK(*argc >= 1, "Need the `argv[0]` value to initialize!");
   install_paths = new InstallPaths(
       InstallPaths::MakeForBazelRunfiles(FindExecutablePath((*argv)[0])));
   return 0;
@@ -83,7 +83,10 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::raw_null_ostream dest;
   Driver d(fs, install_paths, dest, error_stream);
   if (!d.RunCommand(args).success) {
-    if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
+    auto str = error_stream.TakeStr();
+    // TODO: Fix command_line to use `error`, switch back to `find`.
+    if (llvm::StringRef(str).find_insensitive("error:") ==
+        llvm::StringRef::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;
     }

@@ -10,14 +10,14 @@
 
 // --- core.carbon
 
-package Core library "test";
+package Core library "[[@TEST_NAME]]";
 
 fn Int32() -> type = "int.make_type_32";
 fn TestAdd(a: i32, b: i32) -> i32 = "int.sadd";
 
 // --- use.carbon
 
-import Core library "test";
+import Core library "core";
 
 var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 
@@ -41,19 +41,19 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdd.decl: %TestAdd.type = fn_decl @TestAdd [template = constants.%TestAdd] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc5_13: i32 = param_pattern %a.patt
+// CHECK:STDOUT:     %.loc5_13: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_21: i32 = param_pattern %b.patt
+// CHECK:STDOUT:     %.loc5_21: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5_15 [template = i32]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %int.make_type_32.loc5_15, %.loc5_15.1 [template = i32]
-// CHECK:STDOUT:     %param.loc5_12: i32 = param
+// CHECK:STDOUT:     %param.loc5_12: i32 = param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc5_12
 // CHECK:STDOUT:     %int.make_type_32.loc5_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_23.1: type = value_of_initializer %int.make_type_32.loc5_23 [template = i32]
 // CHECK:STDOUT:     %.loc5_23.2: type = converted %int.make_type_32.loc5_23, %.loc5_23.1 [template = i32]
-// CHECK:STDOUT:     %param.loc5_20: i32 = param
+// CHECK:STDOUT:     %param.loc5_20: i32 = param runtime_param1
 // CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc5_20
 // CHECK:STDOUT:     %int.make_type_32.loc5_31: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_31.1: type = value_of_initializer %int.make_type_32.loc5_31 [template = i32]
@@ -88,10 +88,10 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.1
 // CHECK:STDOUT:     .TestAdd = %import_ref.2
-// CHECK:STDOUT:     import Core//test
+// CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//test, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//test, inst+24, loaded [template = constants.%TestAdd]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//core, inst+2, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//core, inst+24, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

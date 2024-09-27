@@ -11,7 +11,7 @@
 fn F() {
   var a: () = ();
   var b: ()* = &a;
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:13: ERROR: Alias initializer must be a name reference.
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:13: error: alias initializer must be a name reference
   // CHECK:STDERR:   alias c = *b;
   // CHECK:STDERR:             ^~
   alias c = *b;

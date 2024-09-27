@@ -34,7 +34,7 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
   auto val = context.ints().Get(int_id);
   if (val.getActiveBits() > 31) {
     CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
-                      "Integer literal with value {0} does not fit in i32.",
+                      "integer literal with value {0} does not fit in i32",
                       llvm::APSInt);
     context.emitter().Emit(node_id, IntLiteralTooLargeForI32,
                            llvm::APSInt(val, /*isUnsigned=*/true));
@@ -72,7 +72,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   if (real_value.mantissa.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(RealMantissaTooLargeForI64, Error,
-                      "Real mantissa with value {0} does not fit in i64.",
+                      "real mantissa with value {0} does not fit in i64",
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
                            llvm::APSInt(real_value.mantissa, true));
@@ -82,7 +82,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   if (real_value.exponent.getSignificantBits() > 64) {
     CARBON_DIAGNOSTIC(RealExponentTooLargeForI64, Error,
-                      "Real exponent with value {0} does not fit in i64.",
+                      "real exponent with value {0} does not fit in i64",
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealExponentTooLargeForI64,
                            llvm::APSInt(real_value.exponent, false));
@@ -126,8 +126,8 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
                                               IntId size_id) -> bool {
   if (!(context.ints().Get(size_id) & 3).isZero()) {
     CARBON_DIAGNOSTIC(IntWidthNotMultipleOf8, Error,
-                      "Bit width of integer type literal must be a multiple of "
-                      "8. Use `Core.{0}({1})` instead.",
+                      "bit width of integer type literal must be a multiple of "
+                      "8; use `Core.{0}({1})` instead",
                       std::string, llvm::APSInt);
     context.emitter().Emit(
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",

@@ -14,6 +14,9 @@ namespace Carbon::SemIR {
 
 // Function-specific fields.
 struct FunctionFields {
+  // Kinds of virtual modifiers that can apply to functions.
+  enum class VirtualModifier { None, Virtual, Abstract, Impl };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -22,6 +25,10 @@ struct FunctionFields {
   // function, depending on whether the return type needs a return slot, but is
   // always present if the function has a declared return type.
   InstId return_storage_id;
+
+  // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
+  // this function.
+  VirtualModifier virtual_modifier;
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
@@ -57,13 +64,8 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns the NameID of the parameter.
-  static auto GetNameFromParamRefId(const File& sem_ir, InstId param_ref_id)
-      -> NameId;
-
-  // FIXME comments
-  // FIXME code duplication
+  // Given a parameter pattern instruction from `param_patterns_id` or
+  // `implicit_param_patterns_id`, returns the NameID of the parameter.
   static auto GetNameFromParamPatternId(const File& sem_ir,
                                         InstId param_pattern_id) -> NameId;
 
@@ -72,10 +74,6 @@ struct Function : public EntityWithParamsBase,
   // and its ID.
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
-
-  // FIXME comments
-  static auto GetTypeFromParamPatternId(const File& sem_ir,
-                                        InstId param_pattern_id) -> TypeId;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is

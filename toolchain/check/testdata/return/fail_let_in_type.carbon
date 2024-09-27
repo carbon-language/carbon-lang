@@ -9,24 +9,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
 
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: let y:! type = i32;
+// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR:
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
-// CHECK:STDERR:                       ^~~~~~~~~
+// CHECK:STDERR:                   ^
 // CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:5: ERROR: Semantics TODO: `HandleTemplate`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:5: error: semantics TODO: `HandleTemplate`
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:14: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: let template z:! type = i32;
+// CHECK:STDERR:              ^~~~~~~~
 let template z:! type = i32;
 fn FirstPerfectNumber() -> z { return 6; }
 
@@ -39,7 +47,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
-// CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic]
 // CHECK:STDOUT:   %HalfDozen.type: type = fn_type @HalfDozen [template]
 // CHECK:STDOUT:   %HalfDozen: %HalfDozen.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -54,19 +61,9 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @HalfDozen(<unexpected>.inst+21.loc19_5: type) {
-// CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic = %y (constants.%y)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @HalfDozen.%y (%y) {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc24: i32 = int_literal 6 [template = constants.%.2]
-// CHECK:STDOUT:     return <error>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HalfDozen(constants.%y) {
-// CHECK:STDOUT:   %y => constants.%y
+// CHECK:STDOUT: fn @HalfDozen() -> <error> {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc28: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

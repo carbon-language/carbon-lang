@@ -10,7 +10,7 @@
 
 // --- namespace.carbon
 
-package Example library "namespace";
+package Example library "[[@TEST_NAME]]";
 
 namespace NS;
 
@@ -24,13 +24,11 @@ import library "namespace";
 // imported declaration.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: In import.
-// CHECK:STDERR: import library "namespace";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,13 +38,11 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-25]]:1: In import.
-// CHECK:STDERR: import library "namespace";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS();
@@ -59,6 +55,7 @@ fn NS();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -92,6 +89,7 @@ fn NS();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -106,9 +104,9 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc20: %.type.1 = fn_decl @.1 [template = constants.%.2] {} {}
-// CHECK:STDOUT:   %NS.loc24: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc35: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

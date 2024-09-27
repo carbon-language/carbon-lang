@@ -45,7 +45,7 @@ class Worklist {
     worklist_.push_back({.inst_id = inst_id,
                          .is_expanded = false,
                          .next_index = static_cast<int>(worklist_.size() + 1)});
-    CARBON_CHECK(worklist_.back().next_index > 0) << "Constant too large.";
+    CARBON_CHECK(worklist_.back().next_index > 0, "Constant too large.");
   }
   auto Pop() -> SemIR::InstId { return worklist_.pop_back_val().inst_id; }
 
@@ -63,12 +63,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
                         SemIR::IdKind kind, int32_t arg) -> void {
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
-      if (auto inst_id = SemIR::InstId(arg); inst_id.is_valid()) {
+      if (SemIR::InstId inst_id(arg); inst_id.is_valid()) {
         worklist.Push(inst_id);
       }
       break;
     case SemIR::IdKind::For<SemIR::TypeId>:
-      if (auto type_id = SemIR::TypeId(arg); type_id.is_valid()) {
+      if (SemIR::TypeId type_id(arg); type_id.is_valid()) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
@@ -111,21 +111,21 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
                        int32_t arg) -> int32_t {
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>: {
-      auto inst_id = SemIR::InstId(arg);
+      SemIR::InstId inst_id(arg);
       if (!inst_id.is_valid()) {
         return arg;
       }
       return worklist.Pop().index;
     }
     case SemIR::IdKind::For<SemIR::TypeId>: {
-      auto type_id = SemIR::TypeId(arg);
+      SemIR::TypeId type_id(arg);
       if (!type_id.is_valid()) {
         return arg;
       }
       return context.GetTypeIdForTypeInst(worklist.Pop()).index;
     }
     case SemIR::IdKind::For<SemIR::InstBlockId>: {
-      auto old_inst_block_id = SemIR::InstBlockId(arg);
+      SemIR::InstBlockId old_inst_block_id(arg);
       auto size = context.inst_blocks().Get(old_inst_block_id).size();
       SemIR::CopyOnWriteInstBlock new_inst_block(context.sem_ir(),
                                                  old_inst_block_id);
@@ -135,7 +135,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return new_inst_block.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::TypeBlockId>: {
-      auto old_type_block_id = SemIR::TypeBlockId(arg);
+      SemIR::TypeBlockId old_type_block_id(arg);
       auto size = context.type_blocks().Get(old_type_block_id).size();
       SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
                                                  old_type_block_id);
@@ -146,7 +146,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return new_type_block.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::SpecificId>: {
-      auto specific_id = SemIR::SpecificId(arg);
+      SemIR::SpecificId specific_id(arg);
       if (!specific_id.is_valid()) {
         return arg;
       }
@@ -240,8 +240,8 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     }
   }
 
-  CARBON_CHECK(worklist.size() == 1)
-      << "Unexpected data left behind in work list";
+  CARBON_CHECK(worklist.size() == 1,
+               "Unexpected data left behind in work list");
   return worklist.back().inst_id;
 }
 
@@ -296,8 +296,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
     auto result_id = TryEvalInst(context_, SemIR::InstId::Invalid, new_inst);
-    CARBON_CHECK(result_id.is_constant())
-        << "Substitution into constant produced non-constant";
+    CARBON_CHECK(result_id.is_constant(),
+                 "Substitution into constant produced non-constant");
     return context_.constant_values().GetInstId(result_id);
   }
 
@@ -309,7 +309,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
 
 auto SubstConstant(Context& context, SemIR::ConstantId const_id,
                    Substitutions substitutions) -> SemIR::ConstantId {
-  CARBON_CHECK(const_id.is_constant()) << "Substituting into non-constant";
+  CARBON_CHECK(const_id.is_constant(), "Substituting into non-constant");
 
   if (substitutions.empty()) {
     // Nothing to substitute.

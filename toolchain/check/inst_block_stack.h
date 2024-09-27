@@ -54,7 +54,7 @@ class InstBlockStack {
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(!empty()) << "no current block";
+    CARBON_CHECK(!empty(), "no current block");
     insts_stack_.AppendToTop(inst_id);
   }
 
@@ -65,7 +65,7 @@ class InstBlockStack {
 
   // Returns a view of the contents of the top instruction block on the stack.
   auto PeekCurrentBlockContents() const -> llvm::ArrayRef<SemIR::InstId> {
-    CARBON_CHECK(!empty()) << "no current block";
+    CARBON_CHECK(!empty(), "no current block");
     return insts_stack_.PeekArray();
   }
 
@@ -75,7 +75,7 @@ class InstBlockStack {
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
-    CARBON_CHECK(empty()) << id_stack_.size();
+    CARBON_CHECK(empty(), "{0}", id_stack_.size());
   }
 
   auto empty() const -> bool { return id_stack_.empty(); }

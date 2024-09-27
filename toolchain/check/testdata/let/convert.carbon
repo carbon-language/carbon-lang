@@ -39,6 +39,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -113,7 +114,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %w: %.3 = bind_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %.3 = name_ref w, %w
 // CHECK:STDOUT:   %.loc15_12: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_11: i32 = tuple_index %w.ref, %.loc15_12
+// CHECK:STDOUT:   %.loc15_11: i32 = tuple_access %w.ref, element1
 // CHECK:STDOUT:   return %.loc15_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

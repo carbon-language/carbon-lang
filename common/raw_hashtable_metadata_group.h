@@ -10,6 +10,7 @@
 #include <iterator>
 
 #include "common/check.h"
+#include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/bit.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -80,14 +81,14 @@ class BitIndex
 
   // Returns true when there are no matches for the tag.
   auto empty() const -> bool {
-    CARBON_DCHECK((bits_ & ZeroMask) == 0) << "Unexpected non-zero bits!";
+    CARBON_DCHECK((bits_ & ZeroMask) == 0, "Unexpected non-zero bits!");
     __builtin_assume((bits_ & ZeroMask) == 0);
     return bits_ == 0;
   }
 
   // Returns the index of the first matched tag.
   auto index() -> ssize_t {
-    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
+    CARBON_DCHECK(bits_ != 0, "Cannot get an index from zero bits!");
     __builtin_assume(bits_ != 0);
     ssize_t index = unscaled_index();
 
@@ -102,7 +103,7 @@ class BitIndex
   // Optimized tool to index a pointer `p` by `index()`.
   template <typename T>
   auto index_ptr(T* pointer) -> T* {
-    CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
+    CARBON_DCHECK(bits_ != 0, "Cannot get an index from zero bits!");
     __builtin_assume(bits_ != 0);
     if constexpr (!ByteEncoding) {
       return &pointer[unscaled_index()];
@@ -191,7 +192,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
     }
 
     auto operator*() -> ssize_t& {
-      CARBON_DCHECK(bits_ != 0) << "Cannot get an index from zero bits!";
+      CARBON_DCHECK(bits_ != 0, "Cannot get an index from zero bits!");
       __builtin_assume(bits_ != 0);
       index_ = BitIndexT(bits_).index();
       // Note that we store the index in a member so we can return a reference
@@ -205,7 +206,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
     }
 
     auto operator++() -> Iterator& {
-      CARBON_DCHECK(bits_ != 0) << "Must not increment past the end!";
+      CARBON_DCHECK(bits_ != 0, "Must not increment past the end!");
       __builtin_assume(bits_ != 0);
       // Clears the least significant set bit, effectively stepping to the next
       // match.
@@ -270,7 +271,7 @@ class BitIndexRange : public Printable<BitIndexRange<BitIndexT>> {
 //   }
 //   if (UseSIMD || DebugSIMD) {
 //     simd_result = SIMDOperation(...)
-//     CARBON_DCHECK(result == portable_result) << ...;
+//     CARBON_DCHECK(result == portable_result, "{0}", ...);
 //   }
 //   return UseSIMD ? simd_result : portable_result;
 // }
@@ -533,9 +534,8 @@ inline auto MetadataGroup::Store(uint8_t* metadata, ssize_t index) const
 }
 
 inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
-  CARBON_DCHECK(FastByteClear) << "Only use byte clearing when fast!";
-  CARBON_DCHECK(Size == 8)
-      << "The clear implementation assumes an 8-byte group.";
+  CARBON_DCHECK(FastByteClear, "Only use byte clearing when fast!");
+  CARBON_DCHECK(Size == 8, "The clear implementation assumes an 8-byte group.");
 
   metadata_ints[0] &= ~(static_cast<uint64_t>(0xff) << (byte_index * 8));
 }
@@ -548,9 +548,10 @@ inline auto MetadataGroup::ClearDeleted() -> void {
   }
   if constexpr (UseSIMD || DebugSIMD) {
     simd_g.SIMDClearDeleted();
-    CARBON_DCHECK(simd_g == portable_g)
-        << "SIMD cleared group '" << simd_g
-        << "' doesn't match portable cleared group '" << portable_g << "'";
+    CARBON_DCHECK(
+        simd_g == portable_g,
+        "SIMD cleared group '{0}' doesn't match portable cleared group '{1}'",
+        simd_g, portable_g);
   }
   *this = UseSIMD ? simd_g : portable_g;
 }
@@ -559,7 +560,7 @@ inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
   // The caller should provide us with the present byte hash, and not set any
   // present bit tag on it so that this layer can manage tagging the high bit of
   // a present byte.
-  CARBON_DCHECK((tag & PresentMask) == 0) << llvm::formatv("{0:x}", tag);
+  CARBON_DCHECK((tag & PresentMask) == 0, "{0:x}", tag);
 
   MatchRange portable_result;
   MatchRange simd_result;
@@ -568,9 +569,9 @@ inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
   }
   if constexpr (UseSIMD || DebugSIMD) {
     simd_result = SIMDMatch(tag);
-    CARBON_DCHECK(simd_result == portable_result)
-        << "SIMD result '" << simd_result << "' doesn't match portable result '"
-        << portable_result << "'";
+    CARBON_DCHECK(simd_result == portable_result,
+                  "SIMD result '{0}' doesn't match portable result '{1}'",
+                  simd_result, portable_result);
   }
   return UseSIMD ? simd_result : portable_result;
 }
@@ -583,9 +584,9 @@ inline auto MetadataGroup::MatchPresent() const -> MatchRange {
   }
   if constexpr (UseSIMD || DebugSIMD) {
     simd_result = SIMDMatchPresent();
-    CARBON_DCHECK(simd_result == portable_result)
-        << "SIMD result '" << simd_result << "' doesn't match portable result '"
-        << portable_result << "'";
+    CARBON_DCHECK(simd_result == portable_result,
+                  "SIMD result '{0}' doesn't match portable result '{1}'",
+                  simd_result, portable_result);
   }
   return UseSIMD ? simd_result : portable_result;
 }
@@ -598,9 +599,9 @@ inline auto MetadataGroup::MatchEmpty() const -> MatchIndex {
   }
   if constexpr (UseSIMD || DebugSIMD) {
     simd_result = SIMDMatchEmpty();
-    CARBON_DCHECK(simd_result == portable_result)
-        << "SIMD result '" << simd_result << "' doesn't match portable result '"
-        << portable_result << "'";
+    CARBON_DCHECK(simd_result == portable_result,
+                  "SIMD result '{0}' doesn't match portable result '{1}'",
+                  simd_result, portable_result);
   }
   return UseSIMD ? simd_result : portable_result;
 }
@@ -613,9 +614,9 @@ inline auto MetadataGroup::MatchDeleted() const -> MatchIndex {
   }
   if constexpr (UseSIMD || DebugSIMD) {
     simd_result = SIMDMatchDeleted();
-    CARBON_DCHECK(simd_result == portable_result)
-        << "SIMD result '" << simd_result << "' doesn't match portable result '"
-        << portable_result << "'";
+    CARBON_DCHECK(simd_result == portable_result,
+                  "SIMD result '{0}' doesn't match portable result '{1}'",
+                  simd_result, portable_result);
   }
   return UseSIMD ? simd_result : portable_result;
 }
@@ -640,29 +641,31 @@ inline auto MetadataGroup::VerifyIndexBits(
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
     if constexpr (!ByteEncoding) {
       if (byte_match(metadata_bytes[byte_index])) {
-        CARBON_CHECK(((index_bits >> byte_index) & 1) == 1)
-            << "Bit not set at matching byte index: " << byte_index;
+        CARBON_CHECK(((index_bits >> byte_index) & 1) == 1,
+                     "Bit not set at matching byte index: {0}", byte_index);
         // Only the first match is needed, so stop scanning once found.
         break;
       }
 
-      CARBON_CHECK(((index_bits >> byte_index) & 1) == 0)
-          << "Bit set at non-matching byte index: " << byte_index;
+      CARBON_CHECK(((index_bits >> byte_index) & 1) == 0,
+                   "Bit set at non-matching byte index: {0}", byte_index);
     } else {
       // `index_bits` is byte-encoded rather than bit encoded, so extract a
       // byte.
       uint8_t index_byte = (index_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
-        CARBON_CHECK((index_byte & 0x80) == 0x80)
-            << "Should have the high bit set for a matching byte, found: "
-            << llvm::formatv("{0:x}", index_byte);
+        CARBON_CHECK(
+            (index_byte & 0x80) == 0x80,
+            "Should have the high bit set for a matching byte, found: {0:x}",
+            index_byte);
         // Only the first match is needed so stop scanning once found.
         break;
       }
 
-      CARBON_CHECK(index_byte == 0)
-          << "Should have no bits set for an unmatched byte, found: "
-          << llvm::formatv("{0:x}", index_byte);
+      CARBON_CHECK(
+          index_byte == 0,
+          "Should have no bits set for an unmatched byte, found: {0:x}",
+          index_byte);
     }
   }
   return true;
@@ -674,24 +677,26 @@ inline auto MetadataGroup::VerifyRangeBits(
   for (ssize_t byte_index : llvm::seq<ssize_t>(0, Size)) {
     if constexpr (!ByteEncoding) {
       if (byte_match(metadata_bytes[byte_index])) {
-        CARBON_CHECK(((range_bits >> byte_index) & 1) == 1)
-            << "Bit not set at matching byte index: " << byte_index;
+        CARBON_CHECK(((range_bits >> byte_index) & 1) == 1,
+                     "Bit not set at matching byte index: {0}", byte_index);
       } else {
-        CARBON_CHECK(((range_bits >> byte_index) & 1) == 0)
-            << "Bit set at non-matching byte index: " << byte_index;
+        CARBON_CHECK(((range_bits >> byte_index) & 1) == 0,
+                     "Bit set at non-matching byte index: {0}", byte_index);
       }
     } else {
       // `range_bits` is byte-encoded rather than bit encoded, so extract a
       // byte.
       uint8_t range_byte = (range_bits >> (byte_index * 8)) & 0xFF;
       if (byte_match(metadata_bytes[byte_index])) {
-        CARBON_CHECK(range_byte == 0x80)
-            << "Should just have the high bit set for a matching byte, found: "
-            << llvm::formatv("{0:x}", range_byte);
+        CARBON_CHECK(range_byte == 0x80,
+                     "Should just have the high bit set for a matching byte, "
+                     "found: {0:x}",
+                     range_byte);
       } else {
-        CARBON_CHECK(range_byte == 0)
-            << "Should have no bits set for an unmatched byte, found: "
-            << llvm::formatv("{0:x}", range_byte);
+        CARBON_CHECK(
+            range_byte == 0,
+            "Should have no bits set for an unmatched byte, found: {0:x}",
+            range_byte);
       }
     }
   }
@@ -730,7 +735,7 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // The caller should provide us with the present byte hash, and not set any
   // present bit tag on it so that this layer can manage tagging the high bit of
   // a present byte.
-  CARBON_DCHECK((tag & PresentMask) == 0) << llvm::formatv("{0:x}", tag);
+  CARBON_DCHECK((tag & PresentMask) == 0, "{0:x}", tag);
 
   // Use a simple fallback approach for sizes beyond 8.
   // TODO: Instead of a simple fallback, we should generalize the below
@@ -783,8 +788,8 @@ inline auto MetadataGroup::PortableMatch(uint8_t tag) const -> MatchRange {
   // know that the add cannot carry, and this way it can be lowered using
   // combined multiply-add instructions if available.
   uint64_t broadcast = LSBs * tag + MSBs;
-  CARBON_DCHECK(broadcast == (LSBs * tag | MSBs))
-      << "Unexpected carry from addition!";
+  CARBON_DCHECK(broadcast == (LSBs * tag | MSBs),
+                "Unexpected carry from addition!");
 
   // Xor the broadcast byte pattern. This makes bytes with matches become 0, and
   // clears the high-bits of non-matches. Note that if we are looking for a tag

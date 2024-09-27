@@ -10,7 +10,7 @@
 
 // --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Implicit' not found.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:6: error: corresponding API for 'Implicit' not found
 // CHECK:STDERR: impl package Implicit;
 // CHECK:STDERR:      ^~~~~~~
 impl package Implicit;
@@ -29,6 +29,7 @@ var a: () = A();
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

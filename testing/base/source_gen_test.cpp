@@ -10,6 +10,7 @@
 #include "common/set.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"
+#include "toolchain/install/install_paths_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -147,19 +148,7 @@ auto TestCompile(llvm::StringRef source) -> bool {
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
 
-  // Load the prelude into our VFS.
-  //
-  // TODO: Factor this and analogous code in file_test into a Driver helper.
-  auto prelude =
-      Driver::FindPreludeFiles(installation.core_package(), llvm::errs());
-  CARBON_CHECK(!prelude.empty());
-  for (const auto& path : prelude) {
-    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-        llvm::MemoryBuffer::getFile(path);
-    CARBON_CHECK(file) << file.getError().message();
-    CARBON_CHECK(fs.addFile(path, /*ModificationTime=*/0, std::move(*file)))
-        << "Duplicate file: " << path;
-  }
+  AddPreludeFilesToVfs(installation, &fs);
 
   fs.addFile("test.carbon", /*ModificationTime=*/0,
              llvm::MemoryBuffer::getMemBuffer(source));

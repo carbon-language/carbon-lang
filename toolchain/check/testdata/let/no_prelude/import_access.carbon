@@ -14,7 +14,7 @@
 
 // --- def.carbon
 
-package Test library "def";
+package Test library "[[@TEST_NAME]]";
 
 private let v: () = ();
 
@@ -24,17 +24,17 @@ private let v: () = ();
 
 // --- def.impl.carbon
 
-impl package Test library "def";
+impl package Test library "[[@TEST_NAME]]";
 
 let v2: () = v;
 
 // --- fail_local_def.carbon
 
-package Test library "fail_local_def";
+package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:14: ERROR: Name `v` not found.
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:14: error: name `v` not found
 // CHECK:STDERR: let v2: () = v;
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
@@ -42,11 +42,11 @@ let v2: () = v;
 
 // --- fail_other_def.carbon
 
-package Other library "fail_other_def";
+package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: ERROR: Name `v` not found.
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: name `v` not found
 // CHECK:STDERR: let v2: () = Test.v;
 // CHECK:STDERR:              ^~~~~~
 let v2: () = Test.v;

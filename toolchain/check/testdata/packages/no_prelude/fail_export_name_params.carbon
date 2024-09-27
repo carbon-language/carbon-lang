@@ -10,20 +10,20 @@
 
 // --- a.carbon
 
-package Foo library "a";
+package Foo library "[[@TEST_NAME]]";
 
 class C1(T:! type);
 class C2(T:! type);
 
 // --- fail_b.carbon
 
-package Foo library "b";
+package Foo library "[[@TEST_NAME]]";
 
 import library "a";
 
 export C1;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:10: ERROR: `export` declaration cannot have parameters.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:10: error: `export` declaration cannot have parameters
 // CHECK:STDERR: export C2(T:! type);
 // CHECK:STDERR:          ^~~~~~~~~~
 export C2(T:! type);
@@ -49,16 +49,16 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [template = constants.%C1.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [template = constants.%C2.1] {
 // CHECK:STDOUT:     %T.patt.loc5: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc5: type = param_pattern %T.patt.loc5 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %.loc5: type = param_pattern %T.patt.loc5, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc5: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -113,7 +113,7 @@ export C2(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%import_ref.1 [template = constants.%C1.1]
-// CHECK:STDOUT:   %param: type = param
+// CHECK:STDOUT:   %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.1]
 // CHECK:STDOUT: }

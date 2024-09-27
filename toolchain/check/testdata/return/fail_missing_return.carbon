@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_missing_return.carbon
 
 fn Main() -> i32 {
-// CHECK:STDERR: fail_missing_return.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_missing_return.carbon:[[@LINE+3]]:1: error: missing `return` at end of function with declared return type
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }
@@ -31,6 +31,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -16,6 +16,10 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
     -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
+
+  // Push a pattern block to handle parameters of the alias declaration.
+  // TODO: Disallow these in parse, instead of check, so we don't have to do
+  // this.
   context.pattern_block_stack().Push();
   return true;
 }
@@ -37,7 +41,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = name_context.name_id_for_new_inst(),
-       .parent_scope_id = name_context.parent_scope_id_for_new_inst(),
+       .parent_scope_id = name_context.parent_scope_id,
        .bind_index = SemIR::CompileTimeBindIndex::Invalid});
 
   auto alias_type_id = SemIR::TypeId::Invalid;
@@ -55,12 +59,12 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     alias_value_id = inst->value_id;
   } else {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
-                      "Alias initializer must be a name reference.");
+                      "alias initializer must be a name reference");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
     alias_type_id = SemIR::TypeId::Error;
     alias_value_id = SemIR::InstId::BuiltinError;
   }
-  auto alias_id = context.AddInstReusingLoc<SemIR::BindAlias>(
+  auto alias_id = context.AddInst<SemIR::BindAlias>(
       name_context.loc_id, {.type_id = alias_type_id,
                             .entity_name_id = entity_name_id,
                             .value_id = alias_value_id});

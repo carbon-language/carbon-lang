@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_invalid_alternative_identifier.carbon
 
 choice InvalidAlternativeIdentifier {
-    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+4]]:5: ERROR: Expected choice alternative name.
+    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+4]]:5: error: expected choice alternative name
     // CHECK:STDERR:     ,Some,
     // CHECK:STDERR:     ^
     // CHECK:STDERR:
     ,Some,
-    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+3]]:5: ERROR: Expected choice alternative name.
+    // CHECK:STDERR: fail_invalid_alternative_identifier.carbon:[[@LINE+3]]:5: error: expected choice alternative name
     // CHECK:STDERR:     42,
     // CHECK:STDERR:     ^~
     42,

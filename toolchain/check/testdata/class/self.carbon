@@ -37,7 +37,8 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,6 +48,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -63,10 +65,10 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc18_16: %Class = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc18_16: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc18: %Class = param
+// CHECK:STDOUT:     %param.loc18: %Class = param runtime_param0
 // CHECK:STDOUT:     %self.loc18: %Class = bind_name self, %param.loc18
 // CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_29.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
@@ -76,11 +78,11 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %.loc22_12.1: %.2 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1
+// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc22_27: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %param.loc22: %.2 = param
+// CHECK:STDOUT:     %param.loc22: %.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc22: %.2 = bind_name self, %param.loc22
 // CHECK:STDOUT:     %.loc22_12.3: %.2 = addr_param %self.loc22
 // CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
@@ -93,10 +95,10 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc18_16: %Class = param_pattern %self.patt
+// CHECK:STDOUT:     %.loc18_16: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc12: %Class = param
+// CHECK:STDOUT:     %param.loc12: %Class = param runtime_param0
 // CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %param.loc12
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
@@ -106,11 +108,11 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %.loc22_12.1: %.2 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1
+// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %param.loc13: %.2 = param
+// CHECK:STDOUT:     %param.loc13: %.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc13: %.2 = bind_name self, %param.loc13
 // CHECK:STDOUT:     %.loc13_8: %.2 = addr_param %self.loc13
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
@@ -122,6 +124,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32, %.loc15_10.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_8: %.3 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

@@ -42,19 +42,6 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
-auto Function::GetNameFromParamRefId(const File& sem_ir, InstId param_ref_id)
-    -> NameId {
-  auto ref = sem_ir.insts().Get(param_ref_id);
-
-  if (auto addr_pattern = ref.TryAs<SemIR::AddrParam>()) {
-    param_ref_id = addr_pattern->inner_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
-  auto bind_name = ref.As<AnyBindName>();
-  return sem_ir.entity_names().Get(bind_name.entity_name_id).name_id;
-}
-
 auto Function::GetNameFromParamPatternId(const File& sem_ir,
                                          InstId param_pattern_id) -> NameId {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);
@@ -85,21 +72,6 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   }
 
   return {param_ref_id, ref.As<SemIR::Param>()};
-}
-
-auto Function::GetTypeFromParamPatternId(const File& sem_ir,
-                                         InstId param_pattern_id) -> TypeId {
-  auto param_inst = sem_ir.insts().Get(param_pattern_id);
-  param_inst =
-      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
-
-  if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
-    param_pattern_id = addr_pattern->inner_id;
-    param_inst = sem_ir.insts().Get(param_pattern_id);
-  }
-
-  auto binding_pattern = param_inst.As<AnyBindingPattern>();
-  return binding_pattern.type_id;
 }
 
 auto Function::GetDeclaredReturnType(const File& file,

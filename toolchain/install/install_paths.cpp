@@ -7,9 +7,11 @@
 #include <memory>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
@@ -42,6 +44,11 @@ auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
   llvm::sys::path::remove_filename(paths.prefix_);
   llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix, "../");
 
+  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
+    paths.SetError(error.message());
+    return paths;
+  }
+
   paths.CheckMarkerFile();
   return paths;
 }
@@ -52,8 +59,8 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   std::string runtimes_error;
   std::unique_ptr<Runfiles> runfiles(
       Runfiles::Create(exe_path.str(), &runtimes_error));
-  CARBON_CHECK(runfiles != nullptr)
-      << "Failed to find runtimes tree: " << runtimes_error;
+  CARBON_CHECK(runfiles != nullptr, "Failed to find runtimes tree: {0}",
+               runtimes_error);
 
   std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
   std::string runtimes_marker_path = runfiles->Rlocation(relative_marker_path);
@@ -65,8 +72,13 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
                           "../../");
 
+  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
+    paths.SetError(error.message());
+    return paths;
+  }
+
   paths.CheckMarkerFile();
-  CARBON_CHECK(!paths.error()) << *paths.error();
+  CARBON_CHECK(!paths.error(), "{0}", *paths.error());
   return paths;
 }
 
@@ -74,6 +86,45 @@ auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
   InstallPaths paths(install_prefix);
   paths.CheckMarkerFile();
   return paths;
+}
+
+auto InstallPaths::ReadPreludeManifest() const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
+  // This is structured to avoid a vector copy on success.
+  ErrorOr<llvm::SmallVector<std::string>> result =
+      llvm::SmallVector<std::string>();
+
+  llvm::SmallString<256> manifest;
+  llvm::sys::path::append(manifest, llvm::sys::path::Style::posix,
+                          core_package(), "prelude_manifest.txt");
+
+  auto fs = llvm::vfs::getRealFileSystem();
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      fs->getBufferForFile(manifest);
+  if (!file) {
+    result = ErrorBuilder() << "Loading prelude manifest `" << manifest
+                            << "`: " << file.getError().message();
+    return result;
+  }
+
+  // The manifest should have one file per line.
+  llvm::StringRef buffer = file.get()->getBuffer();
+  while (true) {
+    auto [token, remainder] = llvm::getToken(buffer, "\n");
+    if (token.empty()) {
+      break;
+    }
+    llvm::SmallString<256> path;
+    llvm::sys::path::append(path, llvm::sys::path::Style::posix, core_package(),
+                            token);
+    result->push_back(path.str().str());
+    buffer = remainder;
+  }
+
+  if (result->empty()) {
+    result = ErrorBuilder() << "Prelude manifest `" << manifest << "` is empty";
+  }
+  return result;
 }
 
 auto InstallPaths::SetError(llvm::Twine message) -> void {
@@ -84,6 +135,10 @@ auto InstallPaths::SetError(llvm::Twine message) -> void {
 }
 
 auto InstallPaths::CheckMarkerFile() -> void {
+  if (!llvm::sys::path::is_absolute(prefix_)) {
+    SetError(llvm::Twine("Not an absolute path: ") + prefix_);
+  }
+
   llvm::SmallString<256> path(prefix_);
   llvm::sys::path::append(path, llvm::sys::path::Style::posix, MarkerPath);
   if (!llvm::sys::fs::exists(path)) {

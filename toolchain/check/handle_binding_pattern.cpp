@@ -32,6 +32,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
   }
 
+  bool needs_compile_time_binding = is_generic && !is_associated_constant;
+
   // Create the appropriate kind of binding for this pattern.
   auto make_bind_name = [&](SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::LocIdAndInst {
@@ -42,7 +44,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
          // TODO: Don't allocate a compile-time binding index for an associated
          // constant declaration.
-         .bind_index = is_generic && !is_associated_constant
+         .bind_index = needs_compile_time_binding
                            ? context.scope_stack().AddCompileTimeBinding()
                            : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
@@ -63,7 +65,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // stack.
   auto push_bind_name = [&](SemIR::InstId bind_id) {
     context.node_stack().Push(node_id, bind_id);
-    if (is_generic && !is_associated_constant) {
+    if (needs_compile_time_binding) {
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
   };
@@ -73,7 +75,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       !context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
     CARBON_DIAGNOSTIC(
         SelfOutsideImplicitParamList, Error,
-        "`self` can only be declared in an implicit parameter list.");
+        "`self` can only be declared in an implicit parameter list");
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
@@ -87,7 +89,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       if (is_generic) {
         CARBON_DIAGNOSTIC(
             CompileTimeBindingInVarDecl, Error,
-            "`var` declaration cannot declare a compile-time binding.");
+            "`var` declaration cannot declare a compile-time binding");
         context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
       }
       auto binding_id =
@@ -99,7 +101,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                          "{0} has incomplete type `{1}`.", llvm::StringLiteral,
+                          "{0} has incomplete type `{1}`", llvm::StringLiteral,
                           SemIR::TypeId);
         return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
                                        parent_class_decl
@@ -108,8 +110,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                        cast_type_id);
       });
       if (parent_class_decl) {
-        CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer)
-            << "`returned var` at class scope";
+        CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,
+                     "`returned var` at class scope");
         auto& class_info = context.classes().Get(parent_class_decl->class_id);
         auto field_type_id = context.GetUnboundElementType(
             class_info.self_type_id, cast_type_id);
@@ -156,8 +158,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id =
-          context.AddInst<SemIR::Param>(name_node, {.type_id = cast_type_id});
+      auto param_id = context.AddInst<SemIR::Param>(
+          name_node, {.type_id = cast_type_id,
+                      .runtime_index = SemIR::RuntimeParamIndex::Invalid});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
       push_bind_name(bind_id);
       // TODO: Bindings should come into scope immediately in other contexts
@@ -186,7 +189,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case Parse::NodeKind::LetIntroducer: {
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type `{0}`.",
+                          "`let` binding has incomplete type `{0}`",
                           SemIR::TypeId);
         return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
                                        cast_type_id);
@@ -202,8 +205,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     default:
-      CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context_node_kind;
+      CARBON_FATAL("Found a pattern binding in unexpected context {0}",
+                   context_node_kind);
   }
   return true;
 }
@@ -215,7 +218,19 @@ auto HandleParseNode(Context& context, Parse::BindingPatternId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
-  return HandleAnyBindingPattern(context, node_id, /*is_generic=*/true);
+  bool is_generic = true;
+  if (context.decl_introducer_state_stack().innermost().kind ==
+      Lex::TokenKind::Let) {
+    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
+    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
+        !scope_inst.Is<SemIR::FunctionDecl>()) {
+      context.TODO(node_id,
+                   "`let` compile time binding outside function or interface");
+      is_generic = false;
+    }
+  }
+
+  return HandleAnyBindingPattern(context, node_id, is_generic);
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
@@ -237,7 +252,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
     context.pattern_node_stack().Push(node_id, addr_pattern_id);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
-                      "`addr` can only be applied to a `self` parameter.");
+                      "`addr` can only be applied to a `self` parameter");
     context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
     context.node_stack().Push(node_id, self_param_id);
     context.pattern_node_stack().Push(node_id, self_pattern_id);

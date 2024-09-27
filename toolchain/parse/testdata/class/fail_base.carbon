@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_base.carbon
 
 class A {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: ERROR: `class` or `:` expected after `base`.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: `class` or `:` expected after `base`
   // CHECK:STDERR:   base;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   base;
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:9: ERROR: Expected expression.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:9: error: expected expression
   // CHECK:STDERR:   base: ;
   // CHECK:STDERR:         ^
   // CHECK:STDERR:
@@ -23,11 +23,11 @@ class A {
 
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+7]]:3: ERROR: `base` declarations must end with a `;`.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+7]]:3: error: `base` declarations must end with a `;`
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: ERROR: Unrecognized declaration introducer.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: error: unrecognized declaration introducer
   // CHECK:STDERR:   var n: i32;
   // CHECK:STDERR:       ^
   var n: i32;
