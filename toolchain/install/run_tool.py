@@ -14,6 +14,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import os
 import sys
+from pathlib import Path
 
 if __name__ == "__main__":
+    symbolizer = str(Path(os.environ["LLVM_SYMBOLIZER_PATH"]).absolute())
+    os.environ["LLVM_SYMBOLIZER_PATH"] = symbolizer
     os.execv(sys.argv[1], sys.argv[1:])

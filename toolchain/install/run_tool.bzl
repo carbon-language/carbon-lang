@@ -6,7 +6,7 @@
 
 load("@rules_python//python:defs.bzl", "py_binary")
 
-def run_tool(name, tool, data):
+def run_tool(name, tool, data, env):
     # TODO: Fix the driver file discovery in order to allow symlinks.
     py_binary(
         name = name,
@@ -14,4 +14,5 @@ def run_tool(name, tool, data):
         srcs = ["run_tool.py"],
         args = ["$(location {})".format(tool)],
         data = [tool] + data,
+        env = env,
     )
