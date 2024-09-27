@@ -189,6 +189,7 @@ class ImplStore {
  private:
   ValueStore<ImplId> values_;
   Map<std::pair<TypeId, TypeId>, ImplOrLookupBucketId> lookup_;
+  // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };
 
