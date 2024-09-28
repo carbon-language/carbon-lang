@@ -646,7 +646,9 @@ struct GenericInterfaceType {
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
-      {.ir_name = "impl_decl", .is_lowered = false});
+      {.ir_name = "impl_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   // No type: an impl declaration is not a value.
   ImplId impl_id;

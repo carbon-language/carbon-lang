@@ -1278,6 +1278,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                            .specific_id = SemIR::SpecificId::Invalid},
           Phase::Template);
     }
+
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       // If the interface has generic parameters, we don't produce an interface
       // type, but a callable whose return value is an interface type.
@@ -1311,10 +1312,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
     // TODO: This doesn't properly handle redeclarations. Consider adding a
-    // corresponding `Value` inst for each of these cases.
+    // corresponding `Value` inst for each of these cases, or returning the
+    // first declaration.
     case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
+    case SemIR::ImplDecl::Kind:
     case SemIR::Namespace::Kind:
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
@@ -1451,7 +1454,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
-    case SemIR::ImplDecl::Kind:
     case SemIR::ImportDecl::Kind:
     case SemIR::Param::Kind:
     case SemIR::RequirementEquivalent::Kind:

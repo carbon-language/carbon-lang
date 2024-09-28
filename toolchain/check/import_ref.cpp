@@ -1580,24 +1580,6 @@ class ImportRefResolver {
         context_.types().GetConstantId(interface_val.type_id()));
   }
 
-  // Forms a constant ID that represents the given instruction ID that denotes
-  // an impl declaration. Impl declarations don't have a constant value, but for
-  // the purposes of importing we pretend that they do.
-  //
-  // TODO: Consider alternative options here. We could make impl declarations
-  // actually evaluate to themselves to avoid this hack.
-  static auto ImplDeclIdAsConstantId(SemIR::InstId impl_decl_id)
-      -> SemIR::ConstantId {
-    return SemIR::ConstantId::ForTemplateConstant(impl_decl_id);
-  }
-
-  // Gets the instruction ID for an impl declaration represented by the
-  // specified constant ID.
-  auto ConstantIdAsImplDeclId(SemIR::ConstantId impl_const_id)
-      -> SemIR::InstId {
-    return context_.constant_values().GetInstId(impl_const_id);
-  }
-
   // Make a declaration of an impl. This is done as a separate step from
   // importing the impl definition in order to resolve cycles.
   auto MakeImplDeclaration(const SemIR::Impl& import_impl)
@@ -1615,7 +1597,7 @@ class ImportRefResolver {
 
     // Write the impl ID into the ImplDecl.
     context_.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
-    return {impl_decl.impl_id, ImplDeclIdAsConstantId(impl_decl_id)};
+    return {impl_decl.impl_id, context_.constant_values().Get(impl_decl_id)};
   }
 
   // Imports the definition of an impl.

@@ -97,7 +97,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.3] {} {}
 // CHECK:STDOUT:   %K.decl: type = interface_decl @K [template = constants.%.4] {} {}
 // CHECK:STDOUT:   %L.decl: type = interface_decl @L [template = constants.%.5] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {
 // CHECK:STDOUT:     %T.patt: %.2 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
@@ -108,7 +108,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc11_21.2: type = converted %T.ref, %.loc11_21.1 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {
 // CHECK:STDOUT:     %T.patt: %.3 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.3]
@@ -119,7 +119,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc12_21.2: type = converted %T.ref, %.loc12_21.1 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.3 {
+// CHECK:STDOUT:   impl_decl @impl.3 [template] {
 // CHECK:STDOUT:     %T.patt: %.4 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%.4]
@@ -130,7 +130,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc13_21.2: type = converted %T.ref, %.loc13_21.1 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.4 {
+// CHECK:STDOUT:   impl_decl @impl.4 [template] {
 // CHECK:STDOUT:     %T.patt: %.5 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [template = constants.%.5]
@@ -141,7 +141,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref, %.loc14_21.1 [symbolic = %T.1 (constants.%T.4)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.5 {
+// CHECK:STDOUT:   impl_decl @impl.5 [template] {
 // CHECK:STDOUT:     %T.patt: %.2 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
@@ -152,7 +152,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc18_21.2: type = converted %T.ref, %.loc18_21.1 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.6 {
+// CHECK:STDOUT:   impl_decl @impl.6 [template] {
 // CHECK:STDOUT:     %T.patt: %.3 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.3]
@@ -163,7 +163,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc19_21.2: type = converted %T.ref, %.loc19_21.1 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.7 {
+// CHECK:STDOUT:   impl_decl @impl.7 [template] {
 // CHECK:STDOUT:     %T.patt: %.4 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%.4]
@@ -174,7 +174,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc20_21.2: type = converted %T.ref, %.loc20_21.1 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.8 {
+// CHECK:STDOUT:   impl_decl @impl.8 [template] {
 // CHECK:STDOUT:     %T.patt: %.5 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [template = constants.%.5]
@@ -346,7 +346,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.2] {} {}
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt: %.1 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [template = constants.%.1]
@@ -357,7 +357,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc7_21.2: type = converted %T.ref.loc7, %.loc7_21.1 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %J.ref.loc7: type = name_ref J, file.%J.decl [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt: %.1 = symbolic_binding_pattern T 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc14: type = name_ref I, file.%I.decl [template = constants.%.1]
@@ -420,11 +420,11 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 {} {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc14_11.1: %.4 = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
