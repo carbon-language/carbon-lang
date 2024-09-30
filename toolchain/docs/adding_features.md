@@ -274,13 +274,22 @@ If the resulting SemIR needs a new instruction:
     -   If an instruction doesn't have a `type_id`, it won't produce a value,
         and so won't be given a label when formatted, and can't be the argument
         of another instruction.
-    -   If an instruction always produces a type, so it sets
-        `.is_type = InstIsType::Always`, then its `type_id` field will be set to
-        `SemIR::TypeId::TypeType`.
-    -   If an instruction produces a value, but not one that can be used in an
-        expression, you can make a new builtin type for its output. For example,
-        we have builtin types for bound methods, namespaces, and witnesses.
-        These are defined in
+    -   If an instruction always produces a type:
+
+        -   set `.is_type = InstIsType::Always` in its `Kind` definition;
+        -   when constructing instructions of this kind, pass
+            `SemIR::TypeId::TypeType` in as the value of the `type_id` field, as
+            in:
+
+            ```
+            context.AddInst<SemIR::NewInstKindName>(
+                node_id, {.type_id = SemIR::TypeId::TypeType, ...});
+            ```
+
+    -   If an instruction produces a value, but not one that has an ordinary
+        type, you can make a new builtin type for its output. For example, we
+        have builtin types for bound methods, namespaces, and witnesses. These
+        are defined in
         [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
         To get a type id for one of these builtin type, use something like
         `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`.
