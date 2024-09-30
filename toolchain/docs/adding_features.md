@@ -282,7 +282,7 @@ If the resulting SemIR needs a new instruction:
             in:
 
             ```
-            context.AddInst<SemIR::NewInstKindName>(
+            SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
                 node_id, {.type_id = SemIR::TypeId::TypeType, ...});
             ```
 
@@ -292,7 +292,14 @@ If the resulting SemIR needs a new instruction:
         are defined in
         [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
         To get a type id for one of these builtin type, use something like
-        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`.
+        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
+
+        ```
+        SemIR::TypeId witness_type_id =
+            context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType);
+        SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
+            node_id, {.type_id = witness_type_id, ...});
+        ```
 
 Once those are added, a rebuild will give errors showing what needs to be
 updated. The updates needed, can depend on whether the instruction produces a
