@@ -253,9 +253,9 @@ If the resulting SemIR needs a new instruction:
             // - `Parse::NodeId` if it can be any kind of parse node.
             // - `Parse::InvalidNodeId` if no associated parse node.
             InstKind::NewInstKindName.Define<Parse::SomeId>(
-               // the name used in textual IR
-              {.ir_name = "new_inst_kind_name"}
-               // Other parameters have defaults
+                // The name used in textual IR:
+                {.ir_name = "new_inst_kind_name"}
+                // Other parameters have defaults.
             );
 
         // Optional: omit if this sem_ir instruction does not produce a value.
