@@ -524,12 +524,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %import_ref.6: %NotEqual.type.2 = import_ref Core//prelude/operators/comparison, inst+55, loaded [template = constants.%NotEqual.2]
 // CHECK:STDOUT:   %import_ref.7: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/comparison, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.9: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+45, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.11: @ImplicitAs.%.2 (%.10) = import_ref Core//prelude/operators/as, inst+70, loaded [symbolic = @ImplicitAs.%.3 (constants.%.15)]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+63, unloaded
+// CHECK:STDOUT:   %import_ref.9: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.11: @ImplicitAs.%.2 (%.10) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.3 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/comparison, inst+55, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

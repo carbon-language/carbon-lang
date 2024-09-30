@@ -414,12 +414,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//state_constraints, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.8: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+45, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.10: @ImplicitAs.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+70, loaded [symbolic = @ImplicitAs.%.3 (constants.%.12)]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+63, unloaded
+// CHECK:STDOUT:   %import_ref.8: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.10: @ImplicitAs.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.3 (constants.%.12)]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

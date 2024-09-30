@@ -56,12 +56,14 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [template]
 // CHECK:STDOUT:   %CallGeneric: %CallGeneric.type = struct_value () [template]
+// CHECK:STDOUT:   %T.patt.3: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %CallGenericPtr.type: type = fn_type @CallGenericPtr [template]
 // CHECK:STDOUT:   %CallGenericPtr: %CallGenericPtr.type = struct_value () [template]
@@ -82,8 +84,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     .CallSpecific = %CallSpecific.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %x.patt: @Function.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc4_24: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -96,8 +98,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return: ref @Function.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
-// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %x.patt: @CallGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc8_27: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -110,8 +112,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return: ref @CallGeneric.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
-// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %x.patt: @CallGenericPtr.%.1 (%.2) = binding_pattern x
 // CHECK:STDOUT:     %.loc12_30: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -147,7 +149,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Function(%T.loc4: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -160,7 +162,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGeneric(%T.loc8: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -178,7 +180,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericPtr(%T.loc12: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:   %.1: type = ptr_type @CallGenericPtr.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -236,12 +238,14 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [template]
 // CHECK:STDOUT:   %CallGeneric: %CallGeneric.type = struct_value () [template]
+// CHECK:STDOUT:   %T.patt.3: type = symbolic_binding_pattern T 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %CallGenericPtr.type: type = fn_type @CallGenericPtr [template]
 // CHECK:STDOUT:   %CallGenericPtr: %CallGenericPtr.type = struct_value () [template]
@@ -262,8 +266,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     .CallSpecific = %CallSpecific.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %x.patt: @Function.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc4_24: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -276,8 +280,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return: ref @Function.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
-// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %x.patt: @CallGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %.loc8_27: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -290,8 +294,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return: ref @CallGeneric.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
-// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %x.patt: @CallGenericPtr.%.1 (%.2) = binding_pattern x
 // CHECK:STDOUT:     %.loc12_30: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -327,7 +331,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Function(%T.loc4: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -340,7 +344,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGeneric(%T.loc8: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -357,7 +361,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericPtr(%T.loc12: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:   %.1: type = ptr_type @CallGenericPtr.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

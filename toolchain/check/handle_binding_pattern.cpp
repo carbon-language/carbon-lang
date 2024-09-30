@@ -171,12 +171,14 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto pattern_inst = SemIR::InstId::Invalid;
       if (is_generic) {
         pattern_inst = context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+            name_node, {.type_id = cast_type_id,
+                        .entity_name_id = entity_name_id,
+                        .bind_name_id = bind_id});
       } else {
         pattern_inst = context.AddPatternInst<SemIR::BindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+            name_node, {.type_id = cast_type_id,
+                        .entity_name_id = entity_name_id,
+                        .bind_name_id = bind_id});
       }
       context.pattern_node_stack().Push(node_id, pattern_inst);
 

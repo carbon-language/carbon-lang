@@ -573,12 +573,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Implicit//default, inst+111, unloaded
-// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+45, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.2 (%.12) = import_ref Core//prelude/operators/as, inst+70, loaded [symbolic = @ImplicitAs.%.3 (constants.%.17)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+63, unloaded
+// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.2 (%.12) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.3 (constants.%.17)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -880,7 +880,19 @@ class FormatterImpl {
   auto FormatArgs(Args... args) -> void {
     out_ << ' ';
     llvm::ListSeparator sep;
-    ((out_ << sep, FormatArg(args)), ...);
+    FormatArgsImpl(sep, args...);
+  }
+
+  auto FormatArgsImpl(llvm::ListSeparator& /* sep */) -> void {}
+
+  template <typename Arg, typename... Args>
+  auto FormatArgsImpl(llvm::ListSeparator& sep, Arg arg, Args... args) -> void {
+    // Suppress printing MatchingInstIds, which aren't really operands.
+    if constexpr (!std::is_same_v<Arg, SemIR::MatchingInstId>) {
+      out_ << sep;
+      FormatArg(arg);
+    }
+    FormatArgsImpl(sep, args...);
   }
 
   // FormatArg variants handling printing instruction arguments. Several things

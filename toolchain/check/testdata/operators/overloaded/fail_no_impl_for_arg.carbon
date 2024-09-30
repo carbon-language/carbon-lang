@@ -124,12 +124,12 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %import_ref.7: %.20 = import_ref Core//prelude/operators/arithmetic, inst+59, loaded [template = constants.%.21]
 // CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+53, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.10: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+45, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.12: @ImplicitAs.%.2 (%.14) = import_ref Core//prelude/operators/as, inst+70, loaded [symbolic = @ImplicitAs.%.3 (constants.%.19)]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+63, unloaded
+// CHECK:STDOUT:   %import_ref.10: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.12: @ImplicitAs.%.2 (%.14) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.3 (constants.%.19)]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/arithmetic, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

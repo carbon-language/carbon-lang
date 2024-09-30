@@ -831,7 +831,10 @@ class ImportRefResolver {
                .bind_index = SemIR::CompileTimeBindIndex::Invalid});
           new_param_id = context_.AddInstInNoBlock<SemIR::BindingPattern>(
               AddImportIRInst(binding_id),
-              {.type_id = type_id, .entity_name_id = entity_name_id});
+              {.type_id = type_id,
+               .entity_name_id = entity_name_id,
+               // FIXME
+               .bind_name_id = SemIR::InstId::Invalid});
           break;
         }
         case SemIR::SymbolicBindingPattern::Kind: {
@@ -1344,7 +1347,9 @@ class ImportRefResolver {
          .bind_index = import_entity_name.bind_index});
     return ResolveAs<SemIR::SymbolicBindingPattern>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .entity_name_id = entity_name_id});
+         .entity_name_id = entity_name_id,
+         // FIXME
+         .bind_name_id = SemIR::InstId::Invalid});
   }
 
   // Makes an incomplete class. This is necessary even with classes with a

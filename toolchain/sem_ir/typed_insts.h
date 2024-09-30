@@ -307,6 +307,7 @@ struct AnyBindingPattern {
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a non-symbolic binding pattern.
@@ -316,9 +317,13 @@ struct BindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a symbolic binding pattern.
+//
+// TODO: Consider dropping this and AnyBindingPattern, using BindingPattern
+// everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
@@ -326,6 +331,7 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
