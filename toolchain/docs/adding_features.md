@@ -396,16 +396,13 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
 
 -   `bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/basics/empty.carbon`
     -   Executes an individual test.
--   `bazel run //toolchain/parse:testdata/basics/empty.carbon.run`
-    -   Runs `carbon` on the file with standard arguments, printing output to
-        console.
-    -   This form will often be most useful when iterating over a specific test.
--   `bazel run //toolchain/parse:testdata/basics/empty.carbon.verbose`
-    -   Similar to the previous command, but with the `-v` flag implied.
--   `bazel run //toolchain/driver:carbon -- compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
+-   `bazel run //toolchain -- compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Explicitly runs `carbon` with the provided arguments.
--   `bazel-bin/toolchain/driver/carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
+-   `bazel-bin/toolchain/install/run_carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Similar to the previous command, but without using `bazel`.
+-   `bazel run //toolchain -- -v compile --phase=check toolchain/check/testdata/basics/run.carbon`
+    -   Runs using `-v` for verbose log output, and running through the `check`
+        phase.
 
 ### Updating tests
 
