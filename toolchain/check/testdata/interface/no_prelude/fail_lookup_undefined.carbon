@@ -59,7 +59,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = interface_type @BeingDefined [template]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %H.type [template]
@@ -83,7 +83,7 @@ interface BeingDefined {
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.4]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]

@@ -22,7 +22,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,7 +55,7 @@ fn F() {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_32, %.loc12_21.1 [template = i32]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc12_21.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %.loc12_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc13: type = ptr_type %T [symbolic = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref %.2 = var p

@@ -52,7 +52,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.5: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self.1: %.5 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.5 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Op.type.1 [template]
@@ -60,7 +60,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %Op.type.2 [template]
@@ -69,14 +69,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.3: %.11 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.11 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = ptr_type %Self.3 [symbolic]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type %.11, %Op.type.3 [template]
 // CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.15 [template]
 // CHECK:STDOUT:   %.15: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.4: %.15 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.4: %.15 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.16: type = ptr_type %Self.4 [symbolic]
@@ -205,7 +205,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.1.%Self (%Self.1)]() -> @Op.1.%Self (%Self.1);
 // CHECK:STDOUT: }
@@ -219,7 +219,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %.8) {
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self.2)](%other: @Op.2.%Self (%Self.2)) -> @Op.2.%Self (%Self.2);
 // CHECK:STDOUT: }
@@ -242,14 +242,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %.11) {
-// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self: @Op.3.%.2 (%.12)](%other: @Op.3.%Self (%Self.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.15) {
-// CHECK:STDOUT:   %Self: %.15 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.4)]
+// CHECK:STDOUT:   %Self: %.15 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.16)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.16)]();
