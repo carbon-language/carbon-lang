@@ -71,10 +71,17 @@ abstract protected class WrongOrder;
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:20: error: `abstract` function with definition
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: `abstract` function with definition
   // CHECK:STDERR:   abstract fn F() {}
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
   abstract fn F() {}
+  abstract fn G();
+}
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: `abstract` function with definition
+// CHECK:STDERR: fn AbstractWithDefinition.G() {
+// CHECK:STDERR:                               ^
+fn AbstractWithDefinition.G() {
 }
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
@@ -92,6 +99,8 @@ abstract class AbstractWithDefinition {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -126,6 +135,7 @@ abstract class AbstractWithDefinition {
 // CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {} {}
 // CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {} {}
 // CHECK:STDOUT:   %AbstractWithDefinition.decl: type = class_decl @AbstractWithDefinition [template = constants.%AbstractWithDefinition] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
@@ -149,7 +159,7 @@ abstract class AbstractWithDefinition {
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:   %.loc70: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc71: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
@@ -157,14 +167,21 @@ abstract class AbstractWithDefinition {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractWithDefinition {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc74: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT:   %.loc80: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: abstract fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: abstract fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -297,6 +297,16 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
+  // Diagnose `abstract` function with definition using the canonical Function's
+  // modifiers.
+  if (is_definition &&
+      context.functions().Get(function_decl.function_id).virtual_modifier ==
+          SemIR::Function::VirtualModifier::Abstract) {
+    CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
+                      "`abstract` function with definition");
+    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+  }
+
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
   if (!name_context.prev_inst_id().is_valid()) {
@@ -440,12 +450,6 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If this is a generic function, collect information about the definition.
   auto& function = context.functions().Get(function_id);
   FinishGenericDefinition(context, function.generic_id);
-
-  if (function.virtual_modifier == SemIR::Function::VirtualModifier::Abstract) {
-    CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
-                      "`abstract` function with definition");
-    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
-  }
 
   return true;
 }
