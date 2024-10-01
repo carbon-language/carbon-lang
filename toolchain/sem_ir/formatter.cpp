@@ -904,7 +904,7 @@ class FormatterImpl {
     const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index.is_valid()) {
-      out_ << " " << info.bind_index.index;
+      out_ << ", " << info.bind_index.index;
     }
   }
 

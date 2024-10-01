@@ -42,7 +42,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: --- fail_todo_impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
@@ -50,16 +50,16 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A.2, %T [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [symbolic]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = interface_type @I, @I(%U) [symbolic]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @I(%U) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %F.type.1 [symbolic]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @I.%F.decl [symbolic]
-// CHECK:STDOUT:   %V: type = bind_symbolic_name V 0 [symbolic]
+// CHECK:STDOUT:   %V: type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %A.3: type = class_type @A, @A(%V) [symbolic]
 // CHECK:STDOUT:   %.8: type = interface_type @I, @I(%V) [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -73,7 +73,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.13: type = struct_type {.n: %V} [symbolic]
 // CHECK:STDOUT:   %.14: <witness> = complete_type_witness %.13 [symbolic]
 // CHECK:STDOUT:   %.15: type = ptr_type %.13 [symbolic]
-// CHECK:STDOUT:   %W: type = bind_symbolic_name W 0 [symbolic]
+// CHECK:STDOUT:   %W: type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %A.4: type = class_type @A, @A(%W) [symbolic]
 // CHECK:STDOUT:   %TestGeneric.type: type = fn_type @TestGeneric [template]
 // CHECK:STDOUT:   %TestGeneric: %TestGeneric.type = struct_value () [template]
@@ -110,22 +110,22 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     .TestSpecific = %TestSpecific.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = interface_decl @I [template = constants.%I] {
-// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 0
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc6: type = bind_symbolic_name U 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc6: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V 0
+// CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc10: type = bind_symbolic_name V 0, %V.param [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc10: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %V.ref.loc10_26: type = name_ref V, %V.loc10 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:     %A.loc10: type = class_type @A, @A(constants.%V) [symbolic = %A.1 (constants.%A.3)]
@@ -134,11 +134,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %.loc10_33: type = interface_type @I, @I(constants.%V) [symbolic = %.1 (constants.%.8)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGeneric.decl: %TestGeneric.type = fn_decl @TestGeneric [template = constants.%TestGeneric] {
-// CHECK:STDOUT:     %W.patt: type = symbolic_binding_pattern W 0
+// CHECK:STDOUT:     %W.patt: type = symbolic_binding_pattern W, 0
 // CHECK:STDOUT:     %a.patt: @TestGeneric.%A.1 (%A.4) = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.param: type = param W, runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc16: type = bind_symbolic_name W 0, %W.param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc16: type = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %W.ref.loc16_31: type = name_ref W, %W.loc16 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:     %A.loc16: type = class_type @A, @A(constants.%W) [symbolic = %A.1 (constants.%A.4)]
@@ -163,18 +163,18 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(%U.loc6: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%U.1) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @I(%U.1) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I.%.1 (%.5), @I.%F.type (%F.type.1) [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:   %.3: @I.%.2 (%.6) = assoc_entity element0, %F.decl [symbolic = %.3 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @I.%.1 (%.5) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @I.%F (constants.%F.1)] {
 // CHECK:STDOUT:       %self.patt: @F.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:     } {
@@ -197,7 +197,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(%V.loc10: type) {
-// CHECK:STDOUT:   %V.1: type = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:   %V.1: type = bind_symbolic_name V, 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%V.1) [symbolic = %A.1 (constants.%A.3)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%V.1) [symbolic = %.1 (constants.%.8)]
 // CHECK:STDOUT:
@@ -220,7 +220,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @A(%T.loc2: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.1) [symbolic = %A (constants.%A.2)]
@@ -240,15 +240,15 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%U.loc6: type, @I.%Self.1: @I.%.1 (%.5)) {
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 0 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%U) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @F.1.%Self (%Self)]() -> @F.1.%U (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@impl.%V.loc10: type) {
-// CHECK:STDOUT:   %V: type = bind_symbolic_name V 0 [symbolic = %V (constants.%V)]
+// CHECK:STDOUT:   %V: type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -265,7 +265,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestGeneric(%W.loc16: type) {
-// CHECK:STDOUT:   %W.1: type = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:   %W.1: type = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%W.1) [symbolic = %A.1 (constants.%A.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
