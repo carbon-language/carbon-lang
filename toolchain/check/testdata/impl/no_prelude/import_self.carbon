@@ -155,13 +155,13 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %.1 = binding_pattern other
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %self.param: %.1 = param self, runtime_param0
 // CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
-// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %other.param: %.1 = param other, runtime_param1
 // CHECK:STDOUT:     %other: %.1 = bind_name other, %other.param
-// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_16: <witness> = interface_witness (%Op.decl) [template = constants.%.3]

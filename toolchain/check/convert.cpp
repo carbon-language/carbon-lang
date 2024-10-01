@@ -853,7 +853,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
            sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
-        type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id));
+        type_ids.push_back(ExprAsType(context, loc_id, tuple_inst_id).type_id);
       }
       auto tuple_type_id = context.GetTupleType(type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
@@ -1271,11 +1271,11 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
-    -> SemIR::TypeId {
+    -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeId::TypeType);
   if (type_inst_id == SemIR::InstId::BuiltinError) {
-    return SemIR::TypeId::Error;
+    return {.inst_id = type_inst_id, .type_id = SemIR::TypeId::Error};
   }
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
@@ -1283,10 +1283,12 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
     CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
                       "cannot evaluate type expression");
     context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
-    return SemIR::TypeId::Error;
+    return {.inst_id = SemIR::InstId::BuiltinError,
+            .type_id = SemIR::TypeId::Error};
   }
 
-  return context.GetTypeIdForTypeConstant(type_const_id);
+  return {.inst_id = type_inst_id,
+          .type_id = context.GetTypeIdForTypeConstant(type_const_id)};
 }
 
 }  // namespace Carbon::Check

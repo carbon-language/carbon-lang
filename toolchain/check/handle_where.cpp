@@ -14,7 +14,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // is being modified by the `where` operator. It would be `MyInterface` in
   // `MyInterface where .Member = i32`.
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  auto self_type_id = ExprAsType(context, self_node, self_id);
+  auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // TODO: Validate that `self_type_id` represents a facet type. Only facet
   // types may have `where` restrictions.
 

@@ -55,15 +55,14 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  auto self_type_id = ExprAsType(context, self_node, self_id);
+  auto [self_inst_id, self_type_id] = ExprAsType(context, self_node, self_id);
   context.node_stack().Push(node_id, self_type_id);
 
   // Introduce `Self`. Note that we add this name lexically rather than adding
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType,
-                          context.types().GetInstId(self_type_id));
+  context.AddNameToLookup(SemIR::NameId::SelfType, self_inst_id);
   return true;
 }
 
@@ -250,7 +249,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Convert the constraint expression to a type.
   // TODO: Check that its constant value is a constraint.
-  auto constraint_type_id = ExprAsType(context, constraint_node, constraint_id);
+  auto constraint_type_id =
+      ExprAsType(context, constraint_node, constraint_id).type_id;
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?

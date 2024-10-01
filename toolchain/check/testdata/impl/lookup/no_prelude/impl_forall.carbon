@@ -205,7 +205,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:       %self.patt: @F.2.%A (%A.3) = binding_pattern self
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%A.3 [symbolic = %A (constants.%A.3)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%A.loc10 [symbolic = %A (constants.%A.3)]
 // CHECK:STDOUT:       %self.param: @F.2.%A (%A.3) = param self, runtime_param0
 // CHECK:STDOUT:       %self: @F.2.%A (%A.3) = bind_name self, %self.param
 // CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.%V.loc10 [symbolic = %V (constants.%V)]
