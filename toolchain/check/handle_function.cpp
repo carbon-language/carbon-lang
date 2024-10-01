@@ -43,7 +43,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto type_id = ExprAsType(context, type_node_id, type_inst_id);
+  auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush<SemIR::VarStorage>(
       node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});

@@ -178,13 +178,13 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %self.param: i32 = param self, runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
-// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %other.param: i32 = param other, runtime_param1
 // CHECK:STDOUT:     %other: i32 = bind_name other, %other.param
-// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.3]

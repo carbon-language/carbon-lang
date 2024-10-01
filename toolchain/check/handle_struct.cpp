@@ -58,7 +58,7 @@ auto HandleParseNode(Context& context, Parse::StructFieldId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::StructTypeFieldId node_id)
     -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
-  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
+  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id).type_id;
 
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 

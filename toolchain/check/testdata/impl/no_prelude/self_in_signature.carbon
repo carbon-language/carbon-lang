@@ -195,13 +195,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %self.patt: %D = binding_pattern self
 // CHECK:STDOUT:     %x.patt: %D = binding_pattern x
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc24_14: type = name_ref Self, constants.%D [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc24_14: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %self.param: %D = param self, runtime_param0
 // CHECK:STDOUT:     %self: %D = bind_name self, %self.param
-// CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, constants.%D [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %x.param: %D = param x, runtime_param1
 // CHECK:STDOUT:     %x: %D = bind_name x, %x.param
-// CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, constants.%D [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: <witness> = interface_witness (%F.decl) [template = constants.%.9]
@@ -237,9 +237,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.decl: %F.type.6 = fn_decl @F.6 [template = constants.%F.6] {
 // CHECK:STDOUT:     %x.patt: %.23 = binding_pattern x
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc36_12: type = name_ref Self, constants.%D [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc36_12: type = name_ref Self, @impl.4.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %.loc36_16: type = ptr_type %D [template = constants.%.21]
-// CHECK:STDOUT:     %Self.ref.loc36_24: type = name_ref Self, constants.%D [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc36_24: type = name_ref Self, @impl.4.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %.loc36_35.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc36_35.2: type = converted %.loc36_35.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc36_36: type = struct_type {.x: %D, .y: %.2} [template = constants.%.22]
