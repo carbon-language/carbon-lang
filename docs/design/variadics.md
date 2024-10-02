@@ -346,9 +346,10 @@ components of a tuple literal after pack expansion. For example, the expression
 `(... each foo)` may evaluate to a tuple value with any number of elements, but
 the expression itself has exactly one segment.
 
-The type of a tuple literal is another tuple literal, which is computed
-segment-wise. For example, suppose we are trying to find the type of `z` in this
-code:
+Each segment has a type, which expresses (potentially symbolically) both the
+types of the elements of the segment and the arity of the segment. The type of a
+tuple literal is a tuple literal of the types of its segments. For example,
+suppose we are trying to find the type of `z` in this code:
 
 ```carbon
 fn F[... each T:! type]((... each x: Optional(each T)), (... each y: i32)) {
@@ -398,10 +399,10 @@ pack literal pseudo-syntax can also be used in patterns.
 The _shape_ of a pack literal is a tuple of the arities of its segments, so the
 shape of `⟬f32, Optional(each T), ⟪i32; ‖each y‖⟫⟭` is
 `(1, ‖each T‖, ‖each y‖)`. Other expressions and patterns also have shapes. In
-particular, the shape of an arity coercion `⟪E; A⟫` is `(A)`, the shape of
-`each X` is `‖each X‖`, and the shape of an expression that does not contain
-pack literals, shape coercions, or each-names is 1. The arity of an expression
-is the sum of the elements of its shape. See the
+particular, the shape of an arity coercion `⟪E; A⟫` is `(A,)`, the shape of
+`each X` is `(‖each X‖,)`, and the shape of an expression that does not contain
+pack literals, shape coercions, or each-names is `(1,)`. The arity of an
+expression is the sum of the elements of its shape. See the
 [appendix](#typing-and-shaping-rules) for the full rules for determining the
 shape of an expression.
 
@@ -713,20 +714,22 @@ or arity coercion, above.
 
 _Singular pack removal:_ if `E` is a pack segment, `⟬E⟭` reduces to `E`.
 
-_Singular expansion removal:_ `...E` reduces to `E`, if `E` contains no pack
-literals, arity coercions, or each-names.
+_Singular expansion removal:_ `...E` reduces to `E`, if the shape of `E` is
+`(1,)`.
 
 _Pack expansion splitting:_ If `E` is a segment and `S` is a sequence of
 segments, `...⟬E, S⟭` reduces to `...E, ...⟬S⟭`.
 
 _Pack expanding:_ If `F` is a function, `X` is an utterance that does not
-contain pack literals or each-names, and `⟬P1, P2⟭` and `⟬Q1, Q2⟭` both have the
-shape `(S1, S2)`, then `F(⟬P1, P2⟭, X, ⟬Q1, Q2⟭, ⟪Y; S1+S2⟫)` reduces to
+contain pack literals, each-names, or arity coercions, and `⟬P1, P2⟭` and
+`⟬Q1, Q2⟭` both have the shape `(S1, S2)`, then
+`F(⟬P1, P2⟭, X, ⟬Q1, Q2⟭, ⟪Y; S1+S2⟫)` reduces to
 `⟬F(P1, X, Q1, ⟪Y; S1⟫), F(P2, X, Q2, ⟪Y; S2⟫)⟭`. This rule generalizes in
 several dimensions:
 
--   `F` can have any number of non-pack-literal arguments, and any positive
-    number of pack literal arguments, and they can be in any order.
+-   `F` can have any number of arity coercion and other non-pack-literal
+    arguments, and any positive number of pack literal arguments, and they can
+    be in any order.
 -   The pack literal arguments can have any number of segments (but the
     well-shapedness requirement means they must have the same number of
     segments).
