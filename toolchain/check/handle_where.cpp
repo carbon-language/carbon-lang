@@ -15,8 +15,13 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // `MyInterface where .Member = i32`.
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
-  // TODO: Validate that `self_type_id` represents a facet type. Only facet
-  // types may have `where` restrictions.
+  // Only facet types may have `where` restrictions.
+  if (!context.IsFacetType(self_type_id)) {
+    CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
+                      "left argument of `where` operator must be a facet type");
+    context.emitter().Emit(self_node, WhereOnNonFacetType);
+    self_type_id = SemIR::TypeId::Error;
+  }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
