@@ -596,6 +596,25 @@ static auto CheckCompleteAdapterClassType(Context& context,
     return SemIR::InstId::BuiltinError;
   }
 
+  for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
+    if (auto function_decl =
+            context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
+      auto& function = context.functions().Get(function_decl->function_id);
+      if (function.virtual_modifier ==
+          SemIR::Function::VirtualModifier::Virtual) {
+        CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
+                          "adapter with virtual function");
+        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
+                          "first virtual function declaration is here");
+        context.emitter()
+            .Build(class_info.adapt_id, AdaptWithVirtual)
+            .Note(inst_id, AdaptWithVirtualHere)
+            .Emit();
+        return SemIR::InstId::BuiltinError;
+      }
+    }
+  }
+
   // The object representation of the adapter is the object representation
   // of the adapted type. This is the adapted type itself unless it's a class
   // type.
