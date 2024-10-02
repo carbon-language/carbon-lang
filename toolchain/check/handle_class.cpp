@@ -393,13 +393,14 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto adapted_type_id =
       ExprAsType(context, node_id, adapted_type_expr_id).type_id;
-  adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "adapted type `{0}` is an incomplete type",
-                      SemIR::TypeId);
-    return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                   adapted_type_id);
-  });
+  adapted_type_id =
+      context.AsCompleteType(adapted_type_id, /*allow_abstract=*/false, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
+                          "adapted type `{0}` is an incomplete type",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
+                                       adapted_type_id);
+      });
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(
@@ -469,12 +470,13 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
-  base_type_id = context.AsCompleteType(base_type_id, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "base `{0}` is an incomplete type", SemIR::TypeId);
-    return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
-                                   base_type_id);
-  });
+  base_type_id =
+      context.AsCompleteType(base_type_id, /*allow_abstract=*/true, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                          "base `{0}` is an incomplete type", SemIR::TypeId);
+        return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                       base_type_id);
+      });
 
   if (base_type_id == SemIR::TypeId::Error) {
     return BaseInfo::Error;

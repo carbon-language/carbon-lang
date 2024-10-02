@@ -198,15 +198,23 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
-  if (class_info.definition_id.is_valid()) {
-    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                      "class is incomplete within its definition");
-    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+  if (class_info.is_defined()) {
+    CARBON_CHECK(
+        class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+        "Class is not abstract");
+    CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                      "class was declared abstract here");
+    builder.Note(class_info.definition_id, ClassAbstractHere);
   } else {
-    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                      "class was forward declared here");
-    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+    if (class_info.definition_id.is_valid()) {
+      CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                        "class is incomplete within its definition");
+      builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+    } else {
+      CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                        "class was forward declared here");
+      builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+    }
   }
 }
 
@@ -839,7 +847,9 @@ class TypeCompleter {
       }
       case CARBON_KIND(SemIR::ClassType inst): {
         auto& class_info = context_.classes().Get(inst.class_id);
-        if (!class_info.is_defined()) {
+        if (!class_info.is_defined() ||
+            class_info.inheritance_kind ==
+                SemIR::Class::InheritanceKind::Abstract) {
           if (diagnoser_) {
             auto builder = diagnoser_();
             context_.NoteIncompleteClass(inst.class_id, builder);
