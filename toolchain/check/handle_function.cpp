@@ -78,35 +78,14 @@ static auto CheckFunctionSignature(Context& context,
   for (auto param_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),
            context.inst_blocks().GetOrEmpty(name_and_params.params_id))) {
-    auto param = context.insts().Get(param_id);
-
     // Find the parameter in the pattern.
-    // TODO: This duplicates work done by Function::GetParamFromParamRefId.
-    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
-      param_id = addr_pattern->inner_id;
-      param = context.insts().Get(param_id);
-    }
-
-    auto bind_name = param.TryAs<SemIR::AnyBindName>();
-    if (bind_name) {
-      param_id = bind_name->value_id;
-      param = context.insts().Get(param_id);
-    }
-
-    auto param_inst = param.TryAs<SemIR::Param>();
-    if (!param_inst) {
-      // Once we support more generalized patterns we will need to diagnose
-      // parameters with unsupported patterns.
-      context.TODO(param_id, "unexpected syntax for parameter");
-      // TODO: Also repair the param ID so downstream code doesn't need to deal
-      // with this.
-      continue;
-    }
+    auto param =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
 
     // If this is a runtime parameter, number it.
-    if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
-      param_inst->runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
+    if (param.bind_name && param.bind_name->kind == SemIR::BindName::Kind) {
+      param.inst.runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param.inst_id, param.inst);
       ++next_index.index;
     }
   }
@@ -374,13 +353,13 @@ static auto HandleFunctionDefinitionAfterSignature(
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.param.type_id, [&] {
+    context.TryToCompleteType(param.inst.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "parameter has incomplete type `{0}` in function definition",
           SemIR::TypeId);
       return context.emitter().Build(
-          param.inst_id, IncompleteTypeInFunctionParam, param.param.type_id);
+          param.inst_id, IncompleteTypeInFunctionParam, param.inst.type_id);
     });
   }
 

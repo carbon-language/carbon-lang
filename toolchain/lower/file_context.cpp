@@ -215,11 +215,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.param.runtime_index.is_valid()) {
+    if (!param.inst.runtime_index.is_valid()) {
       continue;
     }
     switch (auto value_rep =
-                SemIR::ValueRepr::ForType(sem_ir(), param.param.type_id);
+                SemIR::ValueRepr::ForType(sem_ir(), param.inst.type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL("Incomplete parameter type lowering function declaration");
@@ -314,12 +314,12 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.param.runtime_index.is_valid()) {
+    if (!param.inst.runtime_index.is_valid()) {
       continue;
     }
 
     // Get the value of the parameter from the function argument.
-    auto param_type_id = param.param.type_id;
+    auto param_type_id = param.inst.type_id;
     llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
     if (SemIR::ValueRepr::ForType(sem_ir(), param_type_id).kind !=
         SemIR::ValueRepr::None) {

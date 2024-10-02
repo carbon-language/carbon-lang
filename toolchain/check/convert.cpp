@@ -1212,13 +1212,13 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     if (param.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
           context, call_loc_id, callee.callee_loc, callee_specific_id,
-          addr_pattern, param.inst_id, param.param, self_id);
+          addr_pattern, param.inst_id, param.inst, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
       args.push_back(converted_self_id);
     } else {
-      CARBON_CHECK(!param.param.runtime_index.is_valid(),
+      CARBON_CHECK(!param.inst.runtime_index.is_valid(),
                    "Unexpected implicit parameter passed at runtime");
     }
   }
@@ -1241,7 +1241,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     // argument corresponding to each parameter.
     auto param =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
-    if (!param.param.runtime_index.is_valid()) {
+    if (!param.inst.runtime_index.is_valid()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }
@@ -1258,7 +1258,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     }
 
     CARBON_CHECK(
-        static_cast<int32_t>(args.size()) == param.param.runtime_index.index,
+        static_cast<int32_t>(args.size()) == param.inst.runtime_index.index,
         "Parameters not numbered in order.");
     args.push_back(converted_arg_id);
   }
