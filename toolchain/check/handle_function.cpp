@@ -297,13 +297,13 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
-  // Diagnose `abstract` function with definition using the canonical Function's
+  // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
   if (is_definition &&
       context.functions().Get(function_decl.function_id).virtual_modifier ==
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
-                      "`abstract` function with definition");
+                      "definition of `abstract` function");
     context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
   }
 

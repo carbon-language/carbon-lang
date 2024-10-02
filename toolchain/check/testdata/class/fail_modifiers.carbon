@@ -71,14 +71,14 @@ abstract protected class WrongOrder;
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: `abstract` function with definition
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: definition of `abstract` function
   // CHECK:STDERR:   abstract fn F() {}
   // CHECK:STDERR:                   ^
   // CHECK:STDERR:
   abstract fn F() {}
   abstract fn G();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: `abstract` function with definition
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: definition of `abstract` function
 // CHECK:STDERR: fn AbstractWithDefinition.G() {
 // CHECK:STDERR:                               ^
 fn AbstractWithDefinition.G() {
