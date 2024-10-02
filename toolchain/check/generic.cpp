@@ -434,7 +434,7 @@ static auto ReplaceInstructionWithError(Context& context,
        .runtime_index = SemIR::RuntimeParamIndex::Invalid});
 }
 
-auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
+auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
     -> void {
   if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
     return;
@@ -460,8 +460,9 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
   }
 }
 
-auto RequireGenericOrSelfImplicitParams(Context& context,
-                                        SemIR::InstBlockId block_id) -> void {
+auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
+                                                SemIR::InstBlockId block_id)
+    -> void {
   if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
     return;
   }
