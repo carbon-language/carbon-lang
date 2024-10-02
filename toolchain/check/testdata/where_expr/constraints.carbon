@@ -25,9 +25,29 @@ fn EqualEqual(U:! I where .Self == ());
 
 fn Impls(V:! J where .Self impls I);
 
-fn And(W:! I where .Second impls I and .Member = .Second);
+fn And(W:! I where .Self impls J and .Member = .Second);
 
-// --- todo_check_constraints.carbon
+// --- fail_todo_associated_type_impls.carbon
+
+library "[[@TEST_NAME]]";
+
+interface L {}
+interface M {}
+
+interface K {
+  let Associated:! L;
+}
+
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error: cannot implicitly convert from `<associated L in K>` to `type`
+// CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
+// CHECK:STDERR:                                    ^~~~~~~~~~~
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note: type `<associated L in K>` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
+// CHECK:STDERR:                                    ^~~~~~~~~~~
+// CHECK:STDERR:
+fn AssociatedTypeImpls(W:! K where .Associated impls M);
+
+// --- todo_check_rewrite_constraints.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -35,7 +55,43 @@ import library "state_constraints";
 
 // TODO: Should fail since `2` can't be converted to the type of `I.Member`,
 // but constraints are not yet type checked.
-fn TypeMismatch(X:! I where .Member = 2);
+fn RewriteTypeMismatch(X:! I where .Member = 2);
+
+// --- fail_left_of_impls_non_type.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
+// CHECK:STDERR:                                ^
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
+// CHECK:STDERR:                                ^
+// CHECK:STDERR:
+fn NonTypeImpls(U:! type where 7 impls type);
+
+// --- fail_right_of_impls_non_type.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
+// CHECK:STDERR:                                            ^
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
+// CHECK:STDERR:                                            ^
+// CHECK:STDERR:
+fn ImplsNonType(U:! type where .Self impls 7);
+
+// --- fail_right_of_impls_non_facet_type.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:51: error: right argument of `impls` requirement must be a facet type
+// CHECK:STDERR: fn ImplsOfNonFacetType(U:! type where .Self impls i32);
+// CHECK:STDERR:                                                   ^~~
+// CHECK:STDERR:
+fn ImplsOfNonFacetType(U:! type where .Self impls i32);
 
 // --- fail_todo_enforce_constraint.carbon
 
@@ -168,8 +224,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
+// CHECK:STDOUT:     %.loc15_22.1: type = facet_type_access %.Self.ref [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:     %.loc15_22.2: type = converted %.Self.ref, %.loc15_22.1 [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:     %.loc15_16: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_impls %.loc15_22.2, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %.1 = param V, runtime_param<invalid>
 // CHECK:STDOUT:     %V.loc15: %.1 = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
@@ -177,18 +235,19 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %W.patt: %.2 = symbolic_binding_pattern W, 0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref.loc17_12: type = name_ref I, file.%I.decl [template = constants.%.2]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self: %.2 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref.loc17_20: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %Second.ref.loc17_20: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
-// CHECK:STDOUT:     %I.ref.loc17_34: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.Self.ref.loc17_40: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.1]
+// CHECK:STDOUT:     %.loc17_20.1: type = facet_type_access %.Self.ref.loc17_20 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.loc17_20.2: type = converted %.Self.ref.loc17_20, %.loc17_20.1 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref.loc17_38: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
-// CHECK:STDOUT:     %.Self.ref.loc17_50: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %Second.ref.loc17_50: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc17: type = where_expr %.Self [template = constants.%.2] {
-// CHECK:STDOUT:       requirement_impls %Second.ref.loc17_20, %I.ref.loc17_34
-// CHECK:STDOUT:       requirement_rewrite %Member.ref, %Second.ref.loc17_50
+// CHECK:STDOUT:     %.Self.ref.loc17_48: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %Second.ref: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc17_14: type = where_expr %.Self [template = constants.%.2] {
+// CHECK:STDOUT:       requirement_impls %.loc17_20.2, %J.ref
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %Second.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %.2 = param W, runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc17: %.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
@@ -258,7 +317,188 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %W.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_check_constraints.carbon
+// CHECK:STDOUT: --- fail_todo_associated_type_impls.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @L [template]
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_type @M [template]
+// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @K [template]
+// CHECK:STDOUT:   %Self.3: %.3 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.3, %.1 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @K.%Associated [template]
+// CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %.7: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.4: @ImplicitAs.%.1 (%.7) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.5: %.7 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.10: type = interface_type @ImplicitAs, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %.10, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.13: %.8 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %W: %.3 = bind_symbolic_name W, 0 [symbolic]
+// CHECK:STDOUT:   %AssociatedTypeImpls.type: type = fn_type @AssociatedTypeImpls [template]
+// CHECK:STDOUT:   %AssociatedTypeImpls: %AssociatedTypeImpls.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.8) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.13)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .L = %L.decl
+// CHECK:STDOUT:     .M = %M.decl
+// CHECK:STDOUT:     .K = %K.decl
+// CHECK:STDOUT:     .AssociatedTypeImpls = %AssociatedTypeImpls.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %L.decl: type = interface_decl @L [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %M.decl: type = interface_decl @M [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %K.decl: type = interface_decl @K [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %AssociatedTypeImpls.decl: %AssociatedTypeImpls.type = fn_decl @AssociatedTypeImpls [template = constants.%AssociatedTypeImpls] {
+// CHECK:STDOUT:     %W.patt: %.3 = symbolic_binding_pattern W, 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%.3]
+// CHECK:STDOUT:     %.Self: %.3 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %Associated.ref: %.5 = name_ref Associated, @K.%.loc8 [template = constants.%.6]
+// CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [template = constants.%.2]
+// CHECK:STDOUT:     %.loc18_36.1: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.10]
+// CHECK:STDOUT:     %.loc18_36.2: %.11 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.12]
+// CHECK:STDOUT:     %Convert.ref: %.11 = name_ref Convert, %.loc18_36.2 [template = constants.%.12]
+// CHECK:STDOUT:     %.loc18_36.3: type = converted %Associated.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc18_30: type = where_expr %.Self [template = constants.%.3] {
+// CHECK:STDOUT:       requirement_impls <error>, %M.ref
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %W.param: %.3 = param W, runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc18: %.3 = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @L {
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @M {
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @K {
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %L.ref: type = name_ref L, file.%L.decl [template = constants.%.1]
+// CHECK:STDOUT:   %Associated: %.1 = assoc_const_decl Associated [template]
+// CHECK:STDOUT:   %.loc8: %.5 = assoc_entity element0, %Associated [template = constants.%.6]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Associated = %.loc8
+// CHECK:STDOUT:   witness = (%Associated)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.7)]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.5)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.7), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.8)]
+// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.8) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.9)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     .Convert = imports.%import_ref.3
+// CHECK:STDOUT:     witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.4: @ImplicitAs.%.1 (%.7)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.7)]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.5)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc18: %.3) {
+// CHECK:STDOUT:   %W.1: %.3 = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%W.loc18: %.3);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.4) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %Self => constants.%Self.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(type) {
+// CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %Self => constants.%Self.5
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT:   %.3 => constants.%.12
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
+// CHECK:STDOUT:   %W.1 => constants.%W
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_check_rewrite_constraints.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
@@ -269,8 +509,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, imports.%import_ref.12 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %X: %.1 = bind_symbolic_name X, 0 [symbolic]
-// CHECK:STDOUT:   %TypeMismatch.type: type = fn_type @TypeMismatch [template]
-// CHECK:STDOUT:   %TypeMismatch: %TypeMismatch.type = struct_value () [template]
+// CHECK:STDOUT:   %RewriteTypeMismatch.type: type = fn_type @RewriteTypeMismatch [template]
+// CHECK:STDOUT:   %RewriteTypeMismatch: %RewriteTypeMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -278,8 +518,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//state_constraints, inst+7, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+83, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+65, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+86, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -307,20 +547,20 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     .Impls = imports.%import_ref.5
 // CHECK:STDOUT:     .And = imports.%import_ref.6
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .TypeMismatch = %TypeMismatch.decl
+// CHECK:STDOUT:     .RewriteTypeMismatch = %RewriteTypeMismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %TypeMismatch.decl: %TypeMismatch.type = fn_decl @TypeMismatch [template = constants.%TypeMismatch] {
+// CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [template = constants.%RewriteTypeMismatch] {
 // CHECK:STDOUT:     %X.patt: %.1 = symbolic_binding_pattern X, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%.1]
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.8 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_39: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc8_23: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc8_39
+// CHECK:STDOUT:     %.loc8_46: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8_30: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc8_46
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: %.1 = param X, runtime_param<invalid>
 // CHECK:STDOUT:     %X.loc8: %.1 = bind_symbolic_name X, 0, %X.param [symbolic = %X.1 (constants.%X)]
@@ -335,14 +575,350 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   witness = (imports.%import_ref.10, imports.%import_ref.11)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeMismatch(%X.loc8: %.1) {
+// CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X.loc8: %.1) {
 // CHECK:STDOUT:   %X.1: %.1 = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%X.loc8: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @TypeMismatch(constants.%X) {
+// CHECK:STDOUT: specific @RewriteTypeMismatch(constants.%X) {
 // CHECK:STDOUT:   %X.1 => constants.%X
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_left_of_impls_non_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = interface_type @ImplicitAs, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %NonTypeImpls.type: type = fn_type @NonTypeImpls [template]
+// CHECK:STDOUT:   %NonTypeImpls: %NonTypeImpls.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .NonTypeImpls = %NonTypeImpls.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %NonTypeImpls.decl: %NonTypeImpls.type = fn_decl @NonTypeImpls [template = constants.%NonTypeImpls] {
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.loc11_32.1: i32 = int_literal 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_32.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:     %.loc11_32.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc11_32.3 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc11_32.4: type = converted %.loc11_32.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = type] {
+// CHECK:STDOUT:       requirement_impls <error>, type
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.3), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.4) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     .Convert = imports.%import_ref.3
+// CHECK:STDOUT:     witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @NonTypeImpls(%U.loc11: type) {
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%U.loc11: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(type) {
+// CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.3 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonTypeImpls(constants.%U) {
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_right_of_impls_non_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = interface_type @ImplicitAs, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(type) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %ImplsNonType.type: type = fn_type @ImplsNonType [template]
+// CHECK:STDOUT:   %ImplsNonType: %ImplsNonType.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .ImplsNonType = %ImplsNonType.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %ImplsNonType.decl: %ImplsNonType.type = fn_decl @ImplsNonType [template = constants.%ImplsNonType] {
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.loc11_44.1: i32 = int_literal 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_44.2: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%.6]
+// CHECK:STDOUT:     %.loc11_44.3: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.8]
+// CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc11_44.3 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc11_44.4: type = converted %.loc11_44.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = type] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.3), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.4) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     .Convert = imports.%import_ref.3
+// CHECK:STDOUT:     witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11: type) {
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%U.loc11: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(type) {
+// CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.3 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplsNonType(constants.%U) {
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_right_of_impls_non_facet_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %ImplsOfNonFacetType.type: type = fn_type @ImplsOfNonFacetType [template]
+// CHECK:STDOUT:   %ImplsOfNonFacetType: %ImplsOfNonFacetType.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .ImplsOfNonFacetType = %ImplsOfNonFacetType.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %ImplsOfNonFacetType.decl: %ImplsOfNonFacetType.type = fn_decl @ImplsOfNonFacetType [template = constants.%ImplsOfNonFacetType] {
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_51.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc8_51.2: type = converted %int.make_type_32, %.loc8_51.1 [template = i32]
+// CHECK:STDOUT:     %.loc8_33: type = where_expr %.Self [template = type] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc8: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @ImplsOfNonFacetType(%U.loc8: type) {
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%U.loc8: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplsOfNonFacetType(constants.%U) {
+// CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_enforce_constraint.carbon
@@ -389,8 +965,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.5: %Impls.type = import_ref Main//state_constraints, inst+63, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+83, unloaded
+// CHECK:STDOUT:   %import_ref.5: %Impls.type = import_ref Main//state_constraints, inst+65, loaded [template = constants.%Impls]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+86, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//prelude

@@ -75,7 +75,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
     -> bool {
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
-  // TODO: type check lhs and rhs are compatible
+  // TODO: type check lhs and rhs are comparable
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
@@ -86,14 +86,26 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
 
 auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     -> bool {
-  auto rhs = context.node_stack().PopExpr();
-  auto lhs = context.node_stack().PopExpr();
-  // TODO: check lhs is a facet and rhs is a facet type
+  auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
+  auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
+
+  // Check lhs is a facet and rhs is a facet type
+  auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
+  auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
+  if (rhs_as_type.type_id != SemIR::TypeId::Error &&
+      !context.IsFacetType(rhs_as_type.type_id)) {
+    CARBON_DIAGNOSTIC(
+        ImplsOnNonFacetType, Error,
+        "right argument of `impls` requirement must be a facet type");
+    context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
+    rhs_as_type.inst_id = SemIR::InstId::BuiltinError;
+  }
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementImpls>(
-          node_id, {.lhs_id = lhs, .rhs_id = rhs}));
+          node_id,
+          {.lhs_id = lhs_as_type.inst_id, .rhs_id = rhs_as_type.inst_id}));
   return true;
 }
 

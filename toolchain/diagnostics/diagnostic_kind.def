@@ -366,6 +366,7 @@ CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // Where operator and its requirements.
+CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 
 // ============================================================================

@@ -8,12 +8,16 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/fail_not_facet.carbon
 
-// CHECK:STDERR: fail_not_facet.carbon:[[@LINE+3]]:10: error: left argument to `where` operator must be a facet type
-// CHECK:STDERR: fn F[T:! i32 where .Self == bool](x: T);
-// CHECK:STDERR:          ^~~
-fn F[T:! i32 where .Self == bool](x: T);
+// --- fail_left_where_not_facet.carbon
 
-// CHECK:STDOUT: --- fail_not_facet.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_left_where_not_facet.carbon:[[@LINE+3]]:10: error: left argument of `where` operator must be a facet type
+// CHECK:STDERR: fn F(T:! i32 where .Self == bool);
+// CHECK:STDERR:          ^~~
+fn F(T:! i32 where .Self == bool);
+
+// CHECK:STDOUT: --- fail_left_where_not_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -52,22 +56,18 @@ fn F[T:! i32 where .Self == bool](x: T);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32, %.loc14_10.1 [template = i32]
+// CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc7_10.2: type = converted %int.make_type_32, %.loc7_10.1 [template = i32]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc14_14: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     %.loc7_14: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: <error> = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: <error> = name_ref T, %T.loc14 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %x.param: <error> = param x, runtime_param0
-// CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc7: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,10 +75,10 @@ fn F[T:! i32 where .Self == bool](x: T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc14: <error>) {
+// CHECK:STDOUT: generic fn @F(%T.loc7: <error>) {
 // CHECK:STDOUT:   %T.1: <error> = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc14: <error>](%x: <error>);
+// CHECK:STDOUT:   fn(%T.loc7: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
