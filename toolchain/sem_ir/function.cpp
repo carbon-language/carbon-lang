@@ -46,17 +46,17 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     -> ParamInfo {
   auto ref = sem_ir.insts().Get(param_ref_id);
 
-  if (auto addr_pattern = ref.TryAs<SemIR::AddrPattern>()) {
+  if (auto addr_pattern = ref.TryAs<AddrPattern>()) {
     param_ref_id = addr_pattern->inner_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }
 
-  auto bind_name = ref.TryAs<SemIR::AnyBindName>();
+  auto bind_name = ref.TryAs<AnyBindName>();
   if (bind_name) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }
-  return {param_ref_id, bind_name, ref.As<SemIR::Param>()};
+  return {param_ref_id, bind_name, ref.As<Param>()};
 }
 
 auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {
