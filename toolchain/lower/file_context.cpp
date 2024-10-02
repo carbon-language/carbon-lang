@@ -264,8 +264,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
-      name_id =
-          SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id).name_id;
+      name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
+                    .GetNameId(sem_ir());
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }

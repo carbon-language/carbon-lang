@@ -69,8 +69,9 @@ struct Function : public EntityWithParamsBase,
   // its ID, and name_id.
   struct ParamInfo {
     InstId inst_id;
+    std::optional<AnyBindName> bind_name;
     Param param;
-    NameId name_id;
+    auto GetNameId(const File& sem_ir) -> NameId;
   };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> ParamInfo;

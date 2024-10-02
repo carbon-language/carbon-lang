@@ -1209,7 +1209,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         context.insts().TryGetAs<SemIR::AddrPattern>(implicit_param_id);
     auto param = SemIR::Function::GetParamFromParamRefId(context.sem_ir(),
                                                          implicit_param_id);
-    if (param.name_id == SemIR::NameId::SelfValue) {
+    if (param.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
           context, call_loc_id, callee.callee_loc, callee_specific_id,
           addr_pattern, param.inst_id, param.param, self_id);
