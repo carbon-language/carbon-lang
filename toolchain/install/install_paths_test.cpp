@@ -16,6 +16,14 @@
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
+
+class InstallPathsTestPeer {
+ public:
+  static auto GetPrefix(const InstallPaths& paths) -> llvm::StringRef {
+    return paths.prefix_;
+  }
+};
+
 namespace {
 
 using ::bazel::tools::cpp::runfiles::Runfiles;
@@ -37,17 +45,20 @@ class InstallPathsTest : public ::testing::Test {
   // check that the path accessors point to the right kind of file or
   // directory.
   auto TestInstallPaths(const InstallPaths& paths) -> void {
-    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", paths.prefix()));
+    auto prefix = InstallPathsTestPeer::GetPrefix(paths);
+
+    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", prefix));
 
     // Grab a the prefix into a string to make it easier to use in the test.
-    std::string prefix = paths.prefix().str();
     EXPECT_TRUE(llvm::sys::fs::exists(prefix));
     EXPECT_TRUE(llvm::sys::fs::is_directory(prefix));
 
     // Now check that all the expected parts of the toolchain's install are in
     // fact found using the API.
-    std::string driver_path = paths.driver();
-    ASSERT_THAT(driver_path, StartsWith(prefix));
+    llvm::SmallString<256> driver_path(prefix);
+    // TODO: Adjust this to work equally well on Windows.
+    llvm::sys::path::append(driver_path, llvm::sys::path::Style::posix,
+                            "bin/carbon");
     EXPECT_TRUE(llvm::sys::fs::exists(driver_path)) << "path: " << driver_path;
     EXPECT_TRUE(llvm::sys::fs::can_execute(driver_path))
         << "path: " << driver_path;
@@ -120,11 +131,11 @@ TEST_F(InstallPathsTest, BinaryRunfiles) {
 TEST_F(InstallPathsTest, Errors) {
   auto paths = InstallPaths::Make("/foo/bar/baz");
   EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
-  EXPECT_THAT(paths.prefix(), Eq(""));
+  EXPECT_THAT(InstallPathsTestPeer::GetPrefix(paths), Eq(""));
 
   paths = InstallPaths::MakeExeRelative("foo/bar/baz");
   EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
-  EXPECT_THAT(paths.prefix(), Eq(""));
+  EXPECT_THAT(InstallPathsTestPeer::GetPrefix(paths), Eq(""));
 
   // Note that we can't test the runfiles code path from within a test because
   // it succeeds some of the time even with a bogus executable name.

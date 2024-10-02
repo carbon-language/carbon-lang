@@ -34,15 +34,17 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
+// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %a.loc11_9.1: %.1 = param a, runtime_param0
-// CHECK:STDOUT:     @Echo.%a: %.1 = bind_name a, %a.loc11_9.1
+// CHECK:STDOUT:     %a.param: %.1 = param a, runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Echo.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
+// CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: %.1) -> %.1 {

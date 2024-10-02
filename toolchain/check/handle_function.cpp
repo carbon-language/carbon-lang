@@ -35,13 +35,15 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // The function is potentially generic.
   StartGenericDecl(context);
+  // Start a new pattern block for the signature.
+  context.pattern_block_stack().Push();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto type_id = ExprAsType(context, type_node_id, type_inst_id);
+  auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush<SemIR::VarStorage>(
       node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});
@@ -213,8 +215,6 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto decl_block_id = context.inst_block_stack().Pop();
-
   auto return_storage_id = SemIR::InstId::Invalid;
   if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
@@ -260,6 +260,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Add the function declaration.
+  auto decl_block_id = context.inst_block_stack().Pop();
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
   auto decl_id =

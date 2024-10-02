@@ -133,10 +133,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     %.loc4_16.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %.loc4_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -200,10 +200,10 @@ var n: {} = i32;
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     %.loc8_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
@@ -244,10 +244,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     %.loc7_21.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc7_21.2: type = converted %.loc7_21.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     @Int32.%return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
@@ -287,7 +287,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     .Core = %Core.decl
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {}
+// CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {} {}
 // CHECK:STDOUT:   %.loc12_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %n.var: ref %.1 = var n
@@ -295,10 +295,10 @@ var n: {} = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Core {
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
 // CHECK:STDOUT:     %.loc6_18.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc6_18.2: type = converted %.loc6_18.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.var: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:

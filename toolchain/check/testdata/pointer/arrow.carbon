@@ -59,20 +59,24 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %ptr.patt: %.2 = binding_pattern ptr
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %ptr.loc16_8.1: %.2 = param ptr, runtime_param0
-// CHECK:STDOUT:     @Foo.%ptr: %.2 = bind_name ptr, %ptr.loc16_8.1
+// CHECK:STDOUT:     %ptr.param: %.2 = param ptr, runtime_param0
+// CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
+// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc12_13.1: %C = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc12_13.2: %C = bind_name self, %self.loc12_13.1
+// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.2]
@@ -85,7 +89,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .field = %.loc13_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member[@C.%self.loc12_13.2: %C]();
+// CHECK:STDOUT: fn @Member[%self: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr: %.2) {
 // CHECK:STDOUT: !entry:

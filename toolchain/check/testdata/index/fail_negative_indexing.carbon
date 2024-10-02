@@ -31,7 +31,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %array: %.3 = tuple_value (%.5, %.5) [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 10 [template]
 // CHECK:STDOUT:   %.10: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type %.10, %Op.type [template]
@@ -52,11 +52,11 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+72, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.11 = import_ref Core//prelude/operators/arithmetic, inst+90, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+79, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.11 = import_ref Core//prelude/operators/arithmetic, inst+96, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,7 +90,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.10) {
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
 // CHECK:STDOUT: }

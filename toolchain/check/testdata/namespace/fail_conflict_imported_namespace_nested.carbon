@@ -98,7 +98,7 @@ fn Other.Nested.F();
 // CHECK:STDOUT:     .Nested = imports.%Nested
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

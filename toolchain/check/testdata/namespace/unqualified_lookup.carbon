@@ -78,12 +78,12 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .CallABC = %CallABC.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %CallA.decl: %CallA.type = fn_decl @CallA [template = constants.%CallA] {}
-// CHECK:STDOUT:   %CallAB.decl: %CallAB.type = fn_decl @CallAB [template = constants.%CallAB] {}
-// CHECK:STDOUT:   %CallABC.decl: %CallABC.type = fn_decl @CallABC [template = constants.%CallABC] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %CallA.decl: %CallA.type = fn_decl @CallA [template = constants.%CallA] {} {}
+// CHECK:STDOUT:   %CallAB.decl: %CallAB.type = fn_decl @CallAB [template = constants.%CallAB] {} {}
+// CHECK:STDOUT:   %CallABC.decl: %CallABC.type = fn_decl @CallABC [template = constants.%CallABC] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

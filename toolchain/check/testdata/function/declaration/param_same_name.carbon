@@ -47,18 +47,22 @@ fn G(a: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32.loc11, %.loc11_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc11_6.1: i32 = param a, runtime_param0
-// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc11_6.1
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_9.2: type = converted %int.make_type_32, %.loc11_9.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_9.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:     %.loc13_9.2: type = converted %int.make_type_32.loc13, %.loc13_9.1 [template = i32]
-// CHECK:STDOUT:     %a.loc13_6.1: i32 = param a, runtime_param0
-// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc13_6.1
+// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc13_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc13_9.2: type = converted %int.make_type_32, %.loc13_9.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

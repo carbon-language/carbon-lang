@@ -50,6 +50,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
+      pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
       param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
@@ -82,6 +83,7 @@ auto Context::VerifyOnFinish() -> void {
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
+  pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
@@ -174,6 +176,13 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = AddPlaceholderInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
+  return inst_id;
+}
+
+auto Context::AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+  pattern_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
@@ -1064,10 +1073,12 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FunctionType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::InterfaceType, SemIR::UnboundElementType>())
+    requires(
+        InstT::Kind
+            .template IsAnyOf<SemIR::AssociatedEntityType, SemIR::FunctionType,
+                              SemIR::GenericClassType,
+                              SemIR::GenericInterfaceType, SemIR::InterfaceType,
+                              SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value
@@ -1285,6 +1296,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
   node_stack_.PrintForStackDump(formatter, Indent, output);
   inst_block_stack_.PrintForStackDump(formatter, Indent, output);
+  pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
   param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
   args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
 }

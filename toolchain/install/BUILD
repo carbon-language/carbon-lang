@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("run_tool.bzl", "run_tool")
@@ -12,7 +13,7 @@ package(default_visibility = ["//visibility:public"])
 # Build rules supporting the install data tree for the Carbon toolchain.
 #
 # This populates a synthetic Carbon toolchain installation under the
-# `prefix_root` directory. For details on its layout, see `install_paths.h`.
+# `prefix_root` directory. For details on its layout, see `install_dirs` below.
 
 # A library for computing install paths for the toolchain. Note that this
 # library does *not* include the data itself, as that would form a dependency
@@ -76,6 +77,15 @@ lld_aliases = [
     "wasm-ld",
 ]
 
+# Given a root `prefix_root`, the hierarchy looks like:
+#
+# - prefix_root/bin: Binaries intended for direct use.
+# - prefix_root/lib/carbon: Private data and files.
+# - prefix_root/lib/carbon/core: The `Core` package files.
+# - prefix_root/lib/carbon/llvm/bin: LLVM binaries.
+#
+# This will be how installs are provided on Unix-y platforms, and is loosely
+# based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
         install_target(
@@ -132,6 +142,7 @@ pkg_tar_and_test(
 # Support `bazel run` on specific binaries.
 run_tool(
     name = "run_carbon",
-    data = [":install_data"],
+    data = [":install_data"] + cc_env_data(),
+    env = cc_env(),
     tool = "prefix_root/bin/carbon",
 )

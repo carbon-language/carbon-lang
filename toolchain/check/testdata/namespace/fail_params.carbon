@@ -46,7 +46,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -78,23 +78,23 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %A: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %n.loc24_13.1: i32 = param n, runtime_param<invalid>
-// CHECK:STDOUT:   %n.loc24_13.2: i32 = bind_name n, %n.loc24_13.1
+// CHECK:STDOUT:   %n.param: i32 = param n, runtime_param<invalid>
+// CHECK:STDOUT:   %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T.loc30_13.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:   %T.loc30_13.2: type = bind_symbolic_name T 0, %T.loc30_13.1 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T.loc30_13.2 [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.loc30_23.1: %T = param x, runtime_param<invalid>
-// CHECK:STDOUT:   %x.loc30_23.2: %T = bind_name x, %x.loc30_23.1
+// CHECK:STDOUT:   %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %x.param: %T = param x, runtime_param<invalid>
+// CHECK:STDOUT:   %x: %T = bind_name x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.loc39_6.1: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc39_6.2: type = bind_symbolic_name T 0, %T.loc39_6.1 [symbolic = @.1.%T (constants.%T)]
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc39: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +105,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(file.%T.loc39_6.2: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT: generic fn @.1(%T.loc39: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -117,6 +117,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

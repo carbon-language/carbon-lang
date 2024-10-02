@@ -41,6 +41,10 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // This class is potentially generic.
   StartGenericDecl(context);
+  // Push a pattern block for the signature (if any) of the first NameComponent.
+  // TODO: Instead use a separate parse node kind for an identifier that's
+  // followed by a pattern, and push a pattern block when handling it.
+  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -387,7 +391,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapted_type_id = ExprAsType(context, node_id, adapted_type_expr_id);
+  auto adapted_type_id =
+      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
   adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
                       "adapted type `{0}` is an incomplete type",
@@ -463,7 +468,7 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
 // Checks that the specified base type is valid.
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
-  auto base_type_id = ExprAsType(context, node_id, base_expr_id);
+  auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
                       "base `{0}` is an incomplete type", SemIR::TypeId);

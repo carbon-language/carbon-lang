@@ -14,7 +14,7 @@ namespace Carbon::Check {
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
+  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id).type_id;
 
   // TODO: Handle `_` bindings.
 
@@ -32,6 +32,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
   }
 
+  bool needs_compile_time_binding = is_generic && !is_associated_constant;
+
   // Create the appropriate kind of binding for this pattern.
   auto make_bind_name = [&](SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::LocIdAndInst {
@@ -42,7 +44,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
          .parent_scope_id = context.scope_stack().PeekNameScopeId(),
          // TODO: Don't allocate a compile-time binding index for an associated
          // constant declaration.
-         .bind_index = is_generic && !is_associated_constant
+         .bind_index = needs_compile_time_binding
                            ? context.scope_stack().AddCompileTimeBinding()
                            : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
@@ -63,7 +65,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // stack.
   auto push_bind_name = [&](SemIR::InstId bind_id) {
     context.node_stack().Push(node_id, bind_id);
-    if (is_generic && !is_associated_constant) {
+    if (needs_compile_time_binding) {
       context.scope_stack().PushCompileTimeBinding(bind_id);
     }
   };
@@ -165,6 +167,20 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
+      auto entity_name_id =
+          context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+      if (is_generic) {
+        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      } else {
+        context.AddPatternInst<SemIR::BindingPattern>(
+            name_node,
+            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      }
+      // TODO: use the pattern insts to generate the pattern-match insts
+      // at the end of the full pattern, instead of eagerly generating them
+      // here.
       break;
     }
 
@@ -200,7 +216,19 @@ auto HandleParseNode(Context& context, Parse::BindingPatternId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
-  return HandleAnyBindingPattern(context, node_id, /*is_generic=*/true);
+  bool is_generic = true;
+  if (context.decl_introducer_state_stack().innermost().kind ==
+      Lex::TokenKind::Let) {
+    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
+    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
+        !scope_inst.Is<SemIR::FunctionDecl>()) {
+      context.TODO(node_id,
+                   "`let` compile time binding outside function or interface");
+      is_generic = false;
+    }
+  }
+
+  return HandleAnyBindingPattern(context, node_id, is_generic);
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {

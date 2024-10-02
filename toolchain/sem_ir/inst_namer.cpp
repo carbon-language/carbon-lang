@@ -22,7 +22,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     : tokenized_buffer_(tokenized_buffer),
       parse_tree_(parse_tree),
       sem_ir_(sem_ir) {
-  insts_.resize(sem_ir.insts().size());
+  insts_.resize(sem_ir.insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir.inst_blocks().size());
   scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
   generic_scopes_.resize(sem_ir.generics().size(), ScopeId::None);
@@ -107,7 +107,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         globals_.AllocateName(*this, impl_loc, "impl");
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
-    // TODO: Collect names from the generic once we support generic impls.
+    CollectNamesInGeneric(impl_scope, impl_info.generic_id);
   }
 }
 
@@ -381,9 +381,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
 
     auto untyped_inst = sem_ir_.insts().Get(inst_id);
     auto add_inst_name = [&](std::string name) {
-      insts_[inst_id.index] = {
-          scope_id, scope.insts.AllocateName(
-                        *this, sem_ir_.insts().GetLocId(inst_id), name)};
+      ScopeId old_scope_id = insts_[inst_id.index].first;
+      if (old_scope_id == ScopeId::None) {
+        insts_[inst_id.index] = {
+            scope_id, scope.insts.AllocateName(
+                          *this, sem_ir_.insts().GetLocId(inst_id), name)};
+      } else {
+        CARBON_CHECK(old_scope_id == scope_id,
+                     "Attempting to name inst in multiple scopes");
+      }
     };
     auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
       add_inst_name(
@@ -416,6 +422,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id);
         continue;
       }
+      case BindingPattern::Kind:
+      case SymbolicBindingPattern::Kind: {
+        auto inst = untyped_inst.As<AnyBindingPattern>();
+        add_inst_name_id(
+            sem_ir_.entity_names().Get(inst.entity_name_id).name_id, ".patt");
+        continue;
+      }
       case CARBON_KIND(Call inst): {
         auto callee_function =
             SemIR::GetCalleeFunction(sem_ir_, inst.callee_id);
@@ -437,8 +450,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ClassDecl inst): {
-        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        const auto& class_info = sem_ir_.classes().Get(inst.class_id);
+        add_inst_name_id(class_info.name_id, ".decl");
+        auto class_scope_id = GetScopeFor(inst.class_id);
+        CollectNamesInBlock(class_scope_id, class_info.pattern_block_id);
+        CollectNamesInBlock(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -446,9 +462,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(FunctionDecl inst): {
-        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
-                         ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        const auto& function_info = sem_ir_.functions().Get(inst.function_id);
+        add_inst_name_id(function_info.name_id, ".decl");
+        auto function_scope_id = GetScopeFor(inst.function_id);
+        CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
+        CollectNamesInBlock(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -466,7 +484,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        auto impl_scope_id = GetScopeFor(inst.impl_id);
+        CollectNamesInBlock(impl_scope_id,
+                            sem_ir_.impls().Get(inst.impl_id).pattern_block_id);
+        CollectNamesInBlock(impl_scope_id, inst.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -493,9 +514,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(InterfaceDecl inst): {
-        add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
-                         ".decl");
-        CollectNamesInBlock(scope_id, inst.decl_block_id);
+        const auto& interface_info =
+            sem_ir_.interfaces().Get(inst.interface_id);
+        add_inst_name_id(interface_info.name_id, ".decl");
+        auto interface_scope_id = GetScopeFor(inst.interface_id);
+        CollectNamesInBlock(interface_scope_id,
+                            interface_info.pattern_block_id);
+        CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {
@@ -508,7 +533,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(Param inst): {
-        add_inst_name_id(inst.name_id);
+        add_inst_name_id(inst.name_id, ".param");
         continue;
       }
       case CARBON_KIND(SpliceBlock inst): {

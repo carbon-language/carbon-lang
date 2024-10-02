@@ -188,7 +188,7 @@ struct AssociatedEntity {
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
   ElementIndex index;
-  InstId decl_id;
+  AbsoluteInstId decl_id;
 };
 
 // The type of an expression that names an associated entity, such as
@@ -285,6 +285,36 @@ struct BindValue {
 
   TypeId type_id;
   InstId value_id;
+};
+
+// Common representation for various `*binding_pattern` nodes.
+struct AnyBindingPattern {
+  // TODO: Also handle TemplateBindingPattern once it exists.
+  static constexpr InstKind Kinds[] = {InstKind::BindingPattern,
+                                       InstKind::SymbolicBindingPattern};
+
+  InstKind kind;
+  TypeId type_id;
+  EntityNameId entity_name_id;
+};
+
+// Represents a non-symbolic binding pattern.
+struct BindingPattern {
+  static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
+      {.ir_name = "binding_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+};
+
+// Represents a symbolic binding pattern.
+struct SymbolicBindingPattern {
+  static constexpr auto Kind =
+      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "symbolic_binding_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -616,7 +646,9 @@ struct GenericInterfaceType {
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
-      {.ir_name = "impl_decl", .is_lowered = false});
+      {.ir_name = "impl_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   // No type: an impl declaration is not a value.
   ImplId impl_id;
@@ -715,6 +747,7 @@ struct InterfaceWitness {
        .constant_kind = InstConstantKind::Conditional,
        .is_lowered = false});
 
+  // Always the builtin witness type.
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -779,7 +812,7 @@ struct Namespace {
   NameScopeId name_scope_id;
   // If the namespace was produced by an `import` line, the associated line for
   // diagnostics.
-  InstId import_id;
+  AbsoluteInstId import_id;
 };
 
 // A parameter for a function or other parameterized block.
@@ -827,6 +860,39 @@ struct ReturnExpr {
   InstId dest_id;
 };
 
+// An `expr == expr` clause in a `where` expression or `require` declaration.
+struct RequirementEquivalent {
+  static constexpr auto Kind =
+      InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
+          {.ir_name = "requirement_equivalent", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An `expr impls expr` clause in a `where` expression or `require` declaration.
+struct RequirementImpls {
+  static constexpr auto Kind =
+      InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
+          {.ir_name = "requirement_impls", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// A `.M = expr` clause in a `where` expression or `require` declaration.
+struct RequirementRewrite {
+  static constexpr auto Kind =
+      InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
+          {.ir_name = "requirement_rewrite", .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
 // Given an instruction with a constant value that depends on a generic
 // parameter, selects a version of that instruction with the constant value
 // corresponding to a particular specific.
@@ -840,7 +906,7 @@ struct SpecificConstant {
       {.ir_name = "specific_constant", .is_lowered = false});
 
   TypeId type_id;
-  InstId inst_id;
+  AbsoluteInstId inst_id;
   SpecificId specific_id;
 };
 
@@ -1070,6 +1136,20 @@ struct VarStorage {
 
   TypeId type_id;
   NameId name_id;
+};
+
+// An `expr where requirements` expression.
+struct WhereExpr {
+  static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(
+      {.ir_name = "where_expr",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Conditional});
+
+  TypeId type_id;
+  // This is the `.Self` symbolic binding. Its type matches the left type
+  // argument of the `where`.
+  InstId period_self_id;
+  InstBlockId requirements_id;
 };
 
 // These concepts are an implementation detail of the library, not public API.

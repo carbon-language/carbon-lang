@@ -147,7 +147,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Def.decl: type = class_decl @Def [template = constants.%Def] {}
+// CHECK:STDOUT:   %Def.decl: type = class_decl @Def [template = constants.%Def] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def {
@@ -169,8 +169,8 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: type = class_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: type = class_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: type = class_decl @ForwardWithDef [template = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: type = class_decl @ForwardWithDef [template = constants.%ForwardWithDef] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
@@ -190,7 +190,7 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {}
+// CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Forward;
@@ -411,12 +411,14 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %c.patt: %.1 = binding_pattern c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
 // CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
-// CHECK:STDOUT:     %c.loc4_6.1: %.1 = param c, runtime_param0
-// CHECK:STDOUT:     @F.%c: %.1 = bind_name c, %c.loc4_6.1
+// CHECK:STDOUT:     %c.param: %.1 = param c, runtime_param0
+// CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {}
+// CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Forward {
@@ -445,10 +447,12 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.loc10_6.1: <error> = param c, runtime_param0
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc10_6.1
+// CHECK:STDOUT:     %c.param: <error> = param c, runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -478,11 +482,13 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.loc9_6.1: <error> = param c, runtime_param0
-// CHECK:STDOUT:     @F.%c: <error> = bind_name c, %c.loc9_6.1
+// CHECK:STDOUT:     %c.param: <error> = param c, runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -503,8 +509,8 @@ private class Redecl {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Redecl.decl.loc4: type = class_decl @Redecl [template = constants.%Redecl] {}
-// CHECK:STDOUT:   %Redecl.decl.loc6: type = class_decl @Redecl [template = constants.%Redecl] {}
+// CHECK:STDOUT:   %Redecl.decl.loc4: type = class_decl @Redecl [template = constants.%Redecl] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc6: type = class_decl @Redecl [template = constants.%Redecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Redecl {

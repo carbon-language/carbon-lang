@@ -577,9 +577,9 @@ static auto ValidateIntType(Context& context, SemIRLoc loc,
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
-auto MakeIntTypeResult(Context& context, SemIRLoc loc, SemIR::IntKind int_kind,
-                       SemIR::InstId width_id, Phase phase)
-    -> SemIR::ConstantId {
+static auto MakeIntTypeResult(Context& context, SemIRLoc loc,
+                              SemIR::IntKind int_kind, SemIR::InstId width_id,
+                              Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
       .type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::TypeType),
       .int_kind = int_kind,
@@ -1103,8 +1103,10 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   return SemIR::ConstantId::NotConstant;
 }
 
-auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
-                          SemIR::Inst inst) -> SemIR::ConstantId {
+// Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
+static auto TryEvalInstInContext(EvalContext& eval_context,
+                                 SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
   CARBON_KIND_SWITCH(inst) {
@@ -1276,6 +1278,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
                            .specific_id = SemIR::SpecificId::Invalid},
           Phase::Template);
     }
+
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       // If the interface has generic parameters, we don't produce an interface
       // type, but a callable whose return value is an interface type.
@@ -1309,10 +1312,12 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
     // TODO: This doesn't properly handle redeclarations. Consider adding a
-    // corresponding `Value` inst for each of these cases.
+    // corresponding `Value` inst for each of these cases, or returning the
+    // first declaration.
     case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
+    case SemIR::ImplDecl::Kind:
     case SemIR::Namespace::Kind:
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
@@ -1401,6 +1406,12 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       // here. For now, we model a facet value as just a type.
       return eval_context.GetConstantValue(typed_inst.facet_id);
     }
+    case CARBON_KIND(SemIR::WhereExpr typed_inst): {
+      // TODO: This currently ignores the requirements and just produces the
+      // left-hand type argument to the `where`.
+      return eval_context.GetConstantValue(
+          eval_context.insts().Get(typed_inst.period_self_id).type_id());
+    }
 
     // `not true` -> `false`, `not false` -> `true`.
     // All other uses of unary `not` are non-constant.
@@ -1438,16 +1449,20 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:
+    case SemIR::BindingPattern::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
-    case SemIR::ImplDecl::Kind:
     case SemIR::ImportDecl::Kind:
     case SemIR::Param::Kind:
+    case SemIR::RequirementEquivalent::Kind:
+    case SemIR::RequirementImpls::Kind:
+    case SemIR::RequirementRewrite::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
+    case SemIR::SymbolicBindingPattern::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;

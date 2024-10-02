@@ -6,6 +6,7 @@
 
 #include "common/vlog.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
@@ -485,6 +486,10 @@ class CompilationUnit {
     consumer_->Flush();
   }
 
+  // Flushes diagnostics, specifically as part of generating stack trace
+  // information.
+  auto FlushForStackTrace() -> void { consumer_->Flush(); }
+
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
@@ -658,6 +663,25 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
 
     stream_consumer.Flush();
+  });
+
+  PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
+    // When crashing, flush diagnostics. If sorting diagnostics, they can be
+    // redirected to the crash stream; if streaming, the original stream is
+    // flushed.
+    // TODO: Eventually we'll want to limit the count.
+    if (options_.stream_errors) {
+      out << "Flushing diagnostics\n";
+    } else {
+      out << "Pending diagnostics:\n";
+      stream_consumer.set_stream(&out);
+    }
+
+    for (auto& unit : units) {
+      unit->FlushForStackTrace();
+    }
+    stream_consumer.Flush();
+    stream_consumer.set_stream(&driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.
