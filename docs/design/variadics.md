@@ -53,8 +53,8 @@ cases on a keyword following the `...`:
     iteratively evaluates its operand expression, and treats the values as
     successive elements of the tuple.
 -   `...and` and `...or` iteratively evaluate a boolean expression, combining
-    the values using `and` and `or`, and ending the loop early if the underlying
-    operator short-circuits.
+    the values using `and` and `or`. Normal short-circuiting behavior for the
+    resulting `and` and `or` operators applies at runtime.
 -   In a statement context, `...` iteratively executes a statement.
 -   In a tuple literal pattern (such as a function parameter list), `...`
     iteratively matches the elements of the scrutinee tuple. In conjunction with
@@ -383,7 +383,7 @@ Now, consider a modified version of that example:
 
 ```carbon
 fn F[... each T:! type]((... each x: Optional(each T)), (... each y: i32)) {
-  let (.. each z: auto) = (0 as f32, ... each x, ... each y);
+  let (... each z: auto) = (0 as f32, ... each x, ... each y);
 }
 ```
 
