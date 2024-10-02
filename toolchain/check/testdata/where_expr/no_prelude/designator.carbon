@@ -18,6 +18,10 @@ interface I {
 
 fn PeriodSelf(T:! I where .Self == ());
 
+// CHECK:STDERR: success.carbon:[[@LINE+4]]:39: error: package `Core` implicitly referenced here, but not found
+// CHECK:STDERR: fn PeriodMember(U:! I where .Member = {});
+// CHECK:STDERR:                                       ^~
+// CHECK:STDERR:
 fn PeriodMember(U:! I where .Member = {});
 
 fn TypeSelfImpls(V:! type where .Self impls I);
@@ -99,6 +103,7 @@ class D {
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %struct: %.5 = struct_value () [template]
 // CHECK:STDOUT:   %U: %.1 = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
@@ -136,12 +141,15 @@ class D {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, @I.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10_40: %.5 = struct_literal ()
-// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc10_40
+// CHECK:STDOUT:     %.loc14_40.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %struct: %.5 = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:     %.loc14_40.2: %.5 = converted %.loc14_40.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc14_40.3: %.2 = converted %.loc14_40.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc14_23: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc10: %.1 = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc14: %.1 = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V, 0
@@ -149,11 +157,11 @@ class D {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = type] {
+// CHECK:STDOUT:     %.loc16: type = where_expr %.Self [template = type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc12: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc16: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,16 +182,16 @@ class D {
 // CHECK:STDOUT:   fn(%T.loc8: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10: %.1) {
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc14: %.1) {
 // CHECK:STDOUT:   %U.1: %.1 = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc10: %.1);
+// CHECK:STDOUT:   fn(%U.loc14: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12: type) {
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc16: type) {
 // CHECK:STDOUT:   %V.1: type = bind_symbolic_name V, 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.loc12: type);
+// CHECK:STDOUT:   fn(%V.loc16: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
@@ -228,7 +236,7 @@ class D {
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12_44: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, %.loc12_44
+// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %.1 = param W, runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc12: %.1 = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]

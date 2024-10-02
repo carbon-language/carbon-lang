@@ -11,6 +11,9 @@
 interface I { let T:! type; }
 
 // Ensure that we don't crash when checking this `where` in a non-generic context.
+// CHECK:STDERR: non_generic.carbon:[[@LINE+3]]:32: error: package `Core` implicitly referenced here, but not found
+// CHECK:STDERR: fn NotGenericF(U: I where .T = {}) {}
+// CHECK:STDERR:                                ^~
 fn NotGenericF(U: I where .T = {}) {}
 
 // CHECK:STDOUT: --- non_generic.carbon
@@ -23,6 +26,7 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %struct: %.5 = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -40,9 +44,12 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc14_33: %.5 = struct_literal ()
-// CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref, %.loc14_33
+// CHECK:STDOUT:     %.loc17_33.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %struct: %.5 = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:     %.loc17_33.2: %.5 = converted %.loc17_33.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc17_33.3: %.2 = converted %.loc17_33.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc17_21: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param0
 // CHECK:STDOUT:     %U: %.1 = bind_name U, %U.param

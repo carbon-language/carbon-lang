@@ -60,14 +60,17 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     -> bool {
-  auto rhs = context.node_stack().PopExpr();
+  auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto lhs = context.node_stack().PopExpr();
-  // TODO: convert rhs to type of lhs
+
+  // Convert rhs to type of lhs.
+  SemIR::InstId rhs_inst_id = ConvertToValueOfType(
+      context, rhs_node, rhs_id, context.insts().Get(lhs).type_id());
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       context.AddInstInNoBlock<SemIR::RequirementRewrite>(
-          node_id, {.lhs_id = lhs, .rhs_id = rhs}));
+          node_id, {.lhs_id = lhs, .rhs_id = rhs_inst_id}));
   return true;
 }
 
@@ -89,7 +92,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
-  // Check lhs is a facet and rhs is a facet type
+  // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
   if (rhs_as_type.type_id != SemIR::TypeId::Error &&
