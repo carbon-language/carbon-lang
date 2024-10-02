@@ -26,7 +26,7 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %a: %.1 = bind_symbolic_name a 0 [symbolic]
+// CHECK:STDOUT:   %a: %.1 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -60,12 +60,12 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %.1 = symbolic_binding_pattern a 0
+// CHECK:STDOUT:     %a.patt: %.1 = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.param: %.1 = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc16: %.1 = bind_symbolic_name a 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc16: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
@@ -84,7 +84,7 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%a.loc16: %.1) {
-// CHECK:STDOUT:   %a.1: %.1 = bind_symbolic_name a 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:   %a.1: %.1 = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%a.loc16: %.1]();
 // CHECK:STDOUT: }

@@ -440,9 +440,7 @@ auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
     return;
   }
   for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    // TODO: Change GetParamFromParamRefId to return the name instead of
-    // inspecting param.name_id.
-    auto [param_id, param] =
+    auto param =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
       CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
@@ -466,9 +464,7 @@ auto RequireGenericOrSelfImplicitParams(Context& context,
     return;
   }
   for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    // TODO: Change GetParamFromParamRefId to return the name instead of
-    // inspecting param.name_id.
-    auto [param_id, param] =
+    auto param =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
     if (param.name_id != SemIR::NameId::SelfValue &&
         !context.constant_values().Get(inst_id).is_constant()) {

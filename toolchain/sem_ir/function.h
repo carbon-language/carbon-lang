@@ -65,10 +65,15 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns the corresponding `Param` instruction
-  // and its ID.
+  // `implicit_param_refs_id`, returns the corresponding instruction,
+  // its ID, and name_id.
+  struct ParamInfo {
+    InstId inst_id;
+    Param param;
+    NameId name_id;
+  };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-      -> std::pair<InstId, Param>;
+      -> ParamInfo;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is

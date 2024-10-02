@@ -370,17 +370,17 @@ static auto HandleFunctionDefinitionAfterSignature(
   for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
-    auto [param_id, param] =
+    auto param =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.type_id, [&] {
+    context.TryToCompleteType(param.param.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "parameter has incomplete type `{0}` in function definition",
           SemIR::TypeId);
-      return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
-                                     param.type_id);
+      return context.emitter().Build(
+          param.inst_id, IncompleteTypeInFunctionParam, param.param.type_id);
     });
   }
 
