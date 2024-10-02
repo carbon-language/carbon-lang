@@ -24,7 +24,7 @@ interface Modifiers {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Modifiers [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Final: %Final.type = struct_value () [template]
@@ -44,7 +44,7 @@ interface Modifiers {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {} {}
 // CHECK:STDOUT:   %.loc16: %.3 = assoc_entity element0, %Final.decl [template = constants.%.4]
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [template = constants.%Default] {} {}

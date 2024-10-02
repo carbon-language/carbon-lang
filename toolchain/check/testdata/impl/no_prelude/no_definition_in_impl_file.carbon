@@ -83,7 +83,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -113,7 +113,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
@@ -164,7 +164,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +193,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @B [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -223,7 +223,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @B [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,7 +252,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @C [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,7 +269,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -282,7 +282,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @C [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @D [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -341,7 +341,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

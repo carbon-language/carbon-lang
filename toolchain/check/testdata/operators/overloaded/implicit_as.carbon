@@ -43,10 +43,10 @@ fn Test() {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.5 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Convert.type.1 [symbolic]
@@ -72,7 +72,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [template]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [template]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [template]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
@@ -148,10 +148,10 @@ fn Test() {
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [template = constants.%Source] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc27: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc27: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc27 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @Source.%T.1 (%T) = var <return slot>
 // CHECK:STDOUT:   }
@@ -159,11 +159,11 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.5), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.6)]
@@ -230,9 +230,9 @@ fn Test() {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.1(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.5)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Convert.1.%Self (%Self.2)]() -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
@@ -262,7 +262,7 @@ fn Test() {
 // CHECK:STDOUT: fn @Sink_X(%x: %X);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc27: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc27: type) -> @Source.%T.1 (%T);
 // CHECK:STDOUT: }

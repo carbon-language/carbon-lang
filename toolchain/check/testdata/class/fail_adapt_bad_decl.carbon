@@ -110,10 +110,10 @@ class C {
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Convert.type.1 [symbolic]
@@ -166,11 +166,11 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.3), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.4)]
@@ -198,9 +198,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
@@ -250,10 +250,10 @@ class C {
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.3) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %.3, %Convert.type.1 [symbolic]
@@ -306,11 +306,11 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.3), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.4)]
@@ -339,9 +339,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
@@ -444,10 +444,10 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @I.1 [template]
-// CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.3: type = interface_type @I.2 [template]
-// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,7 +477,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %.loc15: %.1 = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -486,7 +486,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.2 {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %.loc23: %.1 = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

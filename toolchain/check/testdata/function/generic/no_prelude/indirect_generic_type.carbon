@@ -15,7 +15,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: --- indirect_generic_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -28,11 +28,11 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %p.patt: @F.%.2 (%.2) = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_20: type = ptr_type %T [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:     %.loc11_21: type = ptr_type %.1 [symbolic = %.2 (constants.%.2)]
@@ -45,7 +45,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @F.%.1 (%.1) [symbolic = %.2 (constants.%.2)]
 // CHECK:STDOUT:

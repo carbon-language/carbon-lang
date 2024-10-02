@@ -45,7 +45,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: --- from_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
@@ -91,17 +91,17 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [template = constants.%InitFromStructGeneric] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_39: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @InitFromStructGeneric.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.1 (%T) = bind_name x, %x.param
@@ -124,7 +124,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
@@ -144,7 +144,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InitFromStructGeneric(%T.loc8: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class.1: type = class_type @Class, @Class(%T.1) [symbolic = %Class.1 (constants.%Class.2)]
@@ -233,7 +233,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: --- adapt.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Adapt.type: type = generic_class_type @Adapt [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Adapt.1: %Adapt.type = struct_value () [template]
@@ -273,17 +273,17 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Adapt.decl: %Adapt.type = class_decl @Adapt [template = constants.%Adapt.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.decl: %InitFromAdaptedGeneric.type = fn_decl @InitFromAdaptedGeneric [template = constants.%InitFromAdaptedGeneric] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_40: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @InitFromAdaptedGeneric.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.1 (%T) = bind_name x, %x.param
@@ -306,7 +306,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Adapt(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: <witness> = complete_type_witness @Adapt.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
@@ -322,7 +322,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @InitFromAdaptedGeneric(%T.loc8: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Adapt.1: type = class_type @Adapt, @Adapt(%T.1) [symbolic = %Adapt.1 (constants.%Adapt.2)]

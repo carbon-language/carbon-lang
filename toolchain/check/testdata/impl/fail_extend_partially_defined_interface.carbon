@@ -24,7 +24,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.1: type = class_type @C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -54,7 +54,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

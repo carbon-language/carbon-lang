@@ -31,7 +31,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @BitComplement [template]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
@@ -129,7 +129,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self)]() -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }

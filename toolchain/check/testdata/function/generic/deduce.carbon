@@ -120,7 +120,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: --- deduce_explicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.type: type = fn_type @ExplicitGenericParam [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
@@ -160,10 +160,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ExplicitGenericParam.decl: %ExplicitGenericParam.type = fn_decl @ExplicitGenericParam [template = constants.%ExplicitGenericParam] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc4: type = ptr_type %T [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:     %return: ref @ExplicitGenericParam.%.1 (%.1) = var <return slot>
@@ -176,10 +176,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallExplicitGenericParamWithGenericArg.decl: %CallExplicitGenericParamWithGenericArg.type = fn_decl @CallExplicitGenericParamWithGenericArg [template = constants.%CallExplicitGenericParamWithGenericArg] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc10_62: type = struct_type {.a: %T} [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:     %.loc10_63: type = ptr_type %.4 [symbolic = %.2 (constants.%.5)]
@@ -188,7 +188,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ExplicitGenericParam(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @ExplicitGenericParam.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc4: type) -> @ExplicitGenericParam.%.1 (%.1);
@@ -209,7 +209,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallExplicitGenericParamWithGenericArg(%T.loc10: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = struct_type {.a: @CallExplicitGenericParamWithGenericArg.%T.1 (%T)} [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %.2: type = ptr_type @CallExplicitGenericParamWithGenericArg.%.1 (%.4) [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
@@ -254,7 +254,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
@@ -291,11 +291,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.decl: %ExplicitAndAlsoDeduced.type = fn_decl @ExplicitAndAlsoDeduced [template = constants.%ExplicitAndAlsoDeduced] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @ExplicitAndAlsoDeduced.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc6_40: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ExplicitAndAlsoDeduced.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @ExplicitAndAlsoDeduced.%T.1 (%T) = bind_name x, %x.param
@@ -327,7 +327,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ExplicitAndAlsoDeduced(%T.loc6: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @ExplicitAndAlsoDeduced.%T.1 (%T) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc6: type, %x: @ExplicitAndAlsoDeduced.%T.1 (%T)) -> @ExplicitAndAlsoDeduced.%.1 (%.3);
@@ -351,7 +351,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: --- deduce_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.type: type = fn_type @ImplicitGenericParam [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
@@ -386,11 +386,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplicitGenericParam.decl: %ImplicitGenericParam.type = fn_decl @ImplicitGenericParam [template = constants.%ImplicitGenericParam] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @ImplicitGenericParam.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_38: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ImplicitGenericParam.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @ImplicitGenericParam.%T.1 (%T) = bind_name x, %x.param
@@ -415,7 +415,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ImplicitGenericParam(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @ImplicitGenericParam.%T.1 (%T) [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.loc4: type](%x: @ImplicitGenericParam.%T.1 (%T)) -> @ImplicitGenericParam.%.1 (%.1);
@@ -446,7 +446,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: --- fail_todo_deduce_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -492,11 +492,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TupleParam.decl: %TupleParam.type = fn_decl @TupleParam [template = constants.%TupleParam] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @TupleParam.%.1 (%.3) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_35.1: %.2 = tuple_literal (%T.ref, %int.make_type_32)
@@ -508,11 +508,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTupleParam.decl: %CallTupleParam.type = fn_decl @CallTupleParam [template = constants.%CallTupleParam] {} {}
 // CHECK:STDOUT:   %StructParam.decl: %StructParam.type = fn_decl @StructParam [template = constants.%StructParam] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @StructParam.%.1 (%.7) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc17: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc17: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc17 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_41.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -527,7 +527,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TupleParam(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = tuple_type (@TupleParam.%T.1 (%T), i32) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.loc4: type](%x: @TupleParam.%.1 (%.3));
@@ -543,7 +543,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @StructParam(%T.loc17: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = struct_type {.a: @StructParam.%T.1 (%T), .b: i32} [symbolic = %.1 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.loc17: type](%x: @StructParam.%.1 (%.7));
@@ -571,8 +571,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: --- fail_deduce_incomplete.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitNotDeducible.type: type = fn_type @ImplicitNotDeducible [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitNotDeducible: %ImplicitNotDeducible.type = struct_value () [template]
@@ -602,14 +602,14 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplicitNotDeducible.decl: %ImplicitNotDeducible.type = fn_decl @ImplicitNotDeducible [template = constants.%ImplicitNotDeducible] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
-// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U 1
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 1
 // CHECK:STDOUT:     %x.patt: @ImplicitNotDeducible.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc6: type = bind_symbolic_name U 1, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc6: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ImplicitNotDeducible.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.1 (%T) = bind_name x, %x.param
@@ -620,8 +620,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ImplicitNotDeducible(%T.loc6: type, %U.loc6: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 1 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.loc6: type, %U.loc6: type](%x: @ImplicitNotDeducible.%T.1 (%T)) -> @ImplicitNotDeducible.%U.1 (%U);
 // CHECK:STDOUT: }
@@ -641,7 +641,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: --- fail_deduce_inconsistent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitNotDeducible.type: type = fn_type @ImplicitNotDeducible [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitNotDeducible: %ImplicitNotDeducible.type = struct_value () [template]
@@ -673,12 +673,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplicitNotDeducible.decl: %ImplicitNotDeducible.type = fn_decl @ImplicitNotDeducible [template = constants.%ImplicitNotDeducible] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @ImplicitNotDeducible.%T.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %y.patt: @ImplicitNotDeducible.%T.1 (%T) = binding_pattern y
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_38: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @ImplicitNotDeducible.%T.1 (%T) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @ImplicitNotDeducible.%T.1 (%T) = bind_name x, %x.param
@@ -692,7 +692,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ImplicitNotDeducible(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.loc4: type](%x: @ImplicitNotDeducible.%T.1 (%T), %y: @ImplicitNotDeducible.%T.1 (%T)) -> @ImplicitNotDeducible.%T.1 (%T);
 // CHECK:STDOUT: }

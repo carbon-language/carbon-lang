@@ -24,7 +24,7 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -68,7 +68,7 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

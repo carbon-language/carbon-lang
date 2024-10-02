@@ -217,7 +217,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -243,7 +243,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.4 [template]
 // CHECK:STDOUT:   %F.5: %F.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @J [template]
-// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.5: type = fn_type @F.5 [template]
 // CHECK:STDOUT:   %F.6: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %F.type.5 [template]
@@ -270,7 +270,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.type.12: type = fn_type @F.12 [template]
 // CHECK:STDOUT:   %F.13: %F.type.12 = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = interface_type @SelfNested [template]
-// CHECK:STDOUT:   %Self.3: %.10 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.10 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.11: type = ptr_type %Self.3 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -364,7 +364,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
 // CHECK:STDOUT:   %.loc11: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -375,7 +375,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.5 [template = constants.%F.6] {
 // CHECK:STDOUT:     %self.patt: bool = binding_pattern self
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
@@ -404,7 +404,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %F.decl: %F.type.13 = fn_decl @F.13 [template = constants.%F.14] {
 // CHECK:STDOUT:     %x.patt: @F.13.%.3 (%.14) = binding_pattern x
 // CHECK:STDOUT:   } {
@@ -922,7 +922,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.13(@SelfNested.%Self: %.10) {
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.1: type = ptr_type @F.13.%Self (%Self.3) [symbolic = %.1 (constants.%.11)]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: @F.13.%Self (%Self.3), .y: i32} [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:   %.3: type = tuple_type (@F.13.%.1 (%.11), @F.13.%.2 (%.12)) [symbolic = %.3 (constants.%.14)]
