@@ -52,8 +52,8 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:     .AdaptWithVirtual = %AdaptWithVirtual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Simple.decl: type = class_decl @Simple [template = constants.%Simple] {}
-// CHECK:STDOUT:   %AdaptWithVirtual.decl: type = class_decl @AdaptWithVirtual [template = constants.%AdaptWithVirtual] {}
+// CHECK:STDOUT:   %Simple.decl: type = class_decl @Simple [template = constants.%Simple] {} {}
+// CHECK:STDOUT:   %AdaptWithVirtual.decl: type = class_decl @AdaptWithVirtual [template = constants.%AdaptWithVirtual] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Simple {
@@ -64,7 +64,7 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithVirtual {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:   adapt_decl %Simple
 // CHECK:STDOUT:
