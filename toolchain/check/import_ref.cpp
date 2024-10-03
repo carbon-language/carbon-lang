@@ -644,8 +644,7 @@ class ImportRefResolver {
     return specific_id;
   }
 
-  // Returns the ConstantId for each parameter's type. Adds unresolved constants
-  // to work_stack_.
+  // Adds unresolved constants for each parameter's type to work_stack_.
   auto LoadLocalParamConstantIds(SemIR::InstBlockId param_refs_id) -> void {
     if (!param_refs_id.is_valid() ||
         param_refs_id == SemIR::InstBlockId::Empty) {
@@ -674,6 +673,14 @@ class ImportRefResolver {
   //
   // Must only be called after a call to GetLocalParamConstantIds(param_refs_id)
   // has completed without adding any new work to work_stack_.
+  //
+  // TODO: This is inconsistent with the rest of this class, which expects
+  // the relevant constants to be explicitly passed in. That makes it
+  // easier to statically detect when an input isn't loaded, but makes it
+  // harder to support importing more complex inst structures. We should
+  // take a holistic look at how to balance those concerns. For example,
+  // could the same function be used to load the constants and use them, with
+  // a parameter to select between the two?
   auto GetLocalParamRefsId(SemIR::InstBlockId param_refs_id)
       -> SemIR::InstBlockId {
     if (!param_refs_id.is_valid() ||
