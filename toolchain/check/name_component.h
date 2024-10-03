@@ -29,6 +29,8 @@ struct NameComponent {
   // The implicit parameter list.
   Parse::NodeId implicit_params_loc_id;
   SemIR::InstBlockId implicit_params_id;
+  // FIXME: Must these be the "root" patterns, or could they be the
+  // ParamPatterns?
   SemIR::InstBlockId implicit_param_patterns_id;
 
   // The explicit parameter list.

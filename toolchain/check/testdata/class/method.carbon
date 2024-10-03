@@ -234,8 +234,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc13_8.2: %.2 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc13_8.1: %.2 = param_pattern %.loc13_8.2, runtime_param0
+// CHECK:STDOUT:     %.loc13_17: %.2 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc13_8: %Class = addr_pattern %.loc13_17
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]
@@ -245,7 +245,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:     %param: %.2 = param runtime_param0
 // CHECK:STDOUT:     %self: %.2 = bind_name self, %param
-// CHECK:STDOUT:     %.loc13_8.3: %.2 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, %F.decl [template = constants.%F]
 // CHECK:STDOUT:   %A: %F.type = bind_alias A, %F.decl [template = constants.%F]
@@ -274,7 +273,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc21_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%.loc13_8.1: %.2]() -> i32;
+// CHECK:STDOUT: fn @G[addr %.loc13_17: %.2]() -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%.loc24_10: %Class) -> i32 {
 // CHECK:STDOUT: !entry:

@@ -50,10 +50,10 @@ class SomeClassAdapter {
 fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `SomeClassAdapter` to `SomeClass`
   // CHECK:STDERR:   a.F();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note: type `SomeClassAdapter` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a.F();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing `self` parameter of method declared here
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~~~~~~~
@@ -351,10 +351,10 @@ class StructAdapter {
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc23_6.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc23_6.2: %.10 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc23_6.2 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc23_6.3: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_3.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc23_3.2: %.10 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc23_3.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc23_3.3: %SomeClass = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %.1 = call %.loc23_4(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

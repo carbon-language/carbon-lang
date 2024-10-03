@@ -45,10 +45,10 @@ class WrongSelf {
 fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `WrongSelf` to `Class`
   // CHECK:STDERR:   ws.F();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   ws.F();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing `self` parameter of method declared here
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~
@@ -222,10 +222,10 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55_7.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc55_7.2: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc55_7.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc55_7.3: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc55_3.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc55_3.2: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class) [template = constants.%.10]
+// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc55_3.2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc55_3.3: %Class = converted %ws.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %.1 = call %.loc55_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

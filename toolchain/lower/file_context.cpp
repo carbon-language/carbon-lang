@@ -214,6 +214,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
+    if (auto addr_pattern =
+            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_pattern_id)) {
+      param_pattern_id = addr_pattern->inner_id;
+    }
     auto param_pattern =
         sem_ir().insts().GetAs<SemIR::ParamPattern>(param_pattern_id);
     if (!param_pattern.runtime_index.is_valid()) {
@@ -336,9 +340,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     //
     // TODO: Support general patterns here.
     auto bind_name_id = param_ref_id;
-    if (auto addr = sem_ir().insts().TryGetAs<SemIR::AddrParam>(param_ref_id)) {
-      bind_name_id = addr->inner_id;
-    }
     auto bind_name = sem_ir().insts().Get(bind_name_id);
     CARBON_CHECK(bind_name.Is<SemIR::BindName>());
     function_lowering.SetLocal(bind_name_id, param_value);

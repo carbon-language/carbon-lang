@@ -332,10 +332,10 @@ fn D() {}
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_25: %.4 = tuple_literal (%.loc8_23)
+// CHECK:STDOUT:   %.loc8_25.1: %.4 = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc8_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_21: %.4 = converted %.loc8_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc8_21)
+// CHECK:STDOUT:   %.loc8_25.2: %.4 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc8_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

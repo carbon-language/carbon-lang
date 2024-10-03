@@ -56,10 +56,10 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
-// CHECK:STDOUT:   %.loc16_9: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_7: %.1 = converted %.loc16_9, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %Echo.call: init %.1 = call %Echo.ref(%.loc16_7)
+// CHECK:STDOUT:   %.loc16_9.2: %.1 = converted %.loc16_9.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %Echo.call: init %.1 = call %Echo.ref(%.loc16_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

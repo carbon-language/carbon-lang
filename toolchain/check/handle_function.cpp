@@ -69,11 +69,12 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 
 // Checks that the parameter lists specified in a function declaration are
 // valid for a function declaration, and numbers the parameters.
+// FIXME: is this function needed, or can it be folded into pattern matching?
 static auto CheckFunctionSignature(Context& context,
                                    const NameComponent& name_and_params)
     -> void {
   SemIR::RuntimeParamIndex next_index(0);
-  for (auto [top_param_id, param_pattern_id] : llvm::zip(
+  for (auto [top_param_id, top_param_pattern_id] : llvm::zip(
            llvm::concat<const SemIR::InstId>(
                context.inst_blocks().GetOrEmpty(
                    name_and_params.implicit_params_id),
@@ -83,18 +84,18 @@ static auto CheckFunctionSignature(Context& context,
                    name_and_params.implicit_param_patterns_id),
                context.inst_blocks().GetOrEmpty(
                    name_and_params.param_patterns_id)))) {
-    auto param_pattern =
-        context.insts().GetAs<SemIR::ParamPattern>(param_pattern_id);
+    auto param_pattern_id = top_param_pattern_id;
+    auto param_pattern = context.insts().Get(param_pattern_id);
+    if (auto addr_pattern = param_pattern.TryAs<SemIR::AddrPattern>()) {
+      param_pattern_id = addr_pattern->inner_id;
+      param_pattern = context.insts().Get(param_pattern_id);
+    }
+    auto param_pattern_inst = param_pattern.As<SemIR::ParamPattern>();
+
     auto param_id = top_param_id;
     auto param = context.insts().Get(param_id);
 
-    // Find the parameter in the pattern.
     // TODO: This duplicates work done by Function::GetParamFromParamRefId.
-    if (auto addr_param = param.TryAs<SemIR::AddrParam>()) {
-      param_id = addr_param->inner_id;
-      param = context.insts().Get(param_id);
-    }
-
     auto bind_name = param.TryAs<SemIR::AnyBindName>();
     if (bind_name) {
       param_id = bind_name->value_id;
@@ -115,8 +116,9 @@ static auto CheckFunctionSignature(Context& context,
     if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
       param_inst->runtime_index = next_index;
       context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
-      param_pattern.runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_pattern_id, param_pattern);
+      param_pattern_inst.runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param_pattern_id,
+                                           param_pattern_inst);
       ++next_index.index;
     }
   }

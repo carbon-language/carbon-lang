@@ -23,6 +23,9 @@ auto ProcessSignature(Context& context,
                       SemIR::InstBlockId implicit_param_patterns_id,
                       SemIR::InstBlockId param_patterns_id) -> ParameterBlocks;
 
+auto PatternMatchArg(Context& context, SemIR::SpecificId specific_id,
+                     SemIR::InstId param, SemIR::InstId arg) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_MATCH_H_

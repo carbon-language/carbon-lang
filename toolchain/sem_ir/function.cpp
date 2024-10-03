@@ -42,29 +42,40 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
+// FIXME: all this pattern traversal conceptually duplicates code in
+// pattern_match.cpp
 auto Function::GetNameFromParamPatternId(const File& sem_ir,
                                          InstId param_pattern_id) -> NameId {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);
-  param_inst =
-      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
 
   if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
     param_pattern_id = addr_pattern->inner_id;
     param_inst = sem_ir.insts().Get(param_pattern_id);
   }
 
+  param_inst =
+      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
+
   auto binding_pattern = param_inst.As<AnyBindingPattern>();
   return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
+}
+
+auto Function::GetRuntimeIndexFromParamPatternId(const File& sem_ir,
+                                                 InstId param_pattern_id)
+    -> SemIR::RuntimeParamIndex {
+  auto param_inst = sem_ir.insts().Get(param_pattern_id);
+
+  if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
+    param_pattern_id = addr_pattern->inner_id;
+    param_inst = sem_ir.insts().Get(param_pattern_id);
+  }
+
+  return param_inst.As<SemIR::ParamPattern>().runtime_index;
 }
 
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     -> std::pair<InstId, Param> {
   auto ref = sem_ir.insts().Get(param_ref_id);
-
-  if (auto addr_pattern = ref.TryAs<SemIR::AddrParam>()) {
-    param_ref_id = addr_pattern->inner_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
 
   if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
     param_ref_id = bind_name->value_id;

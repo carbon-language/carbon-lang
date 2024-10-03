@@ -241,10 +241,10 @@ fn Run() {
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %.loc9_4: <bound method> = bound_method %a.ref.loc9, %F.ref
-// CHECK:STDOUT:   %.loc9_6.1: ref %Base = class_element_access %a.ref.loc9, element0
-// CHECK:STDOUT:   %.loc9_6.2: ref %Base = converted %a.ref.loc9, %.loc9_6.1
-// CHECK:STDOUT:   %.loc9_6.3: %Base = bind_value %.loc9_6.2
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc9_4(%.loc9_6.3)
+// CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
+// CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3.3: %Base = bind_value %.loc9_3.2
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc9_4(%.loc9_3.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

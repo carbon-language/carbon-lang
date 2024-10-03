@@ -77,8 +77,8 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc22_12.1: %.2 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1, runtime_param0
+// CHECK:STDOUT:     %.loc22_21: %.2 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc22_12: %Class = addr_pattern %.loc22_21
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc22_27: type = ptr_type %Class [template = constants.%.2]
@@ -88,7 +88,6 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:     %param.loc22: %.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc22: %.2 = bind_name self, %param.loc22
-// CHECK:STDOUT:     %.loc22_12.3: %.2 = addr_param %self.loc22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,8 +106,8 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
-// CHECK:STDOUT:     %.loc22_12.1: %.2 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc22_12.2: %.2 = param_pattern %.loc22_12.1, runtime_param0
+// CHECK:STDOUT:     %.loc22_21: %.2 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc22_12: %Class = addr_pattern %.loc22_21
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]
@@ -118,7 +117,6 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     %return.var.loc13: ref i32 = var <return slot>
 // CHECK:STDOUT:     %param.loc13: %.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc13: %.2 = bind_name self, %param.loc13
-// CHECK:STDOUT:     %.loc13_8: %.2 = addr_param %self.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -144,7 +142,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   return %.loc19_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%.loc22_12.2: %.2]() -> i32 {
+// CHECK:STDOUT: fn @G[addr %.loc22_21: %.2]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self.loc22
 // CHECK:STDOUT:   %.loc23_11: ref %Class = deref %self.ref

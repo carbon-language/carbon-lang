@@ -360,9 +360,9 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc40_41: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc40_41) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc40_30.1: i32 = value_of_initializer %int.snegate [template = constants.%.9]
-// CHECK:STDOUT:   %.loc40_30.2: i32 = converted %int.snegate, %.loc40_30.1 [template = constants.%.9]
-// CHECK:STDOUT:   %int.left_shift.loc40: init i32 = call %LeftShift.ref.loc40(%.loc40_31, %.loc40_30.2) [template = <error>]
+// CHECK:STDOUT:   %.loc40_40.1: i32 = value_of_initializer %int.snegate [template = constants.%.9]
+// CHECK:STDOUT:   %.loc40_40.2: i32 = converted %int.snegate, %.loc40_40.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.left_shift.loc40: init i32 = call %LeftShift.ref.loc40(%.loc40_31, %.loc40_40.2) [template = <error>]
 // CHECK:STDOUT:   %.loc40_44.1: i32 = value_of_initializer %int.left_shift.loc40 [template = <error>]
 // CHECK:STDOUT:   %.loc40_44.2: i32 = converted %int.left_shift.loc40, %.loc40_44.1 [template = <error>]
 // CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc40_44.2

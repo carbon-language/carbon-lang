@@ -99,14 +99,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %.loc26_25.1: %.7 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc26_25.2: %.7 = param_pattern %.loc26_25.1, runtime_param0
+// CHECK:STDOUT:     %.loc26_34: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc26_25: %Base = addr_pattern %.loc26_34
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc26_40: type = ptr_type %Base [template = constants.%.7]
 // CHECK:STDOUT:     %param.loc26: %.7 = param runtime_param0
 // CHECK:STDOUT:     %self.loc26: %.7 = bind_name self, %param.loc26
-// CHECK:STDOUT:     %.loc26_25.3: %.7 = addr_param %self.loc26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %.11 = binding_pattern p
@@ -152,14 +151,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %.loc26_25.1: %.7 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc26_25.2: %.7 = param_pattern %.loc26_25.1, runtime_param0
+// CHECK:STDOUT:     %.loc26_34: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc26_25: %Base = addr_pattern %.loc26_34
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc19: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:     %.loc19_34: type = ptr_type %Base [template = constants.%.7]
+// CHECK:STDOUT:     %.loc19: type = ptr_type %Base [template = constants.%.7]
 // CHECK:STDOUT:     %param.loc19: %.7 = param runtime_param0
 // CHECK:STDOUT:     %self.loc19: %.7 = bind_name self, %param.loc19
-// CHECK:STDOUT:     %.loc19_19: %.7 = addr_param %self.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
@@ -182,7 +180,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %.loc23_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddrSelfBase[%.loc26_25.2: %.7]() {
+// CHECK:STDOUT: fn @AddrSelfBase[addr %.loc26_34: %.7]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.7 = name_ref self, %self.loc26
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
@@ -200,19 +198,19 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %AddrSelfBase.ref: %AddrSelfBase.type = name_ref AddrSelfBase, @Derived.%AddrSelfBase.decl [template = constants.%AddrSelfBase]
 // CHECK:STDOUT:   %.loc31_7: <bound method> = bound_method %.loc31_4.1, %AddrSelfBase.ref
 // CHECK:STDOUT:   %.loc31_4.2: %.11 = addr_of %.loc31_4.1
-// CHECK:STDOUT:   %.loc31_20.1: ref %Derived = deref %.loc31_4.2
-// CHECK:STDOUT:   %.loc31_20.2: ref %Base = class_element_access %.loc31_20.1, element0
-// CHECK:STDOUT:   %.loc31_20.3: %.7 = addr_of %.loc31_20.2
-// CHECK:STDOUT:   %.loc31_20.4: %.7 = converted %.loc31_4.2, %.loc31_20.3
-// CHECK:STDOUT:   %AddrSelfBase.call: init %.1 = call %.loc31_7(%.loc31_20.4)
+// CHECK:STDOUT:   %.loc31_4.3: ref %Derived = deref %.loc31_4.2
+// CHECK:STDOUT:   %.loc31_4.4: ref %Base = class_element_access %.loc31_4.3, element0
+// CHECK:STDOUT:   %.loc31_4.5: %.7 = addr_of %.loc31_4.4
+// CHECK:STDOUT:   %.loc31_4.6: %.7 = converted %.loc31_4.2, %.loc31_4.5
+// CHECK:STDOUT:   %AddrSelfBase.call: init %.1 = call %.loc31_7(%.loc31_4.6)
 // CHECK:STDOUT:   %p.ref.loc32: %.11 = name_ref p, %p
-// CHECK:STDOUT:   %.loc32_11: ref %Derived = deref %p.ref.loc32
+// CHECK:STDOUT:   %.loc32_11.1: ref %Derived = deref %p.ref.loc32
 // CHECK:STDOUT:   %SelfBase.ref: %SelfBase.type = name_ref SelfBase, @Derived.%SelfBase.decl [template = constants.%SelfBase]
-// CHECK:STDOUT:   %.loc32_14: <bound method> = bound_method %.loc32_11, %SelfBase.ref
-// CHECK:STDOUT:   %.loc32_23.1: ref %Base = class_element_access %.loc32_11, element0
-// CHECK:STDOUT:   %.loc32_23.2: ref %Base = converted %.loc32_11, %.loc32_23.1
-// CHECK:STDOUT:   %.loc32_23.3: %Base = bind_value %.loc32_23.2
-// CHECK:STDOUT:   %SelfBase.call: init i32 = call %.loc32_14(%.loc32_23.3)
+// CHECK:STDOUT:   %.loc32_14: <bound method> = bound_method %.loc32_11.1, %SelfBase.ref
+// CHECK:STDOUT:   %.loc32_11.2: ref %Base = class_element_access %.loc32_11.1, element0
+// CHECK:STDOUT:   %.loc32_11.3: ref %Base = converted %.loc32_11.1, %.loc32_11.2
+// CHECK:STDOUT:   %.loc32_11.4: %Base = bind_value %.loc32_11.3
+// CHECK:STDOUT:   %SelfBase.call: init i32 = call %.loc32_14(%.loc32_11.4)
 // CHECK:STDOUT:   %.loc32_25.1: i32 = value_of_initializer %SelfBase.call
 // CHECK:STDOUT:   %.loc32_25.2: i32 = converted %SelfBase.call, %.loc32_25.1
 // CHECK:STDOUT:   return %.loc32_25.2

@@ -79,16 +79,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+142, loaded [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+144, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/bitwise, inst+169, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+164, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+171, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+173, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/bitwise, inst+199, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+193, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+164, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+193, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+140, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+142, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.11 = import_ref Core//prelude/operators/bitwise, inst+167, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+162, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+169, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+171, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.13 = import_ref Core//prelude/operators/bitwise, inst+196, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+190, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+162, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+190, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -181,8 +181,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.8 = binding_pattern self
-// CHECK:STDOUT:     %.loc23_9.2: %.8 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc23_9.1: %.8 = param_pattern %.loc23_9.2, runtime_param0
+// CHECK:STDOUT:     %.loc23_18: %.8 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc23_9: %C = addr_pattern %.loc23_18
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %.loc23_29: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -191,7 +191,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc23_14: %.8 = param runtime_param0
 // CHECK:STDOUT:     %self: %.8 = bind_name self, %param.loc23_14
-// CHECK:STDOUT:     %.loc23_9.3: %.8 = addr_param %self
 // CHECK:STDOUT:     %param.loc23_24: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc23_24
 // CHECK:STDOUT:   }
@@ -223,7 +222,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self.1)](%.2: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[%.loc23_9.1: %.8](%.loc23_29: %C) {
+// CHECK:STDOUT: fn @Op.3[addr %.loc23_18: %.8](%.loc23_29: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -232,7 +231,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.3: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.3 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+90: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%.loc26_12: %C, %.loc26_18: %C) -> %return: %C {

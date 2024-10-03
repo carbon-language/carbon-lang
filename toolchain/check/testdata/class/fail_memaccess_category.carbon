@@ -18,9 +18,9 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:8: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   s.a.F();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:    ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
@@ -29,9 +29,9 @@ fn F(s: {.a: A}, b: B) {
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   b.a.F();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:    ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
@@ -101,14 +101,13 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %.loc12_8.2: %.1 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc12_8.1: %.1 = param_pattern %.loc12_8.2, runtime_param0
+// CHECK:STDOUT:     %.loc12_17: %.1 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc12_8: %A = addr_pattern %.loc12_17
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param runtime_param0
 // CHECK:STDOUT:     %self: %.1 = bind_name self, %param
-// CHECK:STDOUT:     %.loc12_8.3: %.1 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -127,14 +126,15 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%.loc12_8.1: %.1]();
+// CHECK:STDOUT: fn @F.1[addr %.loc12_17: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%.loc19_7: %.7, %.loc19_19: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %.7 = name_ref s, %s
-// CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
+// CHECK:STDOUT:   %.loc28_4.1: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
+// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4.1, %F.ref.loc28
+// CHECK:STDOUT:   %.loc28_4.2: %.1 = addr_of %.loc28_4.1
 // CHECK:STDOUT:   %F.call.loc28: init %.2 = call %.loc28_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: %.6 = name_ref a, @B.%.loc16 [template = @B.%.loc16]
@@ -142,6 +142,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1
 // CHECK:STDOUT:   %F.ref.loc38: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc38_6: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
+// CHECK:STDOUT:   %.loc38_4.3: %.1 = addr_of %.loc38_4.2
 // CHECK:STDOUT:   %F.call.loc38: init %.2 = call %.loc38_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

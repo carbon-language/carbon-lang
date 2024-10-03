@@ -1144,14 +1144,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.6] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc16_11.1: %.3 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc16_11.2: %.3 = param_pattern %.loc16_11.1, runtime_param0
+// CHECK:STDOUT:     %.loc16_20: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc16_11: %Base = addr_pattern %.loc16_20
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc16_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %param
-// CHECK:STDOUT:     %.loc16_11.3: %.3 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1161,14 +1160,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_8.2: %.3 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc7_8.1: %.3 = param_pattern %.loc7_8.2, runtime_param0
+// CHECK:STDOUT:     %.loc7_17: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc7_8: %Base = addr_pattern %.loc7_17
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc7_23: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %param: %.3 = param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %param
-// CHECK:STDOUT:     %.loc7_8.3: %.3 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
@@ -1178,9 +1176,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc7_8.1: %.3]();
+// CHECK:STDOUT: fn @F[addr %.loc7_17: %.3]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%.loc16_11.2: %.3]() {
+// CHECK:STDOUT: fn @.1[addr %.loc16_20: %.3]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref

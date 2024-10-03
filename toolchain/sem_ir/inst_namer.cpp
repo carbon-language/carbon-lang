@@ -401,14 +401,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {
-      case CARBON_KIND(AddrParam inst): {
-        // TODO: We need to assign names to parameters that appear in
-        // function declarations, which may be nested within a pattern. For
-        // now, just look through `addr`, but we should find a better way to
-        // visit parameters.
-        CollectNamesInBlock(scope_id, inst.inner_id);
-        break;
-      }
       case CARBON_KIND(AssociatedConstantDecl inst): {
         add_inst_name_id(inst.name_id);
         continue;

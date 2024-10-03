@@ -20,9 +20,9 @@ impl C as Core.AddAssign {
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   ++a;
-  // CHECK:STDERR:   ^~
+  // CHECK:STDERR:     ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:         ^~~~~~~~~~~~~
@@ -31,9 +31,9 @@ fn TestIncNonRef(a: C) {
 }
 
 fn TestAddAssignNonRef(a: C, b: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:5: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   a += b;
-  // CHECK:STDERR:     ^~
+  // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:         ^~~~~~~~~~~~~
@@ -88,16 +88,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.12 = import_ref Core//prelude/operators/arithmetic, inst+82, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+76, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+60, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.12 = import_ref Core//prelude/operators/arithmetic, inst+80, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+74, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+31, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.14 = import_ref Core//prelude/operators/arithmetic, inst+59, loaded [template = constants.%.15]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+53, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+76, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.14 = import_ref Core//prelude/operators/arithmetic, inst+58, loaded [template = constants.%.15]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -159,14 +159,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C as %.3 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
-// CHECK:STDOUT:     %.loc16_9.2: %.4 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc16_9.1: %.4 = param_pattern %.loc16_9.2, runtime_param0
+// CHECK:STDOUT:     %.loc16_18: %.4 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc16_9: %C = addr_pattern %.loc16_18
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.4]
 // CHECK:STDOUT:     %param: %.4 = param runtime_param0
 // CHECK:STDOUT:     %self: %.4 = bind_name self, %param
-// CHECK:STDOUT:     %.loc16_9.3: %.4 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
 // CHECK:STDOUT:
@@ -178,8 +177,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.8 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
-// CHECK:STDOUT:     %.loc19_9.2: %.4 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc19_9.1: %.4 = param_pattern %.loc19_9.2, runtime_param0
+// CHECK:STDOUT:     %.loc19_18: %.4 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc19_9: %C = addr_pattern %.loc19_18
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %.loc19_29: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -188,7 +187,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc19_14: %.4 = param runtime_param0
 // CHECK:STDOUT:     %self: %.4 = bind_name self, %param.loc19_14
-// CHECK:STDOUT:     %.loc19_9.3: %.4 = addr_param %self
 // CHECK:STDOUT:     %param.loc19_24: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_24
 // CHECK:STDOUT:   }
@@ -206,22 +204,22 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%.loc16_9.1: %.4]();
+// CHECK:STDOUT: fn @Op.1[addr %.loc16_18: %.4]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self.1) [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.2.%.2 (%.6)]();
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+38: @Op.2.%.2 (%.6)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[%.loc19_9.1: %.4](%.loc19_29: %C);
+// CHECK:STDOUT: fn @Op.3[addr %.loc19_18: %.4](%.loc19_29: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.8) {
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.3: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.3 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+77: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%.loc22: %C) {
@@ -230,6 +228,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, imports.%import_ref.3 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access @impl.1.%.loc15, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
+// CHECK:STDOUT:   %.loc30_5: %.4 = addr_of %a.ref
 // CHECK:STDOUT:   %Op.call: init %.5 = call %.loc30_3.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -241,6 +240,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.ref: %.14 = name_ref Op, imports.%import_ref.7 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access @impl.2.%.loc18, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
+// CHECK:STDOUT:   %.loc40_3: %.4 = addr_of %a.ref
 // CHECK:STDOUT:   %Op.call: init %.5 = call %.loc40_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

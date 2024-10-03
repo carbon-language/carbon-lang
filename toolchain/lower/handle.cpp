@@ -24,11 +24,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::AddrParam /*inst*/) -> void {
-  CARBON_FATAL("`addr` should be lowered by `BuildFunctionDefinition`");
-}
-
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);

@@ -78,14 +78,13 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc17_11.1: %.3 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc17_11.2: %.3 = param_pattern %.loc17_11.1, runtime_param0
+// CHECK:STDOUT:     %.loc17_20: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc17_11: %Base = addr_pattern %.loc17_20
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %param.loc17: %.3 = param runtime_param0
 // CHECK:STDOUT:     %self.loc17: %.3 = bind_name self, %param.loc17
-// CHECK:STDOUT:     %.loc17_11.3: %.3 = addr_param %self.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
@@ -106,14 +105,13 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc12_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %.loc17_11.1: %.3 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc17_11.2: %.3 = param_pattern %.loc17_11.1, runtime_param0
+// CHECK:STDOUT:     %.loc17_20: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc17_11: %Base = addr_pattern %.loc17_20
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %.loc14_23: type = ptr_type %Base [template = constants.%.3]
+// CHECK:STDOUT:     %.loc14: type = ptr_type %Base [template = constants.%.3]
 // CHECK:STDOUT:     %param.loc14: %.3 = param runtime_param0
 // CHECK:STDOUT:     %self.loc14: %.3 = bind_name self, %param.loc14
-// CHECK:STDOUT:     %.loc14_8: %.3 = addr_param %self.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
@@ -136,7 +134,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc17_11.2: %.3]() {
+// CHECK:STDOUT: fn @F[addr %.loc17_20: %.3]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self.loc17
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
@@ -154,11 +152,11 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Base.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc26_7: <bound method> = bound_method %.loc26_4.1, %F.ref
 // CHECK:STDOUT:   %.loc26_4.2: %.11 = addr_of %.loc26_4.1
-// CHECK:STDOUT:   %.loc26_9.1: ref %Derived = deref %.loc26_4.2
-// CHECK:STDOUT:   %.loc26_9.2: ref %Base = class_element_access %.loc26_9.1, element0
-// CHECK:STDOUT:   %.loc26_9.3: %.3 = addr_of %.loc26_9.2
-// CHECK:STDOUT:   %.loc26_9.4: %.3 = converted %.loc26_4.2, %.loc26_9.3
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc26_7(%.loc26_9.4)
+// CHECK:STDOUT:   %.loc26_4.3: ref %Derived = deref %.loc26_4.2
+// CHECK:STDOUT:   %.loc26_4.4: ref %Base = class_element_access %.loc26_4.3, element0
+// CHECK:STDOUT:   %.loc26_4.5: %.3 = addr_of %.loc26_4.4
+// CHECK:STDOUT:   %.loc26_4.6: %.3 = converted %.loc26_4.2, %.loc26_4.5
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc26_7(%.loc26_4.6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

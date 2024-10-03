@@ -101,8 +101,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr)] {
 // CHECK:STDOUT:       %self.patt: @GetAddr.%.1 (%.2) = binding_pattern self
-// CHECK:STDOUT:       %.loc12_14.2: @GetAddr.%.1 (%.2) = addr_pattern %self.patt
-// CHECK:STDOUT:       %.loc12_14.1: @GetAddr.%.1 (%.2) = param_pattern %.loc12_14.2, runtime_param0
+// CHECK:STDOUT:       %.loc12_23: @GetAddr.%.1 (%.2) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %.loc12_14: @GetAddr.%Class (%Class.2) = addr_pattern %.loc12_23
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc12_25 [symbolic = %Class (constants.%Class.2)]
@@ -112,7 +112,6 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return: ref @GetAddr.%.2 (%.3) = var <return slot>
 // CHECK:STDOUT:       %param: @GetAddr.%.1 (%.2) = param runtime_param0
 // CHECK:STDOUT:       %self: @GetAddr.%.1 (%.2) = bind_name self, %param
-// CHECK:STDOUT:       %.loc12_14.3: @GetAddr.%.1 (%.2) = addr_param %self
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetValue.decl: @Class.%GetValue.type (%GetValue.type) = fn_decl @GetValue [symbolic = @Class.%GetValue (constants.%GetValue)] {
 // CHECK:STDOUT:       %self.patt: @GetValue.%Class (%Class.2) = binding_pattern self
@@ -153,7 +152,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc12_14.1: @GetAddr.%.1 (%.2)]() -> @GetAddr.%.2 (%.3) {
+// CHECK:STDOUT:   fn[addr %.loc12_23: @GetAddr.%.1 (%.2)]() -> @GetAddr.%.2 (%.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%.1 (%.2) = name_ref self, %self
 // CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref

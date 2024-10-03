@@ -559,10 +559,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_25: %.4 = tuple_literal (%.loc8_23)
+// CHECK:STDOUT:   %.loc8_25.1: %.4 = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc8_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_21: %.4 = converted %.loc8_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc8_21)
+// CHECK:STDOUT:   %.loc8_25.2: %.4 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc8_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -713,10 +713,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc54_23: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc54_25: %.3 = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %.loc54_25.1: %.3 = tuple_literal (%.loc54_23)
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc54_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc54_21: %.3 = converted %.loc54_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc54_21)
+// CHECK:STDOUT:   %.loc54_25.2: %.3 = converted %.loc54_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc54_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -867,10 +867,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc14_23: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_25: %.3 = tuple_literal (%.loc14_23)
+// CHECK:STDOUT:   %.loc14_25.1: %.3 = tuple_literal (%.loc14_23)
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc14_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_21: %.3 = converted %.loc14_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc14_21)
+// CHECK:STDOUT:   %.loc14_25.2: %.3 = converted %.loc14_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc14_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -997,10 +997,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %.loc54_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc54_25: %.4 = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %.loc54_25.1: %.4 = tuple_literal (%.loc54_23)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc54_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc54_21: %.4 = converted %.loc54_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc54_21)
+// CHECK:STDOUT:   %.loc54_25.2: %.4 = converted %.loc54_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc54_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
@@ -1127,10 +1127,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %.loc53_23: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc53_25: %.4 = tuple_literal (%.loc53_23)
+// CHECK:STDOUT:   %.loc53_25.1: %.4 = tuple_literal (%.loc53_23)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc53_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc53_21: %.4 = converted %.loc53_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc53_21)
+// CHECK:STDOUT:   %.loc53_25.2: %.4 = converted %.loc53_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc53_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()

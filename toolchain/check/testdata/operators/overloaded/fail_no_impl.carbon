@@ -99,11 +99,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+84, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+86, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/arithmetic, inst+104, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+99, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+99, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+82, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+84, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/arithmetic, inst+102, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+97, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+97, unloaded
 // CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.8: %.9 = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [template = constants.%.10]
@@ -111,14 +111,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Core//prelude/operators/arithmetic, inst+31, loaded [template = constants.%.11]
 // CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.13: %.13 = import_ref Core//prelude/operators/arithmetic, inst+59, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [template = constants.%.15]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.18: %.17 = import_ref Core//prelude/operators/arithmetic, inst+82, loaded [template = constants.%.18]
-// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+76, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+76, unloaded
+// CHECK:STDOUT:   %import_ref.13: %.13 = import_ref Core//prelude/operators/arithmetic, inst+58, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+60, loaded [template = constants.%.15]
+// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.18: %.17 = import_ref Core//prelude/operators/arithmetic, inst+80, loaded [template = constants.%.18]
+// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -249,14 +249,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.3: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.3 (constants.%.12)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.3.%.3 (%.12)](%.2: @Op.3.%Self (%Self.3));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+116: @Op.3.%.3 (%.12)](%.2: @Op.3.%Self (%Self.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.15) {
 // CHECK:STDOUT:   %Self: %.15 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.16)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.4.%.2 (%.16)]();
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+143: @Op.4.%.2 (%.16)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.1) {

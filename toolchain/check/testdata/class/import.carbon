@@ -132,14 +132,13 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %.loc15_8.2: %.7 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc15_8.1: %.7 = param_pattern %.loc15_8.2, runtime_param0
+// CHECK:STDOUT:     %.loc15_17: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc15_8: %ForwardDeclared = addr_pattern %.loc15_17
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.7]
 // CHECK:STDOUT:     %param: %.7 = param runtime_param0
 // CHECK:STDOUT:     %self: %.7 = bind_name self, %param
-// CHECK:STDOUT:     %.loc15_8.3: %.7 = addr_param %self
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
@@ -155,7 +154,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%.loc14: %ForwardDeclared]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%.loc15_8.1: %.7]();
+// CHECK:STDOUT: fn @G[addr %.loc15_17: %.7]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -192,7 +191,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+8, loaded [template = constants.%Field]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+26, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+50, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+49, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -208,10 +207,10 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.7: %.9 = import_ref Main//a, inst+20, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+27, unloaded
 // CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+34, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+46, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+45, loaded [template = constants.%G]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+27, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+46, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+45, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -312,5 +311,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%.1: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%.1: %.11]();
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst+94: %.11]();
 // CHECK:STDOUT:

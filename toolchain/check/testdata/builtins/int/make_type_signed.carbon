@@ -364,9 +364,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc12_19) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_11.1: i32 = value_of_initializer %int.snegate [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_11.2: i32 = converted %int.snegate, %.loc12_11.1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_11.2) [template = <error>]
+// CHECK:STDOUT:   %.loc12_18.1: i32 = value_of_initializer %int.snegate [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_18.2: i32 = converted %int.snegate, %.loc12_18.1 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_18.2) [template = <error>]
 // CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %int.make_type_signed [template = <error>]
 // CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_signed, %.loc12_21.1 [template = <error>]
 // CHECK:STDOUT:   %n.var: ref <error> = var n

@@ -21,12 +21,12 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:10: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a + b;
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a + b;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:              ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:3: note: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,12 +36,12 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   a += b;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a += b;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:3: note: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,8 +121,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+23, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+31, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.20 = import_ref Core//prelude/operators/arithmetic, inst+59, loaded [template = constants.%.21]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+53, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.7: %.20 = import_ref Core//prelude/operators/arithmetic, inst+58, loaded [template = constants.%.21]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.10: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+52, unloaded
@@ -130,7 +130,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/arithmetic, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/arithmetic, inst+52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -239,8 +239,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: impl @impl.2: %C as %.6 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %.loc20_9.2: %.7 = addr_pattern %self.patt
-// CHECK:STDOUT:     %.loc20_9.1: %.7 = param_pattern %.loc20_9.2, runtime_param0
+// CHECK:STDOUT:     %.loc20_18: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc20_9: %C = addr_pattern %.loc20_18
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %.loc20_29: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -249,7 +249,6 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc20_14: %.7 = param runtime_param0
 // CHECK:STDOUT:     %self: %.7 = bind_name self, %param.loc20_14
-// CHECK:STDOUT:     %.loc20_9.3: %.7 = addr_param %self
 // CHECK:STDOUT:     %param.loc20_24: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc20_24
 // CHECK:STDOUT:   }
@@ -282,13 +281,13 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self.1)](%.2: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[%.loc20_9.1: %.7](%.loc20_29: %C);
+// CHECK:STDOUT: fn @Op.3[addr %.loc20_18: %.7](%.loc20_29: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.6) {
 // CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.3: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.3 (constants.%.8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.4.%.3 (%.8)](%.2: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+87: @Op.4.%.3 (%.8)](%.2: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test(%.loc23_10: %C, %.loc23_16: %D) -> %return: %C {
@@ -299,10 +298,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc34_12.1: %Op.type.2 = interface_witness_access @impl.1.%.loc16, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc34_12.2: <bound method> = bound_method %a.ref, %.loc34_12.1
 // CHECK:STDOUT:   %.loc34_12.3: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc34_12.4: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc34_12.5: %.17 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.18]
-// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc34_12.5 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc34_12.6: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc34_14.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
+// CHECK:STDOUT:   %.loc34_14.2: %.17 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.18]
+// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc34_14.2 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc34_14.3: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %C = call %.loc34_12.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
@@ -330,10 +329,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc48_5.1: %Op.type.4 = interface_witness_access @impl.2.%.loc19, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc48_5.2: <bound method> = bound_method %a.ref, %.loc48_5.1
 // CHECK:STDOUT:   %.loc48_3: %.7 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc48_5.3: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc48_5.4: %.17 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.18]
-// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc48_5.4 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc48_5.5: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc48_8.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
+// CHECK:STDOUT:   %.loc48_8.2: %.17 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.18]
+// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc48_8.2 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc48_8.3: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %.4 = call %.loc48_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

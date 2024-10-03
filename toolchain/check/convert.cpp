@@ -13,6 +13,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/operator.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -1131,9 +1132,8 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIRLoc callee_loc,
-                        SemIR::SpecificId callee_specific_id, bool addr_pattern,
-                        SemIR::InstId self_param_id,
-                        SemIR::TypeId self_param_type_id, SemIR::InstId self_id)
+                        SemIR::SpecificId callee_specific_id,
+                        SemIR::InstId self_param_id, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
@@ -1145,6 +1145,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
     return SemIR::InstId::BuiltinError;
   }
 
+  bool addr_pattern = context.insts().Is<SemIR::AddrPattern>(self_param_id);
   DiagnosticAnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(
@@ -1156,34 +1157,10 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                                   : llvm::StringLiteral("self"));
       });
 
-  // For `addr self`, take the address of the object argument.
-  auto self_or_addr_id = self_id;
-  if (addr_pattern) {
-    self_or_addr_id = ConvertToValueOrRefExpr(context, self_or_addr_id);
-    auto self = context.insts().Get(self_or_addr_id);
-    switch (SemIR::GetExprCategory(context.sem_ir(), self_id)) {
-      case SemIR::ExprCategory::Error:
-      case SemIR::ExprCategory::DurableRef:
-      case SemIR::ExprCategory::EphemeralRef:
-        break;
-      default:
-        CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
-                          "`addr self` method cannot be invoked on a value");
-        context.emitter().Emit(TokenOnly(call_loc_id), AddrSelfIsNonRef);
-        return SemIR::InstId::BuiltinError;
-    }
-    auto loc_id = context.insts().GetLocId(self_or_addr_id);
-    self_or_addr_id = context.AddInst<SemIR::AddrOf>(
-        loc_id, {.type_id = context.GetPointerType(self.type_id()),
-                 .lvalue_id = self_or_addr_id});
-  }
-
-  return ConvertToValueOfType(
-      context, call_loc_id, self_or_addr_id,
-      SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
-                               self_param_type_id));
+  return PatternMatchArg(context, callee_specific_id, self_param_id, self_id);
 }
 
+// TODO: consider moving this to pattern_match.h
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
@@ -1206,21 +1183,19 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_patterns) {
-    auto param_pattern =
-        context.insts().GetAs<SemIR::ParamPattern>(implicit_param_id);
-    auto implicit_param = context.insts().Get(param_pattern.subpattern_id);
-    bool addr_pattern = implicit_param.kind() == SemIR::InstKind::AddrPattern;
     if (SemIR::Function::GetNameFromParamPatternId(
             context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
-      auto converted_self_id = ConvertSelf(
-          context, call_loc_id, callee.callee_loc, callee_specific_id,
-          addr_pattern, implicit_param_id, implicit_param.type_id(), self_id);
+      auto converted_self_id =
+          ConvertSelf(context, call_loc_id, callee.callee_loc,
+                      callee_specific_id, implicit_param_id, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
       args.push_back(converted_self_id);
     } else {
-      CARBON_CHECK(!param_pattern.runtime_index.is_valid(),
+      CARBON_CHECK(!SemIR::Function::GetRuntimeIndexFromParamPatternId(
+                        context.sem_ir(), implicit_param_id)
+                        .is_valid(),
                    "Unexpected implicit parameter passed at runtime");
     }
   }
@@ -1240,28 +1215,21 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
        llvm::enumerate(arg_refs, param_patterns)) {
     diag_param_index = i;
 
-    // TODO: In general we need to perform pattern matching here to find the
-    // argument corresponding to each parameter.
-    auto param_pattern =
-        context.insts().GetAs<SemIR::ParamPattern>(param_pattern_id);
-    if (!param_pattern.runtime_index.is_valid()) {
+    auto runtime_index = SemIR::Function::GetRuntimeIndexFromParamPatternId(
+        context.sem_ir(), param_pattern_id);
+    if (!runtime_index.is_valid()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }
 
-    auto param_type_id = SemIR::GetTypeInSpecific(
-        context.sem_ir(), callee_specific_id, param_pattern.type_id);
-    // TODO: Convert to the proper expression category. For now, we assume
-    // parameters are all `let` bindings.
     auto converted_arg_id =
-        ConvertToValueOfType(context, call_loc_id, arg_id, param_type_id);
+        PatternMatchArg(context, callee_specific_id, param_pattern_id, arg_id);
     if (converted_arg_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstBlockId::Invalid;
     }
 
-    CARBON_CHECK(
-        static_cast<int32_t>(args.size()) == param_pattern.runtime_index.index,
-        "Parameters not numbered in order.");
+    CARBON_CHECK(static_cast<int32_t>(args.size()) == runtime_index.index,
+                 "Parameters not numbered in order.");
     args.push_back(converted_arg_id);
   }
 

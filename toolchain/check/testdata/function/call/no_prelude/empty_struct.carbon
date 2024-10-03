@@ -57,10 +57,10 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
-// CHECK:STDOUT:   %.loc16_9: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc16_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_7: %.1 = converted %.loc16_9, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %Echo.call: init %.1 = call %Echo.ref(%.loc16_7)
+// CHECK:STDOUT:   %.loc16_9.2: %.1 = converted %.loc16_9.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %Echo.call: init %.1 = call %Echo.ref(%.loc16_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

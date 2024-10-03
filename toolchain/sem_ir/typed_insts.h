@@ -64,19 +64,6 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
-// The parameter-list counterpart of an `addr` pattern. Structurally, `inner_id`
-// will generally be one of `AnyBindName`.
-// FIXME remove this.
-struct AddrParam {
-  // FIXME can we re-narrow the node kind?
-  static constexpr auto Kind =
-      InstKind::AddrParam.Define<Parse::NodeId>({.ir_name = "addr_param"});
-
-  TypeId type_id;
-  // The `self` binding.
-  InstId inner_id;
-};
-
 // An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
 // generally be a pattern inst.
 struct AddrPattern {

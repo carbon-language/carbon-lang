@@ -14,15 +14,9 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
   return true;
 }
 
+// FIXME do we still need this function?
 static auto ConsumeTrailingParam(Context& context) {
-  auto [node_id, pattern_id] = context.node_stack().PopPatternWithNodeId();
-  auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
-      node_id, {
-                   .type_id = context.insts().Get(pattern_id).type_id(),
-                   .subpattern_id = pattern_id,
-                   .runtime_index = SemIR::RuntimeParamIndex::Invalid,
-               });
-  context.param_patterns_stack().AddInstId(param_pattern_id);
+  context.param_patterns_stack().AddInstId(context.node_stack().PopPattern());
 }
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)

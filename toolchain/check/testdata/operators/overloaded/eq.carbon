@@ -62,12 +62,12 @@ impl C as Core.Eq {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:10: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:15: error: cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:15: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:               ^
   // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: note: initializing parameter 1 of function declared here
   // CHECK:STDERR:   fn Equal[self: C](other: C) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -695,10 +695,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Equal.ref: %.7 = name_ref Equal, imports.%import_ref.3 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc7, element0 [template = constants.%Equal.1]
 // CHECK:STDOUT:   %.loc23_12.2: <bound method> = bound_method %a.ref, %.loc23_12.1
-// CHECK:STDOUT:   %.loc23_12.3: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.12]
-// CHECK:STDOUT:   %.loc23_12.4: %.13 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc23_12.4 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc23_12.5: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_15.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc23_15.2: %.13 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.14]
+// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc23_15.2 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc23_15.3: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Equal.call: init bool = call %.loc23_12.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %.loc23_16.1: bool = value_of_initializer %Equal.call [template = <error>]
 // CHECK:STDOUT:   %.loc23_16.2: bool = converted %Equal.call, %.loc23_16.1 [template = <error>]

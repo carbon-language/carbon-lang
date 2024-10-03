@@ -58,11 +58,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+84, loaded [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+86, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.7 = import_ref Core//prelude/operators/arithmetic, inst+104, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+99, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+99, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+82, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+84, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.7 = import_ref Core//prelude/operators/arithmetic, inst+102, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+97, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+97, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

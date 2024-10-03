@@ -97,9 +97,9 @@ fn TakeIncomplete(c: Class);
 fn ReturnIncomplete() -> Class;
 
 fn CallTakeIncomplete(p: Class*) {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `Class`
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:18: error: forming value of incomplete type `Class`
   // CHECK:STDERR:   TakeIncomplete(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-92]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
@@ -109,9 +109,9 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR:
   TakeIncomplete(*p);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: forming value of incomplete type `Class`
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:18: error: forming value of incomplete type `Class`
   // CHECK:STDERR:   TakeIncomplete({});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-104]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~

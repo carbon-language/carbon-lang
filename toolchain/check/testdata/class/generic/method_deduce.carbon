@@ -229,9 +229,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc24_25.2: ref %A = temporary_storage
 // CHECK:STDOUT:   %.loc24_25.3: init %A = class_init (), %.loc24_25.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc24_25.4: ref %A = temporary %.loc24_25.2, %.loc24_25.3
-// CHECK:STDOUT:   %.loc24_23.1: ref %A = converted %.loc24_25.1, %.loc24_25.4
-// CHECK:STDOUT:   %.loc24_23.2: %A = bind_value %.loc24_23.1
-// CHECK:STDOUT:   %GetNoDeduce.call: init %.6 = call %GetNoDeduce.ref(%.loc24_23.2) to %.loc23_54
+// CHECK:STDOUT:   %.loc24_25.5: ref %A = converted %.loc24_25.1, %.loc24_25.4
+// CHECK:STDOUT:   %.loc24_25.6: %A = bind_value %.loc24_25.5
+// CHECK:STDOUT:   %GetNoDeduce.call: init %.6 = call %GetNoDeduce.ref(%.loc24_25.6) to %.loc23_54
 // CHECK:STDOUT:   return %GetNoDeduce.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

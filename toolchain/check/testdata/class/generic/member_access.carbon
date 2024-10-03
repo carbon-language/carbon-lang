@@ -200,8 +200,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type.1) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr.1)] {
 // CHECK:STDOUT:       %self.patt: @GetAddr.%.1 (%.3) = binding_pattern self
-// CHECK:STDOUT:       %.loc7_14.2: @GetAddr.%.1 (%.3) = addr_pattern %self.patt
-// CHECK:STDOUT:       %.loc7_14.1: @GetAddr.%.1 (%.3) = param_pattern %.loc7_14.2, runtime_param0
+// CHECK:STDOUT:       %.loc7_23: @GetAddr.%.1 (%.3) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %.loc7_14: @GetAddr.%Class (%Class.2) = addr_pattern %.loc7_23
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc7_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc7_25 [symbolic = %Class (constants.%Class.2)]
@@ -211,7 +211,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:       %return: ref @GetAddr.%.2 (%.4) = var <return slot>
 // CHECK:STDOUT:       %param: @GetAddr.%.1 (%.3) = param runtime_param0
 // CHECK:STDOUT:       %self: @GetAddr.%.1 (%.3) = bind_name self, %param
-// CHECK:STDOUT:       %.loc7_14.3: @GetAddr.%.1 (%.3) = addr_param %self
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc8: <witness> = complete_type_witness %.5 [symbolic = %.3 (constants.%.6)]
 // CHECK:STDOUT:
@@ -249,7 +248,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %.3 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc7_14.1: @GetAddr.%.1 (%.3)]() -> @GetAddr.%.2 (%.4) {
+// CHECK:STDOUT:   fn[addr %.loc7_23: @GetAddr.%.1 (%.3)]() -> @GetAddr.%.2 (%.4) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%.1 (%.3) = name_ref self, %self
 // CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref
