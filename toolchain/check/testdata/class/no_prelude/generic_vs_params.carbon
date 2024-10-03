@@ -110,14 +110,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = class_decl @NotGenericButParams [template = constants.%NotGenericButParams.1] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.1 = class_decl @GenericAndParams.1 [template = constants.%GenericAndParams.1] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc6_25: type = param_pattern %T.patt.loc6, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc6, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc8: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -173,7 +173,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6_35: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericAndParams.2
@@ -192,7 +192,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [template = constants.%GenericNoParams.1] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.2) = class_decl @GenericAndParams.2 [symbolic = @C.%GenericAndParams (constants.%GenericAndParams.3)] {
 // CHECK:STDOUT:       %U.patt.loc10: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:       %.loc10_27: type = param_pattern %U.patt.loc10, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc10, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10: type = bind_symbolic_name U 1, %param [symbolic = %U.1 (constants.%U)]
@@ -224,7 +224,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc10_37: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericAndParams.4
@@ -325,7 +325,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %.loc8_10: type = param_pattern %T.patt, runtime_param<invalid>
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T: type = bind_name T, %param
@@ -333,7 +333,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc8_21: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2
@@ -361,14 +361,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
 // CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %.loc7_10: type = param_pattern %T.patt, runtime_param<invalid>
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T: type = bind_name T, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc10: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc10: type = param_pattern %T.patt.loc10, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc10, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -376,7 +376,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc7_19: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2
@@ -388,7 +388,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc10: type) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]

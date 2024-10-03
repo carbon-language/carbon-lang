@@ -130,7 +130,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b_ref: ref %.7 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %S.patt.loc8: %.11 = symbolic_binding_pattern S 0 [symbolic = %S.patt.1 (constants.%S.patt)]
-// CHECK:STDOUT:     %.loc8_10: %.11 = param_pattern %S.patt.loc8, runtime_param<invalid> [symbolic = %S.patt.1 (constants.%S.patt)]
+// CHECK:STDOUT:     %S.param_patt: %.11 = param_pattern %S.patt.loc8, runtime_param<invalid> [symbolic = %S.patt.1 (constants.%S.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_18.1: type = value_of_initializer %int.make_type_32.loc8_18 [template = i32]
@@ -599,10 +599,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.11)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.11)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.11)]
 // CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -655,7 +655,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT:   %.1 => constants.%.11
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

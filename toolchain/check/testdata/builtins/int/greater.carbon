@@ -87,9 +87,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Greater.decl: %Greater.type = fn_decl @Greater [template = constants.%Greater] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_13: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc2_21: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_15.1: type = value_of_initializer %int.make_type_32.loc2_15 [template = i32]
@@ -108,7 +108,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc3_12: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc3_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_14.1: type = value_of_initializer %int.make_type_32.loc3_14 [template = i32]
@@ -124,9 +124,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
-// CHECK:STDOUT:     %.loc8_11: %True = param_pattern %true_.patt, runtime_param0
+// CHECK:STDOUT:     %true_.param_patt: %True = param_pattern %true_.patt, runtime_param0
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
-// CHECK:STDOUT:     %.loc8_25: %False = param_pattern %false_.patt, runtime_param1
+// CHECK:STDOUT:     %false_.param_patt: %False = param_pattern %false_.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %False.ref.loc8: type = name_ref False, file.%False.decl [template = constants.%False]
@@ -137,9 +137,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc16_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc16_25: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc16_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16_19 [template = i32]
@@ -176,11 +176,11 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater(%.loc2_13: i32, %.loc2_21: i32) -> bool = "int.greater";
+// CHECK:STDOUT: fn @Greater(%a.param_patt: i32, %b.param_patt: i32) -> bool = "int.greater";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%.loc3_12: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%a.param_patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc8_11: %True, %.loc8_25: %False) {
+// CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Greater.ref.loc9: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
@@ -288,7 +288,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%.loc16_17: i32, %.loc16_25: i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Greater.ref: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a

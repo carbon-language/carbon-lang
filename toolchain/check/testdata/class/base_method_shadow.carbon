@@ -98,13 +98,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %.loc29_10: %.1 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %.1 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %.7 = binding_pattern b
-// CHECK:STDOUT:     %.loc29_17: %.7 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %.7 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:     %c.patt: %.13 = binding_pattern c
-// CHECK:STDOUT:     %.loc29_24: %.13 = param_pattern %c.patt, runtime_param2
+// CHECK:STDOUT:     %c.param_patt: %.13 = param_pattern %c.patt, runtime_param2
 // CHECK:STDOUT:     %d.patt: %.17 = binding_pattern d
-// CHECK:STDOUT:     %.loc29_31: %.17 = param_pattern %d.patt, runtime_param3
+// CHECK:STDOUT:     %d.param_patt: %.17 = param_pattern %d.patt, runtime_param3
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc29_13: type = ptr_type %A [template = constants.%.1]
@@ -128,8 +128,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %.loc12_17: %.1 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc12_8: %A = addr_pattern %.loc12_17
+// CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc12_8: %A = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %A [template = constants.%.1]
@@ -148,8 +148,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc16: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %.loc17_17: %.7 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc17_8: %B = addr_pattern %.loc17_17
+// CHECK:STDOUT:     %self.param_patt: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc17_8: %B = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %.loc17_23: type = ptr_type %B [template = constants.%.7]
@@ -170,8 +170,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc21: %.12 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %self.patt: %.13 = binding_pattern self
-// CHECK:STDOUT:     %.loc22_17: %.13 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc22_8: %C = addr_pattern %.loc22_17
+// CHECK:STDOUT:     %self.param_patt: %.13 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc22_8: %C = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc22_23: type = ptr_type %C [template = constants.%.13]
@@ -198,13 +198,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %.loc12_17: %.1]();
+// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[addr %.loc17_17: %.7]();
+// CHECK:STDOUT: fn @F.2[addr %self.param_patt: %.7]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[addr %.loc22_17: %.13]();
+// CHECK:STDOUT: fn @F.3[addr %self.param_patt: %.13]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%.loc29_10: %.1, %.loc29_17: %.7, %.loc29_24: %.13, %.loc29_31: %.17) {
+// CHECK:STDOUT: fn @Call(%a.param_patt: %.1, %b.param_patt: %.7, %c.param_patt: %.13, %d.param_patt: %.17) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc30_4.1: ref %A = deref %a.ref

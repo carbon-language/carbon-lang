@@ -170,5 +170,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:

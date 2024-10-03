@@ -66,7 +66,7 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type = interface_decl @GenericInterface [template = constants.%GenericInterface] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -90,7 +90,7 @@ class C {
 // CHECK:STDOUT:     %Self.1: @GenericInterface.%.1 (%.2) = bind_symbolic_name Self 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @GenericInterface.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @GenericInterface.%F (constants.%F.1)] {
 // CHECK:STDOUT:       %x.patt: @F.1.%T (%T) = binding_pattern x
-// CHECK:STDOUT:       %.loc12: @F.1.%T (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %param: @F.1.%T (%T) = param runtime_param0
@@ -108,7 +108,7 @@ class C {
 // CHECK:STDOUT: impl @impl: %C as %.2 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %x.patt: @F.2.%T (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc20: @F.2.%T (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @F.2.%T (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %param: @F.2.%T (%T) = param runtime_param0
@@ -126,7 +126,7 @@ class C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param [symbolic = constants.%T]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T 0 [symbolic = constants.%T.patt.2]
-// CHECK:STDOUT:     %.loc19_24: type = param_pattern %T.patt, runtime_param<invalid> [symbolic = constants.%T.patt.2]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid> [symbolic = constants.%T.patt.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T [symbolic = constants.%T]
@@ -142,7 +142,7 @@ class C {
 // CHECK:STDOUT: generic fn @F.1(@GenericInterface.%T.loc11: type, @GenericInterface.%Self.1: @GenericInterface.%.1 (%.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc12: @F.1.%T (%T));
+// CHECK:STDOUT:   fn(%x.param_patt: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@C.%T: type) {
@@ -150,7 +150,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc20: @F.2.%T (%T)) {
+// CHECK:STDOUT:   fn(%x.param_patt: @F.2.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

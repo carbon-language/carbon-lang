@@ -100,9 +100,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Div.decl: %Div.type = fn_decl @Div [template = constants.%Div] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc2_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
@@ -137,9 +137,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc7_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc7_25: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
@@ -160,9 +160,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%.loc2_9: i32, %.loc2_17: i32) -> i32 = "int.sdiv";
+// CHECK:STDOUT: fn @Div(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%.loc7_17: i32, %.loc7_25: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -228,9 +228,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Div.decl: %Div.type = fn_decl @Div [template = constants.%Div] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc4_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc4_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
@@ -249,9 +249,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sub.decl: %Sub.type = fn_decl @Sub [template = constants.%Sub] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc5_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_11.1: type = value_of_initializer %int.make_type_32.loc5_11 [template = i32]
@@ -270,7 +270,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc6_12: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
@@ -295,11 +295,11 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%.loc4_9: i32, %.loc4_17: i32) -> i32 = "int.sdiv";
+// CHECK:STDOUT: fn @Div(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%.loc5_9: i32, %.loc5_17: i32) -> i32 = "int.ssub";
+// CHECK:STDOUT: fn @Sub(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%.loc6_12: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%a.param_patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -394,9 +394,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Div.decl: %Div.type = fn_decl @Div [template = constants.%Div] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc4_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc4_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
@@ -423,7 +423,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%.loc4_9: i32, %.loc4_17: i32) -> i32 = "int.sdiv";
+// CHECK:STDOUT: fn @Div(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

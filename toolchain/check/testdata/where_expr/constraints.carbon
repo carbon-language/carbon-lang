@@ -133,30 +133,30 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.2] {} {}
 // CHECK:STDOUT:   %Equal.decl: %Equal.type = fn_decl @Equal [template = constants.%Equal] {
 // CHECK:STDOUT:     %T.patt.loc11: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc11_11: %.2 = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %.2 = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc11_33: %.8 = struct_literal ()
+// CHECK:STDOUT:     %.loc11: %.8 = struct_literal ()
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11: %.2 = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EqualEqual.decl: %EqualEqual.type = fn_decl @EqualEqual [template = constants.%EqualEqual] {
 // CHECK:STDOUT:     %U.patt.loc13: %.2 = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:     %.loc13_16: %.2 = param_pattern %U.patt.loc13, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: %.2 = param_pattern %U.patt.loc13, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.loc13_37: %.5 = tuple_literal ()
+// CHECK:STDOUT:     %.loc13: %.5 = tuple_literal ()
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc13: %.2 = bind_symbolic_name U 0, %param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [template = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt.loc15: %.1 = symbolic_binding_pattern V 0 [symbolic = %V.patt.1 (constants.%V.patt)]
-// CHECK:STDOUT:     %.loc15: %.1 = param_pattern %V.patt.loc15, runtime_param<invalid> [symbolic = %V.patt.1 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: %.1 = param_pattern %V.patt.loc15, runtime_param<invalid> [symbolic = %V.patt.1 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.1]
 // CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
@@ -167,7 +167,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %W.patt.loc17: %.2 = symbolic_binding_pattern W 0 [symbolic = %W.patt.1 (constants.%W.patt)]
-// CHECK:STDOUT:     %.loc17: %.2 = param_pattern %W.patt.loc17, runtime_param<invalid> [symbolic = %W.patt.1 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: %.2 = param_pattern %W.patt.loc17, runtime_param<invalid> [symbolic = %W.patt.1 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc17_12: type = name_ref I, file.%I.decl [template = constants.%.2]
 // CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
@@ -211,7 +211,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %T.1: %.2 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.1: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc11_11: %.2);
+// CHECK:STDOUT:   fn(%T.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EqualEqual(%U.loc13: %.2) {
@@ -219,7 +219,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.1: %.2 = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.1: %.2 = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc13_16: %.2);
+// CHECK:STDOUT:   fn(%U.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(%V.loc15: %.1) {
@@ -227,7 +227,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %V.1: %.1 = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.1: %.1 = symbolic_binding_pattern V 0 [symbolic = %V.patt.1 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc15: %.1);
+// CHECK:STDOUT:   fn(%V.param_patt: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @And(%W.loc17: %.2) {
@@ -235,7 +235,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %W.1: %.2 = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:   %W.patt.1: %.2 = symbolic_binding_pattern W 0 [symbolic = %W.patt.1 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc17: %.2);
+// CHECK:STDOUT:   fn(%W.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
@@ -318,13 +318,13 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %TypeMismatch.decl: %TypeMismatch.type = fn_decl @TypeMismatch [template = constants.%TypeMismatch] {
 // CHECK:STDOUT:     %X.patt.loc8: %.1 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
-// CHECK:STDOUT:     %.loc8_18: %.1 = param_pattern %X.patt.loc8, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: %.1 = param_pattern %X.patt.loc8, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%.1]
 // CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self)]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self)]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.8 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_39: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
 // CHECK:STDOUT:     %X.loc8: %.1 = bind_symbolic_name X 0, %param [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   }
@@ -343,7 +343,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %X.1: %.1 = bind_symbolic_name X 0 [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   %X.patt.1: %.1 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc8_18: %.1);
+// CHECK:STDOUT:   fn(%X.param_patt: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeMismatch(constants.%X) {
@@ -446,12 +446,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
 // CHECK:STDOUT:     %Y.patt.loc22: %.3 = symbolic_binding_pattern Y 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
-// CHECK:STDOUT:     %.loc22_17: %.3 = param_pattern %Y.patt.loc22, runtime_param<invalid> [symbolic = %Y.patt.1 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.param_patt: %.3 = param_pattern %Y.patt.loc22, runtime_param<invalid> [symbolic = %Y.patt.1 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:     %.Self.1: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
 // CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:     %.loc22_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc22: %.1 = struct_literal ()
 // CHECK:STDOUT:     %param: %.3 = param runtime_param<invalid>
 // CHECK:STDOUT:     %Y.loc22: %.3 = bind_symbolic_name Y 0, %param [symbolic = %Y.1 (constants.%Y)]
 // CHECK:STDOUT:   }
@@ -514,15 +514,15 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %V: %.3 = bind_symbolic_name V 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %V.patt: %.3 = symbolic_binding_pattern V 0 [symbolic = %V.patt (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.1: %.3);
+// CHECK:STDOUT:   fn(%V.param_patt: %.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.6)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.6)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc22: %.3) {
@@ -530,7 +530,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Y.1: %.3 = bind_symbolic_name Y 0 [symbolic = %Y.1 (constants.%Y)]
 // CHECK:STDOUT:   %Y.patt.1: %.3 = symbolic_binding_pattern Y 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc22_17: %.3);
+// CHECK:STDOUT:   fn(%Y.param_patt: %.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
@@ -567,7 +567,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.6
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

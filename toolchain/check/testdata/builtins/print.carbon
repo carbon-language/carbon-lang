@@ -58,7 +58,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Print.decl: %Print.type.1 = fn_decl @Print.1 [template = constants.%Print.1] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_11: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -71,7 +71,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Print.1(%.loc11_11: i32) = "print.int";
+// CHECK:STDOUT: fn @Print.1(%a.param_patt: i32) = "print.int";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
@@ -85,5 +85,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Print.2(%.1: i32) = "print.int";
+// CHECK:STDOUT: fn @Print.2(%x.param_patt: i32) = "print.int";
 // CHECK:STDOUT:

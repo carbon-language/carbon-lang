@@ -56,7 +56,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc12: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
@@ -74,7 +74,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.4: type = struct_type {.a: @F.%T.1 (%T)} [symbolic = %.4 (constants.%.8)]
 // CHECK:STDOUT:   %.5: type = array_type constants.%.9, @F.%T.1 (%T) [symbolic = %.5 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc12: type) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc13_11: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_12: type = ptr_type %T [symbolic = %.1 (constants.%.2)]

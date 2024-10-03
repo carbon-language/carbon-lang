@@ -80,7 +80,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc23_12: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -100,7 +100,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: impl @impl: %C as %.3 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc18: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -122,7 +122,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%.loc18: %C]() -> %return: %C {
+// CHECK:STDOUT: fn @Op.1[%self.param_patt: %C]() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%struct]
@@ -133,17 +133,17 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self)]() -> @Op.2.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self)]() -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%.loc23_12: %C) -> %return: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.ref: %.7 = name_ref Op, imports.%import_ref.3 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access @impl.%.loc17, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc24_10.2: <bound method> = bound_method %a.ref, %.loc24_10.1
-// CHECK:STDOUT:   %.loc23_17: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23_17
+// CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -74,9 +74,9 @@ interface I {
 // CHECK:STDOUT:   %.loc13: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc14_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc14_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14_11 [template = i32]
@@ -133,7 +133,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@I.%Self: %.1) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc14_9: i32, %.loc14_17: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

@@ -93,7 +93,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeI32() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeF64() -> f64;
 // CHECK:STDOUT:

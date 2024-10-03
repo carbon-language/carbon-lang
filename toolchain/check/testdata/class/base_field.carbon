@@ -77,7 +77,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %p.patt: %.10 = binding_pattern p
-// CHECK:STDOUT:     %.loc24_12: %.10 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.10 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_21: type = ptr_type %Derived [template = constants.%.10]
@@ -136,7 +136,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%.loc24_12: %.10) -> %.11 {
+// CHECK:STDOUT: fn @Access(%p.param_patt: %.10) -> %.11 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.10 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_12: ref %Derived = deref %p.ref

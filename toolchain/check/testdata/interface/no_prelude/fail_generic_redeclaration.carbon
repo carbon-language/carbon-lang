@@ -73,14 +73,14 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = interface_decl @.1 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc19: type = param_pattern %T.patt.loc19, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc19, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
 // CHECK:STDOUT:     %T.patt.loc21: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc21: type = param_pattern %T.patt.loc21, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc21, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T.1)]
@@ -88,14 +88,14 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.5] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
 // CHECK:STDOUT:     %T.patt.loc31: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
-// CHECK:STDOUT:     %.loc31: type = param_pattern %T.patt.loc31, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc31, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc31: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: %.type.2 = interface_decl @.3 [template = constants.%.6] {
 // CHECK:STDOUT:     %T.patt.loc38: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.4)]
-// CHECK:STDOUT:     %.loc38_28: %.2 = param_pattern %T.patt.loc38, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.4)]
+// CHECK:STDOUT:     %T.param_patt: %.2 = param_pattern %T.patt.loc38, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.4)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc38_32.1: %.2 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.2 [template = constants.%.2]

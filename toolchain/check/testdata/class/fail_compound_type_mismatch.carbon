@@ -97,7 +97,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [template = constants.%AccessBInA] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %.loc19_16: %A = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %A = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -155,7 +155,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBInA(%.loc19_16: %A) -> i32 {
+// CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
@@ -170,10 +170,10 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.10)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.10)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -193,7 +193,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.10
+// CHECK:STDOUT:   %.1 => constants.%.10
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -86,14 +86,14 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc11: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %Class.3 = binding_pattern c
-// CHECK:STDOUT:     %.loc15_7: %Class.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class.3 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
@@ -109,9 +109,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc19: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc19_7: type = param_pattern %T.patt.loc19, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc19, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %c.patt: @G.%Class.1 (%Class.2) = binding_pattern c
-// CHECK:STDOUT:     %.loc19_17: @G.%Class.1 (%Class.2) = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: @G.%Class.1 (%Class.2) = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc19_25: type = name_ref T, %T.loc19 [symbolic = %T.1 (constants.%T)]
@@ -125,9 +125,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %U.patt.loc23: type = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:     %.loc23_7: type = param_pattern %U.patt.loc23, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc23, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     %c.patt: @H.%Class.1 (%Class.4) = binding_pattern c
-// CHECK:STDOUT:     %.loc23_17: @H.%Class.1 (%Class.4) = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: @H.%Class.1 (%Class.4) = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %U.ref.loc23_25: type = name_ref U, %U.loc23 [symbolic = %U.1 (constants.%U)]
@@ -164,7 +164,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc15_7: %Class.3) -> i32 {
+// CHECK:STDOUT: fn @F(%c.param_patt: %Class.3) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.3 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %.5 = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
@@ -181,7 +181,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @G.%Class.1 (%Class.2), @G.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc19_7: type, %.loc19_17: @G.%Class.1 (%Class.2)) -> @G.%T.1 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %c.param_patt: @G.%Class.1 (%Class.2)) -> @G.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.1 (%Class.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%.1 (%.2) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
@@ -199,7 +199,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @H.%Class.1 (%Class.4), @H.%U.1 (%U) [symbolic = %.1 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc23_7: type, %.loc23_17: @H.%Class.1 (%Class.4)) -> @H.%U.1 (%U) {
+// CHECK:STDOUT:   fn(%U.param_patt: type, %c.param_patt: @H.%Class.1 (%Class.4)) -> @H.%U.1 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.1 (%Class.4) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%.1 (%.10) = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]

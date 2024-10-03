@@ -129,9 +129,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type = fn_decl @Add [template = constants.%Add] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc2_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_11.1: type = value_of_initializer %int.make_type_32.loc2_11 [template = i32]
@@ -166,9 +166,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc7_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc7_25: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
@@ -189,9 +189,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%.loc2_9: i32, %.loc2_17: i32) -> i32 = "int.uadd";
+// CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.uadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%.loc7_17: i32, %.loc7_25: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -272,7 +272,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TooFew.decl: %TooFew.type = fn_decl @TooFew [template = constants.%TooFew] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc8_12: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_14.1: type = value_of_initializer %int.make_type_32.loc8_14 [template = i32]
@@ -286,11 +286,11 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooMany.decl: %TooMany.type = fn_decl @TooMany [template = constants.%TooMany] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc13_13: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc13_21: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:     %c.patt: i32 = binding_pattern c
-// CHECK:STDOUT:     %.loc13_29: i32 = param_pattern %c.patt, runtime_param2
+// CHECK:STDOUT:     %c.param_patt: i32 = param_pattern %c.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15.1: type = value_of_initializer %int.make_type_32.loc13_15 [template = i32]
@@ -314,9 +314,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.decl: %BadReturnType.type = fn_decl @BadReturnType [template = constants.%BadReturnType] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc18_19: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc18_27: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc18_21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_21.1: type = value_of_initializer %int.make_type_32.loc18_21 [template = i32]
@@ -335,9 +335,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %JustRight.decl: %JustRight.type = fn_decl @JustRight [template = constants.%JustRight] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc19_15: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc19_23: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc19_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_17.1: type = value_of_initializer %int.make_type_32.loc19_17 [template = i32]
@@ -387,7 +387,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: %RuntimeCallTooFew.type = fn_decl @RuntimeCallTooFew [template = constants.%RuntimeCallTooFew] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc45_23: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc45_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc45_25.1: type = value_of_initializer %int.make_type_32.loc45_25 [template = i32]
@@ -401,11 +401,11 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallTooMany.decl: %RuntimeCallTooMany.type = fn_decl @RuntimeCallTooMany [template = constants.%RuntimeCallTooMany] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc49_24: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc49_32: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:     %c.patt: i32 = binding_pattern c
-// CHECK:STDOUT:     %.loc49_40: i32 = param_pattern %c.patt, runtime_param2
+// CHECK:STDOUT:     %c.param_patt: i32 = param_pattern %c.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc49_26: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc49_26.1: type = value_of_initializer %int.make_type_32.loc49_26 [template = i32]
@@ -429,9 +429,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallBadReturnType.decl: %RuntimeCallBadReturnType.type = fn_decl @RuntimeCallBadReturnType [template = constants.%RuntimeCallBadReturnType] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc53_30: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc53_38: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc53_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc53_32.1: type = value_of_initializer %int.make_type_32.loc53_32 [template = i32]
@@ -452,17 +452,17 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooFew(%.loc8_12: i32) -> i32;
+// CHECK:STDOUT: fn @TooFew(%a.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooMany(%.loc13_13: i32, %.loc13_21: i32, %.loc13_29: i32) -> i32;
+// CHECK:STDOUT: fn @TooMany(%a.param_patt: i32, %b.param_patt: i32, %c.param_patt: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BadReturnType(%.loc18_19: i32, %.loc18_27: i32) -> bool;
+// CHECK:STDOUT: fn @BadReturnType(%a.param_patt: i32, %b.param_patt: i32) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%.loc19_15: i32, %.loc19_23: i32) -> i32 = "int.uadd";
+// CHECK:STDOUT: fn @JustRight(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.uadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallTooFew(%.loc45_23: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCallTooFew(%a.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -472,7 +472,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   return %.loc46_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallTooMany(%.loc49_24: i32, %.loc49_32: i32, %.loc49_40: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCallTooMany(%a.param_patt: i32, %b.param_patt: i32, %c.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, file.%TooMany.decl [template = constants.%TooMany]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -484,7 +484,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   return %.loc50_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallBadReturnType(%.loc53_30: i32, %.loc53_38: i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a.param_patt: i32, %b.param_patt: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -534,9 +534,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type = fn_decl @Add [template = constants.%Add] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc4_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc4_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4_11 [template = i32]
@@ -563,7 +563,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%.loc4_9: i32, %.loc4_17: i32) -> i32 = "int.uadd";
+// CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.uadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

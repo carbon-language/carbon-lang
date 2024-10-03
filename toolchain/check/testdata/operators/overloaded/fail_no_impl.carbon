@@ -133,7 +133,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [template = constants.%TestUnary] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc15: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -143,9 +143,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc23_16: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc23_22: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -158,7 +158,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc31: %C = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param runtime_param0
@@ -201,7 +201,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestUnary(%.loc15: %C) -> %return: %C {
+// CHECK:STDOUT: fn @TestUnary(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
@@ -211,10 +211,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.1.%Self (%Self.1)]() -> @Op.1.%Self (%Self.1);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self (%Self.1)]() -> @Op.1.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestBinary(%.loc23_16: %C, %.loc23_22: %C) -> %return: %C {
+// CHECK:STDOUT: fn @TestBinary(%a.param_patt: %C, %b.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -225,10 +225,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %.8) {
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self.2)](%.2: @Op.2.%Self (%Self.2)) -> @Op.2.%Self (%Self.2);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self.2)](%other.param_patt: @Op.2.%Self (%Self.2)) -> @Op.2.%Self (%Self.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestRef(%.loc31: %C) {
+// CHECK:STDOUT: fn @TestRef(%b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
@@ -247,9 +247,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %.11) {
 // CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:   %.3: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.3 (constants.%.12)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+116: @Op.3.%.3 (%.12)](%.2: @Op.3.%Self (%Self.3));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+116: @Op.3.%.2 (%.12)](%other.param_patt: @Op.3.%Self (%Self.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.15) {
@@ -269,7 +269,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.3(constants.%Self.3) {
 // CHECK:STDOUT:   %Self => constants.%Self.3
-// CHECK:STDOUT:   %.3 => constants.%.12
+// CHECK:STDOUT:   %.2 => constants.%.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%Self.4) {

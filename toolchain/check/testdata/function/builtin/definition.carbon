@@ -43,9 +43,9 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type = fn_decl @Add [template = constants.%Add] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc11_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
@@ -66,5 +66,5 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%.loc11_9: i32, %.loc11_17: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

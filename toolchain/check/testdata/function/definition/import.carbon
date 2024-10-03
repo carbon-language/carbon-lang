@@ -156,7 +156,7 @@ fn D() {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_7: i32 = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
@@ -170,7 +170,7 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %.3 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
@@ -195,13 +195,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.loc5_7: i32) -> i32 {
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.loc6_7: %.3) -> %.4 {
+// CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
 // CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
@@ -317,9 +317,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.1: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.param_patt: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -402,7 +402,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_then_def.carbon
 // CHECK:STDOUT:

@@ -52,7 +52,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
-// CHECK:STDOUT:     %.loc15_7: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_9.1: type = value_of_initializer %int.make_type_32.loc15_15 [template = i32]
@@ -75,7 +75,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc15_7: %.4) -> %.4 {
+// CHECK:STDOUT: fn @F(%p.param_patt: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

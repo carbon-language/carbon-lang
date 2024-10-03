@@ -148,7 +148,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClassAdapter.decl.loc15: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %TestStaticMemberFunction.decl: %TestStaticMemberFunction.type = fn_decl @TestStaticMemberFunction [template = constants.%TestStaticMemberFunction] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
-// CHECK:STDOUT:     %.loc19: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
@@ -156,7 +156,7 @@ class StructAdapter {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [template = constants.%TestAdapterMethod] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
-// CHECK:STDOUT:     %.loc23: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
@@ -186,7 +186,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
-// CHECK:STDOUT:     %.loc12: %SomeClassAdapter = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %SomeClassAdapter = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
@@ -206,9 +206,9 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @StaticMemberFunction();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdapterMethod[%.loc12: %SomeClassAdapter]();
+// CHECK:STDOUT: fn @AdapterMethod[%self.param_patt: %SomeClassAdapter]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestStaticMemberFunction(%.loc19: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @TestStaticMemberFunction(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %StaticMemberFunction.ref: %StaticMemberFunction.type = name_ref StaticMemberFunction, @SomeClass.%StaticMemberFunction.decl [template = constants.%StaticMemberFunction]
@@ -216,7 +216,7 @@ class StructAdapter {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAdapterMethod(%.loc23: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @TestAdapterMethod(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %AdapterMethod.ref: %AdapterMethod.type = name_ref AdapterMethod, @SomeClass.%AdapterMethod.decl [template = constants.%AdapterMethod]
@@ -290,7 +290,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
-// CHECK:STDOUT:     %.loc12: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
@@ -321,7 +321,7 @@ class StructAdapter {
 // CHECK:STDOUT: class @SomeClass {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %SomeClass = binding_pattern self
-// CHECK:STDOUT:     %.loc5: %SomeClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %SomeClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
 // CHECK:STDOUT:     %param: %SomeClass = param runtime_param0
@@ -344,9 +344,9 @@ class StructAdapter {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%.loc5: %SomeClass]();
+// CHECK:STDOUT: fn @F.1[%self.param_patt: %SomeClass]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%.loc12: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @F.2(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
@@ -361,10 +361,10 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.6)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.6)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -384,7 +384,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.6
+// CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,7 +469,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
-// CHECK:STDOUT:     %.loc13_7: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -530,7 +530,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc13_7: %SomeClassAdapter) -> i32 {
+// CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
@@ -544,10 +544,10 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.7)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.7)]
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -567,7 +567,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.1 => constants.%.7
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

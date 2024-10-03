@@ -76,7 +76,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Deref.decl: %Deref.type = fn_decl @Deref [template = constants.%Deref] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc11_11: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -88,7 +88,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Deref(%.loc11_11: i32) {
+// CHECK:STDOUT: fn @Deref(%n.param_patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref.loc16: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16

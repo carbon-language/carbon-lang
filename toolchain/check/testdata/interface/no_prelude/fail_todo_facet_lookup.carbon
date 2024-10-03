@@ -53,7 +53,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %CallStatic.decl: %CallStatic.type = fn_decl @CallStatic [template = constants.%CallStatic] {
 // CHECK:STDOUT:     %T.patt.loc13: %.1 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc13: %.1 = param_pattern %T.patt.loc13, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: %.1 = param_pattern %T.patt.loc13, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
@@ -61,9 +61,9 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
 // CHECK:STDOUT:     %T.patt.loc21: %.1 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc21_15: %.1 = param_pattern %T.patt.loc21, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: %.1 = param_pattern %T.patt.loc21, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %x.patt: @CallFacet.%T.1 (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc21_30: @CallFacet.%T.1 (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @CallFacet.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc21 [symbolic = %T.1 (constants.%T)]
@@ -98,7 +98,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc13: %.1) {
+// CHECK:STDOUT:   fn(%T.param_patt: %.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %.3 = name_ref F, @Interface.%.loc11 [template = constants.%.4]
@@ -112,7 +112,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc21_15: %.1, %.loc21_30: @CallFacet.%T.1 (%T)) {
+// CHECK:STDOUT:   fn(%T.param_patt: %.1, %x.param_patt: @CallFacet.%T.1 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @CallFacet.%T.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return

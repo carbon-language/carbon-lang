@@ -67,9 +67,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc16_10: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
-// CHECK:STDOUT:     %.loc16_21: %.3 = param_pattern %next.patt, runtime_param1
+// CHECK:STDOUT:     %next.param_patt: %.3 = param_pattern %next.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -85,9 +85,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc20_17: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
-// CHECK:STDOUT:     %.loc20_28: %.3 = param_pattern %next.patt, runtime_param1
+// CHECK:STDOUT:     %next.param_patt: %.3 = param_pattern %next.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -121,7 +121,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make(%.loc16_10: i32, %.loc16_21: %.3) -> %return: %Class {
+// CHECK:STDOUT: fn @Make(%n.param_patt: i32, %next.param_patt: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
@@ -135,7 +135,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   return %.loc17_32 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeReorder(%.loc20_17: i32, %.loc20_28: %.3) -> %return: %Class {
+// CHECK:STDOUT: fn @MakeReorder(%n.param_patt: i32, %next.param_patt: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n

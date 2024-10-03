@@ -173,7 +173,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [template = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
-// CHECK:STDOUT:     %.loc12: %AdaptNotExtend = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
 // CHECK:STDOUT:     %param: %AdaptNotExtend = param runtime_param0
@@ -201,7 +201,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%.loc12: %AdaptNotExtend) {
+// CHECK:STDOUT: fn @F.2(%a.param_patt: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]

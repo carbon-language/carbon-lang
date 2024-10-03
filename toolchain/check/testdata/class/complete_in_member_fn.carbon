@@ -56,7 +56,7 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc12_9: %C = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %C = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -80,7 +80,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc12_9: %C) -> i32 {
+// CHECK:STDOUT: fn @F(%c.param_patt: %C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @C.%.loc14_8 [template = @C.%.loc14_8]

@@ -34,7 +34,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
-// CHECK:STDOUT:     %.loc15_9: %.1 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %.1 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
@@ -50,7 +50,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%.loc15_9: %.1) -> %return: %.2 {
+// CHECK:STDOUT: fn @Foo(%n.param_patt: %.1) -> %return: %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %.1 = tuple_literal ()

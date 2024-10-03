@@ -87,9 +87,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eq.decl: %Eq.type = fn_decl @Eq [template = constants.%Eq] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_8: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc2_16: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_10.1: type = value_of_initializer %int.make_type_32.loc2_10 [template = i32]
@@ -110,9 +110,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %true_.patt: %True = binding_pattern true_
-// CHECK:STDOUT:     %.loc7_11: %True = param_pattern %true_.patt, runtime_param0
+// CHECK:STDOUT:     %true_.param_patt: %True = param_pattern %true_.patt, runtime_param0
 // CHECK:STDOUT:     %false_.patt: %False = binding_pattern false_
-// CHECK:STDOUT:     %.loc7_25: %False = param_pattern %false_.patt, runtime_param1
+// CHECK:STDOUT:     %false_.param_patt: %False = param_pattern %false_.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc7: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %False.ref.loc7: type = name_ref False, file.%False.decl [template = constants.%False]
@@ -123,9 +123,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc12_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc12_25: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_19.1: type = value_of_initializer %int.make_type_32.loc12_19 [template = i32]
@@ -162,9 +162,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Eq(%.loc2_8: i32, %.loc2_16: i32) -> bool = "int.eq";
+// CHECK:STDOUT: fn @Eq(%a.param_patt: i32, %b.param_patt: i32) -> bool = "int.eq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc7_11: %True, %.loc7_25: %False) {
+// CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
@@ -207,7 +207,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%.loc12_17: i32, %.loc12_25: i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
@@ -251,9 +251,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %WrongResult.decl: %WrongResult.type = fn_decl @WrongResult [template = constants.%WrongResult] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc7_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc7_25: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
@@ -274,5 +274,5 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongResult(%.loc7_17: i32, %.loc7_25: i32) -> i32;
+// CHECK:STDOUT: fn @WrongResult(%a.param_patt: i32, %b.param_patt: i32) -> i32;
 // CHECK:STDOUT:

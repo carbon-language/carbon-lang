@@ -35,7 +35,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %.loc12_12: @F.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %.1 = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = %Self (constants.%Self)]
@@ -58,7 +58,7 @@ interface UseSelf {
 // CHECK:STDOUT: generic fn @F(@UseSelf.%Self: %.1) {
 // CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc12_12: @F.%Self (%Self)]() -> @F.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self (%Self)]() -> @F.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {

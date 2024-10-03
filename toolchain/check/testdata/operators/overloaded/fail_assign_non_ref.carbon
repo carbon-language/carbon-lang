@@ -121,7 +121,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [template = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc22: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param runtime_param0
@@ -129,9 +129,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc33_25: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc33_31: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -159,8 +159,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C as %.3 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
-// CHECK:STDOUT:     %.loc16_18: %.4 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16_9: %C = addr_pattern %.loc16_18
+// CHECK:STDOUT:     %self.param_patt: %.4 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc16_9: %C = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.4]
@@ -177,10 +177,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.8 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
-// CHECK:STDOUT:     %.loc19_18: %.4 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc19_9: %C = addr_pattern %.loc19_18
+// CHECK:STDOUT:     %self.param_patt: %.4 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc19_9: %C = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc19_29: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.4]
@@ -204,7 +204,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[addr %.loc16_18: %.4]();
+// CHECK:STDOUT: fn @Op.1[addr %self.param_patt: %.4]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
@@ -213,16 +213,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   fn[addr <unexpected>.inst+38: @Op.2.%.2 (%.6)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr %.loc19_18: %.4](%.loc19_29: %C);
+// CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %.4](%other.param_patt: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.8) {
 // CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.3: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.3 (constants.%.9)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+77: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+77: @Op.4.%.2 (%.9)](%other.param_patt: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestIncNonRef(%.loc22: %C) {
+// CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, imports.%import_ref.3 [template = constants.%.13]
@@ -232,7 +232,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAddAssignNonRef(%.loc33_25: %C, %.loc33_31: %C) {
+// CHECK:STDOUT: fn @TestAddAssignNonRef(%a.param_patt: %C, %b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -255,11 +255,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%Self.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.2 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%C) {
 // CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %.3 => constants.%.4
+// CHECK:STDOUT:   %.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -92,7 +92,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.10) {
 // CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

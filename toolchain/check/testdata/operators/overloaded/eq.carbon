@@ -153,9 +153,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc11_15: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc11_21: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc11_17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc11_23: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -170,9 +170,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc15_18: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc15_24: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc15_26: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -198,9 +198,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: impl @impl: %C as %.3 {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc7_16: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc7_26: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7_18: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc7_28: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -215,9 +215,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc8_19: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc8_29: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8_21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc8_31: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -247,23 +247,23 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.1[%.loc7_16: %C](%.loc7_26: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.1[%.loc8_19: %C](%.loc8_29: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Equal.2.%Self (%Self)](%.2: @Equal.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Equal.2.%Self (%Self)](%other.param_patt: @Equal.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @NotEqual.2.%Self (%Self)](%.2: @NotEqual.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.2.%Self (%Self)](%other.param_patt: @NotEqual.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEqual(%.loc11_15: %C, %.loc11_21: %C) -> bool {
+// CHECK:STDOUT: fn @TestEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -276,7 +276,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return %.loc12_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestNotEqual(%.loc15_18: %C, %.loc15_24: %C) -> bool {
+// CHECK:STDOUT: fn @TestNotEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -366,9 +366,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc6_15: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc6_21: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc6_17: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc6_23: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -383,9 +383,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc14_18: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc14_24: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc14_20: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc14_26: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -417,7 +417,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEqual(%.loc6_15: %D, %.loc6_21: %D) -> bool {
+// CHECK:STDOUT: fn @TestEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -428,10 +428,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: generic fn @Equal(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Equal.%Self (%Self)](%.2: @Equal.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Equal.%Self (%Self)](%other.param_patt: @Equal.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestNotEqual(%.loc14_18: %D, %.loc14_24: %D) -> bool {
+// CHECK:STDOUT: fn @TestNotEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -442,7 +442,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: generic fn @NotEqual(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @NotEqual.%Self (%Self)](%.2: @NotEqual.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.%Self (%Self)](%other.param_patt: @NotEqual.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%Self) {
@@ -551,9 +551,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [template = constants.%TestRhsBad] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc12_16: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc12_22: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -568,9 +568,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLhsBad.decl: %TestLhsBad.type = fn_decl @TestLhsBad [template = constants.%TestLhsBad] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc26_16: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc26_22: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -616,9 +616,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: impl @impl: %C as %.3 {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc8_16: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc8_26: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8_18: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc8_28: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -633,9 +633,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc9_19: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc9_29: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc9_21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc9_31: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -672,23 +672,23 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.1[%.loc8_16: %C](%.loc8_26: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.1[%.loc9_19: %C](%.loc9_29: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self.1: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Equal.2.%Self (%Self.1)](%.2: @Equal.2.%Self (%Self.1)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Equal.2.%Self (%Self.1)](%other.param_patt: @Equal.2.%Self (%Self.1)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self.1: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @NotEqual.2.%Self (%Self.1)](%.2: @NotEqual.2.%Self (%Self.1)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.2.%Self (%Self.1)](%other.param_patt: @NotEqual.2.%Self (%Self.1)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestRhsBad(%.loc12_16: %C, %.loc12_22: %D) -> bool {
+// CHECK:STDOUT: fn @TestRhsBad(%a.param_patt: %C, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -707,13 +707,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.9)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.9)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.9)]
 // CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLhsBad(%.loc26_16: %D, %.loc26_22: %C) -> bool {
+// CHECK:STDOUT: fn @TestLhsBad(%a.param_patt: %D, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -754,7 +754,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.9
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

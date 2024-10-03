@@ -77,7 +77,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Float.decl: %Float.type = fn_decl @Float [template = constants.%Float] {
 // CHECK:STDOUT:     %size.patt: i32 = binding_pattern size
-// CHECK:STDOUT:     %.loc4_14: i32 = param_pattern %size.patt, runtime_param0
+// CHECK:STDOUT:     %size.param_patt: i32 = param_pattern %size.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -90,7 +90,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.loc4_14: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -140,7 +140,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [template = constants.%GetFloat] {
 // CHECK:STDOUT:     %dyn_size.patt: i32 = binding_pattern dyn_size
-// CHECK:STDOUT:     %.loc8_21: i32 = param_pattern %dyn_size.patt, runtime_param0
+// CHECK:STDOUT:     %dyn_size.param_patt: i32 = param_pattern %dyn_size.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -151,11 +151,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetFloat(%.loc8_21: i32) -> type {
+// CHECK:STDOUT: fn @GetFloat(%dyn_size.param_patt: i32) -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: i32 = name_ref dyn_size, %dyn_size
@@ -232,7 +232,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %dyn: ref <error> = bind_name dyn, %dyn.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

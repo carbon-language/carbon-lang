@@ -112,9 +112,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc26_12: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc26_18: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -127,12 +127,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %a.patt: %.8 = binding_pattern a
-// CHECK:STDOUT:     %.loc30_16: %.8 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %.8 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc30_23: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc30_19: type = ptr_type %C [template = constants.%.8]
+// CHECK:STDOUT:     %.loc30: type = ptr_type %C [template = constants.%.8]
 // CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param.loc30_15: %.8 = param runtime_param0
 // CHECK:STDOUT:     %a: %.8 = bind_name a, %param.loc30_15
@@ -158,9 +158,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C as %.3 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc18_13: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc18_23: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_25: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -181,10 +181,10 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C as %.7 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.8 = binding_pattern self
-// CHECK:STDOUT:     %.loc23_18: %.8 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc23_9: %C = addr_pattern %.loc23_18
+// CHECK:STDOUT:     %self.param_patt: %.8 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc23_9: %C = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc23_29: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc23_21: type = ptr_type %C [template = constants.%.8]
@@ -208,7 +208,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%.loc18_13: %C](%.loc18_23: %C) -> %return: %C {
+// CHECK:STDOUT: fn @Op.1[%self.param_patt: %C](%other.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%struct]
@@ -219,34 +219,34 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self.1)](%.2: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self.1)](%other.param_patt: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.3[addr %.loc23_18: %.8](%.loc23_29: %C) {
+// CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %.8](%other.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.7) {
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.3: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.3 (constants.%.9)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+90: @Op.4.%.3 (%.9)](%.2: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+90: @Op.4.%.2 (%.9)](%other.param_patt: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%.loc26_12: %C, %.loc26_18: %C) -> %return: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C, %b.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.3 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access @impl.1.%.loc17, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27_12.2: <bound method> = bound_method %a.ref, %.loc27_12.1
-// CHECK:STDOUT:   %.loc26_23: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc27_12.2(%a.ref, %b.ref) to %.loc26_23
+// CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc27_12.2(%a.ref, %b.ref) to %.loc26
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAssign(%.loc30_16: %.8, %.loc30_23: %C) {
+// CHECK:STDOUT: fn @TestAssign(%a.param_patt: %.8, %b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %.8 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
@@ -269,11 +269,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%Self.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.2 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%C) {
 // CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %.3 => constants.%.8
+// CHECK:STDOUT:   %.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

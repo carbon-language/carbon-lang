@@ -55,7 +55,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Ptr.decl: %Ptr.type = fn_decl @Ptr [template = constants.%Ptr] {
 // CHECK:STDOUT:     %p.patt: %.2 = binding_pattern p
-// CHECK:STDOUT:     %.loc11_9: %.2 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.2 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
@@ -71,7 +71,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [template = constants.%ConstPtr] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
-// CHECK:STDOUT:     %.loc15_14: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
@@ -91,13 +91,13 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Ptr(%.loc11_9: %.2) -> %.2 {
+// CHECK:STDOUT: fn @Ptr(%p.param_patt: %.2) -> %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstPtr(%.loc15_14: %.4) -> %.4 {
+// CHECK:STDOUT: fn @ConstPtr(%p.param_patt: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

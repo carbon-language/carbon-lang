@@ -529,7 +529,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name("param");
         continue;
       }
-      // FIXME name ParamPattern using GetNameFromParamPattern
+      case InstKind::ParamPattern: {
+        add_inst_name_id(
+            SemIR::Function::GetNameFromParamPatternId(sem_ir_, inst_id),
+            ".param_patt");
+        break;
+      }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);
         break;

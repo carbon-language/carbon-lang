@@ -56,7 +56,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [template = constants.%If] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %.loc11_8: bool = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -74,7 +74,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%.loc11_8: bool) -> i32 {
+// CHECK:STDOUT: fn @If(%b.param_patt: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

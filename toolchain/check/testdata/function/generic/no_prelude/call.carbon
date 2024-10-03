@@ -85,9 +85,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %x.patt: @Function.%T.1 (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc4_24: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
@@ -99,9 +99,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %x.patt: @CallGeneric.%T.1 (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc8_27: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
@@ -113,9 +113,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
 // CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
-// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %x.patt: @CallGenericPtr.%.1 (%.2) = binding_pattern x
-// CHECK:STDOUT:     %.loc12_30: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc12_32: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc12_33: type = ptr_type %T [symbolic = %.1 (constants.%.2)]
@@ -130,7 +130,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %CallSpecific.decl: %CallSpecific.type = fn_decl @CallSpecific [template = constants.%CallSpecific] {
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
-// CHECK:STDOUT:     %.loc18_18: %C = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %C = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_26: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -153,7 +153,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc4_14: type, %.loc4_24: @Function.%T.1 (%T)) -> @Function.%T.1 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @Function.%T.1 (%T)) -> @Function.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -166,7 +166,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc8_17: type, %.loc8_27: @CallGeneric.%T.1 (%T)) -> @CallGeneric.%T.1 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @CallGeneric.%T.1 (%T)) -> @CallGeneric.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
@@ -185,7 +185,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc12_20: type, %.loc12_30: @CallGenericPtr.%.1 (%.2)) -> @CallGenericPtr.%.1 (%.2) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @CallGenericPtr.%.1 (%.2)) -> @CallGenericPtr.%.1 (%.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
@@ -198,13 +198,13 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallSpecific(%.loc18_18: %C) -> %return: %C {
+// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc18_23: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Function.call: init %C = call %Function.ref(%x.ref) to %.loc18_23
+// CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Function.call: init %C = call %Function.ref(%x.ref) to %.loc18
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,9 +267,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Function.decl: %Function.type = fn_decl @Function [template = constants.%Function] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc4_14: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %x.patt: @Function.%T.1 (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc4_24: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Function.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
@@ -281,9 +281,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc8_17: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %x.patt: @CallGeneric.%T.1 (%T) = binding_pattern x
-// CHECK:STDOUT:     %.loc8_27: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @CallGeneric.%T.1 (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
@@ -295,9 +295,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
 // CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.3)]
-// CHECK:STDOUT:     %.loc12_20: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %x.patt: @CallGenericPtr.%.1 (%.2) = binding_pattern x
-// CHECK:STDOUT:     %.loc12_30: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @CallGenericPtr.%.1 (%.2) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc12_32: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc12_33: type = ptr_type %T [symbolic = %.1 (constants.%.2)]
@@ -312,7 +312,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %CallSpecific.decl: %CallSpecific.type = fn_decl @CallSpecific [template = constants.%CallSpecific] {
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
-// CHECK:STDOUT:     %.loc18_18: %C = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %C = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_26: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -335,7 +335,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc4_14: type](%.loc4_24: @Function.%T.1 (%T)) -> @Function.%T.1 (%T) {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @Function.%T.1 (%T)) -> @Function.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -348,7 +348,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc8_17: type, %.loc8_27: @CallGeneric.%T.1 (%T)) -> @CallGeneric.%T.1 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @CallGeneric.%T.1 (%T)) -> @CallGeneric.%T.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %x.ref: @CallGeneric.%T.1 (%T) = name_ref x, %x
@@ -366,7 +366,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc12_20: type, %.loc12_30: @CallGenericPtr.%.1 (%.2)) -> @CallGenericPtr.%.1 (%.2) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @CallGenericPtr.%.1 (%.2)) -> @CallGenericPtr.%.1 (%.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %x.ref: @CallGenericPtr.%.1 (%.2) = name_ref x, %x
@@ -377,12 +377,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallSpecific(%.loc18_18: %C) -> %return: %C {
+// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc18_23: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Function.call: init %C = call %Function.ref(%x.ref) to %.loc18_23
+// CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Function.call: init %C = call %Function.ref(%x.ref) to %.loc18
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -109,7 +109,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.decl.loc19: %.type.1 = fn_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
-// CHECK:STDOUT:     %.loc19_7: %.1 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.1 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc19_10.2: type = converted %.loc19_10.1, constants.%.1 [template = constants.%.1]
@@ -118,7 +118,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
-// CHECK:STDOUT:     %.loc21_7: %.1 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.1 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc21_10.2: type = converted %.loc21_10.1, constants.%.1 [template = constants.%.1]
@@ -128,7 +128,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %.decl.loc29: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
-// CHECK:STDOUT:     %.loc31_7: %.1 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.1 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc31_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc31_10.2: type = converted %.loc31_10.1, constants.%.1 [template = constants.%.1]
@@ -137,7 +137,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc36: %.type.3 = fn_decl @.3 [template = constants.%.4] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %.loc36: <error> = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: <error> = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: <error> = param runtime_param0
 // CHECK:STDOUT:     %x: <error> = bind_name x, %param
@@ -168,21 +168,21 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%.loc19_7: %.1) {
+// CHECK:STDOUT: fn @.1(%x.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%.loc21_7: %.1);
+// CHECK:STDOUT: fn @G(%x.param_patt: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%.loc31_7: %.1);
+// CHECK:STDOUT: fn @H(%x.param_patt: %.1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.3(%.loc36: <error>) {
+// CHECK:STDOUT: fn @.3(%x.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

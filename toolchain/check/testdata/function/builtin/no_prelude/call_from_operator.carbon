@@ -59,9 +59,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
 // CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %.loc7_13: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
-// CHECK:STDOUT:     %.loc7_26: @Op.%Self (%Self) = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: @Op.%Self (%Self) = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %.2 = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = %Self (constants.%Self)]
@@ -91,7 +91,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc7_13: @Op.%Self (%Self)](%.loc7_26: @Op.%Self (%Self)) -> @Op.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)](%other.param_patt: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -178,9 +178,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: impl @impl: i32 as %.2 {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
-// CHECK:STDOUT:     %.loc7_13: i32 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
-// CHECK:STDOUT:     %.loc7_26: i32 = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: i32 = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
@@ -200,12 +200,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%.loc7_13: i32](%.loc7_26: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @Op.1[%self.param_patt: i32](%other.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
 // CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Op.2.%Self (%Self)](%.2: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self)](%other.param_patt: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

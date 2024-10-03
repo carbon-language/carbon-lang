@@ -61,7 +61,7 @@ fn Constant() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Not.decl: %Not.type = fn_decl @Not [template = constants.%Not] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %.loc11_9: bool = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_11: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11_11 [template = bool]
@@ -84,7 +84,7 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%.loc11_9: bool) -> bool {
+// CHECK:STDOUT: fn @Not(%b.param_patt: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc12: bool = not %b.ref

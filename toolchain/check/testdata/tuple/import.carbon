@@ -143,7 +143,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %X.patt.loc7: %.9 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
-// CHECK:STDOUT:     %.loc7_10: %.9 = param_pattern %X.patt.loc7, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: %.9 = param_pattern %X.patt.loc7, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
@@ -640,10 +640,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.11)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.11)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.11)]
 // CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -696,7 +696,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.11
+// CHECK:STDOUT:   %.1 => constants.%.11
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

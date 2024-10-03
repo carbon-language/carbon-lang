@@ -76,9 +76,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl.loc11: %A.type = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc19_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc19_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11_9 [template = i32]
@@ -97,9 +97,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl.loc19: %A.type = fn_decl @A [template = constants.%A] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc19_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc19_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc19_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_9.1: type = value_of_initializer %int.make_type_32.loc19_9 [template = i32]
@@ -118,9 +118,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc21: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc29_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc29_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_9.1: type = value_of_initializer %int.make_type_32.loc21_9 [template = i32]
@@ -139,9 +139,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc29_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc29_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc29_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_9.1: type = value_of_initializer %int.make_type_32.loc29_9 [template = i32]
@@ -160,9 +160,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc31: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc38_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc38_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc31_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_9.1: type = value_of_initializer %int.make_type_32.loc31_9 [template = i32]
@@ -181,9 +181,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc38: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc38_7: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %.loc38_15: i32 = param_pattern %m.patt, runtime_param1
+// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc38_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc38_9.1: type = value_of_initializer %int.make_type_32.loc38_9 [template = i32]
@@ -204,17 +204,17 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%.loc19_7: i32, %.loc19_15: i32) -> i32 = "int.sadd" {
+// CHECK:STDOUT: fn @A(%n.param_patt: i32, %m.param_patt: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n.loc19
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.loc29_7: i32, %.loc29_15: i32) -> i32 = "int.sadd" {
+// CHECK:STDOUT: fn @B(%n.param_patt: i32, %m.param_patt: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n.loc21
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.loc38_7: i32, %.loc38_15: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @C(%n.param_patt: i32, %m.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

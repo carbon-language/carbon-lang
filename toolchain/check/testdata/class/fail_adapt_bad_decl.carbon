@@ -159,7 +159,7 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %.loc19: %Bad = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %Bad = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %param: %Bad = param runtime_param0
@@ -202,13 +202,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%.loc19: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
@@ -232,7 +232,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -306,7 +306,7 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %.loc16: %Bad = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %Bad = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
 // CHECK:STDOUT:     %param: %Bad = param runtime_param0
@@ -350,13 +350,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.3)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.3)]
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%.loc16: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
@@ -380,7 +380,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

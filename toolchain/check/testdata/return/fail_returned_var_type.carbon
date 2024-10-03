@@ -78,5 +78,5 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%.1: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
 // CHECK:STDOUT:

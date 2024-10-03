@@ -69,7 +69,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %oi.patt: %Inner = binding_pattern oi
-// CHECK:STDOUT:     %.loc17_8: %Inner = param_pattern %oi.patt, runtime_param0
+// CHECK:STDOUT:     %oi.param_patt: %Inner = param_pattern %oi.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
@@ -82,7 +82,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %o.patt: %Outer = binding_pattern o
-// CHECK:STDOUT:     %.loc21: %Outer = param_pattern %o.patt, runtime_param0
+// CHECK:STDOUT:     %o.param_patt: %Outer = param_pattern %o.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %param: %Outer = param runtime_param0
@@ -113,7 +113,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc17_8: %Inner) -> i32 {
+// CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %.2 = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
@@ -122,7 +122,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%.loc21: %Outer) {
+// CHECK:STDOUT: fn @G(%o.param_patt: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]

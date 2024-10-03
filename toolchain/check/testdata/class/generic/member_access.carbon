@@ -114,14 +114,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc2: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc2: type = param_pattern %T.patt.loc2, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc2, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc2: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DirectFieldAccess.decl: %DirectFieldAccess.type = fn_decl @DirectFieldAccess [template = constants.%DirectFieldAccess] {
 // CHECK:STDOUT:     %x.patt: %Class.3 = binding_pattern x
-// CHECK:STDOUT:     %.loc10_23: %Class.3 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %Class.3 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %int.make_type_32.loc10_31: init type = call constants.%Int32() [template = i32]
@@ -137,7 +137,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MethodCall.decl: %MethodCall.type = fn_decl @MethodCall [template = constants.%MethodCall] {
 // CHECK:STDOUT:     %x.patt: %Class.3 = binding_pattern x
-// CHECK:STDOUT:     %.loc14_16: %Class.3 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %Class.3 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %int.make_type_32.loc14_24: init type = call constants.%Int32() [template = i32]
@@ -153,7 +153,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrMethodCall.decl: %AddrMethodCall.type = fn_decl @AddrMethodCall [template = constants.%AddrMethodCall] {
 // CHECK:STDOUT:     %p.patt: %.12 = binding_pattern p
-// CHECK:STDOUT:     %.loc18_20: %.12 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.12 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %int.make_type_32.loc18_28: init type = call constants.%Int32() [template = i32]
@@ -189,7 +189,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %.loc3: @Class.%.1 (%.2) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.1)] {
 // CHECK:STDOUT:       %self.patt: @Get.%Class (%Class.2) = binding_pattern self
-// CHECK:STDOUT:       %.loc5_14: @Get.%Class (%Class.2) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @Get.%Class (%Class.2) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc5_16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc5_16 [symbolic = %Class (constants.%Class.2)]
@@ -200,8 +200,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type.1) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr.1)] {
 // CHECK:STDOUT:       %self.patt: @GetAddr.%.1 (%.3) = binding_pattern self
-// CHECK:STDOUT:       %.loc7_23: @GetAddr.%.1 (%.3) = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:       %.loc7_14: @GetAddr.%Class (%Class.2) = addr_pattern %.loc7_23
+// CHECK:STDOUT:       %self.param_patt: @GetAddr.%.1 (%.3) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %.loc7_14: @GetAddr.%Class (%Class.2) = addr_pattern %self.param_patt
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc7_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc7_25 [symbolic = %Class (constants.%Class.2)]
@@ -229,7 +229,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = unbound_element_type @Get.%Class (%Class.2), @Get.%T (%T) [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.loc5_14: @Get.%Class (%Class.2)]() -> @Get.%T (%T) {
+// CHECK:STDOUT:   fn[%self.param_patt: @Get.%Class (%Class.2)]() -> @Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Get.%Class (%Class.2) = name_ref self, %self
 // CHECK:STDOUT:     %x.ref: @Get.%.1 (%.2) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
@@ -248,7 +248,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.3: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %.3 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %.loc7_23: @GetAddr.%.1 (%.3)]() -> @GetAddr.%.2 (%.4) {
+// CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%.1 (%.3)]() -> @GetAddr.%.2 (%.4) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%.1 (%.3) = name_ref self, %self
 // CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref
@@ -261,7 +261,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DirectFieldAccess(%.loc10_23: %Class.3) -> i32 {
+// CHECK:STDOUT: fn @DirectFieldAccess(%x.param_patt: %Class.3) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11_10: %Class.3 = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc11_11: %.8 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
@@ -270,7 +270,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   return %.loc11_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MethodCall(%.loc14_16: %Class.3) -> i32 {
+// CHECK:STDOUT: fn @MethodCall(%x.param_patt: %Class.3) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Class.3 = name_ref x, %x
 // CHECK:STDOUT:   %.loc15_11.1: %Get.type.2 = specific_constant @Class.%Get.decl, @Class(i32) [template = constants.%Get.2]
@@ -282,7 +282,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   return %.loc15_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddrMethodCall(%.loc18_20: %.12) -> i32 {
+// CHECK:STDOUT: fn @AddrMethodCall(%p.param_patt: %.12) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.12 = name_ref p, %p
 // CHECK:STDOUT:   %.loc19_12.1: ref %Class.3 = deref %p.ref
@@ -433,14 +433,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %.loc4: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %StaticMemberFunctionCall.decl: %StaticMemberFunctionCall.type = fn_decl @StaticMemberFunctionCall [template = constants.%StaticMemberFunctionCall] {
 // CHECK:STDOUT:     %T.patt.loc8: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %.loc8: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc8: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
@@ -523,7 +523,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @StaticMemberFunctionCall.%.1 (%.8), @StaticMemberFunctionCall.%Convert.type (%Convert.type.2) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:   %.3: @StaticMemberFunctionCall.%.2 (%.9) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc8: type) -> %return: @StaticMemberFunctionCall.%Class.1 (%Class.2) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) -> %return: @StaticMemberFunctionCall.%Class.1 (%Class.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref.loc15: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
@@ -543,10 +543,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.5)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
@@ -601,7 +601,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

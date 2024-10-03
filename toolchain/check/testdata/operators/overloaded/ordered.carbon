@@ -169,9 +169,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [template = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc13_14: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc13_20: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc13_16: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc13_22: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -186,9 +186,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLessEqual.decl: %TestLessEqual.type = fn_decl @TestLessEqual [template = constants.%TestLessEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc17_19: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc17_25: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc17_21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc17_27: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -203,9 +203,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGreater.decl: %TestGreater.type = fn_decl @TestGreater [template = constants.%TestGreater] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc21_17: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc21_23: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc21_19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc21_25: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -220,9 +220,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGreaterEqual.decl: %TestGreaterEqual.type = fn_decl @TestGreaterEqual [template = constants.%TestGreaterEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc25_22: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %.loc25_28: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc25_24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc25_30: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -250,9 +250,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: impl @impl: %C as %.3 {
 // CHECK:STDOUT:   %Less.decl: %Less.type.1 = fn_decl @Less.1 [template = constants.%Less.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc7_15: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc7_25: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7_17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc7_27: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -267,9 +267,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.1 = fn_decl @LessOrEquivalent.1 [template = constants.%LessOrEquivalent.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc8_27: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc8_37: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8_29: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc8_39: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -284,9 +284,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Greater.decl: %Greater.type.1 = fn_decl @Greater.1 [template = constants.%Greater.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc9_18: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc9_28: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc9_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc9_30: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -301,9 +301,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.1 = fn_decl @GreaterOrEquivalent.1 [template = constants.%GreaterOrEquivalent.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %.loc10_30: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %.loc10_40: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc10_32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc10_42: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -335,39 +335,39 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.1[%.loc7_15: %C](%.loc7_25: %C) -> bool;
+// CHECK:STDOUT: fn @Less.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.1[%.loc8_27: %C](%.loc8_37: %C) -> bool;
+// CHECK:STDOUT: fn @LessOrEquivalent.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.1[%.loc9_18: %C](%.loc9_28: %C) -> bool;
+// CHECK:STDOUT: fn @Greater.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.1[%.loc10_30: %C](%.loc10_40: %C) -> bool;
+// CHECK:STDOUT: fn @GreaterOrEquivalent.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Less.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Less.2.%Self (%Self)](%.2: @Less.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Less.2.%Self (%Self)](%other.param_patt: @Less.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @LessOrEquivalent.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @LessOrEquivalent.2.%Self (%Self)](%.2: @LessOrEquivalent.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.2.%Self (%Self)](%other.param_patt: @LessOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Greater.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Greater.2.%Self (%Self)](%.2: @Greater.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Greater.2.%Self (%Self)](%other.param_patt: @Greater.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent.2(constants.%Self: %.3) {
 // CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @GreaterOrEquivalent.2.%Self (%Self)](%.2: @GreaterOrEquivalent.2.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.2.%Self (%Self)](%other.param_patt: @GreaterOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%.loc13_14: %C, %.loc13_20: %C) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -380,7 +380,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc14_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%.loc17_19: %C, %.loc17_25: %C) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -393,7 +393,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%.loc21_17: %C, %.loc21_23: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -406,7 +406,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc22_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%.loc25_22: %C, %.loc25_28: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -532,9 +532,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [template = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc6_14: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc6_20: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc6_16: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc6_22: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -549,9 +549,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLessEqual.decl: %TestLessEqual.type = fn_decl @TestLessEqual [template = constants.%TestLessEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc14_19: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc14_25: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc14_21: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc14_27: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -566,9 +566,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGreater.decl: %TestGreater.type = fn_decl @TestGreater [template = constants.%TestGreater] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc22_17: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc22_23: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc22_25: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -583,9 +583,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestGreaterEqual.decl: %TestGreaterEqual.type = fn_decl @TestGreaterEqual [template = constants.%TestGreaterEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
-// CHECK:STDOUT:     %.loc30_22: %D = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %D = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %D = binding_pattern b
-// CHECK:STDOUT:     %.loc30_28: %D = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %D = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc30_24: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %D.ref.loc30_30: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -619,7 +619,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%.loc6_14: %D, %.loc6_20: %D) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -630,10 +630,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @Less(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Less.%Self (%Self)](%.2: @Less.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Less.%Self (%Self)](%other.param_patt: @Less.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%.loc14_19: %D, %.loc14_25: %D) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -644,10 +644,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @LessOrEquivalent(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @LessOrEquivalent.%Self (%Self)](%.2: @LessOrEquivalent.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.%Self (%Self)](%other.param_patt: @LessOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%.loc22_17: %D, %.loc22_23: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -658,10 +658,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @Greater(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Greater.%Self (%Self)](%.2: @Greater.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @Greater.%Self (%Self)](%other.param_patt: @Greater.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%.loc30_22: %D, %.loc30_28: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -672,7 +672,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent(constants.%Self: %.5) {
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @GreaterOrEquivalent.%Self (%Self)](%.2: @GreaterOrEquivalent.%Self (%Self)) -> bool;
+// CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.%Self (%Self)](%other.param_patt: @GreaterOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Less(constants.%Self) {

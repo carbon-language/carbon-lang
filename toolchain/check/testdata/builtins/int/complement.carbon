@@ -67,7 +67,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Complement.decl: %Complement.type = fn_decl @Complement [template = constants.%Complement] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc2_16: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc2_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc2_18.1: type = value_of_initializer %int.make_type_32.loc2_18 [template = i32]
@@ -81,9 +81,9 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc3_9: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc3_17: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc3_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc3_11.1: type = value_of_initializer %int.make_type_32.loc3_11 [template = i32]
@@ -122,7 +122,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_27: type = ptr_type %.6 [template = constants.%.7]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc8_17: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_19.1: type = value_of_initializer %int.make_type_32.loc8_19 [template = i32]
@@ -138,11 +138,11 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Complement(%.loc2_16: i32) -> i32 = "int.complement";
+// CHECK:STDOUT: fn @Complement(%a.param_patt: i32) -> i32 = "int.complement";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @And(%.loc3_9: i32, %.loc3_17: i32) -> i32 = "int.and";
+// CHECK:STDOUT: fn @And(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.and";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%.loc8_17: i32) -> i32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [template = constants.%Complement]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a

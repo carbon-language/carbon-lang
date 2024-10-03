@@ -30,9 +30,9 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc11: type = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %.loc11_7: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.patt: @F.%.2 (%.2) = binding_pattern p
-// CHECK:STDOUT:     %.loc11_17: @F.%.2 (%.2) = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: @F.%.2 (%.2) = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_20: type = ptr_type %T [symbolic = %.1 (constants.%.1)]
@@ -55,7 +55,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc11_7: type, %.loc11_17: @F.%.2 (%.2)) -> @F.%.1 (%.1) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %p.param_patt: @F.%.2 (%.2)) -> @F.%.1 (%.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%.2 (%.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc12_10.1: ref @F.%.1 (%.1) = deref %p.ref

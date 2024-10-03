@@ -86,7 +86,7 @@ fn Run() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %.loc5: %Base = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %param: %Base = param runtime_param0
@@ -94,7 +94,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %.loc6: %Base = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Base = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %param: %Base = param runtime_param0
@@ -129,9 +129,9 @@ fn Run() {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc5: %Base]();
+// CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[%.loc6: %Base]();
+// CHECK:STDOUT: fn @Unused[%self.param_patt: %Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
@@ -248,5 +248,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.1: %Base]();
+// CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
 // CHECK:STDOUT:

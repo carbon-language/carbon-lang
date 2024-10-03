@@ -304,7 +304,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_7: i32 = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
@@ -318,7 +318,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %.3 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
@@ -344,9 +344,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.loc5_7: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.loc6_7: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -401,7 +401,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc5_42: i32 = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_44: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_44.1: type = value_of_initializer %int.make_type_32.loc5_44 [template = i32]
@@ -415,7 +415,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %.loc6_42: %.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %.3 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_45: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_49.1: %.2 = tuple_literal (%int.make_type_32.loc6_45)
@@ -441,9 +441,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%.loc5_42: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%.loc6_42: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -540,9 +540,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.1: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.param_patt: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -694,9 +694,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.1: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -848,9 +848,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%.1: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %.3) -> %.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -978,9 +978,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%.1: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.param_patt: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -1108,9 +1108,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%.1: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%.1: %.4) -> %.3;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %.4) -> %.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:

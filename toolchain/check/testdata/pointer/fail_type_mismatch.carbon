@@ -76,7 +76,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
 // CHECK:STDOUT:     %p.patt: %.3 = binding_pattern p
-// CHECK:STDOUT:     %.loc11_19: %.3 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.3 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
@@ -112,7 +112,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%.loc11_19: %.3) -> %.5 {
+// CHECK:STDOUT: fn @ConstMismatch(%p.param_patt: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc18_11.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.5) [template = constants.%.10]
@@ -124,10 +124,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.7)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.7)]
 // CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -147,7 +147,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.7
+// CHECK:STDOUT:   %.1 => constants.%.7
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

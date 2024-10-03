@@ -109,7 +109,7 @@ fn Main() {
 // CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [template = constants.%Run0] {} {}
 // CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [template = constants.%Run1] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc12_10: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -119,9 +119,9 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc13_10: i32 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc13_18: i32 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]
@@ -144,12 +144,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run1(%.loc12_10: i32) {
+// CHECK:STDOUT: fn @Run1(%a.param_patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run2(%.loc13_10: i32, %.loc13_18: i32) {
+// CHECK:STDOUT: fn @Run2(%a.param_patt: i32, %b.param_patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

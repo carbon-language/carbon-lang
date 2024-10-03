@@ -102,7 +102,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %UInt.decl: %UInt.type = fn_decl @UInt [template = constants.%UInt] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc4_10: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -115,7 +115,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%.loc4_10: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -168,7 +168,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %.3 = binding_pattern n
-// CHECK:STDOUT:     %.loc6_7: %.3 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %.3 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc6_9: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
@@ -186,7 +186,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: %.5 = binding_pattern n
-// CHECK:STDOUT:     %.loc10_7: %.5 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %.5 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc10_9: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_14: i32 = int_literal 13 [template = constants.%.4]
@@ -204,9 +204,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
 // CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %.loc14_14: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
-// CHECK:STDOUT:     %.loc14_23: @Symbolic.%.1 (%.6) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @Symbolic.%.1 (%.6) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -229,15 +229,15 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%.1: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc6_7: %.3) -> %.3 {
+// CHECK:STDOUT: fn @F(%n.param_patt: %.3) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%.loc10_7: %.5) -> %.5 {
+// CHECK:STDOUT: fn @G(%n.param_patt: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %.5 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
@@ -252,7 +252,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc14_14: i32, %.loc14_23: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
+// CHECK:STDOUT:   fn(%N.param_patt: i32, %x.param_patt: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -305,7 +305,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%.1: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_negative_size.carbon
 // CHECK:STDOUT:
@@ -348,7 +348,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc6_12: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
@@ -375,9 +375,9 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%.loc6_12: i32) -> i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate(%n.param_patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%.1: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_oversized.carbon
 // CHECK:STDOUT:
@@ -419,5 +419,5 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%.1: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:

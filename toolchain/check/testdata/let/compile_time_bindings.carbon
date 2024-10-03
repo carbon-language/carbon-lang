@@ -310,7 +310,7 @@ fn F() -> T;
 // CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc9_18
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %b.patt.loc10: %.2 = symbolic_binding_pattern b 0 [symbolic = %b.patt.1 (constants.%b.patt)]
-// CHECK:STDOUT:     %.loc10_9: %.2 = param_pattern %b.patt.loc10, runtime_param<invalid> [symbolic = %b.patt.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %.2 = param_pattern %b.patt.loc10, runtime_param<invalid> [symbolic = %b.patt.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_16.1: %.2 = tuple_literal (%.loc10_14)
@@ -356,7 +356,7 @@ fn F() -> T;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %c.1: %.7 = bind_symbolic_name c 1 [symbolic = %c.1 (constants.%c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%.loc10_9: %.2) {
+// CHECK:STDOUT:   fn(%b.param_patt: %.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_19: %.1 = tuple_literal ()
@@ -676,10 +676,10 @@ fn F() -> T;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.5)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %.1) {
@@ -704,7 +704,7 @@ fn F() -> T;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

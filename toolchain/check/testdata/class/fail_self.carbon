@@ -122,7 +122,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc25: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc25: %Class = param runtime_param0
@@ -135,7 +135,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {} {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
 // CHECK:STDOUT:     %ws.patt: %WrongSelf = binding_pattern ws
-// CHECK:STDOUT:     %.loc45: %WrongSelf = param_pattern %ws.patt, runtime_param0
+// CHECK:STDOUT:     %ws.param_patt: %WrongSelf = param_pattern %ws.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, file.%WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %param: %WrongSelf = param runtime_param0
@@ -166,7 +166,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc25: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %param.loc16: %Class = param runtime_param0
@@ -187,7 +187,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @WrongSelf {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc42: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %param: %Class = param runtime_param0
@@ -200,7 +200,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%.loc25: %Class) {
+// CHECK:STDOUT: fn @F.1(%self.param_patt: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -215,9 +215,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%.loc42: %Class]();
+// CHECK:STDOUT: fn @F.2[%self.param_patt: %Class]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallWrongSelf(%.loc45: %WrongSelf) {
+// CHECK:STDOUT: fn @CallWrongSelf(%ws.param_patt: %WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
@@ -232,10 +232,10 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.5)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%.1: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -255,7 +255,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
