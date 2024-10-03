@@ -86,10 +86,15 @@ build --strip=never
 # Enable Abseil for GoogleTest.
 build --define=absl=1
 
+# Enable TCMalloc on Linux in optimized builds.
+build --custom_malloc=//bazel/malloc:tcmalloc_if_linux_opt
+
 # Configuration for enabling Address Sanitizer. Note that this is enabled by
 # default for fastbuild. The config is provided to enable ASan even in
-# optimized or other build configurations.
+# optimized or other build configurations. Note that ASan and TCMalloc are
+# incompatible so this explicitly forces the system malloc.
 build:asan --features=asan
+build:asan --custom_malloc=//bazel/malloc:system_malloc
 
 # Configuration for enabling LibFuzzer (along with ASan).
 build:fuzzer --features=fuzzer
@@ -107,9 +112,6 @@ build --action_env=LANG=en_US.UTF-8
 # Enable libpfm for google_benchmark on Linux only.
 build --enable_platform_specific_config
 build:linux --define=pfm=1
-
-# Enable TCMalloc on Linux as well.
-build:linux --custom_malloc=@tcmalloc//tcmalloc
 
 # Disables `actions.declare_symlink`. Done for cross-environment support.
 build --allow_unresolved_symlinks=false
