@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/alias.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/fail_alias.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/alias.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/fail_alias.carbon
 
 interface I {}
 class C {}
@@ -16,15 +16,15 @@ alias AC = C;
 
 impl AC as AI {}
 
-// CHECK:STDERR: alias.carbon:[[@LINE+6]]:1: error: redefinition of `impl AC as AI`
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+6]]:1: error: redefinition of `impl AC as AI`
 // CHECK:STDERR: impl AC as AI {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: alias.carbon:[[@LINE-5]]:1: note: previous definition was here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-5]]:1: note: previous definition was here
 // CHECK:STDERR: impl AC as AI {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 impl AC as AI {}
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- fail_alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
