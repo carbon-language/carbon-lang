@@ -205,10 +205,11 @@ static auto LookupInterfaceWitness(Context& context,
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-static auto PerformImplLookup(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
-    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
+static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId type_const_id,
+                              SemIR::AssociatedEntityType assoc_type,
+                              SemIR::InstId member_id,
+                              Context::BuildDiagnosticFn missing_impl_diagnoser)
     -> SemIR::InstId {
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
@@ -220,7 +221,7 @@ static auto PerformImplLookup(
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
                         "type `{1}` does not implement interface `{0}`",
                         SemIR::NameId, SemIR::TypeId);
-      (*missing_impl_diagnoser)()
+      missing_impl_diagnoser()
           .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
                 context.GetTypeIdForTypeConstant(type_const_id))
           .Emit();
@@ -320,7 +321,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (ScopeNeedsImplLookup(context, lookup_scope)) {
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
-                                    *assoc_type, member_id, std::nullopt);
+                                    *assoc_type, member_id, nullptr);
     }
   }
 
@@ -478,8 +479,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
-    -> SemIR::InstId {
+    Context::BuildDiagnosticFn missing_impl_diagnoser) -> SemIR::InstId {
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrRefExpr(context, base_id);
   auto base_type_id = context.insts().Get(base_id).type_id();
