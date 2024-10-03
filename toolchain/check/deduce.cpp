@@ -246,6 +246,7 @@ auto DeduceImplArguments(Context& context, const SemIR::Impl& impl,
                          SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
   CARBON_CHECK(impl.generic_id.is_valid(),
                "Performing deduction for non-generic impl");
+  // TODO: This is a placeholder. Implement deduction.
   static_cast<void>(context);
   static_cast<void>(self_id);
   static_cast<void>(constraint_id);
