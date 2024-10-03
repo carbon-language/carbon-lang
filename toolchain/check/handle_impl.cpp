@@ -105,7 +105,10 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 
   // Build the implicit access to the enclosing `Self`.
   // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
-  // expression.
+  // expression. We've already done the work to check that the enclosing context
+  // is a class and found its `Self`, so additionally performing an unqualified
+  // name lookup would be redundant work, but would avoid duplicating the
+  // handling of the `Self` expression.
   auto self_inst_id = context.AddInst(
       node_id,
       SemIR::NameRef{.type_id = SemIR::TypeId::TypeType,

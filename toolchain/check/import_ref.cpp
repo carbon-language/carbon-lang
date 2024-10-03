@@ -71,6 +71,10 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   return import_ref_id;
 }
 
+// Adds an import_ref instruction for an instruction that we have already loaded
+// from an imported IR, with a known constant value. This is useful when the
+// instruction has a symbolic constant value, in order to produce an instruction
+// that hold that symbolic constant.
 static auto AddLoadedImportRef(Context& context,
                                SemIR::ImportIRInst import_ir_inst,
                                SemIR::TypeId type_id,
