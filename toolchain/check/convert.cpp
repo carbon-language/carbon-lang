@@ -1157,7 +1157,8 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                                   : llvm::StringLiteral("self"));
       });
 
-  return PatternMatchArg(context, callee_specific_id, self_param_id, self_id);
+  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+                            self_id);
 }
 
 // TODO: consider moving this to pattern_match.h
@@ -1222,8 +1223,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       continue;
     }
 
-    auto converted_arg_id =
-        PatternMatchArg(context, callee_specific_id, param_pattern_id, arg_id);
+    auto converted_arg_id = CallerPatternMatch(context, callee_specific_id,
+                                               param_pattern_id, arg_id);
     if (converted_arg_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstBlockId::Invalid;
     }

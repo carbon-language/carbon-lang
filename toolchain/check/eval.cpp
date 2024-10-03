@@ -1351,7 +1351,7 @@ auto TryEvalInstInContext(EvalContext& eval_context, SemIR::InstId inst_id,
       break;
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-      // FIXME address code duplication
+      // TODO: address code duplication with BindSymbolicName
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
 

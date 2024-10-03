@@ -567,10 +567,12 @@ class Context {
   // The stack of instruction blocks that contain pattern instructions.
   InstBlockStack pattern_block_stack_;
 
-  // The stack of instruction blocks being used for param and arg ref blocks.
+  // The stack of instruction blocks being used for arg ref blocks.
+  // TODO: rename now that it no longer handles param refs.
   ParamAndArgRefsStack param_and_arg_refs_stack_;
 
-  // FIXME clarify relationship with param_and_args...
+  // The stack of instruction blocks being used for parameter patterns.
+  // Analogous to param_and_arg_refs_stack_.
   InstBlockStack param_patterns_stack_;
 
   // The stack of instruction blocks being used for type information while

@@ -525,7 +525,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case InstKind::Param: {
-        // FIXME bring back the name
+        // TODO: Find a way to use the name of the enclosing bind inst here.
         add_inst_name("param");
         continue;
       }

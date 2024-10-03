@@ -262,7 +262,6 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       return true;
     }
 
-    // FIXME code duplication
     auto entity_name_id = SemIR::EntityNameId::Invalid;
     if (auto bind =
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {

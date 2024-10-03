@@ -14,8 +14,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
   return true;
 }
 
-// FIXME do we still need this function?
-static auto ConsumeTrailingParam(Context& context) {
+static auto HandleTrailingParam(Context& context) {
   context.param_patterns_stack().AddInstId(context.node_stack().PopPattern());
 }
 
@@ -24,7 +23,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   if (!context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
-    ConsumeTrailingParam(context);
+    HandleTrailingParam(context);
   }
   context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
   // The implicit parameter list's scope extends to the end of the following
@@ -41,7 +40,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
-  ConsumeTrailingParam(context);
+  HandleTrailingParam(context);
   return true;
 }
 
@@ -49,7 +48,7 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   if (!context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
-    ConsumeTrailingParam(context);
+    HandleTrailingParam(context);
   }
   context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
   return true;

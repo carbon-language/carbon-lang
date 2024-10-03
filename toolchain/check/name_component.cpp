@@ -42,7 +42,7 @@ auto PopNameComponent(Context& context) -> NameComponent {
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  auto [implicit_params_id, params_id] = ProcessSignature(
+  auto [implicit_params_id, params_id] = CalleePatternMatch(
       context, *implicit_param_patterns_id, *param_patterns_id);
 
   auto [name_loc_id, name_id] = context.node_stack().PopNameWithNodeId();

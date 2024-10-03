@@ -69,7 +69,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 
 // Checks that the parameter lists specified in a function declaration are
 // valid for a function declaration, and numbers the parameters.
-// FIXME: is this function needed, or can it be folded into pattern matching?
 static auto CheckFunctionSignature(Context& context,
                                    const NameComponent& name_and_params)
     -> void {
@@ -113,6 +112,8 @@ static auto CheckFunctionSignature(Context& context,
     }
 
     // If this is a runtime parameter, number it.
+    // TODO: move this logic to pattern_match.cpp, and remove this function
+    // (which is otherwise redundant).
     if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
       param_inst->runtime_index = next_index;
       context.ReplaceInstBeforeConstantUse(param_id, *param_inst);

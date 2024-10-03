@@ -400,8 +400,6 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  // FIXME check only the patterns (and remove support for params from
-  // CheckRedeclParams)
   if (!CheckRedeclParams(context, new_entity.loc,
                          new_entity.implicit_param_patterns_id, prev_entity.loc,
                          prev_entity.implicit_param_patterns_id, "implicit ",

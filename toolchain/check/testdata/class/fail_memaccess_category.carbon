@@ -131,10 +131,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: fn @F.2(%.loc19_7: %.7, %.loc19_19: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %.7 = name_ref s, %s
-// CHECK:STDOUT:   %.loc28_4.1: %A = struct_access %s.ref, element0
+// CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4.1, %F.ref.loc28
-// CHECK:STDOUT:   %.loc28_4.2: %.1 = addr_of %.loc28_4.1
+// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
 // CHECK:STDOUT:   %F.call.loc28: init %.2 = call %.loc28_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: %.6 = name_ref a, @B.%.loc16 [template = @B.%.loc16]
@@ -142,7 +141,6 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1
 // CHECK:STDOUT:   %F.ref.loc38: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc38_6: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
-// CHECK:STDOUT:   %.loc38_4.3: %.1 = addr_of %.loc38_4.2
 // CHECK:STDOUT:   %F.call.loc38: init %.2 = call %.loc38_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

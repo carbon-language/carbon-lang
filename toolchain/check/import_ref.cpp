@@ -657,7 +657,7 @@ class ImportRefResolver {
     }
   }
 
-  // FIXME code duplication
+  // Adds unresolved constants for each parameter's type to work_stack_.
   auto LoadLocalPatternConstantIds(SemIR::InstBlockId param_patterns_id)
       -> void {
     if (!param_patterns_id.is_valid() ||
@@ -756,8 +756,11 @@ class ImportRefResolver {
     return context_.inst_blocks().Add(new_param_refs);
   }
 
-  // FIXME comment
-  // FIXME code duplication?
+  // Returns a version of param_patterns_id localized to the current IR.
+  //
+  // Must only be called after a call to
+  // LoadLocalPatternConstantIds(param_patterns_id) has completed without adding
+  // any new work to work_stack_.
   auto GetLocalParamPatternsId(SemIR::InstBlockId param_patterns_id)
       -> SemIR::InstBlockId {
     if (!param_patterns_id.is_valid() ||
@@ -803,7 +806,6 @@ class ImportRefResolver {
               AddImportIRInst(binding_id),
               {.type_id = type_id,
                .entity_name_id = entity_name_id,
-               // FIXME
                .bind_name_id = SemIR::InstId::Invalid});
           break;
         }
@@ -1319,7 +1321,6 @@ class ImportRefResolver {
     return ResolveAs<SemIR::SymbolicBindingPattern>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .entity_name_id = entity_name_id,
-         // FIXME
          .bind_name_id = SemIR::InstId::Invalid});
   }
 

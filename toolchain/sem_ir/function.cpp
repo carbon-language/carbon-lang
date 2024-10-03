@@ -42,8 +42,6 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
-// FIXME: all this pattern traversal conceptually duplicates code in
-// pattern_match.cpp
 auto Function::GetNameFromParamPatternId(const File& sem_ir,
                                          InstId param_pattern_id) -> NameId {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);

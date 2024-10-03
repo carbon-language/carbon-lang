@@ -215,7 +215,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   if (params_id) {
     auto parameter_blocks =
-        ProcessSignature(context, *params_id, SemIR::InstBlockId::Invalid);
+        CalleePatternMatch(context, *params_id, SemIR::InstBlockId::Invalid);
     // TODO: Check parameters. Store them on the `Impl` in some form.
     static_cast<void>(parameter_blocks);
   }

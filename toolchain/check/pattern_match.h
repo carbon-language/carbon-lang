@@ -10,7 +10,6 @@
 
 namespace Carbon::Check {
 
-// FIXME document how this differs from inputs
 struct ParameterBlocks {
   // The implicit parameter list.
   SemIR::InstBlockId implicit_params_id;
@@ -19,12 +18,36 @@ struct ParameterBlocks {
   SemIR::InstBlockId params_id;
 };
 
-auto ProcessSignature(Context& context,
-                      SemIR::InstBlockId implicit_param_patterns_id,
-                      SemIR::InstBlockId param_patterns_id) -> ParameterBlocks;
+// TODO: Find a better place for this overview, once it has stabilized.
+//
+// The signature pattern of a function call is matched partially by the caller
+// and partially by the callee. `ParamPattern` insts mark the boundary
+// between the two: pattern insts that are descendants of a `ParamPattern`
+// are matched by the callee, and pattern insts that have a `ParamPattern`
+// as a descendant are matched by the caller.
+//
+// "Calling convention arguments" are the values actually passed from caller to
+// callee at the semantic IR level, and "calling convention parameters" are
+// the corresponding semantic placeholders that they bind to.
 
-auto PatternMatchArg(Context& context, SemIR::SpecificId specific_id,
-                     SemIR::InstId param, SemIR::InstId arg) -> SemIR::InstId;
+// Emits the pattern-match IR for the declaration of a function with the
+// given implicit and explicit parameter patterns. This IR performs the callee
+// side of pattern matching, starting at the `ParamPattern` insts, and matching
+// them against the corresponding calling-convention parameters.
+auto CalleePatternMatch(Context& context,
+                        SemIR::InstBlockId implicit_param_patterns_id,
+                        SemIR::InstBlockId param_patterns_id)
+    -> ParameterBlocks;
+
+// Emits the pattern-match IR for matching the given argument with the given
+// parameter pattern, and returns the inst representing the resulting
+// calling-convention argument. This IR performs the caller side of pattern
+// matching that argument.
+//
+// TODO: restructure to have this handle the entire signature.
+auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
+                        SemIR::InstId param, SemIR::InstId arg)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

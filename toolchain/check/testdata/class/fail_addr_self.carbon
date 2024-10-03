@@ -123,9 +123,8 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc27: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
-// CHECK:STDOUT:   %.loc27_3: %.1 = addr_of %c.ref.loc27
-// CHECK:STDOUT:   %F.call.loc27: init %.2 = call %.loc27_4(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
+// CHECK:STDOUT:   %F.call.loc27: init %.2 = call %.loc27(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc29: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
