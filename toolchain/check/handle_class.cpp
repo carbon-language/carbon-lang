@@ -227,8 +227,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
        .self_type_id = SemIR::TypeId::Invalid,
        .inheritance_kind = inheritance_kind}};
 
-  RequireGenericParams(context, class_info.implicit_param_refs_id);
-  RequireGenericParams(context, class_info.param_refs_id);
+  RequireGenericParamsOnType(context, class_info.implicit_param_refs_id);
+  RequireGenericParamsOnType(context, class_info.param_refs_id);
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
                  class_info, is_definition,

@@ -72,6 +72,8 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 static auto CheckFunctionSignature(Context& context,
                                    const NameComponent& name_and_params)
     -> void {
+  RequireGenericOrSelfImplicitFunctionParams(
+      context, name_and_params.implicit_params_id);
   SemIR::RuntimeParamIndex next_index(0);
   for (auto param_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),
