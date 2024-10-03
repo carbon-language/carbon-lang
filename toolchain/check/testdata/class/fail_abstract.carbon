@@ -109,17 +109,17 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, <unexpected>.inst+3.loc11_25 [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc16: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc23: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32, %.loc18_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc18_8: %.5 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %.loc25_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc25_10.2: type = converted %int.make_type_32, %.loc25_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc25_8: %.5 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc26: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .d = %.loc18_8
+// CHECK:STDOUT:   .base = %.loc23
+// CHECK:STDOUT:   .d = %.loc25_8
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,17 +127,17 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27_25: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc27_26: %.3 = struct_literal (%.loc27_25)
-// CHECK:STDOUT:   %.loc27_34: i32 = int_literal 7 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc27_35: %.8 = struct_literal (%.loc27_26, %.loc27_34)
+// CHECK:STDOUT:   %.loc30_25: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc30_26: %.3 = struct_literal (%.loc30_25)
+// CHECK:STDOUT:   %.loc30_34: i32 = int_literal 7 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc30_35: %.8 = struct_literal (%.loc30_26, %.loc30_34)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Return() -> %Abstract {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc35_16: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc35_17: %.3 = struct_literal (%.loc35_16)
+// CHECK:STDOUT:   %.loc41_16: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc41_17: %.3 = struct_literal (%.loc41_16)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

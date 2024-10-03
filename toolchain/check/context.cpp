@@ -742,6 +742,12 @@ class TypeCompleter {
  public:
   TypeCompleter(Context& context, Context::BuildDiagnosticFn diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
+  TypeCompleter(Context& context,
+                std::optional<Context::BuildDiagnosticFn> diagnoser,
+                std::optional<Context::BuildDiagnosticFn> abstract_diagnoser)
+      : context_(context),
+        diagnoser_(diagnoser),
+        abstract_diagnoser_(abstract_diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
@@ -847,14 +853,20 @@ class TypeCompleter {
       }
       case CARBON_KIND(SemIR::ClassType inst): {
         auto& class_info = context_.classes().Get(inst.class_id);
-        if (!class_info.is_defined() ||
-            class_info.inheritance_kind ==
-                SemIR::Class::InheritanceKind::Abstract) {
+        if (!class_info.is_defined()) {
           if (diagnoser_) {
             auto builder = diagnoser_();
             context_.NoteIncompleteClass(inst.class_id, builder);
             builder.Emit();
           }
+          return false;
+        }
+        if (abstract_diagnoser_ &&
+            class_info.inheritance_kind ==
+                SemIR::Class::InheritanceKind::Abstract) {
+          auto builder = (*abstract_diagnoser_)();
+          context_.NoteAbstractClass(inst.class_id, builder);
+          builder.Emit();
           return false;
         }
         if (inst.specific_id.is_valid()) {
@@ -1137,13 +1149,14 @@ class TypeCompleter {
 }  // namespace
 
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
-                                BuildDiagnosticFn diagnoser) -> bool {
+                                BuildDiagnosticFn diagnoser,
+                                BuildDiagnosticFn abstract_diagnoser) -> bool {
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,
                               BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, diagnoser)) {
+  if (!TryToCompleteType(type_id, /*allow_abstract=*/true, diagnoser)) {
     return false;
   }
 
@@ -1195,7 +1208,9 @@ template <typename InstT, typename... EachArgT>
 static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
-  bool complete = context.TryToCompleteType(type_id);
+  // FIXME: allow_abstract should probably come as a parameter to this function
+  // and passed along here.
+  bool complete = context.TryToCompleteType(type_id, /*allow_abstract=*/true);
   CARBON_CHECK(complete, "Type completion should not fail");
   return type_id;
 }
@@ -1221,7 +1236,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinInstKind::Invalid);
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
-  bool complete = TryToCompleteType(type_id);
+  bool complete = TryToCompleteType(type_id, /*allow_abstract=*/false);
   CARBON_CHECK(complete, "Failed to complete builtin type");
   return type_id;
 }

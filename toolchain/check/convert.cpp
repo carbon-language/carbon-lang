@@ -586,7 +586,7 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!context.TryToCompleteType(derived_id)) {
+  if (!context.TryToCompleteType(derived_id, /*allow_abstract=*/false)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -937,7 +937,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete types.
-  if (!context.TryToCompleteType(target.type_id, [&] {
+  if (!context.TryToCompleteType(target.type_id, /*allow_abstract=*/false, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
                           "initialization of incomplete type `{0}`",
                           SemIR::TypeId);
