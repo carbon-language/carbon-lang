@@ -20,31 +20,31 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc3_7.1: %.2 = tuple_literal ()
-// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%.1]
+// CHECK:STDOUT:     %.loc3_7.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.1 as %A.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -61,5 +61,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.1 as %A.type;
 // CHECK:STDOUT:

@@ -523,6 +523,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
         continue;
       }
+      case CARBON_KIND(InterfaceType inst): {
+        const auto& interface_info =
+            sem_ir_.interfaces().Get(inst.interface_id);
+        add_inst_name_id(interface_info.name_id, ".type");
+        continue;
+      }
       case CARBON_KIND(NameRef inst): {
         add_inst_name_id(inst.name_id, ".ref");
         continue;
