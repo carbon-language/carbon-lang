@@ -227,8 +227,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
        .self_type_id = SemIR::TypeId::Invalid,
        .inheritance_kind = inheritance_kind}};
 
-  RequireGenericParams(context, class_info.implicit_param_refs_id);
-  RequireGenericParams(context, class_info.param_refs_id);
+  RequireGenericParamsOnType(context, class_info.implicit_param_refs_id);
+  RequireGenericParamsOnType(context, class_info.param_refs_id);
 
   MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
                  class_info, is_definition,
@@ -594,6 +594,25 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Note(first_field_id, AdaptWithFieldHere)
         .Emit();
     return SemIR::InstId::BuiltinError;
+  }
+
+  for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
+    if (auto function_decl =
+            context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
+      auto& function = context.functions().Get(function_decl->function_id);
+      if (function.virtual_modifier ==
+          SemIR::Function::VirtualModifier::Virtual) {
+        CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
+                          "adapter with virtual function");
+        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
+                          "first virtual function declaration is here");
+        context.emitter()
+            .Build(class_info.adapt_id, AdaptWithVirtual)
+            .Note(inst_id, AdaptWithVirtualHere)
+            .Emit();
+        return SemIR::InstId::BuiltinError;
+      }
+    }
   }
 
   // The object representation of the adapter is the object representation
