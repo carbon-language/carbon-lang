@@ -65,8 +65,8 @@ struct Function : public EntityWithParamsBase,
   }
 
   // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns the corresponding instruction,
-  // its ID, and name_id.
+  // `implicit_param_refs_id`, returns a `ParamInfo` value with the
+  // corresponding instruction, its ID, and the name binding, if present.
   struct ParamInfo {
     InstId inst_id;
     std::optional<AnyBindName> bind_name;
