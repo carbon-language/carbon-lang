@@ -11,48 +11,26 @@
 interface I { let T:! type; }
 
 // Ensure that we don't crash when checking this `where` in a non-generic context.
-// CHECK:STDERR: non_generic.carbon:[[@LINE+6]]:32: error: cannot implicitly convert from `{}` to `<associated type in I>`
-// CHECK:STDERR: fn NotGenericF(U: I where .T = {}) {}
-// CHECK:STDERR:                                ^~
-// CHECK:STDERR: non_generic.carbon:[[@LINE+3]]:32: note: type `{}` does not implement interface `ImplicitAs`
-// CHECK:STDERR: fn NotGenericF(U: I where .T = {}) {}
-// CHECK:STDERR:                                ^~
-fn NotGenericF(U: I where .T = {}) {}
+fn NotGenericF(U: I where .T == i32) {}
 
 // CHECK:STDOUT: --- non_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %.6: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.6) = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.3: %.6 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %.9: type = interface_type @ImplicitAs, @ImplicitAs(%.2) [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%.2) [template]
-// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type %.9, %Convert.type.2 [template]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.12: %.7 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %struct: %.5 = struct_value () [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -62,12 +40,7 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.2 (%.7) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.12)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -85,15 +58,9 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc11 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc20_33.1: %.5 = struct_literal ()
-// CHECK:STDOUT:     %.loc20_33.2: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.2) [template = constants.%.9]
-// CHECK:STDOUT:     %.loc20_33.3: %.10 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.2) [template = constants.%.11]
-// CHECK:STDOUT:     %Convert.ref: %.10 = name_ref Convert, %.loc20_33.3 [template = constants.%.11]
-// CHECK:STDOUT:     %struct: %.5 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc20_33.4: %.5 = converted %.loc20_33.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:     %.loc20_33.5: %.2 = converted %.loc20_33.1, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc20_21: type = where_expr %.Self [template = constants.%.1] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %.1 = param U, runtime_param0
 // CHECK:STDOUT:     %U: %.1 = bind_name U, %U.param
@@ -101,7 +68,7 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc11: %.2 = assoc_entity element0, %T [template = constants.%.3]
 // CHECK:STDOUT:
@@ -111,65 +78,10 @@ fn NotGenericF(U: I where .T = {}) {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.6), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.7)]
-// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.7) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.8)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.2
-// CHECK:STDOUT:     .Convert = imports.%import_ref.3
-// CHECK:STDOUT:     witness = (imports.%import_ref.4)
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.6)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotGenericF(%U: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%.2) {
-// CHECK:STDOUT:   %Dest => constants.%.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.9
-// CHECK:STDOUT:   %Self => constants.%Self.3
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
-// CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.2 => constants.%.10
-// CHECK:STDOUT:   %.3 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
