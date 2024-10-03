@@ -71,6 +71,8 @@ struct Function : public EntityWithParamsBase,
     InstId inst_id;
     std::optional<AnyBindName> bind_name;
     Param inst;
+
+    // Gets the name from `bind_name`, returns invalid if that is not present.
     auto GetNameId(const File& sem_ir) -> NameId;
   };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
