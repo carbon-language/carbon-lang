@@ -230,31 +230,31 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.1(%T.loc11: %.2) {
 // CHECK:STDOUT:   %T.1: %.2 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.1 as %.1;
+// CHECK:STDOUT:   impl: %.loc11_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2(%T.loc12: %.3) {
 // CHECK:STDOUT:   %T.1: %.3 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.2 as %.1;
+// CHECK:STDOUT:   impl: %.loc12_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.3(%T.loc13: %.4) {
 // CHECK:STDOUT:   %T.1: %.4 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.3 as %.1;
+// CHECK:STDOUT:   impl: %.loc13_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.4(%T.loc14: %.5) {
 // CHECK:STDOUT:   %T.1: %.5 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.4 as %.1;
+// CHECK:STDOUT:   impl: %.loc14_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.5(%T.loc18: %.2) {
 // CHECK:STDOUT:   %T.1: %.2 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.1 as %.1 {
+// CHECK:STDOUT:   impl: %.loc18_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -265,7 +265,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.6(%T.loc19: %.3) {
 // CHECK:STDOUT:   %T.1: %.3 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.2 as %.1 {
+// CHECK:STDOUT:   impl: %.loc19_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -276,7 +276,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.7(%T.loc20: %.4) {
 // CHECK:STDOUT:   %T.1: %.4 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.3 as %.1 {
+// CHECK:STDOUT:   impl: %.loc20_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -287,7 +287,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.8(%T.loc21: %.5) {
 // CHECK:STDOUT:   %T.1: %.5 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.4 as %.1 {
+// CHECK:STDOUT:   impl: %.loc21_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -389,7 +389,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl(%T.loc7: %.1) {
 // CHECK:STDOUT:   %T.1: %.1 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T as %.2 {
+// CHECK:STDOUT:   impl: %.loc7_21.2 as %J.ref.loc7 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = <unexpected>.inst+21.loc7_28
 // CHECK:STDOUT:   }
@@ -444,14 +444,14 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %.1 {
+// CHECK:STDOUT: impl @impl.1: %C.ref as %I.ref {
 // CHECK:STDOUT:   %.loc13: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.1 {
+// CHECK:STDOUT: impl @impl.2: %.loc14_12 as %I.ref {
 // CHECK:STDOUT:   %.loc14_20: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

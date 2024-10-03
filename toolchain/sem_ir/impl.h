@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
 #include "common/map.h"
-#include "llvm/ADT/TinyPtrVector.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -17,9 +16,9 @@ struct ImplFields {
   // lifetime of the interface.
 
   // The type for which the impl is implementing a constraint.
-  TypeId self_id;
+  InstId self_id;
   // The constraint that the impl implements.
-  TypeId constraint_id;
+  InstId constraint_id;
 
   // The following members are set at the `{` of the impl definition.
 
@@ -151,18 +150,13 @@ class ImplStore {
     ImplId single_id_storage_;
   };
 
+  explicit ImplStore(File& sem_ir) : sem_ir_(sem_ir) {}
+
   // Returns a reference to the lookup bucket containing the list of impls with
   // this self type and constraint, or adds a new bucket if this is the first
   // time we've seen an impl of this kind. The lookup bucket reference remains
   // valid until this function is called again.
-  auto GetOrAddLookupBucket(TypeId self_id, TypeId constraint_id)
-      -> LookupBucketRef {
-    return LookupBucketRef(
-        *this, lookup_
-                   .Insert(std::pair{self_id, constraint_id},
-                           [] { return ImplOrLookupBucketId::Invalid; })
-                   .value());
-  }
+  auto GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef;
 
   // Adds the specified impl to the store. Does not add it to impl lookup.
   auto Add(Impl impl) -> ImplId { return values_.Add(impl); }
@@ -188,8 +182,9 @@ class ImplStore {
   auto size() const -> size_t { return values_.size(); }
 
  private:
+  File& sem_ir_;
   ValueStore<ImplId> values_;
-  Map<std::pair<TypeId, TypeId>, ImplOrLookupBucketId> lookup_;
+  Map<std::pair<InstId, InstId>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };

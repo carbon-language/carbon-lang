@@ -55,10 +55,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.1;
+// CHECK:STDOUT: impl @impl: %Self.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.2 [template = constants.%.3]

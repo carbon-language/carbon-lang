@@ -100,7 +100,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc15_6.2 as %Simple.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
 // CHECK:STDOUT:   } {
@@ -130,7 +130,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.3 = name_ref G, @Simple.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc23_4.1: %G.type.1 = interface_witness_access @impl.%.loc15_20, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc23_4.1: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   %.loc23_4.2: <bound method> = bound_method %n.ref, %.loc23_4.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

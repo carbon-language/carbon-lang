@@ -150,7 +150,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2 {
+// CHECK:STDOUT: impl @impl: %.loc6_7.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %.1 = binding_pattern other
@@ -190,7 +190,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, imports.%import_ref.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_11.1: %Op.type.2 = interface_witness_access @impl.%.loc6_16, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc11_11.1: %Op.type.2 = interface_witness_access constants.%.3, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc11_11.2: <bound method> = bound_method %x.ref, %.loc11_11.1
 // CHECK:STDOUT:   %y.ref: %.1 = name_ref y, %y
 // CHECK:STDOUT:   %Op.call: init %.1 = call %.loc11_11.2(%x.ref, %y.ref)

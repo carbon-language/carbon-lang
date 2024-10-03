@@ -191,7 +191,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   witness = (imports.%import_ref.5, imports.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.3 {
+// CHECK:STDOUT: impl @impl: %C.ref as %Eq.ref {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -260,7 +260,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Equal.ref: %.7 = name_ref Equal, imports.%import_ref.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc6, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %.loc12_12.1: %Equal.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Equal.1]
 // CHECK:STDOUT:   %.loc12_12.2: <bound method> = bound_method %a.ref, %.loc12_12.1
 // CHECK:STDOUT:   %Equal.call: init bool = call %.loc12_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
@@ -273,7 +273,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %NotEqual.ref: %.9 = name_ref NotEqual, imports.%import_ref.4 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc16_12.1: %NotEqual.type.2 = interface_witness_access @impl.%.loc6, element1 [template = constants.%NotEqual.1]
+// CHECK:STDOUT:   %.loc16_12.1: %NotEqual.type.2 = interface_witness_access constants.%.5, element1 [template = constants.%NotEqual.1]
 // CHECK:STDOUT:   %.loc16_12.2: <bound method> = bound_method %a.ref, %.loc16_12.1
 // CHECK:STDOUT:   %NotEqual.call: init bool = call %.loc16_12.2(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
@@ -595,7 +595,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.3 {
+// CHECK:STDOUT: impl @impl: %C.ref as %Eq.ref {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -671,7 +671,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %Equal.ref: %.7 = name_ref Equal, imports.%import_ref.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access @impl.%.loc7, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Equal.1]
 // CHECK:STDOUT:   %.loc23_12.2: <bound method> = bound_method %a.ref, %.loc23_12.1
 // CHECK:STDOUT:   %.loc23_12.3: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc23_12.4: %.13 = specific_constant imports.%import_ref.11, @ImplicitAs(constants.%C) [template = constants.%.14]
