@@ -299,6 +299,16 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
+  // Diagnose 'definition of `abstract` function' using the canonical Function's
+  // modifiers.
+  if (is_definition &&
+      context.functions().Get(function_decl.function_id).virtual_modifier ==
+          SemIR::Function::VirtualModifier::Abstract) {
+    CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
+                      "definition of `abstract` function");
+    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+  }
+
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
   if (!name_context.prev_inst_id().is_valid()) {

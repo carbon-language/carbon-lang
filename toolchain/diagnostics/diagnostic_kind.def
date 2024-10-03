@@ -194,6 +194,7 @@ CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
 CARBON_DIAGNOSTIC_KIND(SelfParameterNotAllowed)
 
 // Function declaration checking.
+CARBON_DIAGNOSTIC_KIND(DefinedAbstractFunction)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffers)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffersNoReturn)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypePrevious)
