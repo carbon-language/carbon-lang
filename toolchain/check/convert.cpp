@@ -1207,18 +1207,18 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   for (auto implicit_param_id : implicit_param_refs) {
     auto addr_pattern =
         context.insts().TryGetAs<SemIR::AddrPattern>(implicit_param_id);
-    auto param = SemIR::Function::GetParamFromParamRefId(context.sem_ir(),
-                                                         implicit_param_id);
-    if (param.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
+    auto param_info = SemIR::Function::GetParamFromParamRefId(
+        context.sem_ir(), implicit_param_id);
+    if (param_info.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
       auto converted_self_id = ConvertSelf(
           context, call_loc_id, callee.callee_loc, callee_specific_id,
-          addr_pattern, param.inst_id, param.inst, self_id);
+          addr_pattern, param_info.inst_id, param_info.inst, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
       args.push_back(converted_self_id);
     } else {
-      CARBON_CHECK(!param.inst.runtime_index.is_valid(),
+      CARBON_CHECK(!param_info.inst.runtime_index.is_valid(),
                    "Unexpected implicit parameter passed at runtime");
     }
   }
@@ -1239,16 +1239,16 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
     // TODO: In general we need to perform pattern matching here to find the
     // argument corresponding to each parameter.
-    auto param =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
-    if (!param.inst.runtime_index.is_valid()) {
+    if (!param_info.inst.runtime_index.is_valid()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }
 
-    auto param_type_id =
-        SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id,
-                                 context.insts().Get(param.inst_id).type_id());
+    auto param_type_id = SemIR::GetTypeInSpecific(
+        context.sem_ir(), callee_specific_id,
+        context.insts().Get(param_info.inst_id).type_id());
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
     auto converted_arg_id =
@@ -1257,9 +1257,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       return SemIR::InstBlockId::Invalid;
     }
 
-    CARBON_CHECK(
-        static_cast<int32_t>(args.size()) == param.inst.runtime_index.index,
-        "Parameters not numbered in order.");
+    CARBON_CHECK(static_cast<int32_t>(args.size()) ==
+                     param_info.inst.runtime_index.index,
+                 "Parameters not numbered in order.");
     args.push_back(converted_arg_id);
   }
 

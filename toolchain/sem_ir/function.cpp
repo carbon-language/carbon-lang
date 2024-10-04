@@ -56,7 +56,7 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }
-  return {param_ref_id, bind_name, ref.As<Param>()};
+  return {param_ref_id, ref.As<Param>(), bind_name};
 }
 
 auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {

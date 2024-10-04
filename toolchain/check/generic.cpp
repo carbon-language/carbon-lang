@@ -440,9 +440,9 @@ auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
     return;
   }
   for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    auto param =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
-    if (param.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
+    if (param_info.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
       CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
                         "`self` parameter only allowed on functions");
       context.emitter().Emit(inst_id, SelfParameterNotAllowed);
@@ -465,9 +465,9 @@ auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
     return;
   }
   for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    auto param =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
-    if (param.GetNameId(context.sem_ir()) != SemIR::NameId::SelfValue &&
+    if (param_info.GetNameId(context.sem_ir()) != SemIR::NameId::SelfValue &&
         !context.constant_values().Get(inst_id).is_constant()) {
       CARBON_DIAGNOSTIC(
           ImplictParamMustBeConstant, Error,
