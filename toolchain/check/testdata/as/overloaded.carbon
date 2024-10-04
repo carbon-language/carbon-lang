@@ -138,7 +138,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: i32 as %.8 {
+// CHECK:STDOUT: impl @impl.1: %.loc15_6.2 as %.loc15_20 {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.2 = fn_decl @Convert.2 [template = constants.%Convert.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
@@ -158,7 +158,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   witness = %.loc15_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %X as %.13 {
+// CHECK:STDOUT: impl @impl.2: %X.ref as %.loc19_18.3 {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %X = param_pattern %self.patt, runtime_param0
@@ -230,7 +230,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc23_26.1: type = interface_type @As, @As(constants.%X) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc23_26.2: %.9 = specific_constant imports.%import_ref.4, @As(constants.%X) [template = constants.%.10]
 // CHECK:STDOUT:   %Convert.ref.loc23_26: %.9 = name_ref Convert, %.loc23_26.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc23_26.3: %Convert.type.3 = interface_witness_access @impl.1.%.loc15_24, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc23_26.3: %Convert.type.3 = interface_witness_access constants.%.11, element0 [template = constants.%Convert.2]
 // CHECK:STDOUT:   %.loc23_26.4: <bound method> = bound_method %.loc23_16, %.loc23_26.3 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc23_26.5: ref %X = temporary_storage
 // CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %.loc23_26.4(%.loc23_16) to %.loc23_26.5
@@ -242,7 +242,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc23_32.2: %.14 = specific_constant imports.%import_ref.4, @As(i32) [template = constants.%.15]
 // CHECK:STDOUT:   %Convert.ref.loc23_32: %.14 = name_ref Convert, %.loc23_32.2 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc23_26.7: ref %X = temporary %.loc23_26.5, %.loc23_26.6
-// CHECK:STDOUT:   %.loc23_32.3: %Convert.type.5 = interface_witness_access @impl.2.%.loc19_24, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc23_32.3: %Convert.type.5 = interface_witness_access constants.%.16, element0 [template = constants.%Convert.4]
 // CHECK:STDOUT:   %.loc23_32.4: <bound method> = bound_method %.loc23_26.7, %.loc23_32.3
 // CHECK:STDOUT:   %.loc23_26.8: %X = bind_value %.loc23_26.7
 // CHECK:STDOUT:   %Convert.call.loc23_32: init i32 = call %.loc23_32.4(%.loc23_26.8)

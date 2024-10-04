@@ -73,11 +73,19 @@ auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
 auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool;
 
-// Requires that a param block only contains generics. Diagnoses and updates the
-// block otherwise. This will typically be called once for each of implicit and
-// explicit parameters, and must occur before constant evaluation of the
-// parameterized instruction.
-auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
+// Requires that a param block only contains generics, and no parameters
+// named `self`. Diagnoses and updates the block otherwise. This will typically
+// be called once for each of implicit and explicit parameters, and must occur
+// before constant evaluation of the parameterized instruction.
+auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
+    -> void;
+
+// Requires that a param block only contains generics or parameters
+// named `self`. Diagnoses and updates the block otherwise. This is used for
+// the implicit parameters of a function declaration, and must occur
+// before constant evaluation of the parameterized instruction.
+auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
+                                                SemIR::InstBlockId block_id)
     -> void;
 
 }  // namespace Carbon::Check

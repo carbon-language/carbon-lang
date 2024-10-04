@@ -111,7 +111,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
@@ -133,6 +133,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.6 [template = constants.%.7]
@@ -156,7 +157,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc14 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc24_11.1: %F.type.1 = interface_witness_access @impl.%.loc18, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc24_11.1: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc24_11.2: <bound method> = bound_method %c.ref, %.loc24_11.1
 // CHECK:STDOUT:   %F.call: init i32 = call %.loc24_11.2(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: i32 = value_of_initializer %F.call

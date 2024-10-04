@@ -165,7 +165,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc16_6.2 as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
@@ -207,7 +207,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Simple.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access @impl.%.loc16_20, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %.2 = call %.loc22()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -217,7 +217,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.5 = name_ref G, @Simple.%.loc13 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc26_4.1: %G.type.1 = interface_witness_access @impl.%.loc16_20, element1 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc26_4.1: %G.type.1 = interface_witness_access constants.%.7, element1 [template = constants.%G.2]
 // CHECK:STDOUT:   %.loc26_4.2: <bound method> = bound_method %n.ref, %.loc26_4.1
 // CHECK:STDOUT:   %G.call: init %.2 = call %.loc26_4.2(%n.ref)
 // CHECK:STDOUT:   return
@@ -229,7 +229,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @Simple.%.loc12 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc30_4.1: ref i32 = deref %p.ref
-// CHECK:STDOUT:   %.loc30_4.2: %F.type.1 = interface_witness_access @impl.%.loc16_20, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc30_4.2: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %.2 = call %.loc30_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -240,7 +240,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %G.ref: %.5 = name_ref G, @Simple.%.loc13 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc34_4.1: ref i32 = deref %p.ref
-// CHECK:STDOUT:   %.loc34_4.2: %G.type.1 = interface_witness_access @impl.%.loc16_20, element1 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc34_4.2: %G.type.1 = interface_witness_access constants.%.7, element1 [template = constants.%G.2]
 // CHECK:STDOUT:   %.loc34_4.3: <bound method> = bound_method %.loc34_4.1, %.loc34_4.2
 // CHECK:STDOUT:   %.loc34_4.4: i32 = bind_value %.loc34_4.1
 // CHECK:STDOUT:   %G.call: init %.2 = call %.loc34_4.3(%.loc34_4.4)

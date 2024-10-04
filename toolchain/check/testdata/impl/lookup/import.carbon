@@ -87,7 +87,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT: impl @impl: %C.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.loc10: <witness> = interface_witness (%F.decl) [template = constants.%.7]
 // CHECK:STDOUT:
@@ -132,7 +132,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.1, %F.type.1 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
@@ -150,18 +150,20 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl: <namespace> = namespace file.%Impl.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.6
-// CHECK:STDOUT:     .HasF = %import_ref.7
+// CHECK:STDOUT:     .C = %import_ref.8
+// CHECK:STDOUT:     .HasF = %import_ref.9
 // CHECK:STDOUT:     import Impl//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.2: %.6 = import_ref Impl//default, inst+12, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Impl//default, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Impl//default, inst+25, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Impl//default, inst+3, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Impl//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Impl//default, inst+19, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+20, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Impl//default, inst+25, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Impl//default, inst+3, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Impl//default, inst+7, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,7 +179,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     %c.param_patt: %C = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6 [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.8 [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param runtime_param0
 // CHECK:STDOUT:     %c: %C = bind_name c, %param
 // CHECK:STDOUT:   }
@@ -190,9 +192,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.1 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.5 as imports.%import_ref.6 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.5
+// CHECK:STDOUT:   witness = imports.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -204,9 +206,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
-// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.7 [template = constants.%.1]
+// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.9 [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.6 = name_ref F, imports.%import_ref.2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc5: %F.type.1 = interface_witness_access imports.%import_ref.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc5: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %.4 = call %.loc5()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

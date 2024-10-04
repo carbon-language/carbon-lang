@@ -64,7 +64,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc16_13.2 as %I.ref {
 // CHECK:STDOUT:   %.loc16_22: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -158,7 +158,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc10_18.1: %Op.type.2 = interface_witness_access @impl.%.loc6_22, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc10_18.1: %Op.type.2 = interface_witness_access constants.%.3, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc10_18.2: <bound method> = bound_method %.loc10_16, %.loc10_18.1 [template = constants.%.8]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18.2(%.loc10_16, %.loc10_20) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -175,7 +175,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   witness = (imports.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.2 {
+// CHECK:STDOUT: impl @impl: %.loc6_6.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
@@ -215,7 +215,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.12]
 // CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc10_34.1: %Op.type.2 = interface_witness_access @impl.%.loc6_22, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc10_34.1: %Op.type.2 = interface_witness_access constants.%.3, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc10_34.2: <bound method> = bound_method %.loc10_32, %.loc10_34.1 [template = constants.%.13]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_34.2(%.loc10_32, %.loc10_36) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc10_37.1: %.15 = tuple_literal (%.loc10_26, %.loc10_29, %int.sadd)

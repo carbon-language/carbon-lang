@@ -63,7 +63,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc14_6.2 as %Empty.ref {
 // CHECK:STDOUT:   %.loc14_19: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -79,7 +79,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T as %.1 {
+// CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:

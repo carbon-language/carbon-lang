@@ -156,7 +156,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %.3 {
+// CHECK:STDOUT: impl @impl.1: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.4 = param_pattern %self.patt, runtime_param0
@@ -174,7 +174,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.8 {
+// CHECK:STDOUT: impl @impl.2: %C.ref as %AddAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.4 = param_pattern %self.patt, runtime_param0
@@ -226,7 +226,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, imports.%import_ref.3 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access @impl.1.%.loc15, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access constants.%.7, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
 // CHECK:STDOUT:   %Op.call: init %.5 = call %.loc30_3.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
@@ -237,7 +237,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Op.ref: %.14 = name_ref Op, imports.%import_ref.7 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access @impl.2.%.loc18, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access constants.%.10, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
 // CHECK:STDOUT:   %Op.call: init %.5 = call %.loc40_5.2(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

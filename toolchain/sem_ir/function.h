@@ -64,6 +64,8 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
+  // FIXME combine these functions
+
   // Given a parameter pattern instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns the NameID of the parameter.
   static auto GetNameFromParamPatternId(const File& sem_ir,
@@ -76,10 +78,18 @@ struct Function : public EntityWithParamsBase,
       -> SemIR::RuntimeParamIndex;
 
   // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns the corresponding `Param` instruction
-  // and its ID.
+  // `implicit_param_refs_id`, returns a `ParamInfo` value with the
+  // corresponding instruction, its ID, and the name binding, if present.
+  struct ParamInfo {
+    InstId inst_id;
+    Param inst;
+    std::optional<AnyBindName> bind_name;
+
+    // Gets the name from `bind_name`. Returns invalid if that is not present.
+    auto GetNameId(const File& sem_ir) -> NameId;
+  };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-      -> std::pair<InstId, Param>;
+      -> ParamInfo;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is

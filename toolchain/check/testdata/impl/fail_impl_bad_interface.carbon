@@ -105,7 +105,7 @@ impl i32 as false {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as <error> {
+// CHECK:STDOUT: impl @impl: %.loc21_6.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

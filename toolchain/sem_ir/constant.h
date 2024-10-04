@@ -143,8 +143,7 @@ class ConstantValueStore {
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& /*allocator*/)
-      : sem_ir_(sem_ir) {}
+  explicit ConstantStore(File& sem_ir) : sem_ir_(sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.

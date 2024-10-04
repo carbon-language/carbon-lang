@@ -217,14 +217,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %.8 {
+// CHECK:STDOUT: impl @impl.1: %Self.ref as %.loc14_17 {
 // CHECK:STDOUT:   %.loc14_21: <witness> = interface_witness () [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14_21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.10 {
+// CHECK:STDOUT: impl @impl.2: %Self.ref as %.loc15_22 {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return: ref %X = var <return slot>
@@ -245,11 +245,13 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: %Simple.type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc14_17: type = interface_type @Simple, @Simple(constants.%C) [template = constants.%.8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type = name_ref WithAssocFn, file.%WithAssocFn.decl [template = constants.%WithAssocFn]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc15_22: type = interface_type @WithAssocFn, @WithAssocFn(constants.%C) [template = constants.%.10]

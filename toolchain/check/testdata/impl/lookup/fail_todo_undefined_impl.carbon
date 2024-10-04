@@ -99,9 +99,9 @@ impl C as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %.1;
+// CHECK:STDOUT: impl @impl.1: %Self.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.1 {
+// CHECK:STDOUT: impl @impl.2: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {}
 // CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -112,6 +112,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.5 [template = constants.%.6]

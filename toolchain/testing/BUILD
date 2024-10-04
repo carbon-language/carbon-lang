@@ -11,6 +11,7 @@ package(default_visibility = ["//visibility:public"])
 file_test(
     name = "file_test",
     size = "small",
+    timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
     data = cc_env_data(),
     env = cc_env(),

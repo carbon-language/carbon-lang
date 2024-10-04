@@ -10,10 +10,10 @@
 
 class Class {
   // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter
-  // CHECK:STDERR:   fn F[addr a: Class*]();
+  // CHECK:STDERR:   fn F[addr a:! Class*]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
-  fn F[addr a: Class*]();
+  fn F[addr a:! Class*]();
 
   // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter
   // CHECK:STDERR:   fn G(addr b: Class*);
@@ -26,6 +26,8 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %a: %.1 = bind_symbolic_name a, 0 [symbolic]
+// CHECK:STDOUT:   %a.patt: %.1 = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -59,13 +61,13 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.1 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt.loc16: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %.1 = param_pattern %a.patt.loc16, runtime_param<invalid> [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc16: %.1 = bind_symbolic_name a, 0, %param [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
@@ -84,7 +86,17 @@ class Class {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%a.param_patt: %.1]();
+// CHECK:STDOUT: generic fn @F(%a.loc16: %.1) {
+// CHECK:STDOUT:   %a.1: %.1 = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.1: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%a.param_patt: %.1]();
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b.param_patt: %.1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%a) {
+// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

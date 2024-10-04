@@ -225,12 +225,12 @@ class FormatterImpl {
     const Impl& impl_info = sem_ir_.impls().Get(id);
     FormatEntityStart("impl", impl_info.generic_id, id);
 
-    out_ << ": ";
-    FormatType(impl_info.self_id);
-    out_ << " as ";
-    FormatType(impl_info.constraint_id);
-
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
+
+    out_ << ": ";
+    FormatName(impl_info.self_id);
+    out_ << " as ";
+    FormatName(impl_info.constraint_id);
 
     if (impl_info.is_defined()) {
       out_ << ' ';

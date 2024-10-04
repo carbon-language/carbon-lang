@@ -213,35 +213,35 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %X as %.1 {
+// CHECK:STDOUT: impl @impl.1: %X.ref as %NotGenericNoParams.ref {
 // CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %X as %.3 {
+// CHECK:STDOUT: impl @impl.2: %X.ref as %.loc15_30 {
 // CHECK:STDOUT:   %.loc15_33: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc15_33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %X as %.11 {
+// CHECK:STDOUT: impl @impl.3: %X.ref.loc16_6 as %.loc16_27 {
 // CHECK:STDOUT:   %.loc16_31: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc16_31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: %X as %.5 {
+// CHECK:STDOUT: impl @impl.4: %X.ref.loc17_6 as %GenericNoParams.ref {
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: %X as %.13 {
+// CHECK:STDOUT: impl @impl.5: %X.ref.loc18_6 as %.loc18_32 {
 // CHECK:STDOUT:   %.loc18_36: <witness> = interface_witness () [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -89,7 +89,7 @@ fn TestOp() {
 // CHECK:STDOUT:   witness = (imports.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %.3 {
+// CHECK:STDOUT: impl @impl: %C.ref as %Dec.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.4 = param_pattern %self.patt, runtime_param0
@@ -134,7 +134,7 @@ fn TestOp() {
 // CHECK:STDOUT:   assign %c.var, %.loc22_16
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc23_3.1: %Op.type.2 = interface_witness_access @impl.%.loc17, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc23_3.1: %Op.type.2 = interface_witness_access constants.%.7, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc23_3.2: <bound method> = bound_method %c.ref, %.loc23_3.1
 // CHECK:STDOUT:   %.loc23_5: %.4 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %.5 = call %.loc23_3.2(%.loc23_5)
