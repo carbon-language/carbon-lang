@@ -89,7 +89,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -146,7 +146,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.1 [template = constants.%.3]
@@ -252,13 +252,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Equal.2.%Self (%Self)](%other.param_patt: @Equal.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.2.%Self (%Self)](%other.param_patt: @NotEqual.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -318,7 +318,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.5: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Equal.type [template]
@@ -426,7 +426,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Equal.%Self (%Self)](%other.param_patt: @Equal.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -440,7 +440,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.%Self (%Self)](%other.param_patt: @NotEqual.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -461,7 +461,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -481,11 +481,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.9: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.9) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic]
-// CHECK:STDOUT:   %Self.3: %.9 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.9) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.9 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type %.9, %Convert.type.1 [symbolic]
@@ -544,7 +544,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.1 [template = constants.%.3]
@@ -594,12 +594,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.9)]
-// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.9), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.10)]
@@ -677,13 +677,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.2(constants.%Self.1: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Equal.2.%Self (%Self.1)](%other.param_patt: @Equal.2.%Self (%Self.1)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NotEqual.2(constants.%Self.1: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.2.%Self (%Self.1)](%other.param_patt: @NotEqual.2.%Self (%Self.1)) -> bool;
 // CHECK:STDOUT: }
@@ -706,9 +706,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.9)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.9)]
-// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }

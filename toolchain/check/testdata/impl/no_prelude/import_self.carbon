@@ -34,7 +34,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
@@ -50,7 +50,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
 // CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
@@ -81,7 +81,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %.1) {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)](%other.param_patt: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
@@ -95,7 +95,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
@@ -122,7 +122,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %.loc6_7.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%.2]
@@ -161,9 +161,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %other.patt: %.1 = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: %.1 = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
 // CHECK:STDOUT:     %param.loc7_9: %.1 = param runtime_param0
 // CHECK:STDOUT:     %self: %.1 = bind_name self, %param.loc7_9
@@ -186,7 +186,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.2) {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self)](%other.param_patt: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }

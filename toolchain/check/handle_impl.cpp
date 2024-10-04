@@ -5,8 +5,10 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -32,11 +34,13 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
 
+  // This might be a generic impl.
+  StartGenericDecl(context);
+
   // Push a pattern block for the signature of the `forall` (if any).
   // TODO: Instead use a separate parse node kinds for `impl` and `impl forall`,
   // and only push a pattern block in `forall` case.
   context.pattern_block_stack().Push();
-
   return true;
 }
 
@@ -45,21 +49,21 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
       context.node_stack().PopWithNodeId<Parse::NodeKind::ImplicitParamList>();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
+  RequireGenericParams(context, params_id);
   context.node_stack().Push(node_id, params_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  auto self_type_id = ExprAsType(context, self_node, self_id);
+  auto [self_inst_id, self_type_id] = ExprAsType(context, self_node, self_id);
   context.node_stack().Push(node_id, self_type_id);
 
   // Introduce `Self`. Note that we add this name lexically rather than adding
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType,
-                          context.types().GetInstId(self_type_id));
+  context.AddNameToLookup(SemIR::NameId::SelfType, self_inst_id);
   return true;
 }
 
@@ -181,6 +185,66 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   parent_scope.extended_scopes.push_back(interface.scope_id);
 }
 
+// Pops the parameters of an `impl`, forming a `NameComponent` with no
+// associated name that describes them.
+static auto PopImplIntroducerAndParamsAsNameComponent(
+    Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
+    -> NameComponent {
+  auto [implicit_params_loc_id, implicit_param_patterns_id] =
+      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+
+  ParameterBlocks parameter_blocks{
+      .implicit_params_id = SemIR::InstBlockId::Invalid,
+      .params_id = SemIR::InstBlockId::Invalid};
+  if (implicit_param_patterns_id) {
+    parameter_blocks = CalleePatternMatch(context, *implicit_param_patterns_id,
+                                          SemIR::InstBlockId::Invalid);
+  }
+
+  Parse::NodeId first_param_node_id =
+      context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
+  Parse::NodeId last_param_node_id = end_of_decl_node_id;
+
+  return {
+      .name_loc_id = Parse::NodeId::Invalid,
+      .name_id = SemIR::NameId::Invalid,
+      .first_param_node_id = first_param_node_id,
+      .last_param_node_id = last_param_node_id,
+      .implicit_params_loc_id = implicit_params_loc_id,
+      .implicit_params_id = parameter_blocks.implicit_params_id,
+      .implicit_param_patterns_id =
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
+      .params_loc_id = Parse::NodeId::Invalid,
+      .params_id = SemIR::InstBlockId::Invalid,
+      .param_patterns_id = SemIR::InstBlockId::Invalid,
+      .pattern_block_id = context.pattern_block_stack().Pop(),
+  };
+}
+
+static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
+                            SemIR::ImplId prev_impl_id) -> bool {
+  auto& prev_impl = context.impls().Get(prev_impl_id);
+
+  // TODO: Following #3763, disallow redeclarations in different scopes.
+
+  // If the parameters aren't the same, then this is not a redeclaration of this
+  // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
+                              DeclParams(prev_impl), SemIR::SpecificId::Invalid,
+                              /*check_syntax=*/true, /*diagnose=*/false)) {
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+    return false;
+  }
+
+  // TODO: CheckIsAllowedRedecl. We don't have a suitable NameId; decide if we
+  // need to treat the `T as I` as a kind of name.
+
+  // TODO: Merge information from the new declaration into the old one as
+  // needed.
+
+  return true;
+}
+
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
@@ -190,14 +254,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
-  auto [params_node, params_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+  // Pop the `impl` introducer and any `forall` parameters as a "name".
+  auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
-  context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
   // Convert the constraint expression to a type.
   // TODO: Check that its constant value is a constraint.
-  auto constraint_type_id = ExprAsType(context, constraint_node, constraint_id);
+  auto constraint_type_id =
+      ExprAsType(context, constraint_node, constraint_id).type_id;
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -213,28 +277,46 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // TODO: Check for an orphan `impl`.
 
-  if (params_id) {
-    auto parameter_blocks =
-        CalleePatternMatch(context, *params_id, SemIR::InstBlockId::Invalid);
-    // TODO: Check parameters. Store them on the `Impl` in some form.
-    static_cast<void>(parameter_blocks);
-  }
+  // Add the impl declaration.
+  SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
+                               .decl_block_id = decl_block_id};
+  auto impl_decl_id =
+      context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, impl_decl));
+
+  SemIR::Impl impl_info = {
+      name_context.MakeEntityWithParamsBase(name, impl_decl_id,
+                                            /*is_extern=*/false,
+                                            SemIR::LibraryNameId::Invalid),
+      {.self_id = self_type_id, .constraint_id = constraint_type_id}};
 
   // Add the impl declaration.
-  // TODO: Does lookup in an impl file need to look for a prior impl declaration
-  // in the api file?
-  auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
-  context.impls().Get(impl_id).pattern_block_id =
-      context.pattern_block_stack().Pop();
-  SemIR::ImplDecl impl_decl = {.impl_id = impl_id,
-                               .decl_block_id = decl_block_id};
-  auto impl_decl_id = context.AddInst(node_id, impl_decl);
+  auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(
+      impl_info.self_id, impl_info.constraint_id);
+  for (auto prev_impl_id : lookup_bucket_ref) {
+    if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
+      impl_decl.impl_id = prev_impl_id;
+      break;
+    }
+  }
+
+  // Create a new impl if this isn't a valid redeclaration.
+  if (!impl_decl.impl_id.is_valid()) {
+    impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_decl.impl_id = context.impls().Add(impl_info);
+    lookup_bucket_ref.push_back(impl_decl.impl_id);
+  } else {
+    FinishGenericRedecl(context, impl_decl_id,
+                        context.impls().Get(impl_decl.impl_id).generic_id);
+  }
+
+  // Write the impl ID into the ImplDecl.
+  context.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               params_node, constraint_type_id);
+               name.implicit_params_loc_id, constraint_type_id);
   }
 
   if (!is_definition && context.IsImplFile()) {

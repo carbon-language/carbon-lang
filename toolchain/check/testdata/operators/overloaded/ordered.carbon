@@ -81,7 +81,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Ordered [template]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -162,7 +162,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%import_ref.1 [template = constants.%.3]
@@ -344,25 +344,25 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: fn @GreaterOrEquivalent.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Less.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Less.2.%Self (%Self)](%other.param_patt: @Less.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @LessOrEquivalent.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.2.%Self (%Self)](%other.param_patt: @LessOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Greater.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Greater.2.%Self (%Self)](%other.param_patt: @Greater.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.2.%Self (%Self)](%other.param_patt: @GreaterOrEquivalent.2.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -464,7 +464,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.5: type = interface_type @Ordered [template]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Less.type: type = fn_type @Less [template]
 // CHECK:STDOUT:   %Less: %Less.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Less.type [template]
@@ -628,7 +628,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Less(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Less.%Self (%Self)](%other.param_patt: @Less.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -642,7 +642,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @LessOrEquivalent(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.%Self (%Self)](%other.param_patt: @LessOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -656,7 +656,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Greater(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Greater.%Self (%Self)](%other.param_patt: @Greater.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }
@@ -670,7 +670,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @GreaterOrEquivalent(constants.%Self: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.%Self (%Self)](%other.param_patt: @GreaterOrEquivalent.%Self (%Self)) -> bool;
 // CHECK:STDOUT: }

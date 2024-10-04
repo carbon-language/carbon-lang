@@ -47,7 +47,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
@@ -57,7 +57,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %.6: type = ptr_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %.8: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
@@ -109,12 +109,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 {} {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%import_ref.5 [template = constants.%.8]
@@ -207,7 +207,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @Op.1[addr %self.param_patt: %.4]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self.1) [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr <unexpected>.inst+38: @Op.2.%.2 (%.6)]();
@@ -216,7 +216,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %.4](%other.param_patt: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.8) {
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr <unexpected>.inst+77: @Op.4.%.2 (%.9)](%other.param_patt: @Op.4.%Self (%Self.2));

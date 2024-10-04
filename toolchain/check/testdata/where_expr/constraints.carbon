@@ -76,31 +76,31 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @J [template]
-// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.2, %.1 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element1, @I.%Second [template]
-// CHECK:STDOUT:   %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic]
+// CHECK:STDOUT:   %.Self.1: %.2 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {} [template]
-// CHECK:STDOUT:   %T: %.2 = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %.2 = symbolic_binding_pattern T 0 [symbolic]
+// CHECK:STDOUT:   %T: %.2 = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
-// CHECK:STDOUT:   %U: %.2 = bind_symbolic_name U 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: %.2 = symbolic_binding_pattern U 0 [symbolic]
+// CHECK:STDOUT:   %U: %.2 = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: %.2 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %EqualEqual.type: type = fn_type @EqualEqual [template]
 // CHECK:STDOUT:   %EqualEqual: %EqualEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic]
-// CHECK:STDOUT:   %V: %.1 = bind_symbolic_name V 0 [symbolic]
-// CHECK:STDOUT:   %V.patt: %.1 = symbolic_binding_pattern V 0 [symbolic]
+// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %V: %.1 = bind_symbolic_name V, 0 [symbolic]
+// CHECK:STDOUT:   %V.patt: %.1 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
-// CHECK:STDOUT:   %W: %.2 = bind_symbolic_name W 0 [symbolic]
-// CHECK:STDOUT:   %W.patt: %.2 = symbolic_binding_pattern W 0 [symbolic]
+// CHECK:STDOUT:   %W: %.2 = bind_symbolic_name W, 0 [symbolic]
+// CHECK:STDOUT:   %W.patt: %.2 = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %And.type: type = fn_type @And [template]
 // CHECK:STDOUT:   %And: %And.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -132,59 +132,72 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.2] {} {}
 // CHECK:STDOUT:   %Equal.decl: %Equal.type = fn_decl @Equal [template = constants.%Equal] {
-// CHECK:STDOUT:     %T.patt.loc11: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11: %.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %.2 = param_pattern %T.patt.loc11, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self: %.2 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc11: %.8 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_33: %.8 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_16: type = where_expr %.Self [template = constants.%.2] {
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc11_33
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11: %.2 = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11: %.2 = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EqualEqual.decl: %EqualEqual.type = fn_decl @EqualEqual [template = constants.%EqualEqual] {
-// CHECK:STDOUT:     %U.patt.loc13: %.2 = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc13: %.2 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: %.2 = param_pattern %U.patt.loc13, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.loc13: %.5 = tuple_literal ()
+// CHECK:STDOUT:     %.Self: %.2 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.loc13_37: %.5 = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_21: type = where_expr %.Self [template = constants.%.2] {
+// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc13_37
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc13: %.2 = bind_symbolic_name U 0, %param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc13: %.2 = bind_symbolic_name U, 0, %param [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [template = constants.%Impls] {
-// CHECK:STDOUT:     %V.patt.loc15: %.1 = symbolic_binding_pattern V 0 [symbolic = %V.patt.1 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc15: %.1 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.1 (constants.%V.patt)]
 // CHECK:STDOUT:     %V.param_patt: %.1 = param_pattern %V.patt.loc15, runtime_param<invalid> [symbolic = %V.patt.1 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%.1]
-// CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.2)]
+// CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.2]
+// CHECK:STDOUT:     %.loc15: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc15: %.1 = bind_symbolic_name V 0, %param [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc15: %.1 = bind_symbolic_name V, 0, %param [symbolic = %V.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
-// CHECK:STDOUT:     %W.patt.loc17: %.2 = symbolic_binding_pattern W 0 [symbolic = %W.patt.1 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt.loc17: %.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.1 (constants.%W.patt)]
 // CHECK:STDOUT:     %W.param_patt: %.2 = param_pattern %W.patt.loc17, runtime_param<invalid> [symbolic = %W.patt.1 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc17_12: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.Self.1: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref.loc17_20: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self: %.2 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref.loc17_20: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Second.ref.loc17_20: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
 // CHECK:STDOUT:     %I.ref.loc17_34: type = name_ref I, file.%I.decl [template = constants.%.2]
-// CHECK:STDOUT:     %.Self.ref.loc17_40: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self.ref.loc17_40: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, @I.%.loc7 [template = constants.%.4]
-// CHECK:STDOUT:     %.Self.ref.loc17_50: %.2 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self.ref.loc17_50: %.2 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Second.ref.loc17_50: %.6 = name_ref Second, @I.%.loc8 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc17: type = where_expr %.Self [template = constants.%.2] {
+// CHECK:STDOUT:       requirement_impls %Second.ref.loc17_20, %I.ref.loc17_34
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %Second.ref.loc17_50
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc17: %.2 = bind_symbolic_name W 0, %param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc17: %.2 = bind_symbolic_name W, 0, %param [symbolic = %W.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -192,7 +205,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
 // CHECK:STDOUT:   %.loc7: %.3 = assoc_entity element0, %Member [template = constants.%.4]
 // CHECK:STDOUT:   %J.ref: type = name_ref J, file.%J.decl [template = constants.%.1]
@@ -207,57 +220,49 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal(%T.loc11: %.2) {
-// CHECK:STDOUT:   %.Self.2: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:   %T.1: %.2 = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: %.2 = symbolic_binding_pattern T 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.1: %.2 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.1: %.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EqualEqual(%U.loc13: %.2) {
-// CHECK:STDOUT:   %.Self.2: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:   %U.1: %.2 = bind_symbolic_name U 0 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.1: %.2 = symbolic_binding_pattern U 0 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.1: %.2 = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.1: %.2 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.1 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(%V.loc15: %.1) {
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:   %V.1: %.1 = bind_symbolic_name V 0 [symbolic = %V.1 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.1: %.1 = symbolic_binding_pattern V 0 [symbolic = %V.patt.1 (constants.%V.patt)]
+// CHECK:STDOUT:   %V.1: %.1 = bind_symbolic_name V, 0 [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:   %V.patt.1: %.1 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.1 (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.param_patt: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @And(%W.loc17: %.2) {
-// CHECK:STDOUT:   %.Self.2: %.2 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:   %W.1: %.2 = bind_symbolic_name W 0 [symbolic = %W.1 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.1: %.2 = symbolic_binding_pattern W 0 [symbolic = %W.patt.1 (constants.%W.patt)]
+// CHECK:STDOUT:   %W.1: %.2 = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.1: %.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.1 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: %.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
-// CHECK:STDOUT:   %.Self.2 => constants.%T
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT:   %T.patt.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
-// CHECK:STDOUT:   %.Self.2 => constants.%U
 // CHECK:STDOUT:   %U.1 => constants.%U
 // CHECK:STDOUT:   %U.patt.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
-// CHECK:STDOUT:   %.Self.2 => constants.%V
 // CHECK:STDOUT:   %V.1 => constants.%V
 // CHECK:STDOUT:   %V.patt.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @And(constants.%W) {
-// CHECK:STDOUT:   %.Self.2 => constants.%W
 // CHECK:STDOUT:   %W.1 => constants.%W
 // CHECK:STDOUT:   %W.patt.1 => constants.%W
 // CHECK:STDOUT: }
@@ -266,14 +271,14 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, type [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, imports.%import_ref.12 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %X: %.1 = bind_symbolic_name X 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %.1 = symbolic_binding_pattern X 0 [symbolic]
+// CHECK:STDOUT:   %X: %.1 = bind_symbolic_name X, 0 [symbolic]
+// CHECK:STDOUT:   %X.patt: %.1 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %TypeMismatch.type: type = fn_type @TypeMismatch [template]
 // CHECK:STDOUT:   %TypeMismatch: %TypeMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -281,10 +286,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//state_constraints, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//state_constraints, inst+7, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+50, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+67, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+88, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+94, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -317,16 +322,19 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %TypeMismatch.decl: %TypeMismatch.type = fn_decl @TypeMismatch [template = constants.%TypeMismatch] {
-// CHECK:STDOUT:     %X.patt.loc8: %.1 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc8: %.1 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:     %X.param_patt: %.1 = param_pattern %X.patt.loc8, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%.1]
-// CHECK:STDOUT:     %.Self.1: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self)]
-// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self)]
+// CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.8 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8_39: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8_23: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc8_39
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc8: %.1 = bind_symbolic_name X 0, %param [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc8: %.1 = bind_symbolic_name X, 0, %param [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,15 +347,13 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TypeMismatch(%X.loc8: %.1) {
-// CHECK:STDOUT:   %.Self.2: %.1 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self)]
-// CHECK:STDOUT:   %X.1: %.1 = bind_symbolic_name X 0 [symbolic = %X.1 (constants.%X)]
-// CHECK:STDOUT:   %X.patt.1: %.1 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.1: %.1 = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:   %X.patt.1: %.1 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%X.param_patt: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeMismatch(constants.%X) {
-// CHECK:STDOUT:   %.Self.2 => constants.%X
 // CHECK:STDOUT:   %X.1 => constants.%X
 // CHECK:STDOUT:   %X.patt.1 => constants.%X
 // CHECK:STDOUT: }
@@ -359,23 +365,22 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @J [template]
-// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %DoesNotImplI.type: type = fn_type @DoesNotImplI [template]
 // CHECK:STDOUT:   %DoesNotImplI: %DoesNotImplI.type = struct_value () [template]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
-// CHECK:STDOUT:   %V: %.3 = bind_symbolic_name V 0 [symbolic]
-// CHECK:STDOUT:   %V.patt: %.3 = symbolic_binding_pattern V 0 [symbolic]
-// CHECK:STDOUT:   %.Self.1: %.3 = bind_symbolic_name .Self 0 [symbolic]
+// CHECK:STDOUT:   %V: %.3 = bind_symbolic_name V, 0 [symbolic]
+// CHECK:STDOUT:   %V.patt: %.3 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.6) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic]
-// CHECK:STDOUT:   %Self.3: %.6 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.6) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.6 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %.6, %Convert.type.1 [symbolic]
@@ -386,9 +391,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %.10: type = assoc_entity_type %.9, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.12 [template]
 // CHECK:STDOUT:   %.12: %.7 = assoc_entity element0, imports.%import_ref.13 [symbolic]
-// CHECK:STDOUT:   %.Self.2: %.3 = bind_symbolic_name .Self 0 [symbolic]
-// CHECK:STDOUT:   %Y: %.3 = bind_symbolic_name Y 0 [symbolic]
-// CHECK:STDOUT:   %Y.patt: %.3 = symbolic_binding_pattern Y 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %Y: %.3 = bind_symbolic_name Y, 0 [symbolic]
+// CHECK:STDOUT:   %Y.patt: %.3 = symbolic_binding_pattern Y, 0 [symbolic]
 // CHECK:STDOUT:   %EmptyStruct.type: type = fn_type @EmptyStruct [template]
 // CHECK:STDOUT:   %EmptyStruct: %EmptyStruct.type = struct_value () [template]
 // CHECK:STDOUT:   %NotEmptyStruct.type: type = fn_type @NotEmptyStruct [template]
@@ -398,10 +403,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//state_constraints, inst+3, loaded [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+50, unloaded
-// CHECK:STDOUT:   %import_ref.5: %Impls.type = import_ref Main//state_constraints, inst+67, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+88, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.5: %Impls.type = import_ref Main//state_constraints, inst+71, loaded [template = constants.%Impls]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+94, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//prelude
@@ -439,21 +444,24 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %Y.patt.loc22: %.3 = symbolic_binding_pattern Y 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.patt.loc22: %.3 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
 // CHECK:STDOUT:     %Y.param_patt: %.3 = param_pattern %Y.patt.loc22, runtime_param<invalid> [symbolic = %Y.patt.1 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%.3]
-// CHECK:STDOUT:     %.Self.1: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:     %.loc22: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.Self: %.3 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %.3 = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.loc22_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc22_22: type = where_expr %.Self [template = constants.%.3] {
+// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc22_38
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %.3 = param runtime_param<invalid>
-// CHECK:STDOUT:     %Y.loc22: %.3 = bind_symbolic_name Y 0, %param [symbolic = %Y.1 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc22: %.3 = bind_symbolic_name Y, 0, %param [symbolic = %Y.1 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -465,12 +473,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.6), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.7)]
@@ -510,25 +518,23 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Impls(constants.%V: %.3) {
-// CHECK:STDOUT:   %.Self: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self (constants.%.Self.1)]
-// CHECK:STDOUT:   %V: %.3 = bind_symbolic_name V 0 [symbolic = %V (constants.%V)]
-// CHECK:STDOUT:   %V.patt: %.3 = symbolic_binding_pattern V 0 [symbolic = %V.patt (constants.%V.patt)]
+// CHECK:STDOUT:   %V: %.3 = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
+// CHECK:STDOUT:   %V.patt: %.3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.param_patt: %.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.6)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.6 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc22: %.3) {
-// CHECK:STDOUT:   %.Self.2: %.3 = bind_symbolic_name .Self 0 [symbolic = %.Self.2 (constants.%.Self.2)]
-// CHECK:STDOUT:   %Y.1: %.3 = bind_symbolic_name Y 0 [symbolic = %Y.1 (constants.%Y)]
-// CHECK:STDOUT:   %Y.patt.1: %.3 = symbolic_binding_pattern Y 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
+// CHECK:STDOUT:   %Y.1: %.3 = bind_symbolic_name Y, 0 [symbolic = %Y.1 (constants.%Y)]
+// CHECK:STDOUT:   %Y.patt.1: %.3 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.1 (constants.%Y.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%Y.param_patt: %.3);
 // CHECK:STDOUT: }
@@ -545,7 +551,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
-// CHECK:STDOUT:   %.Self => constants.%V
 // CHECK:STDOUT:   %V => constants.%V
 // CHECK:STDOUT:   %V.patt => constants.%V
 // CHECK:STDOUT: }
@@ -585,7 +590,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %.Self.2 => constants.%Y
 // CHECK:STDOUT:   %Y.1 => constants.%Y
 // CHECK:STDOUT:   %Y.patt.1 => constants.%Y
 // CHECK:STDOUT: }

@@ -26,7 +26,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.2: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 34 [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %Op.type [template]
@@ -86,7 +86,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.4) {
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)](%other.param_patt: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }

@@ -75,8 +75,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.2: %.8 = tuple_value (%tuple.1, %.15) [template]
 // CHECK:STDOUT:   %tuple.3: %.9 = tuple_value (%.16, %.17) [template]
 // CHECK:STDOUT:   %tuple.4: %.10 = tuple_value (%tuple.2, %tuple.3) [template]
-// CHECK:STDOUT:   %X: %.9 = bind_symbolic_name X 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %.9 = symbolic_binding_pattern X 0 [symbolic]
+// CHECK:STDOUT:   %X: %.9 = bind_symbolic_name X, 0 [symbolic]
+// CHECK:STDOUT:   %X.patt: %.9 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
@@ -142,7 +142,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref.var: ref %.10 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %X.patt.loc7: %.9 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc7: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:     %X.param_patt: %.9 = param_pattern %X.patt.loc7, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
@@ -154,7 +154,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc7_22.5: type = converted %int.make_type_32.loc7_19, %.loc7_22.4 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.6: type = converted %.loc7_22.1, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:     %param: %.9 = param runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc7: %.9 = bind_symbolic_name X 0, %param [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc7: %.9 = bind_symbolic_name X, 0, %param [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
@@ -169,8 +169,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%X.loc7: %.9) {
-// CHECK:STDOUT:   %X.1: %.9 = bind_symbolic_name X 0 [symbolic = %X.1 (constants.%X)]
-// CHECK:STDOUT:   %X.patt.1: %.9 = symbolic_binding_pattern X 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.1: %.9 = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:   %X.patt.1: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -255,9 +255,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = struct_type {} [template]
 // CHECK:STDOUT:   %.15: <witness> = complete_type_witness %.14 [template]
-// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0 [symbolic]
+// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
-// CHECK:STDOUT:   %X.patt: %.8 = symbolic_binding_pattern X 0 [symbolic]
+// CHECK:STDOUT:   %X.patt: %.8 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %.16: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.17: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %tuple: %.8 = tuple_value (%.16, %.17) [template]
@@ -342,8 +342,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.8) {
-// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %.8 = symbolic_binding_pattern X 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X.patt: %.8 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -424,9 +424,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X 0 [symbolic]
+// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
-// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X 0 [symbolic]
+// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 3 [template]
@@ -479,8 +479,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.4) {
-// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -522,9 +522,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X 0 [symbolic]
+// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
-// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X 0 [symbolic]
+// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
@@ -539,11 +539,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%tuple.2) [template]
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.11: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.11) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.11 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.11) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.11 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type %.11, %Convert.type.1 [symbolic]
@@ -605,12 +605,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.11)]
-// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.11), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.12)]
@@ -625,8 +625,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%X: %.4) {
-// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -639,9 +639,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @F() -> %C.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.11)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.11)]
-// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }

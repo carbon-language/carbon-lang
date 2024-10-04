@@ -22,7 +22,7 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -55,30 +55,32 @@ impl i32 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_6.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_6.2: type = converted %int.make_type_32.loc13, %.loc13_6.1 [template = i32]
 // CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
-// CHECK:STDOUT:     %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_6.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:     %.loc19_6.2: type = converted %int.make_type_32.loc19, %.loc19_6.1 [template = i32]
-// CHECK:STDOUT:     %I.ref.loc19: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc19_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_6.2: type = converted %int.make_type_32, %.loc19_6.1 [template = i32]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl.1: i32 as %.1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.2: i32 as %.1 {
 // CHECK:STDOUT:   %.loc19_15: <witness> = interface_witness () [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -86,7 +88,7 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_8.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:     %.loc16_8.2: type = converted %int.make_type_32.loc16, %.loc16_8.1 [template = i32]

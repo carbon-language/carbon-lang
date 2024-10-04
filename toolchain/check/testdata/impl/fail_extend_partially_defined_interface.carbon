@@ -24,7 +24,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.1: type = class_type @C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
@@ -54,7 +54,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -63,13 +63,16 @@ interface I {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.2 as %.1;
+// CHECK:STDOUT: generic impl @impl(@I.%Self: %.1) {
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: %C.2 as %.1;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(@I.%Self: %.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     impl_decl @impl {} {
+// CHECK:STDOUT:     impl_decl @impl [template] {} {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -81,4 +84,6 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%Self) {}
 // CHECK:STDOUT:

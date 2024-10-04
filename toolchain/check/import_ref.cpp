@@ -561,10 +561,16 @@ class ImportRefResolver {
     if (!generic_id.is_valid()) {
       return SemIR::ConstantId::Invalid;
     }
-    return GetLocalConstantId(
-        import_ir_.insts()
-            .Get(import_ir_.generics().Get(generic_id).decl_id)
-            .type_id());
+    auto import_decl_inst_id = import_ir_.generics().Get(generic_id).decl_id;
+    auto import_decl_inst = import_ir_.insts().Get(import_decl_inst_id);
+    if (import_decl_inst.Is<SemIR::ImplDecl>()) {
+      // For an impl declaration, the imported entity can be found via the
+      // declaration.
+      return GetLocalConstantId(import_decl_inst_id);
+    }
+    // For all other kinds of declaration, the imported entity can be found via
+    // the type of the declaration.
+    return GetLocalConstantId(import_decl_inst.type_id());
   }
 
   // Gets a local generic ID given the corresponding local constant ID returned
@@ -573,9 +579,9 @@ class ImportRefResolver {
     if (!local_const_id.is_valid()) {
       return SemIR::GenericId::Invalid;
     }
-    auto type = context_.insts().Get(
+    auto inst = context_.insts().Get(
         context_.constant_values().GetInstId(local_const_id));
-    CARBON_KIND_SWITCH(type) {
+    CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::FunctionType fn_type): {
         return context_.functions().Get(fn_type.function_id).generic_id;
       }
@@ -587,8 +593,11 @@ class ImportRefResolver {
             .Get(interface_type.interface_id)
             .generic_id;
       }
+      case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+        return context_.impls().Get(impl_decl.impl_id).generic_id;
+      }
       default: {
-        CARBON_FATAL("Unexpected type for generic declaration: {0}", type);
+        CARBON_FATAL("Unexpected inst for generic declaration: {0}", inst);
       }
     }
   }
@@ -635,8 +644,7 @@ class ImportRefResolver {
     return specific_id;
   }
 
-  // Returns the ConstantId for each parameter's type. Adds unresolved constants
-  // to work_stack_.
+  // Adds unresolved constants for each parameter's type to work_stack_.
   auto LoadLocalParamConstantIds(SemIR::InstBlockId param_refs_id) -> void {
     if (!param_refs_id.is_valid() ||
         param_refs_id == SemIR::InstBlockId::Empty) {
@@ -687,8 +695,18 @@ class ImportRefResolver {
     }
   }
 
-  // Given a param_refs_id and const_ids from GetLocalParamConstantIds, returns
-  // a version of param_refs_id localized to the current IR.
+  // Returns a version of param_refs_id localized to the current IR.
+  //
+  // Must only be called after a call to GetLocalParamConstantIds(param_refs_id)
+  // has completed without adding any new work to work_stack_.
+  //
+  // TODO: This is inconsistent with the rest of this class, which expects
+  // the relevant constants to be explicitly passed in. That makes it
+  // easier to statically detect when an input isn't loaded, but makes it
+  // harder to support importing more complex inst structures. We should
+  // take a holistic look at how to balance those concerns. For example,
+  // could the same function be used to load the constants and use them, with
+  // a parameter to select between the two?
   auto GetLocalParamRefsId(SemIR::InstBlockId param_refs_id)
       -> SemIR::InstBlockId {
     if (!param_refs_id.is_valid() ||
@@ -871,10 +889,6 @@ class ImportRefResolver {
     // Get the constant value for the scope.
     auto const_id = SemIR::ConstantId::Invalid;
     CARBON_KIND_SWITCH(*inst) {
-      case SemIR::ImplDecl::Kind:
-        // TODO: Import the scope for an `impl` definition.
-        return SemIR::NameScopeId::Invalid;
-
       case SemIR::Namespace::Kind:
         // If the namespace has already been imported, we can use its constant.
         // However, if it hasn't, we use Invalid instead of adding it to the
@@ -897,6 +911,9 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::ClassType inst): {
         return context_.classes().Get(inst.class_id).scope_id;
+      }
+      case CARBON_KIND(SemIR::ImplDecl inst): {
+        return context_.impls().Get(inst.impl_id).scope_id;
       }
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return context_.interfaces().Get(inst.interface_id).scope_id;
@@ -1137,6 +1154,9 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::GenericInterfaceType inst): {
         return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ImplDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
       }
       case CARBON_KIND(SemIR::ImportRefLoaded inst): {
         return TryResolveTypedInst(inst, inst_id);
@@ -1701,6 +1721,119 @@ class ImportRefResolver {
         context_.types().GetConstantId(interface_val.type_id()));
   }
 
+  // Make a declaration of an impl. This is done as a separate step from
+  // importing the impl definition in order to resolve cycles.
+  auto MakeImplDeclaration(const SemIR::Impl& import_impl)
+      -> std::pair<SemIR::ImplId, SemIR::ConstantId> {
+    SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
+                                 .decl_block_id = SemIR::InstBlockId::Empty};
+    auto impl_decl_id =
+        context_.AddPlaceholderInstInNoBlock(context_.MakeImportedLocAndInst(
+            AddImportIRInst(import_impl.latest_decl_id()), impl_decl));
+    impl_decl.impl_id = context_.impls().Add(
+        {GetIncompleteLocalEntityBase(impl_decl_id, import_impl),
+         {.self_id = SemIR::TypeId::Invalid,
+          .constraint_id = SemIR::TypeId::Invalid,
+          .witness_id = SemIR::InstId::Invalid}});
+
+    // Write the impl ID into the ImplDecl.
+    context_.ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
+    return {impl_decl.impl_id, context_.constant_values().Get(impl_decl_id)};
+  }
+
+  // Imports the definition of an impl.
+  auto AddImplDefinition(const SemIR::Impl& import_impl, SemIR::Impl& new_impl,
+                         SemIR::InstId witness_id) -> void {
+    new_impl.definition_id = new_impl.first_owning_decl_id;
+
+    new_impl.witness_id = witness_id;
+
+    // Import the definition scope, if we might need it. Name lookup is never
+    // performed into this scope by a user of the impl, so this is only
+    // necessary in the same library that defined the impl, in order to support
+    // defining members of the impl out of line in the impl file when the impl
+    // is defined in the API file.
+    if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+      new_impl.scope_id = context_.name_scopes().Add(
+          new_impl.first_owning_decl_id, SemIR::NameId::Invalid,
+          new_impl.parent_scope_id);
+      auto& new_scope = context_.name_scopes().Get(new_impl.scope_id);
+      const auto& import_scope =
+          import_ir_.name_scopes().Get(import_impl.scope_id);
+
+      // Push a block so that we can add scoped instructions to it.
+      context_.inst_block_stack().Push();
+      AddNameScopeImportRefs(import_scope, new_scope);
+      new_impl.body_block_id = context_.inst_block_stack().Pop();
+    }
+  }
+
+  auto TryResolveTypedInst(SemIR::ImplDecl inst,
+                           SemIR::ConstantId impl_const_id) -> ResolveResult {
+    // TODO: This duplicates a lot of the handling of interfaces, classes, and
+    // functions. Factor out the commonality.
+    const auto& import_impl = import_ir_.impls().Get(inst.impl_id);
+
+    SemIR::ImplId impl_id = SemIR::ImplId::Invalid;
+    if (!impl_const_id.is_valid()) {
+      if (HasNewWork()) {
+        // This is the end of the first phase. Don't make a new impl yet if we
+        // already have new work.
+        return Retry();
+      }
+
+      // On the second phase, create a forward declaration of the impl for any
+      // recursive references.
+      std::tie(impl_id, impl_const_id) = MakeImplDeclaration(import_impl);
+    } else {
+      // On the third phase, compute the impl ID from the "constant value" of
+      // the declaration, which is a reference to the created ImplDecl.
+      auto impl_const_inst = context_.insts().GetAs<SemIR::ImplDecl>(
+          context_.constant_values().GetInstId(impl_const_id));
+      impl_id = impl_const_inst.impl_id;
+    }
+
+    // Load constants for the definition.
+    auto parent_scope_id = GetLocalNameScopeId(import_impl.parent_scope_id);
+    LoadLocalParamConstantIds(import_impl.implicit_param_refs_id);
+    auto generic_data = GetLocalGenericData(import_impl.generic_id);
+    auto self_const_id = GetLocalConstantId(import_impl.self_id);
+    auto constraint_const_id = GetLocalConstantId(import_impl.constraint_id);
+
+    if (HasNewWork()) {
+      return Retry(impl_const_id);
+    }
+
+    auto& new_impl = context_.impls().Get(impl_id);
+    new_impl.parent_scope_id = parent_scope_id;
+    new_impl.implicit_param_refs_id =
+        GetLocalParamRefsId(import_impl.implicit_param_refs_id);
+    CARBON_CHECK(!import_impl.param_refs_id.is_valid() &&
+                 !new_impl.param_refs_id.is_valid());
+    SetGenericData(import_impl.generic_id, new_impl.generic_id, generic_data);
+    new_impl.self_id = context_.GetTypeIdForTypeConstant(self_const_id);
+    new_impl.constraint_id =
+        context_.GetTypeIdForTypeConstant(constraint_const_id);
+
+    if (import_impl.is_defined()) {
+      auto witness_id = AddImportRef(
+          context_, {.ir_id = import_ir_id_, .inst_id = import_impl.witness_id},
+          SemIR::EntityNameId::Invalid);
+      AddImplDefinition(import_impl, new_impl, witness_id);
+    }
+
+    // If the `impl` is declared in the API file corresponding to the current
+    // file, add this to impl lookup so that it can be found by redeclarations
+    // in the current file.
+    if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+      context_.impls()
+          .GetOrAddLookupBucket(new_impl.self_id, new_impl.constraint_id)
+          .push_back(impl_id);
+    }
+
+    return ResolveAsConstant(impl_const_id);
+  }
+
   auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,
                            SemIR::InstId inst_id) -> ResolveResult {
     // Return the constant for the instruction of the imported constant.
@@ -2019,9 +2152,18 @@ class ImportRefResolver {
     // Note that the individual Finish steps can add new pending work, so keep
     // going until we have no more work to do.
     while (!pending_generics_.empty() || !pending_specifics_.empty()) {
-      while (!pending_generics_.empty()) {
-        FinishPendingGeneric(pending_generics_.pop_back_val());
+      // Process generics in the order that we added them because a later
+      // generic might refer to an earlier one, and the calls to
+      // RebuildGenericEvalBlock assume that the reachable SemIR is in a valid
+      // state.
+      // TODO: Import the generic eval block rather than calling
+      // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
+      // NOLINTNEXTLINE(modernize-loop-convert)
+      for (size_t i = 0; i != pending_generics_.size(); ++i) {
+        FinishPendingGeneric(pending_generics_[i]);
       }
+      pending_generics_.clear();
+
       while (!pending_specifics_.empty()) {
         FinishPendingSpecific(pending_specifics_.pop_back_val());
       }
@@ -2212,30 +2354,6 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   }
 }
 
-// Imports the impl `import_impl_id` from the imported IR `import_ir`.
-static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                       const SemIR::File& import_ir,
-                       SemIR::ImplId import_impl_id) -> void {
-  // Resolve the imported impl to a local impl ID.
-  ImportRefResolver resolver(context, import_ir_id);
-  const auto& import_impl = import_ir.impls().Get(import_impl_id);
-  auto self_id = resolver.ResolveType(import_impl.self_id);
-  auto constraint_id = resolver.ResolveType(import_impl.constraint_id);
-
-  // Import the definition if the impl is defined.
-  // TODO: Do we need to check for multiple definitions?
-  auto impl_id = context.impls().LookupOrAdd(self_id, constraint_id);
-  if (import_impl.is_defined()) {
-    // TODO: Create a scope for the `impl` if necessary.
-    // TODO: Consider importing the definition_id.
-
-    auto& impl = context.impls().Get(impl_id);
-    impl.witness_id = AddImportRef(
-        context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id},
-        SemIR::EntityNameId::Invalid);
-  }
-}
-
 // TODO: This doesn't belong in this file. Consider moving the import resolver
 // and this file elsewhere.
 auto ImportImpls(Context& context) -> void {
@@ -2248,7 +2366,10 @@ auto ImportImpls(Context& context) -> void {
     SemIR::ImportIRId import_ir_id(import_index);
     for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
       SemIR::ImplId impl_id(impl_index);
-      ImportImpl(context, import_ir_id, *import_ir.sem_ir, impl_id);
+
+      // Resolve the imported impl to a local impl ID.
+      ImportRefResolver resolver(context, import_ir_id);
+      resolver.Resolve(import_ir.sem_ir->impls().Get(impl_id).first_decl_id());
     }
   }
 }

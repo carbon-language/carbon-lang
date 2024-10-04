@@ -263,8 +263,8 @@ fn F() -> T;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %tuple.1: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (%.1) [template]
-// CHECK:STDOUT:   %b: %.2 = bind_symbolic_name b 0 [symbolic]
-// CHECK:STDOUT:   %b.patt: %.2 = symbolic_binding_pattern b 0 [symbolic]
+// CHECK:STDOUT:   %b: %.2 = bind_symbolic_name b, 0 [symbolic]
+// CHECK:STDOUT:   %b.patt: %.2 = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (%.1, %.1, %.1) [template]
@@ -275,7 +275,7 @@ fn F() -> T;
 // CHECK:STDOUT:   %.7: type = tuple_type (%.1, %.1) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.7 [template]
 // CHECK:STDOUT:   %tuple.3: %.7 = tuple_value (%tuple.1, %tuple.1) [template]
-// CHECK:STDOUT:   %c: %.7 = bind_symbolic_name c 1 [symbolic]
+// CHECK:STDOUT:   %c: %.7 = bind_symbolic_name c, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.4: %.2 = tuple_value (%tuple.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,7 +309,7 @@ fn F() -> T;
 // CHECK:STDOUT:   %.loc9_18: %.1 = converted %.loc9_17, %tuple.loc9 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc9_18
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %b.patt.loc10: %.2 = symbolic_binding_pattern b 0 [symbolic = %b.patt.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.patt.loc10: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.1 (constants.%b.patt)]
 // CHECK:STDOUT:     %b.param_patt: %.2 = param_pattern %b.patt.loc10, runtime_param<invalid> [symbolic = %b.patt.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14: %.1 = tuple_literal ()
@@ -317,7 +317,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc10: %.2 = bind_symbolic_name b 0, %param [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10: %.2 = bind_symbolic_name b, 0, %param [symbolic = %b.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_17: %.1 = tuple_literal ()
@@ -350,11 +350,11 @@ fn F() -> T;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%b.loc10: %.2) {
-// CHECK:STDOUT:   %b.1: %.2 = bind_symbolic_name b 0 [symbolic = %b.1 (constants.%b)]
-// CHECK:STDOUT:   %b.patt.1: %.2 = symbolic_binding_pattern b 0 [symbolic = %b.patt.1 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.1: %.2 = bind_symbolic_name b, 0 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:   %b.patt.1: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.1 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %c.1: %.7 = bind_symbolic_name c 1 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:   %c.1: %.7 = bind_symbolic_name c, 1 [symbolic = %c.1 (constants.%c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%b.param_patt: %.2) {
 // CHECK:STDOUT:   !entry:
@@ -373,7 +373,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc11_31.3: %.1 = converted %.loc11_30, %tuple.loc11_30 [template = constants.%tuple.1]
 // CHECK:STDOUT:     %tuple.loc11_31: %.7 = tuple_value (%.loc11_31.2, %.loc11_31.3) [template = constants.%tuple.3]
 // CHECK:STDOUT:     %.loc11_32: %.7 = converted %.loc11_31.1, %tuple.loc11_31 [template = constants.%tuple.3]
-// CHECK:STDOUT:     %c.loc11: %.7 = bind_symbolic_name c 1, %.loc11_32 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:     %c.loc11: %.7 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.1 (constants.%c)]
 // CHECK:STDOUT:     %.loc13_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a1.var: ref %.1 = var a1
@@ -519,7 +519,7 @@ fn F() -> T;
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero 0 [symbolic]
+// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -559,7 +559,7 @@ fn F() -> T;
 // CHECK:STDOUT:   %.loc5_14.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_14.2: type = converted %int.make_type_32.loc5, %.loc5_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_20: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero 0, %.loc5_20 [symbolic = constants.%Zero]
+// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0, %.loc5_20 [symbolic = constants.%Zero]
 // CHECK:STDOUT:   %Zero.ref: i32 = name_ref Zero, %Zero [symbolic = constants.%Zero]
 // CHECK:STDOUT:   return %Zero.ref
 // CHECK:STDOUT: }
@@ -568,7 +568,7 @@ fn F() -> T;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -576,11 +576,11 @@ fn F() -> T;
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic]
-// CHECK:STDOUT:   %Self.3: %.5 = bind_symbolic_name Self 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%.1 (%.5) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Self.3: %.5 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Convert.type.1 [symbolic]
@@ -629,7 +629,7 @@ fn F() -> T;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_21.2: type = converted %int.make_type_32, %.loc5_21.1 [template = i32]
@@ -653,12 +653,12 @@ fn F() -> T;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.5), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.6)]
@@ -675,9 +675,9 @@ fn F() -> T;
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%.1 (%.5)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }

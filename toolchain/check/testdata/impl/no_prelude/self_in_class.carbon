@@ -26,7 +26,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @DefaultConstructible [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
@@ -55,7 +55,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @DefaultConstructible {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {} {
 // CHECK:STDOUT:     %Self.ref: %.1 = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
@@ -72,7 +72,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %.1 {
 // CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {} {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.7]
@@ -90,7 +90,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
@@ -101,7 +101,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %.1) {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%Self (%Self);
 // CHECK:STDOUT: }

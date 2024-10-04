@@ -133,8 +133,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N 0 [symbolic]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = int_type unsigned, %N [symbolic]
 // CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
 // CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
@@ -203,7 +203,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %n: %.5 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
-// CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Symbolic.%.1 (%.6) = param_pattern %x.patt, runtime_param0
@@ -223,7 +223,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:     %return: ref @Symbolic.%.1 (%.6) = var <return slot>
 // CHECK:STDOUT:     %param.loc14_13: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N 0, %param.loc14_13 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N, 0, %param.loc14_13 [symbolic = %N.1 (constants.%N)]
 // CHECK:STDOUT:     %param.loc14_22: @Symbolic.%.1 (%.6) = param runtime_param0
 // CHECK:STDOUT:     %x: @Symbolic.%.1 (%.6) = bind_name x, %param.loc14_22
 // CHECK:STDOUT:   }
@@ -246,8 +246,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Symbolic(%N.loc14: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N 0 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
 // CHECK:STDOUT:   %.1: type = int_type unsigned, %N.1 [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

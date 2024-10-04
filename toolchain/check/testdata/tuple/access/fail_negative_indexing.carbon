@@ -28,7 +28,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 10 [template]
 // CHECK:STDOUT:   %.8: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %Op.type [template]
@@ -90,7 +90,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%Self: %.8) {
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
 // CHECK:STDOUT: }

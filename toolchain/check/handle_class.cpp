@@ -391,7 +391,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapted_type_id = ExprAsType(context, node_id, adapted_type_expr_id);
+  auto adapted_type_id =
+      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
   adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
                       "adapted type `{0}` is an incomplete type",
@@ -467,7 +468,7 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
 // Checks that the specified base type is valid.
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
-  auto base_type_id = ExprAsType(context, node_id, base_expr_id);
+  auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
                       "base `{0}` is an incomplete type", SemIR::TypeId);
@@ -593,6 +594,25 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Note(first_field_id, AdaptWithFieldHere)
         .Emit();
     return SemIR::InstId::BuiltinError;
+  }
+
+  for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
+    if (auto function_decl =
+            context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
+      auto& function = context.functions().Get(function_decl->function_id);
+      if (function.virtual_modifier ==
+          SemIR::Function::VirtualModifier::Virtual) {
+        CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
+                          "adapter with virtual function");
+        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
+                          "first virtual function declaration is here");
+        context.emitter()
+            .Build(class_info.adapt_id, AdaptWithVirtual)
+            .Note(inst_id, AdaptWithVirtualHere)
+            .Emit();
+        return SemIR::InstId::BuiltinError;
+      }
+    }
   }
 
   // The object representation of the adapter is the object representation

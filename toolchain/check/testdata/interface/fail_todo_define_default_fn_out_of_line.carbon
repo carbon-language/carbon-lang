@@ -67,7 +67,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -132,7 +132,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc7: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
@@ -203,17 +203,17 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.1: type = class_type @C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U 1 [symbolic]
-// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U 1 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %U.patt.2: type = symbolic_binding_pattern U 1 [symbolic]
+// CHECK:STDOUT:   %U.patt.2: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,7 +240,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %C.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U 1 [symbolic = constants.%U.patt.2]
+// CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:     %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:     %u.param_patt: %U = param_pattern %u.patt, runtime_param1
@@ -253,14 +253,14 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %param.loc20_18: %C.2 = param runtime_param0
 // CHECK:STDOUT:     %self.loc20: %C.2 = bind_name self, %param.loc20_18
 // CHECK:STDOUT:     %param.loc20_30: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U 1, %param.loc20_30 [symbolic = constants.%U]
+// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1, %param.loc20_30 [symbolic = constants.%U]
 // CHECK:STDOUT:     %param.loc20_40: %U = param runtime_param1
 // CHECK:STDOUT:     %u.loc20: %U = bind_name u, %param.loc20_40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -271,7 +271,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(@Interface.%Self: %.1) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @C.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:
@@ -279,7 +279,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: %C.2 = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: %C.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:       %U.patt.loc20: type = symbolic_binding_pattern U 1 [symbolic = constants.%U.patt.2]
+// CHECK:STDOUT:       %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:       %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:       %u.param_patt: %U = param_pattern %u.patt, runtime_param1
@@ -292,7 +292,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %param.loc14_10: @F.%C (%C.2) = param runtime_param0
 // CHECK:STDOUT:       %self.loc14: @F.%C (%C.2) = bind_name self, %param.loc14_10
 // CHECK:STDOUT:       %param.loc14_22: type = param runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc14: type = bind_symbolic_name U 1, %param.loc14_22 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:       %U.loc14: type = bind_symbolic_name U, 1, %param.loc14_22 [symbolic = %U.1 (constants.%U)]
 // CHECK:STDOUT:       %param.loc14_32: @F.%U.1 (%U) = param runtime_param1
 // CHECK:STDOUT:       %u.loc14: @F.%U.1 (%U) = bind_name u, %param.loc14_32
 // CHECK:STDOUT:     }
@@ -305,10 +305,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self: %.1, %U.loc14: type) {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U 1 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U 1 [symbolic = %U.patt.1 (constants.%U.patt.1)]
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 1 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.1 (constants.%U.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

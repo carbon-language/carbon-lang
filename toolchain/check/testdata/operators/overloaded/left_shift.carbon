@@ -38,7 +38,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @LeftShift [template]
-// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.1: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
@@ -48,7 +48,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.6: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @LeftShiftAssign [template]
-// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
@@ -100,12 +100,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %LeftShift.ref: type = name_ref LeftShift, imports.%import_ref.1 [template = constants.%.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.2 {} {
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %LeftShiftAssign.ref: type = name_ref LeftShiftAssign, imports.%import_ref.5 [template = constants.%.7]
@@ -217,7 +217,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self.1)](%other.param_patt: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
 // CHECK:STDOUT: }
@@ -228,7 +228,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %.7) {
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr <unexpected>.inst+90: @Op.4.%.2 (%.9)](%other.param_patt: @Op.4.%Self (%Self.2));

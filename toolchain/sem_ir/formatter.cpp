@@ -223,10 +223,9 @@ class FormatterImpl {
   // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
-    FormatEntityStart("impl", SemIR::GenericId::Invalid, id);
+    FormatEntityStart("impl", impl_info.generic_id, id);
 
     out_ << ": ";
-    // TODO: Include the deduced parameter list if present.
     FormatType(impl_info.self_id);
     out_ << " as ";
     FormatType(impl_info.constraint_id);
@@ -256,6 +255,8 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(impl_info.generic_id);
   }
 
   // Formats a full function.
@@ -858,6 +859,11 @@ class FormatterImpl {
     FormatTrailingBlock(inst.block_id);
   }
 
+  auto FormatInstRHS(WhereExpr inst) -> void {
+    FormatArgs(inst.period_self_id);
+    FormatTrailingBlock(inst.requirements_id);
+  }
+
   // StructTypeFields are formatted as part of their StructType.
   auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
 
@@ -911,7 +917,7 @@ class FormatterImpl {
     const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index.is_valid()) {
-      out_ << " " << info.bind_index.index;
+      out_ << ", " << info.bind_index.index;
     }
   }
 
@@ -1036,6 +1042,10 @@ class FormatterImpl {
 
   auto FormatName(InstId id) -> void {
     out_ << inst_namer_->GetNameFor(scope_, id);
+  }
+
+  auto FormatName(AbsoluteInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
   }
 
   auto FormatName(SpecificId id) -> void {

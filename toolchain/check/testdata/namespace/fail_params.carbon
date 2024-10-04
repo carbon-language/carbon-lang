@@ -46,9 +46,9 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -89,14 +89,14 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %param.loc30_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %param.loc30_13 [symbolic = constants.%T]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_13 [symbolic = constants.%T]
 // CHECK:STDOUT:   %param.loc30_23: %T = param runtime_param<invalid>
 // CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc39: type = bind_symbolic_name T 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc39: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,8 +108,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%T.loc39: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T 0 [symbolic = %T.patt (constants.%T.patt.2)]
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

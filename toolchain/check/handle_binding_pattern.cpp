@@ -14,7 +14,7 @@ namespace Carbon::Check {
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
+  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id).type_id;
 
   // TODO: Handle `_` bindings.
 

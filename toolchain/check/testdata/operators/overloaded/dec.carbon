@@ -30,7 +30,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Dec [template]
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
@@ -74,7 +74,7 @@ fn TestOp() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, imports.%import_ref.1 [template = constants.%.3]
@@ -117,7 +117,7 @@ fn TestOp() {
 // CHECK:STDOUT: fn @Op.1[addr %self.param_patt: %.4]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %.3) {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.2.%Self (%Self) [symbolic = %.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr <unexpected>.inst+38: @Op.2.%.2 (%.6)]();
