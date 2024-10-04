@@ -20,6 +20,12 @@ auto DeduceGenericCallArguments(Context& context, SemIR::LocId loc_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::SpecificId;
 
+// Deduces the impl arguments to use in a use of a parameterized impl. Returns
+// `Invalid` if deduction fails.
+auto DeduceImplArguments(Context& context, const SemIR::Impl& impl,
+                         SemIR::ConstantId self_id,
+                         SemIR::ConstantId constraint_id) -> SemIR::SpecificId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_DEDUCE_H_

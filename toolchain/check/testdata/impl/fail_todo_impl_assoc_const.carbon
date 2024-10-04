@@ -131,7 +131,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: bool as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc23_6.2 as %.loc23_16 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

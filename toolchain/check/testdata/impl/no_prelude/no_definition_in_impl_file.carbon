@@ -107,7 +107,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc6_7.2 as %A.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -121,6 +121,8 @@ impl () as D;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, inst+8, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,7 +149,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 {
 // CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -171,6 +173,8 @@ impl () as D;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_in_api_definition_in_impl, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, inst+8, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -187,7 +191,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.carbon
 // CHECK:STDOUT:
@@ -217,7 +221,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc6_7.2 as %B.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
@@ -230,6 +234,8 @@ impl () as D;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_only_in_api, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_only_in_api, inst+8, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -246,7 +252,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -276,7 +282,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc6_7.2 as %C.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
@@ -289,6 +295,8 @@ impl () as D;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_decl_in_impl, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_decl_in_impl, inst+8, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -310,7 +318,7 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
@@ -348,5 +356,5 @@ impl () as D;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc9_7.2 as %D.ref;
 // CHECK:STDOUT:

@@ -113,15 +113,15 @@ library "[[@TEST_NAME]]";
 class C {}
 alias D = C;
 
-fn Foo[a: C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
-// CHECK:STDERR: fn Foo[a: D]() {}
-// CHECK:STDERR:           ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
-// CHECK:STDERR: fn Foo[a: C]();
-// CHECK:STDERR:           ^
+fn Foo[a:! C]();
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:12: error: redeclaration syntax differs here
+// CHECK:STDERR: fn Foo[a:! D]() {}
+// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note: comparing with previous declaration here
+// CHECK:STDERR: fn Foo[a:! C]();
+// CHECK:STDERR:            ^
 // CHECK:STDERR:
-fn Foo[a: D]() {}
+fn Foo[a:! D]() {}
 
 // --- todo_fail_alias_in_return.carbon
 
@@ -605,6 +605,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
@@ -623,18 +624,18 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = param a, runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = param a, runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc15: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -645,11 +646,29 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[%a: %C]();
+// CHECK:STDOUT: generic fn @Foo(%a.loc7: %C) {
+// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[%a: %C]() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn[%a.loc7: %C]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @.1(%a.loc15: %C) {
+// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%a.loc15: %C]() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo(constants.%a) {
+// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @.1(constants.%a) {
+// CHECK:STDOUT:   %a.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

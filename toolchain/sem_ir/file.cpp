@@ -27,11 +27,12 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
       library_id_(library_id),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
+      impls_(*this),
       type_blocks_(allocator_),
       name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
-      constants_(*this, allocator_) {
+      constants_(*this) {
   // `type` and the error type are both complete types.
   types_.SetValueRepr(TypeId::TypeType,
                       {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
@@ -488,6 +489,15 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
       case VarStorage::Kind:
+        // We don't know how to print this instruction, but it might have a
+        // constant value that we can print.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(step.inst_id);
+        if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {
+          push_inst_id(const_inst_id);
+          break;
+        }
+
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
