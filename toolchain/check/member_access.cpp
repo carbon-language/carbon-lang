@@ -339,6 +339,8 @@ static auto LookupMemberNameInScope(
           context.IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
         // FIXME: Want to get a witness.
+        context.TODO(member_id, "unimplemented access to facet member");
+        return SemIR::InstId::BuiltinError;
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.
