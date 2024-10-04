@@ -69,8 +69,8 @@ struct Function : public EntityWithParamsBase,
   // corresponding instruction, its ID, and the name binding, if present.
   struct ParamInfo {
     InstId inst_id;
-    std::optional<AnyBindName> bind_name;
     Param inst;
+    std::optional<AnyBindName> bind_name;
 
     // Gets the name from `bind_name`. Returns invalid if that is not present.
     auto GetNameId(const File& sem_ir) -> NameId;
