@@ -2,11 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <iostream>
+
+#include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl.h"
+#include "toolchain/check/operator.h"
+#include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -16,17 +24,49 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
+static auto GetIndexWithParams(Context& context, Parse::NodeId node_id,
+                               SemIR::TypeId self_id)
+    -> llvm::ArrayRef<SemIR::InstId> {
+  auto index_with_interface =
+      context.types().GetAs<SemIR::GenericInterfaceType>(
+          context.insts()
+              .GetAs<SemIR::StructValue>(
+                  context.LookupNameInCore(node_id, "IndexWith"))
+              .type_id);
+
+  for (const auto& impl : context.impls().array_ref()) {
+    if (impl.self_id != self_id) {
+      continue;
+    }
+    auto interface_type =
+        context.types().TryGetAs<SemIR::InterfaceType>(impl.constraint_id);
+    if (!interface_type) {
+      continue;
+    }
+
+    if (index_with_interface.interface_id != interface_type->interface_id) {
+      continue;
+    }
+
+    return context.inst_blocks().Get(
+        context.specifics().Get(interface_type->specific_id).args_id);
+  }
+
+  return {};
+}
+
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
+
   CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      auto index_node_id = context.insts().GetLocId(index_inst_id);
+      auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_node_id, index_inst_id,
+          context, index_loc_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
@@ -52,6 +92,31 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       context.node_stack().Push(node_id, elem_id);
       return true;
     }
+
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      auto class_info = context.classes().Get(class_type.class_id);
+      auto params =
+          GetIndexWithParams(context, node_id, class_info.self_type_id);
+      CARBON_CHECK(params.size() == 2,
+                   "IndexWith should have two generic constraints");
+
+      auto op = Operator{
+          .interface_name = "IndexWith",
+          .interface_args_ref = params,
+          .op_name = "At",
+      };
+
+      auto cast_index =
+          ConvertToValueOfType(context, node_id, index_inst_id,
+                               context.GetTypeIdForTypeInst(params[0]));
+
+      auto result = BuildBinaryOperator(context, node_id, op, operand_inst_id,
+                                        cast_index);
+
+      context.node_stack().Push(node_id, result);
+      return true;
+    }
+
     default: {
       if (operand_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
