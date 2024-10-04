@@ -312,7 +312,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                                                         SemIR::ClassId class_id)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
-                    "cannot declare a member of incomplete class `{0}`",
+                    "cannot declare a member of incomplete class {0}",
                     SemIR::TypeId);
   auto builder =
       context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,

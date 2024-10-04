@@ -50,6 +50,17 @@ struct TypedInt {
   llvm::APInt value;
 };
 
+// A type value for rendering in a diagnostic without enclosing "`"s. See
+// InstIdAsRawType for details.
+struct TypeIdAsRawType {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  TypeIdAsRawType(SemIR::TypeId type_id) : type_id(type_id) {}
+
+  SemIR::TypeId type_id;
+};
+
 // A type expression, for rendering in a diagnostic. The diagnostic rendering
 // will include enclosing "`"s, and may also include extra information about the
 // type if it would otherwise be ambiguous.

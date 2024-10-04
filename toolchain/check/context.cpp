@@ -380,7 +380,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   auto class_info = context.classes().Get(class_type->class_id);
 
   CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "cannot access {0} member `{1}` of type `{2}`",
+                    "cannot access {0} member `{1}` of type {2}",
                     SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
                     "the {0} member `{1}` is defined here", SemIR::AccessKind,

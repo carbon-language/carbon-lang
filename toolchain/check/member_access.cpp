@@ -232,7 +232,7 @@ static auto PerformImplLookup(
     if (missing_impl_diagnoser) {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
-                        "type `{1}` does not implement interface `{0}`",
+                        "type {1} does not implement interface `{0}`",
                         SemIR::NameId, SemIR::TypeId);
       (*missing_impl_diagnoser)()
           .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
@@ -241,7 +241,7 @@ static auto PerformImplLookup(
     } else {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                        "cannot access member of interface `{0}` in type `{1}` "
+                        "cannot access member of interface `{0}` in type {1} "
                         "that does not implement that interface",
                         SemIR::NameId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,

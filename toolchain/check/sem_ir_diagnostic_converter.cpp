@@ -134,13 +134,13 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return sem_ir_->names().GetFormatted(*name_id).str();
   }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
-    // TODO: Format the enclosing "`"s here to prepare for adding an "aka" when
-    // desirable.
-    return StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id));
+    return "`" +
+           StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) +
+           "`";
   }
-  if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
-    return llvm::APSInt(typed_int->value,
-                        !sem_ir_->types().IsSignedInt(typed_int->type));
+  if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
+    return StringifyTypeExpr(*sem_ir_,
+                             sem_ir_->types().GetInstId(type->type_id));
   }
   if (auto* type_expr = llvm::any_cast<InstIdAsType>(&arg)) {
     return "`" + StringifyTypeExpr(*sem_ir_, type_expr->inst_id) + "`";
@@ -160,6 +160,10 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
                sem_ir_->types().GetInstId(
                    sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
            "`";
+  }
+  if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
+    return llvm::APSInt(typed_int->value,
+                        !sem_ir_->types().IsSignedInt(typed_int->type));
   }
   return DiagnosticConverter<SemIRLoc>::ConvertArg(arg);
 }
