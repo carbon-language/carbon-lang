@@ -387,10 +387,10 @@ static auto HandleFunctionDefinitionAfterSignature(
     context.TryToCompleteType(param.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
-          "parameter has incomplete type `{0}` in function definition",
-          SemIR::TypeId);
+          "parameter has incomplete type {0} in function definition",
+          InstIdAsTypeOfExpr);
       return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
-                                     param.type_id);
+                                     param_id);
     });
   }
 

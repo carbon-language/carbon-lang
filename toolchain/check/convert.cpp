@@ -466,12 +466,12 @@ static auto ConvertStructToStructOrClass(Context& context,
                                  dest_field.name_id);
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                            "cannot convert from struct type `{0}` to `{1}`: "
+                            "cannot convert from struct type {0} to `{1}`: "
                             "missing field `{2}` in source type",
-                            SemIR::TypeId, SemIR::TypeId, SemIR::NameId);
-          context.emitter().Emit(
-              value_loc_id, StructInitMissingFieldInConversion, value.type_id(),
-              target.type_id, dest_field.name_id);
+                            InstIdAsTypeOfExpr, SemIR::TypeId, SemIR::NameId);
+          context.emitter().Emit(value_loc_id,
+                                 StructInitMissingFieldInConversion, value_id,
+                                 target.type_id, dest_field.name_id);
         }
         return SemIR::InstId::BuiltinError;
       }
@@ -909,8 +909,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // TODO: We don't yet have rules for whether and when a class type is
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
-                    "cannot copy value of type `{0}`", SemIR::TypeId);
-  context.emitter().Emit(expr_id, CopyOfUncopyableType, type_id);
+                    "cannot copy value of type {0}", InstIdAsTypeOfExpr);
+  context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
   return SemIR::InstId::BuiltinError;
 }
 
@@ -978,16 +978,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
       CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                        "cannot implicitly convert from `{0}` to `{1}`",
-                        SemIR::TypeId, SemIR::TypeId);
+                        "cannot implicitly convert from {0} to `{1}`",
+                        InstIdAsTypeOfExpr, SemIR::TypeId);
       CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
-                        "cannot convert from `{0}` to `{1}` with `as`",
-                        SemIR::TypeId, SemIR::TypeId);
+                        "cannot convert from {0} to `{1}` with `as`",
+                        InstIdAsTypeOfExpr, SemIR::TypeId);
       return context.emitter().Build(loc_id,
                                      target.kind == ConversionTarget::ExplicitAs
                                          ? ExplicitAsConversionFailure
                                          : ImplicitAsConversionFailure,
-                                     expr.type_id(), target.type_id);
+                                     expr_id, target.type_id);
     });
   }
 

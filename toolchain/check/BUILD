@@ -249,6 +249,7 @@ cc_library(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:stringify_type",
         "@llvm-project//llvm:Support",
     ],
 )

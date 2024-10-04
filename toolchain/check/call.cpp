@@ -128,10 +128,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       default: {
         if (!callee_function.is_error) {
           CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                            "value of type `{0}` is not callable",
-                            SemIR::TypeId);
-          context.emitter().Emit(loc_id, CallToNonCallable,
-                                 context.insts().Get(callee_id).type_id());
+                            "value of type {0} is not callable",
+                            InstIdAsTypeOfExpr);
+          context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
         }
         return SemIR::InstId::BuiltinError;
       }

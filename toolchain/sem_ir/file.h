@@ -70,16 +70,6 @@ class File : public Printable<File> {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
-  // Produces a string version of a type. Generally, this should not be called
-  // directly. To format a string into a diagnostic, use a diagnostic parameter
-  // of type InstIdAsType or InstIdAsTypeOfExpr where possible, or of type
-  // TypeId if you don't have an expression describing the type.
-  auto StringifyType(TypeId type_id) const -> std::string;
-
-  // Same as `StringifyType`, but starting with an instruction representing a
-  // type expression rather than a canonical type.
-  auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
-
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> IdentifierId { return package_id_; }
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }

@@ -136,6 +136,19 @@ cc_library(
 )
 
 cc_library(
+    name = "stringify_type",
+    srcs = ["stringify_type.cpp"],
+    hdrs = ["stringify_type.h"],
+    deps = [
+        ":file",
+        ":ids",
+        ":inst_kind",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "inst_namer",
     srcs = ["inst_namer.cpp"],
     hdrs = ["inst_namer.h"],

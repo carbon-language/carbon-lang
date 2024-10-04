@@ -50,7 +50,10 @@ struct TypedInt {
   llvm::APInt value;
 };
 
-// A type expression, for rendering in a diagnostic.
+// A type expression, for rendering in a diagnostic. The diagnostic rendering
+// will include enclosing "`"s, and may also include extra information about the
+// type if it would otherwise be ambiguous.
+// TODO: Include such additional information where relevant.
 struct InstIdAsType {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
@@ -60,10 +63,25 @@ struct InstIdAsType {
   SemIR::InstId inst_id;
 };
 
-// An expression whose type should be rendered in a diagnostic. This should be
-// used instead of TypeId as a diagnostic argument wherever possible, because we
-// should eventually be able to produce a sugared type name in this case,
-// whereas a TypeId will render as a canonical type.
+// A type expression, for rendering in a diagnostic. Like InstIdAsType, but the
+// type will not be enclosed in "`"s. Once we start including "aka" types for
+// sugared types, such annotations will also not be included for raw types. This
+// is intended for cases where the type is part of a larger syntactic construct
+// in a diagnostic, such as "redefinition of `impl {0} as {1}`".
+struct InstIdAsRawType {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstIdAsRawType(SemIR::InstId inst_id) : inst_id(inst_id) {}
+
+  SemIR::InstId inst_id;
+};
+
+// An expression whose type should be rendered in a diagnostic, including
+// enclosing "`"s. This should be used instead of TypeId as a diagnostic
+// argument wherever possible, because we should eventually be able to produce a
+// sugared type name in this case, whereas a TypeId will render as a canonical
+// type.
 struct InstIdAsTypeOfExpr {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 

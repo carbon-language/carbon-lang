@@ -55,9 +55,9 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     default: {
       if (operand_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                          "type `{0}` does not support indexing",
-                          SemIR::TypeId);
-        context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
+                          "type {0} does not support indexing",
+                          InstIdAsTypeOfExpr);
+        context.emitter().Emit(node_id, TypeNotIndexable, operand_inst_id);
       }
       context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
       return true;
