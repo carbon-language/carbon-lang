@@ -205,11 +205,10 @@ static auto LookupInterfaceWitness(Context& context,
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
-                              SemIR::ConstantId type_const_id,
-                              SemIR::AssociatedEntityType assoc_type,
-                              SemIR::InstId member_id,
-                              Context::BuildDiagnosticFn missing_impl_diagnoser)
+static auto PerformImplLookup(
+    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
+    Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
@@ -321,7 +320,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (ScopeNeedsImplLookup(context, lookup_scope)) {
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
-                                    *assoc_type, member_id, nullptr);
+                                    *assoc_type, member_id);
     }
   }
 
