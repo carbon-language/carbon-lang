@@ -865,7 +865,7 @@ class TypeCompleter {
             class_info.inheritance_kind ==
                 SemIR::Class::InheritanceKind::Abstract) {
           auto builder = (*abstract_diagnoser_)();
-          context_.NoteAbstractClass(inst.class_id, builder);
+          context_.NoteIncompleteClass(inst.class_id, builder);
           builder.Emit();
           return false;
         }
@@ -1151,12 +1151,13 @@ class TypeCompleter {
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
                                 BuildDiagnosticFn diagnoser,
                                 BuildDiagnosticFn abstract_diagnoser) -> bool {
-  return TypeCompleter(*this, diagnoser).Complete(type_id);
+  return TypeCompleter(*this, diagnoser, abstract_diagnoser).Complete(type_id);
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,
                               BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, /*allow_abstract=*/true, diagnoser)) {
+    -> bool {
+  if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
   }
 
@@ -1210,7 +1211,7 @@ static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
   // FIXME: allow_abstract should probably come as a parameter to this function
   // and passed along here.
-  bool complete = context.TryToCompleteType(type_id, /*allow_abstract=*/true);
+  bool complete = context.TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Type completion should not fail");
   return type_id;
 }
@@ -1236,7 +1237,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinInstKind::Invalid);
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
-  bool complete = TryToCompleteType(type_id, /*allow_abstract=*/false);
+  bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Failed to complete builtin type");
   return type_id;
 }

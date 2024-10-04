@@ -586,7 +586,7 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!context.TryToCompleteType(derived_id, /*allow_abstract=*/false)) {
+  if (!context.TryToCompleteType(derived_id)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -937,24 +937,44 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete types.
-  if (!context.TryToCompleteType(target.type_id, /*allow_abstract=*/false, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
-                          "initialization of incomplete type `{0}`",
-                          SemIR::TypeId);
-        CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                          "forming value of incomplete type `{0}`",
-                          SemIR::TypeId);
-        CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                          "invalid use of incomplete type `{0}`",
-                          SemIR::TypeId);
-        return context.emitter().Build(loc_id,
-                                       target.is_initializer()
-                                           ? IncompleteTypeInInit
-                                       : target.kind == ConversionTarget::Value
-                                           ? IncompleteTypeInValueConversion
-                                           : IncompleteTypeInConversion,
-                                       target.type_id);
-      })) {
+  if (!context.TryToCompleteType(
+          target.type_id,
+          [&] {
+            CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
+                              "initialization of incomplete type `{0}`",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
+                              "forming value of incomplete type `{0}`",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
+                              "invalid use of incomplete type `{0}`",
+                              SemIR::TypeId);
+            return context.emitter().Build(
+                loc_id,
+                target.is_initializer() ? IncompleteTypeInInit
+                : target.kind == ConversionTarget::Value
+                    ? IncompleteTypeInValueConversion
+                    : IncompleteTypeInConversion,
+                target.type_id);
+          },
+          [&]() -> Context::DiagnosticBuilder {
+            CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
+                              "initialization of abstract type `{0}`",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(AbstractTypeInValueConversion, Error,
+                              "forming value of abstract type `{0}`",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(AbstractTypeInConversion, Error,
+                              "invalid use of abstract type `{0}`",
+                              SemIR::TypeId);
+            return context.emitter().Build(
+                loc_id,
+                target.is_initializer() ? AbstractTypeInInit
+                : target.kind == ConversionTarget::Value
+                    ? AbstractTypeInValueConversion
+                    : AbstractTypeInConversion,
+                target.type_id);
+          })) {
     return SemIR::InstId::BuiltinError;
   }
 

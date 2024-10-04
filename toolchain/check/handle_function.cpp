@@ -365,13 +365,23 @@ static auto HandleFunctionDefinitionAfterSignature(
 
     // The parameter types need to be complete.
     context.TryToCompleteType(
-        param_info.inst.type_id, /*allow_abstract=*/false, [&] {
+        param_info.inst.type_id,
+        [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type `{0}` in function definition",
               SemIR::TypeId);
-          return context.emitter().Build(param_info.inst_id,
+          return context.emitter().Build(param_info_inst_id,
                                          IncompleteTypeInFunctionParam,
+                                         parami_info.inst.type_id);
+        },
+        [&] {
+          CARBON_DIAGNOSTIC(
+              AbstractTypeInFunctionParam, Error,
+              "parameter has abstract type `{0}` in function definition",
+              SemIR::TypeId);
+          return context.emitter().Build(param_info.inst_id,
+                                         AbstractTypeInFunctionParam,
                                          param_info.inst.type_id);
         });
   }
