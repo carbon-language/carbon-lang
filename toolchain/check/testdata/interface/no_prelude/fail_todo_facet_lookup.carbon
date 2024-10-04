@@ -11,9 +11,9 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<associated <type of F> in Interface>` is not callable
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: semantics TODO: `unimplemented access to facet member`
   // CHECK:STDERR:   T.F();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   T.F();
 }
