@@ -42,14 +42,15 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
-        auto interface_type =
-            types().GetAs<SemIR::InterfaceType>(impl.constraint_id);
+        auto interface_type = insts().GetAs<SemIR::InterfaceType>(
+            constant_values().GetConstantInstId(impl.constraint_id));
         const auto& interface =
             sem_ir().interfaces().Get(interface_type.interface_id);
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
-        CARBON_KIND_SWITCH(types().GetAsInst(impl.self_id)) {
+        CARBON_KIND_SWITCH(insts().Get(constant_values().GetConstantInstId(
+                               impl.self_id))) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;

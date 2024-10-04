@@ -48,21 +48,21 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  RequireGenericParams(context, params_id);
+  RequireGenericParamsOnType(context, params_id);
   context.node_stack().Push(node_id, params_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  auto [self_inst_id, self_type_id] = ExprAsType(context, self_node, self_id);
-  context.node_stack().Push(node_id, self_type_id);
+  self_id = ExprAsType(context, self_node, self_id).inst_id;
+  context.node_stack().Push(node_id, self_id);
 
   // Introduce `Self`. Note that we add this name lexically rather than adding
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  context.AddNameToLookup(SemIR::NameId::SelfType, self_inst_id);
+  context.AddNameToLookup(SemIR::NameId::SelfType, self_id);
   return true;
 }
 
@@ -103,9 +103,21 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     self_type_id = SemIR::TypeId::Error;
   }
 
+  // Build the implicit access to the enclosing `Self`.
+  // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
+  // expression. We've already done the work to check that the enclosing context
+  // is a class and found its `Self`, so additionally performing an unqualified
+  // name lookup would be redundant work, but would avoid duplicating the
+  // handling of the `Self` expression.
+  auto self_inst_id = context.AddInst(
+      node_id,
+      SemIR::NameRef{.type_id = SemIR::TypeId::TypeType,
+                     .name_id = SemIR::NameId::SelfType,
+                     .value_id = context.types().GetInstId(self_type_id)});
+
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
-  context.node_stack().Push(node_id, self_type_id);
+  context.node_stack().Push(node_id, self_inst_id);
   return true;
 }
 
@@ -241,16 +253,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
-  auto [self_type_node, self_type_id] =
+  auto [self_type_node, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
+  auto self_type_id = context.GetTypeIdForTypeInst(self_inst_id);
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
   // TODO: Check that its constant value is a constraint.
-  auto constraint_type_id =
-      ExprAsType(context, constraint_node, constraint_id).type_id;
+  auto [constraint_inst_id, constraint_type_id] =
+      ExprAsType(context, constraint_node, constraint_id);
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -276,11 +289,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       name_context.MakeEntityWithParamsBase(name, impl_decl_id,
                                             /*is_extern=*/false,
                                             SemIR::LibraryNameId::Invalid),
-      {.self_id = self_type_id, .constraint_id = constraint_type_id}};
+      {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
   // Add the impl declaration.
-  auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(
-      impl_info.self_id, impl_info.constraint_id);
+  auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
       impl_decl.impl_id = prev_impl_id;
@@ -329,13 +341,14 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
 
   if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`", SemIR::TypeId,
-                      SemIR::TypeId);
+                      "redefinition of `impl {0} as {1}`", std::string,
+                      std::string);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "previous definition was here");
     context.emitter()
-        .Build(node_id, ImplRedefinition, impl_info.self_id,
-               impl_info.constraint_id)
+        .Build(node_id, ImplRedefinition,
+               context.sem_ir().StringifyTypeExpr(impl_info.self_id),
+               context.sem_ir().StringifyTypeExpr(impl_info.constraint_id))
         .Note(impl_info.definition_id, ImplPreviousDefinition)
         .Emit();
   } else {

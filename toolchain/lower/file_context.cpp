@@ -213,12 +213,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto [param_id, param] =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.runtime_index.is_valid()) {
+    if (!param_info.inst.runtime_index.is_valid()) {
       continue;
     }
-    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param.type_id);
+    switch (auto value_rep =
+                SemIR::ValueRepr::ForType(sem_ir(), param_info.inst.type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL("Incomplete parameter type lowering function declaration");
@@ -264,7 +265,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
       name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
-                    .second.name_id;
+                    .GetNameId(sem_ir());
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -311,14 +312,14 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto [param_id, param] =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param.runtime_index.is_valid()) {
+    if (!param_info.inst.runtime_index.is_valid()) {
       continue;
     }
 
     // Get the value of the parameter from the function argument.
-    auto param_type_id = param.type_id;
+    auto param_type_id = param_info.inst.type_id;
     llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
     if (SemIR::ValueRepr::ForType(sem_ir(), param_type_id).kind !=
         SemIR::ValueRepr::None) {
@@ -327,7 +328,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     }
 
     // The value of the parameter is the value of the argument.
-    function_lowering.SetLocal(param_id, param_value);
+    function_lowering.SetLocal(param_info.inst_id, param_value);
 
     // Match the portion of the pattern corresponding to the parameter against
     // the parameter value. For now this is always a single name binding,

@@ -38,7 +38,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc3_7.2 as %A.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
@@ -48,12 +48,14 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//a, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+6, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%import_ref.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
@@ -61,5 +63,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.2 as imports.%import_ref.3;
 // CHECK:STDOUT:

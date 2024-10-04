@@ -74,7 +74,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %.loc19_16: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: %.3 = name_ref F, @I.%.loc12 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc19_17.1: %F.type.1 = interface_witness_access @impl.%.loc15_15, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc19_17.1: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc19_17.2: <bound method> = bound_method %.loc19_16, %.loc19_17.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_24: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_17.2(%.loc19_16, %.loc19_24) [template = constants.%.9]
@@ -114,7 +114,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %.1 {
+// CHECK:STDOUT: impl @impl: %.loc15_6.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other

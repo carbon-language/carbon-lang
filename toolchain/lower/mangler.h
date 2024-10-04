@@ -8,6 +8,7 @@
 #include <string>
 
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
@@ -38,7 +39,13 @@ class Mangler {
 
   auto names() const -> SemIR::NameStoreWrapper { return sem_ir().names(); }
 
-  auto types() const -> SemIR::TypeStore { return sem_ir().types(); }
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
+
+  auto types() const -> const SemIR::TypeStore& { return sem_ir().types(); }
+
+  auto constant_values() const -> const SemIR::ConstantValueStore& {
+    return sem_ir().constant_values();
+  }
 
   FileContext& file_context_;
 };

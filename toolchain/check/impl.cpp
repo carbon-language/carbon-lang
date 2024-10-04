@@ -139,6 +139,7 @@ static auto BuildInterfaceWitness(
   }
 
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
+  auto self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
 
   llvm::SmallVector<SemIR::InstId> table;
   auto assoc_entities =
@@ -168,7 +169,7 @@ static auto BuildInterfaceWitness(
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
           table.push_back(CheckAssociatedFunctionImplementation(
-              context, *fn_type, impl_decl_id, impl.self_id));
+              context, *fn_type, impl_decl_id, self_type_id));
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -210,8 +211,9 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   CARBON_CHECK(impl.is_being_defined());
 
   // TODO: Handle non-interface constraints.
+  auto interface_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
   auto interface_type =
-      context.types().TryGetAs<SemIR::InterfaceType>(impl.constraint_id);
+      context.types().TryGetAs<SemIR::InterfaceType>(interface_type_id);
   if (!interface_type) {
     context.TODO(impl.definition_id, "impl as non-interface");
     return SemIR::InstId::BuiltinError;
@@ -219,7 +221,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
-  auto witness_id = BuildInterfaceWitness(context, impl, impl.constraint_id,
+  auto witness_id = BuildInterfaceWitness(context, impl, interface_type_id,
                                           *interface_type, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.

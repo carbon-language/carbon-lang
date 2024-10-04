@@ -151,7 +151,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %.3 {
+// CHECK:STDOUT: impl @impl.1: %C.ref as %Mul.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -172,7 +172,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C as %.7 {
+// CHECK:STDOUT: impl @impl.2: %C.ref as %MulAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.8 = binding_pattern self
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -231,7 +231,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.3 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access @impl.1.%.loc17, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27_12.2: <bound method> = bound_method %a.ref, %.loc27_12.1
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %.loc27_12.2(%a.ref, %b.ref) to %.loc26
@@ -244,7 +244,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Op.ref: %.13 = name_ref Op, imports.%import_ref.7 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc31_6.1: %Op.type.4 = interface_witness_access @impl.2.%.loc22, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc31_6.1: %Op.type.4 = interface_witness_access constants.%.10, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc31_6.2: <bound method> = bound_method %.loc31_3.1, %.loc31_6.1
 // CHECK:STDOUT:   %.loc31_3.2: %.8 = addr_of %.loc31_3.1
 // CHECK:STDOUT:   %Op.call: init %.4 = call %.loc31_6.2(%.loc31_3.2, %b.ref)

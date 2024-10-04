@@ -72,39 +72,21 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
 static auto CheckFunctionSignature(Context& context,
                                    const NameComponent& name_and_params)
     -> void {
+  RequireGenericOrSelfImplicitFunctionParams(
+      context, name_and_params.implicit_params_id);
   SemIR::RuntimeParamIndex next_index(0);
   for (auto param_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),
            context.inst_blocks().GetOrEmpty(name_and_params.params_id))) {
-    auto param = context.insts().Get(param_id);
-
     // Find the parameter in the pattern.
-    // TODO: This duplicates work done by Function::GetParamFromParamRefId.
-    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
-      param_id = addr_pattern->inner_id;
-      param = context.insts().Get(param_id);
-    }
-
-    auto bind_name = param.TryAs<SemIR::AnyBindName>();
-    if (bind_name) {
-      param_id = bind_name->value_id;
-      param = context.insts().Get(param_id);
-    }
-
-    auto param_inst = param.TryAs<SemIR::Param>();
-    if (!param_inst) {
-      // Once we support more generalized patterns we will need to diagnose
-      // parameters with unsupported patterns.
-      context.TODO(param_id, "unexpected syntax for parameter");
-      // TODO: Also repair the param ID so downstream code doesn't need to deal
-      // with this.
-      continue;
-    }
+    auto param_info =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
 
     // If this is a runtime parameter, number it.
-    if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
-      param_inst->runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
+    if (param_info.bind_name &&
+        param_info.bind_name->kind == SemIR::BindName::Kind) {
+      param_info.inst.runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param_info.inst_id, param_info.inst);
       ++next_index.index;
     }
   }
@@ -297,6 +279,16 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(decl_id, function_decl);
 
+  // Diagnose 'definition of `abstract` function' using the canonical Function's
+  // modifiers.
+  if (is_definition &&
+      context.functions().Get(function_decl.function_id).virtual_modifier ==
+          SemIR::Function::VirtualModifier::Abstract) {
+    CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
+                      "definition of `abstract` function");
+    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+  }
+
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
   if (!name_context.prev_inst_id().is_valid()) {
@@ -368,17 +360,18 @@ static auto HandleFunctionDefinitionAfterSignature(
   for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
-    auto [param_id, param] =
+    auto param_info =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.type_id, [&] {
+    context.TryToCompleteType(param_info.inst.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "parameter has incomplete type `{0}` in function definition",
           SemIR::TypeId);
-      return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
-                                     param.type_id);
+      return context.emitter().Build(param_info.inst_id,
+                                     IncompleteTypeInFunctionParam,
+                                     param_info.inst.type_id);
     });
   }
 
