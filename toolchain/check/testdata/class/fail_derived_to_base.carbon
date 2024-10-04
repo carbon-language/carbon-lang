@@ -65,32 +65,32 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %.13: type = struct_type {.base: %.6, .b: i32} [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.13 [template]
 // CHECK:STDOUT:   %.15: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %.16: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.16) = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.16 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.17: type = assoc_entity_type %.16, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.18: %.17 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %.19: type = interface_type @ImplicitAs, @ImplicitAs(%.12) [template]
+// CHECK:STDOUT:   %.16: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%.12) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%.12) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.20: type = assoc_entity_type %.19, %Convert.type.2 [template]
-// CHECK:STDOUT:   %.21: %.20 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.22: %.17 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT:   %.18: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.19: %.18 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.20: %.16 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
-// CHECK:STDOUT:   %.23: type = ptr_type %Incomplete [template]
-// CHECK:STDOUT:   %.24: type = ptr_type %A2 [template]
+// CHECK:STDOUT:   %.21: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %.22: type = ptr_type %A2 [template]
 // CHECK:STDOUT:   %ConvertIncomplete.type: type = fn_type @ConvertIncomplete [template]
 // CHECK:STDOUT:   %ConvertIncomplete: %ConvertIncomplete.type = struct_value () [template]
-// CHECK:STDOUT:   %.25: type = interface_type @ImplicitAs, @ImplicitAs(%.24) [template]
-// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert, @ImplicitAs(%.24) [template]
+// CHECK:STDOUT:   %ImplicitAs.type.4: type = interface_type @ImplicitAs, @ImplicitAs(%.22) [template]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert, @ImplicitAs(%.22) [template]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.26: type = assoc_entity_type %.25, %Convert.type.3 [template]
-// CHECK:STDOUT:   %.27: %.26 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.23: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.3 [template]
+// CHECK:STDOUT:   %.24: %.23 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -107,9 +107,9 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.17) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.22)]
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.16) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.20)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
@@ -142,15 +142,15 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
-// CHECK:STDOUT:     %p.patt: %.23 = binding_pattern p
+// CHECK:STDOUT:     %p.patt: %.21 = binding_pattern p
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.23]
-// CHECK:STDOUT:     %p.param: %.23 = param p, runtime_param0
-// CHECK:STDOUT:     %p: %.23 = bind_name p, %p.param
+// CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.21]
+// CHECK:STDOUT:     %p.param: %.21 = param p, runtime_param0
+// CHECK:STDOUT:     %p: %.21 = bind_name p, %p.param
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.24]
-// CHECK:STDOUT:     %return: ref %.24 = var <return slot>
+// CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.22]
+// CHECK:STDOUT:     %return: ref %.22 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,12 +158,12 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.16)]
-// CHECK:STDOUT:   %Self: %.16 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.16), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.17)]
-// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.17) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.18)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.16)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.16) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.2 (constants.%.17)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -220,28 +220,28 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertUnrelated(%p: %.11) -> %.12 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
-// CHECK:STDOUT:   %.loc31_46.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.12) [template = constants.%.19]
-// CHECK:STDOUT:   %.loc31_46.2: %.20 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.12) [template = constants.%.21]
-// CHECK:STDOUT:   %Convert.ref: %.20 = name_ref Convert, %.loc31_46.2 [template = constants.%.21]
-// CHECK:STDOUT:   %.loc31_46.3: %.12 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.12) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %.loc31_46.1: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.12) [template = constants.%.19]
+// CHECK:STDOUT:   %Convert.ref: %.18 = name_ref Convert, %.loc31_46.1 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc31_46.2: %.12 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.16)) {
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.16)]
-// CHECK:STDOUT:   %Self: %.16 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertIncomplete(%p: %.23) -> %.24 {
+// CHECK:STDOUT: fn @ConvertIncomplete(%p: %.21) -> %.22 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.23 = name_ref p, %p
-// CHECK:STDOUT:   %.loc41_55.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.24) [template = constants.%.25]
-// CHECK:STDOUT:   %.loc41_55.2: %.26 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.24) [template = constants.%.27]
-// CHECK:STDOUT:   %Convert.ref: %.26 = name_ref Convert, %.loc41_55.2 [template = constants.%.27]
-// CHECK:STDOUT:   %.loc41_55.3: %.24 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %p.ref: %.21 = name_ref p, %p
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.22) [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %.loc41_55.1: %.23 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.22) [template = constants.%.24]
+// CHECK:STDOUT:   %Convert.ref: %.23 = name_ref Convert, %.loc41_55.1 [template = constants.%.24]
+// CHECK:STDOUT:   %.loc41_55.2: %.22 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,7 +259,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.1 => constants.%.16
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,23 +267,23 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %Dest => constants.%.12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.19
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.2 => constants.%.20
-// CHECK:STDOUT:   %.3 => constants.%.21
+// CHECK:STDOUT:   %.1 => constants.%.18
+// CHECK:STDOUT:   %.2 => constants.%.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%.24) {
-// CHECK:STDOUT:   %Dest => constants.%.24
+// CHECK:STDOUT: specific @ImplicitAs(constants.%.22) {
+// CHECK:STDOUT:   %Dest => constants.%.22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.25
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.3
 // CHECK:STDOUT:   %Convert => constants.%Convert.3
-// CHECK:STDOUT:   %.2 => constants.%.26
-// CHECK:STDOUT:   %.3 => constants.%.27
+// CHECK:STDOUT:   %.1 => constants.%.23
+// CHECK:STDOUT:   %.2 => constants.%.24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
