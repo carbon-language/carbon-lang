@@ -21,6 +21,9 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
+// Returns the argument values of the `IndexWith` interface, this corresponds to
+// the `SubscriptType` and the `ElementType`, if the class does not implement
+// the said interface this returns an empty array reference.
 static auto GetIndexWithParams(Context& context, Parse::NodeId node_id,
                                SemIR::TypeId self_id)
     -> llvm::ArrayRef<SemIR::InstId> {
@@ -45,7 +48,7 @@ static auto GetIndexWithParams(Context& context, Parse::NodeId node_id,
       continue;
     }
 
-    return context.inst_blocks().Get(
+    return context.inst_blocks().GetOrEmpty(
         context.specifics().Get(interface_type->specific_id).args_id);
   }
 
@@ -58,6 +61,12 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
+
+  auto diagnose_invalid_index = [&]() {
+    CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
+                      "type `{0}` does not support indexing", SemIR::TypeId);
+    context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
+  };
 
   CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
@@ -94,6 +103,15 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       auto class_info = context.classes().Get(class_type.class_id);
       auto params =
           GetIndexWithParams(context, node_id, class_info.self_type_id);
+
+      // If the class does not implement the `IndexWith` interface, then return
+      // an error.
+      if (params.empty()) {
+        diagnose_invalid_index();
+        context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+        return true;
+      }
+
       CARBON_CHECK(params.size() == 2,
                    "IndexWith should have two generic constraints");
 
@@ -116,10 +134,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
 
     default: {
       if (operand_type_id != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                          "type `{0}` does not support indexing",
-                          SemIR::TypeId);
-        context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
+        diagnose_invalid_index();
       }
       context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
       return true;
