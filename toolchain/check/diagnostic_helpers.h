@@ -50,6 +50,29 @@ struct TypedInt {
   llvm::APInt value;
 };
 
+// A type expression, for rendering in a diagnostic.
+struct InstIdAsType {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstIdAsType(SemIR::InstId inst_id) : inst_id(inst_id) {}
+
+  SemIR::InstId inst_id;
+};
+
+// An expression whose type should be rendered in a diagnostic. This should be
+// used instead of TypeId as a diagnostic argument wherever possible, because we
+// should eventually be able to produce a sugared type name in this case,
+// whereas a TypeId will render as a canonical type.
+struct InstIdAsTypeOfExpr {
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstIdAsTypeOfExpr(SemIR::InstId inst_id) : inst_id(inst_id) {}
+
+  SemIR::InstId inst_id;
+};
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_

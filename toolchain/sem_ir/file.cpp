@@ -513,11 +513,6 @@ auto File::StringifyType(TypeId type_id) const -> std::string {
   return StringifyTypeExprImpl(*this, types().GetInstId(type_id));
 }
 
-auto File::StringifyType(ConstantId type_const_id) const -> std::string {
-  return StringifyTypeExprImpl(*this,
-                               constant_values().GetInstId(type_const_id));
-}
-
 auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   return StringifyTypeExprImpl(*this, outer_inst_id);
 }

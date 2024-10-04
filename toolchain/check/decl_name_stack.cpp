@@ -327,13 +327,10 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
-                    "cannot declare a member of undefined interface `{0}`",
-                    std::string);
+                    "cannot declare a member of undefined interface {0}",
+                    InstIdAsType);
   auto builder = context.emitter().Build(
-      loc, QualifiedDeclInUndefinedInterfaceScope,
-      context.sem_ir().StringifyTypeExpr(
-          context.sem_ir().constant_values().GetConstantInstId(
-              interface_inst_id)));
+      loc, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
   context.NoteUndefinedInterface(interface_id, builder);
   builder.Emit();
 }

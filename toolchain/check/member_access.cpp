@@ -38,11 +38,10 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
-                            "member access into incomplete class `{0}`",
-                            std::string);
+                            "member access into incomplete class {0}",
+                            InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteClassScope,
-              context.sem_ir().StringifyType(base_const_id));
+              loc_id, QualifiedExprInIncompleteClassScope, base_id);
         });
     auto& class_info = context.classes().Get(base_as_class->class_id);
     return LookupScope{.name_scope_id = class_info.scope_id,
@@ -52,11 +51,10 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                            "member access into undefined interface `{0}`",
-                            std::string);
+                            "member access into undefined interface {0}",
+                            InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInUndefinedInterfaceScope,
-              context.sem_ir().StringifyType(base_const_id));
+              loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
         });
     auto& interface_info =
         context.interfaces().Get(base_as_interface->interface_id);
