@@ -2,14 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <iostream>
-
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
-#include "toolchain/check/impl.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
