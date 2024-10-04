@@ -189,7 +189,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                           "`let` binding has incomplete type {0}",
-                         InstIdAsType);
+                          InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
                                        cast_type_inst_id);
       });

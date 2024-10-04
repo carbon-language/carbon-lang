@@ -77,8 +77,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
   if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "function returns incomplete type {0}",
-                        SemIR::TypeId);
+                        "function returns incomplete type {0}", SemIR::TypeId);
       return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                      return_info.type_id);
     };

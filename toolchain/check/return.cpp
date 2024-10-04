@@ -40,8 +40,8 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
 static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function,
                            SemIR::TypeId return_type_id) {
-  CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
-                    "return type of function is {0}", SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
+                    SemIR::TypeId);
   diag.Note(function.return_storage_id, ReturnTypeHereNote, return_type_id);
 }
 

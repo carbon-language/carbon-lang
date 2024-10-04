@@ -343,8 +343,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
 
   if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`",
-                      InstIdAsRawType, InstIdAsRawType);
+                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
+                      InstIdAsRawType);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "previous definition was here");
     context.emitter()

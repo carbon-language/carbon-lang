@@ -306,10 +306,9 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
       [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
         // TODO: Pass in the expression we're trying to dereference to produce a
         // better diagnostic.
-        CARBON_DIAGNOSTIC(
-            DerefOfNonPointer, Error,
-            "cannot dereference operand of non-pointer type {0}",
-            SemIR::TypeId);
+        CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
+                          "cannot dereference operand of non-pointer type {0}",
+                          SemIR::TypeId);
 
         auto builder = context.emitter().Build(
             TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);

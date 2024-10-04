@@ -144,6 +144,7 @@ cc_library(
         ":ids",
         ":inst_kind",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
     ],
 )

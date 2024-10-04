@@ -945,8 +945,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                           "forming value of incomplete type {0}",
                           SemIR::TypeId);
         CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                          "invalid use of incomplete type {0}",
-                          SemIR::TypeId);
+                          "invalid use of incomplete type {0}", SemIR::TypeId);
         return context.emitter().Build(loc_id,
                                        target.is_initializer()
                                            ? IncompleteTypeInInit
