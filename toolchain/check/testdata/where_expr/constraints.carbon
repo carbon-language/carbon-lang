@@ -62,18 +62,19 @@ interface K {
 // CHECK:STDERR:
 fn AssociatedTypeImpls(W:! K where .Associated impls M);
 
-// --- fail_todo_check_rewrite_constraints.carbon
+// --- fail_check_rewrite_constraints.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "state_constraints";
 
-// TODO: Should fail since `2` can't be converted to the type of `I.Member`,
-// but constraints are not yet type checked.
-// CHECK:STDERR: fail_todo_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>`
+// `2` can't be converted to the type of `I.Member`
+// TODO: The diagnostics are wrong since member access into facets isn't
+// working properly yet.
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>`
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
-// CHECK:STDERR: fail_todo_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR:
@@ -650,7 +651,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %W.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_check_rewrite_constraints.carbon
+// CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
@@ -731,16 +732,16 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.3 = name_ref Member, imports.%import_ref.7 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc15_46.1: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc15_46.2: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:     %.loc15_46.3: %.10 = specific_constant imports.%import_ref.14, @ImplicitAs(constants.%.3) [template = constants.%.11]
-// CHECK:STDOUT:     %Convert.ref: %.10 = name_ref Convert, %.loc15_46.3 [template = constants.%.11]
-// CHECK:STDOUT:     %.loc15_46.4: %.3 = converted %.loc15_46.1, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc15_30: type = where_expr %.Self [template = constants.%.1] {
+// CHECK:STDOUT:     %.loc16_46.1: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc16_46.2: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%.9]
+// CHECK:STDOUT:     %.loc16_46.3: %.10 = specific_constant imports.%import_ref.14, @ImplicitAs(constants.%.3) [template = constants.%.11]
+// CHECK:STDOUT:     %Convert.ref: %.10 = name_ref Convert, %.loc16_46.3 [template = constants.%.11]
+// CHECK:STDOUT:     %.loc16_46.4: %.3 = converted %.loc16_46.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = constants.%.1] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: %.1 = param X, runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc15: %.1 = bind_symbolic_name X, 0, %X.param [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc16: %.1 = bind_symbolic_name X, 0, %X.param [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -779,10 +780,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X.loc15: %.1) {
+// CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X.loc16: %.1) {
 // CHECK:STDOUT:   %X.1: %.1 = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%X.loc15: %.1);
+// CHECK:STDOUT:   fn(%X.loc16: %.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
