@@ -714,7 +714,8 @@ class ImportRefResolver {
     llvm::SmallVector<SemIR::InstId> new_param_refs;
     for (auto ref_id : param_refs) {
       // Figure out the param structure. This echoes
-      // Function::GetParamFromParamRefId.
+      // Function::GetParamFromParamRefId, and could use that function if we
+      // added `bool addr` and `InstId bind_inst_id` to its return `ParamInfo`.
       // TODO: Consider a different parameter handling to simplify import logic.
       auto inst = import_ir_.insts().Get(ref_id);
       auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
