@@ -225,8 +225,8 @@ class Context {
   auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
 
   // Adds a `Branch` instruction branching to a new instruction block with a
-  // value, and returns the ID of the new block. All paths to the branch
-  // target must go through the current block.
+  // value, and returns the ID of the new block. All paths to the branch target
+  // must go through the current block.
   auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
@@ -240,17 +240,16 @@ class Context {
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the instruction block stack to a new block, pops the
-  // existing blocks, and pushes the new block onto the instruction block
-  // stack.
+  // existing blocks, and pushes the new block onto the instruction block stack.
   auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
-  // from the top few blocks on the instruction block stack to a new block,
-  // pops the existing blocks, and pushes the new block onto the instruction
-  // block stack. The number of blocks popped is the size of `block_args`, and
-  // the corresponding result values are the elements of `block_args`. Returns
-  // an instruction referring to the result value.
+  // from the top few blocks on the instruction block stack to a new block, pops
+  // the existing blocks, and pushes the new block onto the instruction block
+  // stack. The number of blocks popped is the size of `block_args`, and the
+  // corresponding result values are the elements of `block_args`. Returns an
+  // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
       Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
@@ -289,9 +288,9 @@ class Context {
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
   //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the
-  // issue, if a `diagnoser` is provided. The builder it returns will be
-  // annotated to describe the reason why the type is not complete.
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
+  // if a `diagnoser` is provided. The builder it returns will be annotated to
+  // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
       std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
@@ -307,8 +306,8 @@ class Context {
       std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
-  // type error and returns an error type. This is a convenience wrapper
-  // around TryToCompleteType.
+  // type error and returns an error type. This is a convenience wrapper around
+  // TryToCompleteType.
   auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser) ? type_id
@@ -328,9 +327,9 @@ class Context {
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
 
-  // Gets a generic class type, which is the type of a name of a generic
-  // class, such as the type of `Vector` given `class Vector(T:! type)`. The
-  // returned type will be complete.
+  // Gets a generic class type, which is the type of a name of a generic class,
+  // such as the type of `Vector` given `class Vector(T:! type)`. The returned
+  // type will be complete.
   auto GetGenericClassType(SemIR::ClassId class_id,
                            SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
@@ -481,8 +480,8 @@ class Context {
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
-  // Instructions should be added with `AddInst` or `AddInstInNoBlock`. This
-  // is `const` to prevent accidental misuse.
+  // Instructions should be added with `AddInst` or `AddInstInNoBlock`. This is
+  // `const` to prevent accidental misuse.
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
@@ -521,8 +520,8 @@ class Context {
   auto CheckCompatibleImportedNodeKind(SemIR::ImportIRInstId imported_loc_id,
                                        SemIR::InstKind kind) -> void;
 
-  // Finish producing an instruction. Set its constant value, and register it
-  // in any applicable instruction lists.
+  // Finish producing an instruction. Set its constant value, and register it in
+  // any applicable instruction lists.
   auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
 
   // Tokens for getting data on literals.
