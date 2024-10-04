@@ -76,7 +76,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: generic impl @impl(%T.loc15: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T as %.1 {
+// CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:

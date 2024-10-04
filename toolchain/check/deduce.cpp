@@ -10,6 +10,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -236,6 +237,20 @@ auto DeduceGenericCallArguments(
 
   return MakeSpecific(context, generic_id,
                       context.inst_blocks().AddCanonical(result_arg_ids));
+}
+
+// Deduces the impl arguments to use in a use of a parameterized impl. Returns
+// `Invalid` if deduction fails.
+auto DeduceImplArguments(Context& context, const SemIR::Impl& impl,
+                         SemIR::ConstantId self_id,
+                         SemIR::ConstantId constraint_id) -> SemIR::SpecificId {
+  CARBON_CHECK(impl.generic_id.is_valid(),
+               "Performing deduction for non-generic impl");
+  // TODO: This is a placeholder. Implement deduction.
+  static_cast<void>(context);
+  static_cast<void>(self_id);
+  static_cast<void>(constraint_id);
+  return SemIR::SpecificId::Invalid;
 }
 
 }  // namespace Carbon::Check
