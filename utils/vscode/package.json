@@ -3,6 +3,7 @@
   "displayName": "carbon-lang",
   "description": "Carbon Language support",
   "version": "0.0.2",
+  "publisher": "carbon-language",
   "repository": {
     "url": "https://github.com/carbon-language/carbon-lang"
   },
@@ -10,7 +11,8 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
   ],
   "activationEvents": [],
   "main": "./src/extension.js",
@@ -18,6 +20,10 @@
     "languages": [
       {
         "id": "carbon",
+        "icon": {
+          "dark": "favicon.png",
+          "light": "favicon.png"
+        },
         "aliases": [
           "Carbon"
         ],
@@ -33,8 +39,19 @@
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
       }
+    ],
+    "snippets": [
+      {
+        "language": "carbon",
+        "path": "./carbon.code-snippets"
+      }
     ]
   },
+  "keywords": [
+    "carbon",
+    "snippet",
+    "snippets"
+  ],
   "scripts": {
     "package": "mkdir -p out && vsce package -o out/carbon.vsix"
   },
