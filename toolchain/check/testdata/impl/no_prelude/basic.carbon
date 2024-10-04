@@ -60,7 +60,7 @@ impl C as Simple {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %Simple.type {
+// CHECK:STDOUT: impl @impl: %C.ref as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:

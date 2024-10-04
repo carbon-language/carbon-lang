@@ -70,7 +70,7 @@ class A {
 // CHECK:STDOUT:   witness = (%Make.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %DefaultConstructible.type {
+// CHECK:STDOUT: impl @impl: %C.ref as %DefaultConstructible.ref {
 // CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>

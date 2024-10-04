@@ -76,7 +76,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: bool as %I.type {
+// CHECK:STDOUT: impl @impl: %.loc16_6.2 as %.loc16_16 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

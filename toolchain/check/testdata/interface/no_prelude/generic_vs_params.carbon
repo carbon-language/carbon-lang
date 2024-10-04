@@ -206,35 +206,35 @@ interface A(T: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %X as %NotGenericNoParams.type {
+// CHECK:STDOUT: impl @impl.1: %X.ref as %NotGenericNoParams.ref {
 // CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %X as %NotGenericButParams.type.2 {
+// CHECK:STDOUT: impl @impl.2: %X.ref as %NotGenericButParams.type {
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %X as %GenericAndParams.type.5 {
+// CHECK:STDOUT: impl @impl.3: %X.ref.loc16_6 as %GenericAndParams.type {
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: %X as %GenericNoParams.type.1 {
+// CHECK:STDOUT: impl @impl.4: %X.ref.loc17_6 as %GenericNoParams.ref {
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.5: %X as %GenericAndParams.type.7 {
+// CHECK:STDOUT: impl @impl.5: %X.ref.loc18_6 as %GenericAndParams.type {
 // CHECK:STDOUT:   %.loc18_36: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

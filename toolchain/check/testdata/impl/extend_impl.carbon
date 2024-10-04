@@ -87,7 +87,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %HasF.type {
+// CHECK:STDOUT: impl @impl: %Self.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%F.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -98,6 +98,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -121,11 +122,11 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %.2 = name_ref F, @HasF.%.loc12 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access @impl.%.loc16, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%.4, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc22: init %.1 = call %.loc22()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %.2 = name_ref F, @HasF.%.loc12 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access @impl.%.loc16, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access constants.%.4, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc23: init %.1 = call %.loc23()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

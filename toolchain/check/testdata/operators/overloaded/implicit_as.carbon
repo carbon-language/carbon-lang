@@ -177,7 +177,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: i32 as %ImplicitAs.type.3 {
+// CHECK:STDOUT: impl @impl.1: %.loc15_6.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.2 = fn_decl @Convert.2 [template = constants.%Convert.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:   } {
@@ -196,7 +196,7 @@ fn Test() {
 // CHECK:STDOUT:   witness = %.loc15_32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %X as %ImplicitAs.type.4 {
+// CHECK:STDOUT: impl @impl.2: %X.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
 // CHECK:STDOUT:   } {
@@ -278,7 +278,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc30_11.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc30: %.11 = name_ref Convert, %.loc30_11.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc30_18.2: ref %X = temporary %.loc30_18.1, %Source.call.loc30
-// CHECK:STDOUT:   %.loc30_11.2: %Convert.type.5 = interface_witness_access @impl.2.%.loc19_32, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc30_11.2: %Convert.type.5 = interface_witness_access constants.%.13, element0 [template = constants.%Convert.4]
 // CHECK:STDOUT:   %.loc30_11.3: <bound method> = bound_method %.loc30_18.2, %.loc30_11.2
 // CHECK:STDOUT:   %.loc30_18.3: %X = bind_value %.loc30_18.2
 // CHECK:STDOUT:   %Convert.call.loc30: init i32 = call %.loc30_11.3(%.loc30_18.3)
@@ -298,7 +298,7 @@ fn Test() {
 // CHECK:STDOUT:   %Convert.ref.loc31: %.7 = name_ref Convert, %.loc31_9.1 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc31_16.3: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc31_16.4: ref i32 = temporary %.loc31_16.3, %Source.call.loc31
-// CHECK:STDOUT:   %.loc31_9.2: %Convert.type.3 = interface_witness_access @impl.1.%.loc15_32, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc31_9.2: %Convert.type.3 = interface_witness_access constants.%.9, element0 [template = constants.%Convert.2]
 // CHECK:STDOUT:   %.loc31_9.3: <bound method> = bound_method %.loc31_16.4, %.loc31_9.2
 // CHECK:STDOUT:   %.loc31_9.4: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc31_16.5: i32 = bind_value %.loc31_16.4

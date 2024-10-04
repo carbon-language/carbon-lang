@@ -474,7 +474,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %J.type {
+// CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
 // CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

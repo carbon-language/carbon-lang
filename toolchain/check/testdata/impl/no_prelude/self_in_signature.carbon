@@ -169,7 +169,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C as %UseSelf.type {
+// CHECK:STDOUT: impl @impl.1: %C.ref as %UseSelf.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
@@ -190,7 +190,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %D as %UseSelf.type {
+// CHECK:STDOUT: impl @impl.2: %D.ref as %UseSelf.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %self.patt: %D = binding_pattern self
 // CHECK:STDOUT:     %x.patt: %D = binding_pattern x
@@ -211,7 +211,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %C as %SelfNested.type {
+// CHECK:STDOUT: impl @impl.3: %C.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.5 [template = constants.%F.5] {
 // CHECK:STDOUT:     %x.patt: %.17 = binding_pattern x
 // CHECK:STDOUT:   } {
@@ -233,7 +233,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   witness = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: %D as %SelfNested.type {
+// CHECK:STDOUT: impl @impl.4: %D.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.6 = fn_decl @F.6 [template = constants.%F.6] {
 // CHECK:STDOUT:     %x.patt: %.21 = binding_pattern x
 // CHECK:STDOUT:   } {

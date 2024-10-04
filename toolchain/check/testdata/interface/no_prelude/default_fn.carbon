@@ -61,7 +61,7 @@ class C {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C as %I.type {
+// CHECK:STDOUT: impl @impl: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %.loc21: <witness> = interface_witness (%F.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -98,7 +98,7 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %.2 = name_ref F, @I.%.loc14 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc17: %F.type.1 = interface_witness_access @impl.%.loc21, element0 [template = constants.%F.2]
+// CHECK:STDOUT:     %.loc17: %F.type.1 = interface_witness_access constants.%.4, element0 [template = constants.%F.2]
 // CHECK:STDOUT:     %F.call: init %.1 = call %.loc17()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

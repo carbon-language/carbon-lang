@@ -60,7 +60,7 @@ impl i32 as I;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as %I.type;
+// CHECK:STDOUT: impl @impl: %.loc13_6.2 as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

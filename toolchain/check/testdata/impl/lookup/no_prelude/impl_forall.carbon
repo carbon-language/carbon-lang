@@ -201,7 +201,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%V.1) [symbolic = %A.1 (constants.%A.3)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%V.1) [symbolic = %I.type.1 (constants.%I.type.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %A.3 as %I.type.3 {
+// CHECK:STDOUT:   impl: %A.loc10 as %I.type.loc10 {
 // CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:       %self.patt: @F.2.%A (%A.3) = binding_pattern self
 // CHECK:STDOUT:     } {

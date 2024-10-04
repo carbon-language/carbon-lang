@@ -78,9 +78,9 @@ impl i32 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: i32 as %I.type;
+// CHECK:STDOUT: impl @impl.1: %.loc13_6.2 as %I.ref.loc13;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: i32 as %I.type {
+// CHECK:STDOUT: impl @impl.2: %.loc19_6.2 as %I.ref {
 // CHECK:STDOUT:   %.loc19_15: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

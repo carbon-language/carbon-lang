@@ -10,6 +10,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/deduce.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -90,9 +91,10 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
        sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_refs_id)) {
-    auto param =
-        SemIR::Function::GetParamFromParamRefId(sem_ir, param_id).second;
-    if (param.name_id == SemIR::NameId::SelfValue) {
+    auto param_name_id =
+        SemIR::Function::GetParamFromParamRefId(sem_ir, param_id)
+            .GetNameId(sem_ir);
+    if (param_name_id == SemIR::NameId::SelfValue) {
       return true;
     }
   }
@@ -177,18 +179,30 @@ static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
 // Returns an invalid InstId if no matching impl is found.
 static auto LookupInterfaceWitness(Context& context,
                                    SemIR::ConstantId type_const_id,
-                                   SemIR::TypeId interface_type_id)
+                                   SemIR::ConstantId interface_const_id)
     -> SemIR::InstId {
   // TODO: Add a better impl lookup system. At the very least, we should only be
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.
   for (const auto& impl : context.impls().array_ref()) {
+    auto specific_id = SemIR::SpecificId::Invalid;
+    if (impl.generic_id.is_valid()) {
+      specific_id =
+          DeduceImplArguments(context, impl, type_const_id, interface_const_id);
+      if (!specific_id.is_valid()) {
+        continue;
+      }
+    }
     if (!context.constant_values().AreEqualAcrossDeclarations(
-            context.types().GetConstantId(impl.self_id), type_const_id)) {
+            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                              impl.self_id),
+            type_const_id)) {
       continue;
     }
-    if (!context.types().AreEqualAcrossDeclarations(impl.constraint_id,
-                                                    interface_type_id)) {
+    if (!context.constant_values().AreEqualAcrossDeclarations(
+            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                              impl.constraint_id),
+            interface_const_id)) {
       // TODO: An impl of a constraint type should be treated as implementing
       // the constraint's interfaces.
       continue;
@@ -198,7 +212,9 @@ static auto LookupInterfaceWitness(Context& context,
       return SemIR::InstId::Invalid;
     }
     LoadImportRef(context, impl.witness_id);
-    return impl.witness_id;
+    return context.constant_values().GetInstId(
+        SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                          impl.witness_id));
   }
   return SemIR::InstId::Invalid;
 }
@@ -213,8 +229,8 @@ static auto PerformImplLookup(
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
   auto& interface = context.interfaces().Get(interface_type.interface_id);
-  auto witness_id = LookupInterfaceWitness(context, type_const_id,
-                                           assoc_type.interface_type_id);
+  auto witness_id = LookupInterfaceWitness(
+      context, type_const_id, assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.is_valid()) {
     if (missing_impl_diagnoser) {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,

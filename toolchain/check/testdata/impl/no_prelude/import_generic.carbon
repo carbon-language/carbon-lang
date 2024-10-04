@@ -109,7 +109,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%T.1) [symbolic = %I.type.1 (constants.%I.type.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.2;
+// CHECK:STDOUT:   impl: %C.ref as %I.type.loc7;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2(%T.loc8: type) {
@@ -117,7 +117,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%.1) [symbolic = %I.type.1 (constants.%I.type.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.3 {
+// CHECK:STDOUT:   impl: %C.ref as %I.type.loc8 {
 // CHECK:STDOUT:     %.loc8_35: <witness> = interface_witness () [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -190,7 +190,11 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+10, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+23, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+44, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -228,7 +232,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%T.1) [symbolic = %I.type.1 (constants.%I.type.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.2 {
+// CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6 {
 // CHECK:STDOUT:     %.loc4: <witness> = interface_witness () [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -241,9 +245,9 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type: type = interface_type @I, @I(%.1) [symbolic = %I.type (constants.%I.type.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.3 {
+// CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.5
+// CHECK:STDOUT:     witness = imports.%import_ref.9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,10 +279,6 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.4) {
 // CHECK:STDOUT:   %T => constants.%.4
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@impl.2.%.1) {
@@ -313,7 +313,11 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+10, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+23, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+44, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -352,7 +356,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %I.type: type = interface_type @I, @I(%T) [symbolic = %I.type (constants.%I.type.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.2;
+// CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2(constants.%T: type) {
@@ -360,9 +364,9 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%.1) [symbolic = %I.type.1 (constants.%I.type.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C as %I.type.3 {
+// CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.5
+// CHECK:STDOUT:     witness = imports.%import_ref.9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -390,10 +394,6 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.4) {
 // CHECK:STDOUT:   %T => constants.%.4
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@impl.2.%.1) {

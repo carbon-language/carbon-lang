@@ -64,8 +64,10 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(@I.%Self: %I.type) {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C.2 as %I.type;
+// CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(@I.%Self: %I.type) {
@@ -73,6 +75,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     impl_decl @impl [template] {} {
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.2 [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc20: <witness> = complete_type_witness %.1 [template = constants.%.2]
@@ -85,5 +88,10 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%Self) {}
+// CHECK:STDOUT: specific @C(@impl.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %C => constants.%C.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

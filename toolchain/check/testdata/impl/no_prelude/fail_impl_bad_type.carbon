@@ -45,7 +45,7 @@ impl true as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: <error> as %I.type {
+// CHECK:STDOUT: impl @impl: <error> as %I.ref {
 // CHECK:STDOUT:   %.loc16_16: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
