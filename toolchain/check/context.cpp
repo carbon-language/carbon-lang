@@ -742,12 +742,6 @@ class TypeCompleter {
  public:
   TypeCompleter(Context& context, Context::BuildDiagnosticFn diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
-  TypeCompleter(Context& context,
-                std::optional<Context::BuildDiagnosticFn> diagnoser,
-                std::optional<Context::BuildDiagnosticFn> abstract_diagnoser)
-      : context_(context),
-        diagnoser_(diagnoser),
-        abstract_diagnoser_(abstract_diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
@@ -861,14 +855,8 @@ class TypeCompleter {
           }
           return false;
         }
-        if (abstract_diagnoser_ &&
-            class_info.inheritance_kind ==
-                SemIR::Class::InheritanceKind::Abstract) {
-          auto builder = (*abstract_diagnoser_)();
-          context_.NoteIncompleteClass(inst.class_id, builder);
-          builder.Emit();
-          return false;
-        }
+        /*
+         */
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
@@ -1151,7 +1139,23 @@ class TypeCompleter {
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
                                 BuildDiagnosticFn diagnoser,
                                 BuildDiagnosticFn abstract_diagnoser) -> bool {
-  return TypeCompleter(*this, diagnoser, abstract_diagnoser).Complete(type_id);
+  if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
+    return false;
+  }
+  if (!abstract_diagnoser) {
+    return true;
+  }
+  if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
+    auto& class_info = classes().Get(class_type->class_id);
+    if (class_info.inheritance_kind ==
+        SemIR::Class::InheritanceKind::Abstract) {
+      auto builder = (*abstract_diagnoser)();
+      NoteIncompleteClass(class_type->class_id, builder);
+      builder.Emit();
+      return false;
+    }
+  }
+  return true;
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,

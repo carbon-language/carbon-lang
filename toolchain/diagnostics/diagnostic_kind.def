@@ -276,7 +276,7 @@ CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(NoPeriodSelfForDesignator)
 
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInAdaptDecl)
-CARBON_DIAGNOSTIC_KIND(AbstractTypeInConversion)
+CARBON_DIAGNOSTIC_KIND(AbstractTypeInConversion)  // untested?
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInInit)

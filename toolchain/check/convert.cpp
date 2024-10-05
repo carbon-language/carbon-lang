@@ -949,6 +949,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
                               "invalid use of incomplete type `{0}`",
                               SemIR::TypeId);
+            assert(!target.is_initializer());
+            assert(target.kind == ConversionTarget::Value);
             return context.emitter().Build(
                 loc_id,
                 target.is_initializer() ? IncompleteTypeInInit
@@ -957,7 +959,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                     : IncompleteTypeInConversion,
                 target.type_id);
           },
-          [&]() -> Context::DiagnosticBuilder {
+          [&] {
             CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
                               "initialization of abstract type `{0}`",
                               SemIR::TypeId);
