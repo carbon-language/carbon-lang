@@ -395,7 +395,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc8: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ElementType.ref.loc21: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
+// CHECK:STDOUT:   %ElementType.ref.loc22: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType.2: type, constants.%ElementType.2: type) {
@@ -511,22 +511,22 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_14.2: %C = bind_value %.loc14_14.1
 // CHECK:STDOUT:   %c: %C = bind_name c, %.loc14_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc21_24: i32 = int_literal 0 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc21_25.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc21_25.2: %.17 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.18]
-// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc21_25.2 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc21_25.3: %SubscriptType.1 = converted %.loc21_24, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21_25.4: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_25.5: %.8 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.9]
-// CHECK:STDOUT:   %At.ref: %.8 = name_ref At, %.loc21_25.5 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc21_25.6: %At.type.3 = interface_witness_access @impl.%.loc8, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc21_25.7: <bound method> = bound_method %c.ref, %.loc21_25.6
-// CHECK:STDOUT:   %.loc21_25.8: ref %ElementType.1 = temporary_storage
-// CHECK:STDOUT:   %At.call: init %ElementType.1 = call %.loc21_25.7(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc21_25.9: ref %ElementType.1 = temporary_storage
-// CHECK:STDOUT:   %.loc21_25.10: ref %ElementType.1 = temporary %.loc21_25.9, %At.call
-// CHECK:STDOUT:   %.loc21_25.11: %ElementType.1 = bind_value %.loc21_25.10
-// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, %.loc21_25.11
+// CHECK:STDOUT:   %.loc22_24: i32 = int_literal 0 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc22_25.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.16]
+// CHECK:STDOUT:   %.loc22_25.2: %.17 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.18]
+// CHECK:STDOUT:   %Convert.ref: %.17 = name_ref Convert, %.loc22_25.2 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc22_25.3: %SubscriptType.1 = converted %.loc22_24, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_25.4: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc22_25.5: %.8 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.9]
+// CHECK:STDOUT:   %At.ref: %.8 = name_ref At, %.loc22_25.5 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc22_25.6: %At.type.3 = interface_witness_access @impl.%.loc8, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %.loc22_25.7: <bound method> = bound_method %c.ref, %.loc22_25.6
+// CHECK:STDOUT:   %.loc22_25.8: ref %ElementType.1 = temporary_storage
+// CHECK:STDOUT:   %At.call: init %ElementType.1 = call %.loc22_25.7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc22_25.9: ref %ElementType.1 = temporary_storage
+// CHECK:STDOUT:   %.loc22_25.10: ref %ElementType.1 = temporary %.loc22_25.9, %At.call
+// CHECK:STDOUT:   %.loc22_25.11: %ElementType.1 = bind_value %.loc22_25.10
+// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, %.loc22_25.11
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -660,8 +660,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32, %.loc7_8.1 [template = i32]
+// CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_32, %.loc10_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
@@ -712,7 +712,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_14.2: %C = bind_value %.loc6_14.1
 // CHECK:STDOUT:   %c: %C = bind_name c, %.loc6_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 0 [template = constants.%.5]
 // CHECK:STDOUT:   %x: i32 = bind_name x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

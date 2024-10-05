@@ -24,8 +24,8 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
 // Returns the argument values of the `IndexWith` interface, this corresponds to
 // the `SubscriptType` and the `ElementType`, if the class does not implement
 // the said interface this returns an empty array reference.
-static auto GetIndexWithParams(Context& context, Parse::NodeId node_id,
-                               SemIR::TypeId self_id)
+static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
+                             SemIR::TypeId self_id)
     -> llvm::ArrayRef<SemIR::InstId> {
   auto index_with_interface =
       context.types().GetAs<SemIR::GenericInterfaceType>(
@@ -101,29 +101,30 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
 
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);
-      auto params =
-          GetIndexWithParams(context, node_id, class_info.self_type_id);
+      auto args = GetIndexWithArgs(context, node_id, class_info.self_type_id);
 
       // If the class does not implement the `IndexWith` interface, then return
       // an error.
-      if (params.empty()) {
+      if (args.empty()) {
         diagnose_invalid_index();
         context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
         return true;
       }
 
-      CARBON_CHECK(params.size() == 2,
+      CARBON_CHECK(args.size() == 2,
                    "IndexWith should have two generic constraints");
 
       auto op = Operator{
           .interface_name = "IndexWith",
-          .interface_args_ref = params,
+          .interface_args_ref = args,
           .op_name = "At",
       };
 
-      auto cast_index =
-          ConvertToValueOfType(context, node_id, index_inst_id,
-                               context.GetTypeIdForTypeInst(params[0]));
+      // The first argument of the `IndexWith` interface corresponds to the
+      // `SubscriptType`, so first cast `index_inst_id` to that type.
+      auto subscript_type_id = context.GetTypeIdForTypeInst(args[0]);
+      auto cast_index = ConvertToValueOfType(context, node_id, index_inst_id,
+                                             subscript_type_id);
 
       auto result = BuildBinaryOperator(context, node_id, op, operand_inst_id,
                                         cast_index);
