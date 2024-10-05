@@ -195,26 +195,28 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
+auto Context::NoteAbstractClass(SemIR::ClassId class_id,
+                                DiagnosticBuilder& builder) -> void {
+  const auto& class_info = classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                    "class was declared abstract here");
+  builder.Note(class_info.definition_id, ClassAbstractHere);
+}
+
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
-  if (class_info.is_defined()) {
-    CARBON_CHECK(
-        class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
-        "Class is not abstract");
-    CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
-                      "class was declared abstract here");
-    builder.Note(class_info.definition_id, ClassAbstractHere);
+  if (class_info.definition_id.is_valid()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "class is incomplete within its definition");
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
-    if (class_info.definition_id.is_valid()) {
-      CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                        "class is incomplete within its definition");
-      builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
-    } else {
-      CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                        "class was forward declared here");
-      builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
-    }
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "class was forward declared here");
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
   }
 }
 
@@ -1142,19 +1144,24 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
   if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
     return false;
   }
+
   if (!abstract_diagnoser) {
     return true;
   }
+
   if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = classes().Get(class_type->class_id);
-    if (class_info.inheritance_kind ==
+    if (class_info.inheritance_kind !=
         SemIR::Class::InheritanceKind::Abstract) {
-      auto builder = (*abstract_diagnoser)();
-      NoteIncompleteClass(class_type->class_id, builder);
-      builder.Emit();
-      return false;
+      return true;
     }
+
+    auto builder = (*abstract_diagnoser)();
+    NoteAbstractClass(class_type->class_id, builder);
+    builder.Emit();
+    return false;
   }
+
   return true;
 }
 

@@ -235,6 +235,10 @@ class Context {
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
+  // Adds a note to a diagnostic explaining that a class is abstract.
+  auto NoteAbstractClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
+      -> void;
+
   // Adds a note to a diagnostic explaining that an interface is not defined.
   auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                               DiagnosticBuilder& builder) -> void;

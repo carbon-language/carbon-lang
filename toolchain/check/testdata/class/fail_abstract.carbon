@@ -81,21 +81,22 @@ fn Make() -> Derived {
 }
 
 fn Return() -> Abstract {
+  var d: Derived;
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract`
-  // CHECK:STDERR:   return {.a = 1};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-76]]:1: note: class was declared abstract here
+  // CHECK:STDERR:   return d.base;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-77]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  return {.a = 1};
+  return d.base;
 }
 
 fn Access(d: Derived) -> (i32, i32) {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:16: error: forming value of abstract type `Abstract`
   // CHECK:STDERR:   return (d.d, d.base.a);
   // CHECK:STDERR:                ^~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-87]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-88]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -107,7 +108,7 @@ fn Var() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: Variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-99]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-100]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -115,7 +116,7 @@ fn Var() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+6]]:10: error: `let` binding has abstract type `Abstract`
   // CHECK:STDERR:   let l: Abstract = {};
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-107]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-108]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   let l: Abstract = {};
@@ -234,14 +235,14 @@ fn Var() {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.param: %Derived = param d, runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %int.make_type_32.loc94_27: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc94_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc94_35.1: %.17 = tuple_literal (%int.make_type_32.loc94_27, %int.make_type_32.loc94_32)
-// CHECK:STDOUT:     %.loc94_35.2: type = value_of_initializer %int.make_type_32.loc94_27 [template = i32]
-// CHECK:STDOUT:     %.loc94_35.3: type = converted %int.make_type_32.loc94_27, %.loc94_35.2 [template = i32]
-// CHECK:STDOUT:     %.loc94_35.4: type = value_of_initializer %int.make_type_32.loc94_32 [template = i32]
-// CHECK:STDOUT:     %.loc94_35.5: type = converted %int.make_type_32.loc94_32, %.loc94_35.4 [template = i32]
-// CHECK:STDOUT:     %.loc94_35.6: type = converted %.loc94_35.1, constants.%.18 [template = constants.%.18]
+// CHECK:STDOUT:     %int.make_type_32.loc95_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc95_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc95_35.1: %.17 = tuple_literal (%int.make_type_32.loc95_27, %int.make_type_32.loc95_32)
+// CHECK:STDOUT:     %.loc95_35.2: type = value_of_initializer %int.make_type_32.loc95_27 [template = i32]
+// CHECK:STDOUT:     %.loc95_35.3: type = converted %int.make_type_32.loc95_27, %.loc95_35.2 [template = i32]
+// CHECK:STDOUT:     %.loc95_35.4: type = value_of_initializer %int.make_type_32.loc95_32 [template = i32]
+// CHECK:STDOUT:     %.loc95_35.5: type = converted %int.make_type_32.loc95_32, %.loc95_35.4 [template = i32]
+// CHECK:STDOUT:     %.loc95_35.6: type = converted %.loc95_35.1, constants.%.18 [template = constants.%.18]
 // CHECK:STDOUT:     %return: ref %.18 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Var.decl: %Var.type = fn_decl @Var [template = constants.%Var] {} {}
@@ -321,31 +322,35 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Return() -> %return: %Abstract {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc91_16: i32 = int_literal 1 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc91_17: %.3 = struct_literal (%.loc91_16)
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:   %d.var: ref %Derived = var d
+// CHECK:STDOUT:   %d: ref %Derived = bind_name d, %d.var
+// CHECK:STDOUT:   %d.ref: ref %Derived = name_ref d, %d
+// CHECK:STDOUT:   %base.ref: %.7 = name_ref base, @Derived.%.loc66 [template = @Derived.%.loc66]
+// CHECK:STDOUT:   %.loc92: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: %Derived) -> %return: %.18 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref.loc102_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc102_12: %.8 = name_ref d, @Derived.%.loc68_8 [template = @Derived.%.loc68_8]
-// CHECK:STDOUT:   %.loc102_12.1: ref i32 = class_element_access %d.ref.loc102_11, element1
-// CHECK:STDOUT:   %.loc102_12.2: i32 = bind_value %.loc102_12.1
-// CHECK:STDOUT:   %d.ref.loc102_16: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc103_11: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc103_12: %.8 = name_ref d, @Derived.%.loc68_8 [template = @Derived.%.loc68_8]
+// CHECK:STDOUT:   %.loc103_12.1: ref i32 = class_element_access %d.ref.loc103_11, element1
+// CHECK:STDOUT:   %.loc103_12.2: i32 = bind_value %.loc103_12.1
+// CHECK:STDOUT:   %d.ref.loc103_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %.7 = name_ref base, @Derived.%.loc66 [template = @Derived.%.loc66]
-// CHECK:STDOUT:   %.loc102_17: ref %Abstract = class_element_access %d.ref.loc102_16, element0
-// CHECK:STDOUT:   %.loc102_24: <error> = tuple_literal (%.loc102_12.2, <error>)
+// CHECK:STDOUT:   %.loc103_17: ref %Abstract = class_element_access %d.ref.loc103_16, element0
+// CHECK:STDOUT:   %.loc103_24: <error> = tuple_literal (%.loc103_12.2, <error>)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Abstract.ref.loc114: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref.loc115: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %Abstract.ref.loc121: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc121: %.20 = struct_literal ()
+// CHECK:STDOUT:   %Abstract.ref.loc122: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %.loc122: %.20 = struct_literal ()
 // CHECK:STDOUT:   %l: <error> = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
