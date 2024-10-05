@@ -253,27 +253,27 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.7, %.8) [template]
-// CHECK:STDOUT:   %ImplicitAs.type: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %.9: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%.1 (%.9) = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.9 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.10: type = assoc_entity_type %.9, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %.12: type = interface_type @ImplicitAs, @ImplicitAs(%AdaptC) [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%AdaptC) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%AdaptC) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type %.12, %Convert.type.2 [template]
-// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.15: %.10 = assoc_entity element0, imports.%import_ref.7 [symbolic]
-// CHECK:STDOUT:   %.16: type = interface_type @ImplicitAs, @ImplicitAs(%C) [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.13: %.9 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.4: type = interface_type @ImplicitAs, @ImplicitAs(%C) [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert, @ImplicitAs(%C) [template]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.17: type = assoc_entity_type %.16, %Convert.type.3 [template]
-// CHECK:STDOUT:   %.18: %.17 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.14: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.3 [template]
+// CHECK:STDOUT:   %.15: %.14 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [template]
@@ -294,9 +294,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.2 (%.10) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.3 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.9) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.13)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
@@ -341,12 +341,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.9)]
-// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @ImplicitAs.%.1 (%.9), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.2 (constants.%.10)]
-// CHECK:STDOUT:   %.3: @ImplicitAs.%.2 (%.10) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.11)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.9)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.9) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.2 (constants.%.10)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -384,10 +384,10 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%.1 (%.9)) {
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %.1: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %.1 (constants.%.9)]
-// CHECK:STDOUT:   %Self: %.9 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
@@ -412,34 +412,34 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc24_18.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
-// CHECK:STDOUT:   %.loc24_18.2: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref.loc24: %.13 = name_ref Convert, %.loc24_18.2 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc24_18.3: %AdaptC = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %ImplicitAs.type.loc24: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %.loc24_18.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
+// CHECK:STDOUT:   %Convert.ref.loc24: %.11 = name_ref Convert, %.loc24_18.1 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc24_18.2: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %.loc33_13.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc33_13.2: %.17 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.18]
-// CHECK:STDOUT:   %Convert.ref.loc33: %.17 = name_ref Convert, %.loc33_13.2 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc33_13.3: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %ImplicitAs.type.loc33: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %.loc33_13.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
+// CHECK:STDOUT:   %Convert.ref.loc33: %.14 = name_ref Convert, %.loc33_13.1 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc33_13.2: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c: %C = bind_name c, <error>
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
 // CHECK:STDOUT:   %.loc46_22.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_22.1
-// CHECK:STDOUT:   %.loc46_24.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
-// CHECK:STDOUT:   %.loc46_24.2: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref.loc46: %.13 = name_ref Convert, %.loc46_24.2 [template = constants.%.14]
+// CHECK:STDOUT:   %ImplicitAs.type.loc46: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %.loc46_24.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
+// CHECK:STDOUT:   %Convert.ref.loc46: %.11 = name_ref Convert, %.loc46_24.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc46_22.2: ref %C = temporary %.loc46_22.1, %MakeC.call
-// CHECK:STDOUT:   %.loc46_24.3: %AdaptC = converted %MakeC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc46_24.2: %AdaptC = converted %MakeC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc54_22.1: ref %AdaptC = temporary_storage
 // CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc54_22.1
-// CHECK:STDOUT:   %.loc54_24.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc54_24.2: %.17 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.18]
-// CHECK:STDOUT:   %Convert.ref.loc54: %.17 = name_ref Convert, %.loc54_24.2 [template = constants.%.18]
+// CHECK:STDOUT:   %ImplicitAs.type.loc54: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %.loc54_24.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
+// CHECK:STDOUT:   %Convert.ref.loc54: %.14 = name_ref Convert, %.loc54_24.1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc54_22.2: ref %AdaptC = temporary %.loc54_22.1, %MakeAdaptC.call
-// CHECK:STDOUT:   %.loc54_24.3: %C = converted %MakeAdaptC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc54_24.2: %C = converted %MakeAdaptC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -458,7 +458,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -466,23 +466,23 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Dest => constants.%AdaptC
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.12
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.2 => constants.%.13
-// CHECK:STDOUT:   %.3 => constants.%.14
+// CHECK:STDOUT:   %.1 => constants.%.11
+// CHECK:STDOUT:   %.2 => constants.%.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%C) {
 // CHECK:STDOUT:   %Dest => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.16
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.3
 // CHECK:STDOUT:   %Convert => constants.%Convert.3
-// CHECK:STDOUT:   %.2 => constants.%.17
-// CHECK:STDOUT:   %.3 => constants.%.18
+// CHECK:STDOUT:   %.1 => constants.%.14
+// CHECK:STDOUT:   %.2 => constants.%.15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
