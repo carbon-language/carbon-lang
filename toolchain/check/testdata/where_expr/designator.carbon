@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/no_prelude/designator.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/designator.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/no_prelude/designator.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/designator.carbon
 
 // --- success.carbon
 
@@ -18,7 +18,7 @@ interface I {
 
 fn PeriodSelf(T:! I where .Self == ());
 
-fn PeriodMember(U:! I where .Member = {});
+fn PeriodMember(U:! I where .Member == ());
 
 fn TypeSelfImpls(V:! type where .Self impls I);
 
@@ -98,7 +98,6 @@ class D {
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %U: %I.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
@@ -108,13 +107,28 @@ class D {
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .PeriodSelf = %PeriodSelf.decl
 // CHECK:STDOUT:     .PeriodMember = %PeriodMember.decl
 // CHECK:STDOUT:     .TypeSelfImpls = %TypeSelfImpls.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [template = constants.%PeriodSelf] {
 // CHECK:STDOUT:     %T.patt: %I.type = symbolic_binding_pattern T, 0
@@ -136,9 +150,9 @@ class D {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc10_40: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc10_41: %.3 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type] {
-// CHECK:STDOUT:       requirement_rewrite %Member.ref, %.loc10_40
+// CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc10_41
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type = param U, runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc10: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
@@ -213,11 +227,26 @@ class D {
 // CHECK:STDOUT:   %PeriodMismatch: %PeriodMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .J = %J.decl
 // CHECK:STDOUT:     .PeriodMismatch = %PeriodMismatch.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [template = constants.%PeriodMismatch] {
 // CHECK:STDOUT:     %W.patt: %J.type = symbolic_binding_pattern W, 0
@@ -228,7 +257,7 @@ class D {
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12_44: %.4 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%J.type] {
-// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, %.loc12_44
+// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %J.type = param W, runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc12: %J.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
@@ -264,10 +293,25 @@ class D {
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {} {
 // CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
@@ -293,10 +337,25 @@ class D {
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [template = constants.%Bar] {} {
 // CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
@@ -322,10 +381,25 @@ class D {
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -358,10 +432,25 @@ class D {
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

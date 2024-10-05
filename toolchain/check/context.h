@@ -324,6 +324,12 @@ class Context {
                                                  : SemIR::TypeId::Error;
   }
 
+  // Returns whether `type_id` represents a facet type.
+  auto IsFacetType(SemIR::TypeId type_id) -> bool {
+    return type_id == SemIR::TypeId::TypeType ||
+           types().Is<SemIR::InterfaceType>(type_id);
+  }
+
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
   // Gets the type for the name of an associated entity.
