@@ -9,3 +9,10 @@ Cargo.toml
 package.json
 binding.gyp
 bindings
+.editorconfig
+.gitattributes
+Makefile
+Package.swift
+pyproject.toml
+setup.py
+go.mod
