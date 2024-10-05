@@ -30,6 +30,8 @@ fn Access(d: Derived) -> (i32, i32) {
   return (d.d, d.base.a);
 }
 
+abstract class AbstractDecl;
+
 // CHECK:STDOUT: --- fail_abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -59,6 +61,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [template]
 // CHECK:STDOUT:   %.18: type = ptr_type %.17 [template]
+// CHECK:STDOUT:   %AbstractDecl: type = class_type @AbstractDecl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,6 +86,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:     .Access = %Access.decl
+// CHECK:STDOUT:     .AbstractDecl = %AbstractDecl.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
@@ -107,6 +111,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc29_35.6: type = converted %.loc29_35.1, constants.%.17 [template = constants.%.17]
 // CHECK:STDOUT:     %return: ref %.17 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AbstractDecl.decl: type = class_decl @AbstractDecl [template = constants.%AbstractDecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
@@ -136,6 +141,8 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   .d = %.loc18_8
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @AbstractDecl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
