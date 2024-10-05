@@ -2,49 +2,62 @@
   "package": {
     "scope": "carbon",
     "prefix": "package",
-    "body": "package $fileNameWithoutExt",
+    "body": "impl library ${1:$fileNameWithoutExt}",
     "description": "Carbon package"
   },
   "Main Run function": {
     "scope": "carbon",
     "prefix": "Run",
-    "body": ["fn Run() -> i32 {", "\t$1", "\treturn 0;", "}"]
+    "body": [
+      "fn Run() -> i32 {",
+      "\t$1",
+      "\treturn 0;",
+      "}"
+    ]
   },
   "New Function": {
     "scope": "carbon",
     "prefix": "fn",
-    "body": ["fn $1($2) ->  $3 {", "\t$4", "}"]
+    "body": [
+      "fn $1($2) {",
+      "\t$3",
+      "}"
+    ]
   },
   "If statement": {
     "scope": "carbon",
     "prefix": "if",
-    "body": ["if ($1) {", "\t$2", "}"]
+    "body": [
+      "if ($1) {",
+      "\t$2",
+      "}"
+    ]
   },
   "Else if statement": {
     "scope": "carbon",
     "prefix": "elif",
-    "body": ["else if ($1) {", "\t$2", "}"]
+    "body": [
+      "else if ($1) {",
+      "\t$2",
+      "}"
+    ]
   },
   "For each loop with for": {
     "scope": "carbon",
     "prefix": "foreach",
-    "body": ["for (var $1: $2 in $3) {", "\t$4", "}"]
+    "body": [
+      "for (const $1: $2 in $3) {",
+      "\t$4",
+      "}"
+    ]
   },
   "Match case": {
     "scope": "carbon",
     "prefix": "match",
-    "body": ["match ($1) {", "\tcase ($2) => {$3}", "\tdefault => {$4}"]
-  },
-  "Class declaration": {
-    "scope": "carbon",
-    "prefix": "class",
     "body": [
-      "class $1 {",
-      "\tvar $2;",
-      "\tfn Make() -> Self {",
-      "\t\t$3",
-      "\t}",
-      "}"
+      "match ($1) {",
+      "\tcase ($2) => {$3}",
+      "\tdefault => {$4}"
     ]
   },
   "Extends Class": {

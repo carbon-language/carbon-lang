@@ -20,10 +20,6 @@
     "languages": [
       {
         "id": "carbon",
-        "icon": {
-          "dark": "favicon.png",
-          "light": "favicon.png"
-        },
         "aliases": [
           "Carbon"
         ],
@@ -49,7 +45,6 @@
   },
   "keywords": [
     "carbon",
-    "snippet",
     "snippets"
   ],
   "scripts": {
