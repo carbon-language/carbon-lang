@@ -30,12 +30,12 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %array: %.3 = tuple_value (%.5, %.5) [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 10 [template]
-// CHECK:STDOUT:   %.10: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Negate.type: type = interface_type @Negate [template]
+// CHECK:STDOUT:   %Self: %Negate.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type %.10, %Op.type [template]
-// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %Negate.type, %Op.type [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,9 +52,9 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%Negate.type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+79, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.11 = import_ref Core//prelude/operators/arithmetic, inst+96, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.4: %.10 = import_ref Core//prelude/operators/arithmetic, inst+96, loaded [template = constants.%.11]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
 // CHECK:STDOUT: }
@@ -89,8 +89,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(constants.%Self: %.10) {
-// CHECK:STDOUT:   %Self: %.10 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT: generic fn @Op(constants.%Self: %Negate.type) {
+// CHECK:STDOUT:   %Self: %Negate.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.%Self (%Self)]() -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
@@ -111,7 +111,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   %c.ref: ref %.3 = name_ref c, file.%c
 // CHECK:STDOUT:   %.loc15_17: i32 = int_literal 10 [template = constants.%.9]
-// CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.4 [template = constants.%.12]
+// CHECK:STDOUT:   %Op.ref: %.10 = name_ref Op, imports.%import_ref.4 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc15_19.1: ref i32 = array_index %c.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15_19.2: i32 = bind_value %.loc15_19.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_19.2

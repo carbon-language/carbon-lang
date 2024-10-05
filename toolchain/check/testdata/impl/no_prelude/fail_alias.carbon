@@ -27,13 +27,13 @@ impl AC as AI {}
 // CHECK:STDOUT: --- fail_alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: type = tuple_type () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,24 +43,24 @@ impl AC as AI {}
 // CHECK:STDOUT:     .AI = %AI
 // CHECK:STDOUT:     .AC = %AC
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %AI: type = bind_alias AI, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   %AI: type = bind_alias AI, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %AC: type = bind_alias AC, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %AC.ref.loc17: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc17: type = name_ref AI, file.%AI [template = constants.%.1]
+// CHECK:STDOUT:     %AI.ref.loc17: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %AC.ref.loc25: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc25: type = name_ref AI, file.%AI [template = constants.%.1]
+// CHECK:STDOUT:     %AI.ref.loc25: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -73,7 +73,7 @@ impl AC as AI {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
