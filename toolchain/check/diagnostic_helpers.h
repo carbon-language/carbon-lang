@@ -74,11 +74,11 @@ struct InstIdAsType {
   SemIR::InstId inst_id;
 };
 
-// A type expression, for rendering in a diagnostic. Like `InstIdAsType`, but the
-// type will not be enclosed in "`"s. Once we start including "aka" types for
-// sugared types, such annotations will also not be included for raw types. This
-// is intended for cases where the type is part of a larger syntactic construct
-// in a diagnostic, such as "redefinition of `impl {0} as {1}`".
+// A type expression, for rendering in a diagnostic. Like `InstIdAsType`, but
+// the type will not be enclosed in "`"s. Once we start including "aka" types
+// for sugared types, such annotations will also not be included for raw types.
+// This is intended for cases where the type is part of a larger syntactic
+// construct in a diagnostic, such as "redefinition of `impl {0} as {1}`".
 struct InstIdAsRawType {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
