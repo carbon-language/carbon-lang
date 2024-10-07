@@ -431,8 +431,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
 // constructing a generic based on it. Note this is updating the param
 // refs block, not the actual params block, so will not be directly
 // reflected in SemIR output.
-static auto ReplaceInstructionWithError(Context& /*context*/,  // FIXME
-                                        SemIR::InstId& inst_id) -> void {
+static auto ReplaceInstructionWithError(SemIR::InstId& inst_id) -> void {
   inst_id = SemIR::InstId::BuiltinError;
 }
 
@@ -443,20 +442,21 @@ auto RequireGenericParamsOnType(Context& context,
     return;
   }
   for (auto& inst_id : context.inst_blocks().Get(pattern_block_id)) {
-    auto name_id =
-        SemIR::Function::GetNameFromParamPatternId(context.sem_ir(), inst_id);
+    auto name_id = SemIR::Function::GetParamPatternInfoFromPatternId(
+                       context.sem_ir(), inst_id)
+                       .GetNameId(context.sem_ir());
     if (name_id == SemIR::NameId::SelfValue) {
       CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
                         "`self` parameter only allowed on functions");
       context.emitter().Emit(inst_id, SelfParameterNotAllowed);
 
-      ReplaceInstructionWithError(context, inst_id);
+      ReplaceInstructionWithError(inst_id);
     } else if (!context.constant_values().Get(inst_id).is_constant()) {
       CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                         "parameters of generic types must be constant");
       context.emitter().Emit(inst_id, GenericParamMustBeConstant);
 
-      ReplaceInstructionWithError(context, inst_id);
+      ReplaceInstructionWithError(inst_id);
     }
   }
 }
@@ -477,7 +477,7 @@ auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
           "implicit parameters of functions must be constant or `self`");
       context.emitter().Emit(inst_id, ImplictParamMustBeConstant);
 
-      ReplaceInstructionWithError(context, inst_id);
+      ReplaceInstructionWithError(inst_id);
     }
   }
 }

@@ -531,7 +531,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case InstKind::ParamPattern: {
         add_inst_name_id(
-            SemIR::Function::GetNameFromParamPatternId(sem_ir_, inst_id),
+            SemIR::Function::GetParamPatternInfoFromPatternId(sem_ir_, inst_id)
+                .GetNameId(sem_ir_),
             ".param_patt");
         break;
       }

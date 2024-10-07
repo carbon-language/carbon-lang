@@ -247,8 +247,9 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
-  if (SemIR::Function::GetNameFromParamPatternId(
-          context.sem_ir(), param_pattern_id) == SemIR::NameId::SelfValue) {
+  if (SemIR::Function::GetParamPatternInfoFromPatternId(context.sem_ir(),
+                                                        param_pattern_id)
+          .GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
     auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
         context.insts().Get(param_pattern_id).type_id());
     if (pointer_type) {

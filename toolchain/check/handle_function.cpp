@@ -97,32 +97,16 @@ static auto CheckFunctionSignature(Context& context,
     }
     auto param_pattern_inst = param_pattern.As<SemIR::ParamPattern>();
 
-    auto param_id = top_param_id;
-    auto param = context.insts().Get(param_id);
-
-    // FIXME: Use Function::GetParamFromParamRefId?
-    auto bind_name = param.TryAs<SemIR::AnyBindName>();
-    if (bind_name) {
-      param_id = bind_name->value_id;
-      param = context.insts().Get(param_id);
-    }
-
-    auto param_inst = param.TryAs<SemIR::Param>();
-    if (!param_inst) {
-      // Once we support more generalized patterns we will need to diagnose
-      // parameters with unsupported patterns.
-      context.TODO(param_id, "unexpected syntax for parameter");
-      // TODO: Also repair the param ID so downstream code doesn't need to deal
-      // with this.
-      continue;
-    }
+    auto param_info =
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), top_param_id);
 
     // If this is a runtime parameter, number it.
     // TODO: move this logic to pattern_match.cpp, and remove this function
     // (which is otherwise redundant).
-    if (bind_name && bind_name->kind == SemIR::BindName::Kind) {
-      param_inst->runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_id, *param_inst);
+    if (param_info.bind_name &&
+        param_info.bind_name->kind == SemIR::BindName::Kind) {
+      param_info.inst.runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param_info.inst_id, param_info.inst);
       param_pattern_inst.runtime_index = next_index;
       context.ReplaceInstBeforeConstantUse(param_pattern_id,
                                            param_pattern_inst);

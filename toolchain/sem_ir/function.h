@@ -64,18 +64,19 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // FIXME combine these functions
+  // Given an instruction from `param_patterns_id` or
+  // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
+  // corresponding entity name ID and runtime parameter index.
+  struct ParamPatternInfo {
+    EntityNameId entity_name_id;
+    SemIR::RuntimeParamIndex runtime_param_index;
 
-  // Given a parameter pattern instruction from `param_patterns_id` or
-  // `implicit_param_patterns_id`, returns the NameID of the parameter.
-  static auto GetNameFromParamPatternId(const File& sem_ir,
-                                        InstId param_pattern_id) -> NameId;
+    auto GetNameId(const File& sem_ir) -> NameId;
+  };
 
-  // Given a parameter pattern instruction from `param_patterns_id` or
-  // `implicit_param_patterns_id`, returns the runtime index of the parameter.
-  static auto GetRuntimeIndexFromParamPatternId(const File& sem_ir,
-                                                InstId param_pattern_id)
-      -> SemIR::RuntimeParamIndex;
+  static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
+                                               InstId param_pattern_id)
+      -> ParamPatternInfo;
 
   // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns a `ParamInfo` value with the

@@ -42,25 +42,13 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   return result;
 }
 
-auto Function::GetNameFromParamPatternId(const File& sem_ir,
-                                         InstId param_pattern_id) -> NameId {
-  auto param_inst = sem_ir.insts().Get(param_pattern_id);
-
-  if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
-    param_pattern_id = addr_pattern->inner_id;
-    param_inst = sem_ir.insts().Get(param_pattern_id);
-  }
-
-  param_inst =
-      sem_ir.insts().Get(param_inst.As<SemIR::ParamPattern>().subpattern_id);
-
-  auto binding_pattern = param_inst.As<AnyBindingPattern>();
-  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
+auto Function::ParamPatternInfo::GetNameId(const File& sem_ir) -> NameId {
+  return sem_ir.entity_names().Get(entity_name_id).name_id;
 }
 
-auto Function::GetRuntimeIndexFromParamPatternId(const File& sem_ir,
-                                                 InstId param_pattern_id)
-    -> SemIR::RuntimeParamIndex {
+auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
+                                                InstId param_pattern_id)
+    -> ParamPatternInfo {
   auto param_inst = sem_ir.insts().Get(param_pattern_id);
 
   if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
@@ -68,7 +56,12 @@ auto Function::GetRuntimeIndexFromParamPatternId(const File& sem_ir,
     param_inst = sem_ir.insts().Get(param_pattern_id);
   }
 
-  return param_inst.As<SemIR::ParamPattern>().runtime_index;
+  auto param_pattern_inst = param_inst.As<SemIR::ParamPattern>();
+  param_inst = sem_ir.insts().Get(param_pattern_inst.subpattern_id);
+
+  auto binding_pattern = param_inst.As<AnyBindingPattern>();
+  return {.entity_name_id = binding_pattern.entity_name_id,
+          .runtime_param_index = param_pattern_inst.runtime_index};
 }
 
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
@@ -79,6 +72,8 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   if (bind_name) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
+  } else {
+    CARBON_FATAL();
   }
   return {param_ref_id, ref.As<Param>(), bind_name};
 }
