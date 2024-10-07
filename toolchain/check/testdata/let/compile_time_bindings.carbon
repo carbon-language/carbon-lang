@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -30,7 +30,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -43,7 +43,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let a:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ class C {
     var c1: ((), ()) = c;
     var d1: ((), (), ()) = d;
   }
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let d:! ((), (), ()) = ((), (), ());
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,7 +69,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -122,7 +122,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class I {
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
@@ -134,11 +134,19 @@ class I {
   fn F() -> T;
 }
 
-// --- return_in_package_scope.carbon
+// --- fail_return_in_package_scope.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: let T:! type = i32;
+// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR:
 let T:! type = i32;
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression
+// CHECK:STDERR: fn F() -> T;
+// CHECK:STDERR:           ^
+// CHECK:STDERR:
 fn F() -> T;
 
 // --- fail_use_in_impl.carbon
@@ -148,7 +156,7 @@ library "[[@TEST_NAME]]";
 interface Empty {}
 
 impl i32 as Empty {
-  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error: semantics TODO: ``let` compile time binding in class or impl`
+  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
   let Zero:! i32 = 0;
@@ -853,13 +861,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> <error>;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_in_package_scope.carbon
+// CHECK:STDOUT: --- fail_return_in_package_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -887,30 +894,22 @@ impl i32 as Empty {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @__global_init.%T [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:     %return: ref @F.%T (%T) = var <return slot>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @__global_init.%T
+// CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@__global_init.%T: type) {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.%T (%T);
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F() -> <error>;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc4_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc4_19.2: type = converted %int.make_type_32, %.loc4_19.1 [template = i32]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %.loc4_19.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc8_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc8_19.2: type = converted %int.make_type_32, %.loc8_19.1 [template = i32]
+// CHECK:STDOUT:   %T: type = bind_name T, %.loc8_19.2
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_in_impl.carbon
