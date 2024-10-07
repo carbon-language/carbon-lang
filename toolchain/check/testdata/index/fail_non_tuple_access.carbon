@@ -23,10 +23,22 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %IndexWith.type: type = generic_interface_type @IndexWith [template]
+// CHECK:STDOUT:   %IndexWith: %IndexWith.type = struct_value () [template]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %Self.1: @IndexWith.%.1 (%.4) = bind_symbolic_name Self 2 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 2 [symbolic]
+// CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %At: %At.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %At.type [symbolic]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .IndexWith = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
@@ -37,6 +49,11 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %IndexWith.type = import_ref Core//prelude/operators/index, inst+7, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+35, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+27, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,10 +65,61 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type)]
+// CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type) = struct_value () [symbolic = %At (constants.%At)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @IndexWith.%.1 (%.4), @IndexWith.%At.type (%At.type) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.3: @IndexWith.%.2 (%.5) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.3 (constants.%.6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.2
+// CHECK:STDOUT:     .At = imports.%import_ref.3
+// CHECK:STDOUT:     witness = (imports.%import_ref.4)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_3: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_5: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @At(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%.1 (%.4)) {
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @At.%Self (%Self.2)](%subscript: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType, @At.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

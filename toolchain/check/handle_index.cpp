@@ -55,18 +55,49 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   return {};
 }
 
+static auto PerformIndex(Context& context, Parse::NodeId node_id,
+                         SemIR::InstId operand_inst_id,
+                         SemIR::TypeId operand_type_id,
+                         SemIR::InstId index_inst_id) -> SemIR::InstId {
+  auto args = GetIndexWithArgs(context, node_id, operand_type_id);
+
+  CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
+                    "type `{0}` does not support indexing", SemIR::TypeId);
+
+  // If the type does not implement the `IndexWith` interface, then return
+  // an error.
+  if (args.empty()) {
+    context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
+    return SemIR::InstId::BuiltinError;
+  }
+
+  CARBON_CHECK(args.size() == 2,
+               "IndexWith should have two generic constraints");
+
+  auto op = Operator{
+      .interface_name = "IndexWith",
+      .interface_args_ref = args,
+      .op_name = "At",
+  };
+
+  // The first argument of the `IndexWith` interface corresponds to the
+  // `SubscriptType`, so first cast `index_inst_id` to that type.
+  auto subscript_type_id = context.GetTypeIdForTypeInst(args[0]);
+  auto cast_index =
+      ConvertToValueOfType(context, node_id, index_inst_id, subscript_type_id);
+
+  auto result =
+      BuildBinaryOperator(context, node_id, op, operand_inst_id, cast_index);
+
+  return result;
+}
+
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
-
-  auto diagnose_invalid_index = [&]() {
-    CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                      "type `{0}` does not support indexing", SemIR::TypeId);
-    context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
-  };
 
   CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
@@ -99,45 +130,13 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       return true;
     }
 
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      auto class_info = context.classes().Get(class_type.class_id);
-      auto args = GetIndexWithArgs(context, node_id, class_info.self_type_id);
-
-      // If the class does not implement the `IndexWith` interface, then return
-      // an error.
-      if (args.empty()) {
-        diagnose_invalid_index();
-        context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
-        return true;
-      }
-
-      CARBON_CHECK(args.size() == 2,
-                   "IndexWith should have two generic constraints");
-
-      auto op = Operator{
-          .interface_name = "IndexWith",
-          .interface_args_ref = args,
-          .op_name = "At",
-      };
-
-      // The first argument of the `IndexWith` interface corresponds to the
-      // `SubscriptType`, so first cast `index_inst_id` to that type.
-      auto subscript_type_id = context.GetTypeIdForTypeInst(args[0]);
-      auto cast_index = ConvertToValueOfType(context, node_id, index_inst_id,
-                                             subscript_type_id);
-
-      auto result = BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                                        cast_index);
-
-      context.node_stack().Push(node_id, result);
-      return true;
-    }
-
     default: {
+      auto elem_id = SemIR::InstId::BuiltinError;
       if (operand_type_id != SemIR::TypeId::Error) {
-        diagnose_invalid_index();
+        elem_id = PerformIndex(context, node_id, operand_inst_id,
+                               operand_type_id, index_inst_id);
       }
-      context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+      context.node_stack().Push(node_id, elem_id);
       return true;
     }
   }

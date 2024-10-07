@@ -26,6 +26,19 @@ let s: SubscriptType = {};
 let c: C = {};
 let x: ElementType = c[s];
 
+// --- overloaded_builtin.carbon
+
+library "[[@TEST_NAME]]";
+
+impl (i32, i32) as Core.IndexWith(i32, i32) {
+  fn At[self: Self](subscript: i32) -> i32 {
+    return self.0;
+  }
+}
+
+let s: (i32, i32) = (1, 5);
+let e: i32 = s[0];
+
 // --- fail_invalid_subscript_type.carbon
 
 library "[[@TEST_NAME]]";
@@ -61,6 +74,7 @@ let c: C = {};
 // CHECK:STDERR: let x: i32 = c[0];
 // CHECK:STDERR:              ^~~~
 let x: i32 = c[0];
+
 
 // CHECK:STDOUT: --- overloaded_index.carbon
 // CHECK:STDOUT:
@@ -292,6 +306,228 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.1
 // CHECK:STDOUT:   %.1 => constants.%.7
 // CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- overloaded_builtin.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %IndexWith.type: type = generic_interface_type @IndexWith [template]
+// CHECK:STDOUT:   %IndexWith: %IndexWith.type = struct_value () [template]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %Self.1: @IndexWith.%.1 (%.4) = bind_symbolic_name Self 2 [symbolic]
+// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self 2 [symbolic]
+// CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %.4, %At.type.1 [symbolic]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %.7: type = interface_type @IndexWith, @IndexWith(i32, i32) [template]
+// CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
+// CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(i32, i32) [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %At.type.3 [template]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness (%At.2) [template]
+// CHECK:STDOUT:   %.11: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.13: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.14: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.13, %.14) [template]
+// CHECK:STDOUT:   %.15: %.5 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .IndexWith = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %IndexWith.type = import_ref Core//prelude/operators/index, inst+7, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.4: @IndexWith.%.2 (%.5) = import_ref Core//prelude/operators/index, inst+35, loaded [symbolic = @IndexWith.%.3 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.5: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+27, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/index, inst+27, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .s = @__global_init.%s
+// CHECK:STDOUT:     .e = @__global_init.%e
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %int.make_type_32.loc4_7: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc4_12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_15.1: %.2 = tuple_literal (%int.make_type_32.loc4_7, %int.make_type_32.loc4_12)
+// CHECK:STDOUT:     %.loc4_15.2: type = value_of_initializer %int.make_type_32.loc4_7 [template = i32]
+// CHECK:STDOUT:     %.loc4_15.3: type = converted %int.make_type_32.loc4_7, %.loc4_15.2 [template = i32]
+// CHECK:STDOUT:     %.loc4_15.4: type = value_of_initializer %int.make_type_32.loc4_12 [template = i32]
+// CHECK:STDOUT:     %.loc4_15.5: type = converted %int.make_type_32.loc4_12, %.loc4_15.4 [template = i32]
+// CHECK:STDOUT:     %.loc4_15.6: type = converted %.loc4_15.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type = name_ref IndexWith, imports.%import_ref.2 [template = constants.%IndexWith]
+// CHECK:STDOUT:     %int.make_type_32.loc4_35: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc4_40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_34.1: type = value_of_initializer %int.make_type_32.loc4_35 [template = i32]
+// CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_35, %.loc4_34.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_34.3: type = value_of_initializer %int.make_type_32.loc4_40 [template = i32]
+// CHECK:STDOUT:     %.loc4_34.4: type = converted %int.make_type_32.loc4_40, %.loc4_34.3 [template = i32]
+// CHECK:STDOUT:     %.loc4_34.5: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%.7]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int.make_type_32.loc10_9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc10_14: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc10_17.1: %.2 = tuple_literal (%int.make_type_32.loc10_9, %int.make_type_32.loc10_14)
+// CHECK:STDOUT:   %.loc10_17.2: type = value_of_initializer %int.make_type_32.loc10_9 [template = i32]
+// CHECK:STDOUT:   %.loc10_17.3: type = converted %int.make_type_32.loc10_9, %.loc10_17.2 [template = i32]
+// CHECK:STDOUT:   %.loc10_17.4: type = value_of_initializer %int.make_type_32.loc10_14 [template = i32]
+// CHECK:STDOUT:   %.loc10_17.5: type = converted %int.make_type_32.loc10_14, %.loc10_17.4 [template = i32]
+// CHECK:STDOUT:   %.loc10_17.6: type = converted %.loc10_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc18_8.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
+// CHECK:STDOUT:   %.loc18_8.2: type = converted %int.make_type_32.loc18, %.loc18_8.1 [template = i32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type.1)]
+// CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @IndexWith.%.1 (%.4), @IndexWith.%At.type (%At.type.1) [symbolic = %.2 (constants.%.5)]
+// CHECK:STDOUT:   %.3: @IndexWith.%.2 (%.5) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     .At = imports.%import_ref.4
+// CHECK:STDOUT:     witness = (imports.%import_ref.5)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.3 as %.7 {
+// CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %self.loc5_9.1: %.3 = param self, runtime_param0
+// CHECK:STDOUT:     %self.loc5_9.2: %.3 = bind_name self, %self.loc5_9.1
+// CHECK:STDOUT:     %int.make_type_32.loc5_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc5_32.1: type = value_of_initializer %int.make_type_32.loc5_32 [template = i32]
+// CHECK:STDOUT:     %.loc5_32.2: type = converted %int.make_type_32.loc5_32, %.loc5_32.1 [template = i32]
+// CHECK:STDOUT:     %subscript.loc5_21.1: i32 = param subscript, runtime_param1
+// CHECK:STDOUT:     %subscript.loc5_21.2: i32 = bind_name subscript, %subscript.loc5_21.1
+// CHECK:STDOUT:     %int.make_type_32.loc5_40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc5_40.1: type = value_of_initializer %int.make_type_32.loc5_40 [template = i32]
+// CHECK:STDOUT:     %.loc5_40.2: type = converted %int.make_type_32.loc5_40, %.loc5_40.1 [template = i32]
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc4: <witness> = interface_witness (%At.decl) [template = constants.%.10]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .At = %At.decl
+// CHECK:STDOUT:   witness = %.loc4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @At.1(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%.1 (%.4)) {
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self: @At.1.%Self (%Self.2)](%subscript: @At.1.%SubscriptType (%SubscriptType)) -> @At.1.%ElementType (%ElementType);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @At.2[@impl.%self.loc5_9.2: %.3](@impl.%subscript.loc5_21.2: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %.3 = name_ref self, @impl.%self.loc5_9.2
+// CHECK:STDOUT:   %.loc6_17: i32 = int_literal 0 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc6_16: i32 = tuple_access %self.ref, element0
+// CHECK:STDOUT:   return %.loc6_16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_22: i32 = int_literal 1 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc10_25: i32 = int_literal 5 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc10_26: %.3 = tuple_literal (%.loc10_22, %.loc10_25)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc10_22, %.loc10_25) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc10_27: %.3 = converted %.loc10_26, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %s: %.3 = bind_name s, %.loc10_27
+// CHECK:STDOUT:   %s.ref: %.3 = name_ref s, %s
+// CHECK:STDOUT:   %.loc18_16: i32 = int_literal 0 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc18_17.1: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_17.2: %.8 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.9]
+// CHECK:STDOUT:   %At.ref: %.8 = name_ref At, %.loc18_17.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18_17.3: %At.type.3 = interface_witness_access @impl.%.loc4, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %.loc18_17.4: <bound method> = bound_method %s.ref, %.loc18_17.3
+// CHECK:STDOUT:   %At.call: init i32 = call %.loc18_17.4(%s.ref, %.loc18_16)
+// CHECK:STDOUT:   %.loc18_18.1: i32 = value_of_initializer %At.call
+// CHECK:STDOUT:   %.loc18_18.2: i32 = converted %At.call, %.loc18_18.1
+// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc18_18.2
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType, @At.1.%ElementType) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {
+// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(i32, i32) {
+// CHECK:STDOUT:   %SubscriptType => i32
+// CHECK:STDOUT:   %ElementType => i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %At.type => constants.%At.type.3
+// CHECK:STDOUT:   %At => constants.%At.3
+// CHECK:STDOUT:   %.2 => constants.%.8
+// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @At.1(i32, i32, constants.%.3) {
+// CHECK:STDOUT:   %SubscriptType => i32
+// CHECK:STDOUT:   %ElementType => i32
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %Self => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_subscript_type.carbon
