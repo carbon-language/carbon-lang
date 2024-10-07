@@ -219,11 +219,9 @@ auto HandleParseNode(Context& context,
   bool is_generic = true;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
-    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
-    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-        !scope_inst.Is<SemIR::FunctionDecl>()) {
-      context.TODO(node_id,
-                   "`let` compile time binding outside function or interface");
+    if (context.GetCurrentScopeAs<SemIR::ClassDecl>() ||
+        context.GetCurrentScopeAs<SemIR::ImplDecl>()) {
+      context.TODO(node_id, "`let` compile time binding in class or impl");
       is_generic = false;
     }
   }
