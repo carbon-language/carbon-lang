@@ -8,6 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_modifiers.carbon
 
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:9: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: private abstract private class DuplicatePrivate;
+// CHECK:STDERR:         ^~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: error: `private` repeated on declaration
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR:                  ^~~~~~~
@@ -26,6 +30,10 @@ private abstract private class DuplicatePrivate;
 // CHECK:STDERR:
 private base protected class TwoAccess {}
 
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: abstract abstract class TwoAbstract;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `abstract` repeated on declaration
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR:          ^~~~~~~~
@@ -52,6 +60,10 @@ abstract abstract class TwoAbstract;
 // CHECK:STDERR:
 protected virtual base class Virtual {}
 
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: abstract protected class WrongOrder;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `protected` must appear before `abstract`
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR:          ^~~~~~~~~
@@ -141,7 +153,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAccess {
-// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc31: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TwoAccess
@@ -150,7 +162,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
-// CHECK:STDOUT:   %.loc53: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc61: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Virtual
@@ -159,7 +171,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:   %.loc71: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc83: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
@@ -168,7 +180,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @AbstractWithDefinition {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
-// CHECK:STDOUT:   %.loc80: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc92: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition

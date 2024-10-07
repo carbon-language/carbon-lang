@@ -40,20 +40,21 @@ abstract class B {}
 
 library "[[@TEST_NAME]]";
 
-base class C;
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration
 // CHECK:STDERR: base class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR:
+base class C;
 class C {}
 
 // --- fail_base_to_abstract.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration
+// CHECK:STDERR: base class D;
+// CHECK:STDERR: ^~~~
+// CHECK:STDERR:
 base class D;
 // CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: abstract class D {}
@@ -68,20 +69,21 @@ abstract class D {}
 
 library "[[@TEST_NAME]]";
 
-abstract class E;
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: class E {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` declaration
 // CHECK:STDERR: abstract class E;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
+abstract class E;
 class E {}
 
 // --- fail_abstract_to_base.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: abstract class F;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract class F;
 // CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: class redeclared with different inheritance kind
 // CHECK:STDERR: base class F {}
@@ -191,15 +193,15 @@ base class F {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .C = %C.decl.loc4
+// CHECK:STDOUT:     .C = %C.decl.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc8: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -229,15 +231,15 @@ base class F {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .D = %D.decl.loc4
+// CHECK:STDOUT:     .D = %D.decl.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %D.decl.loc4: type = class_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc12: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc8: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc16: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -267,15 +269,15 @@ base class F {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .E = %E.decl.loc4
+// CHECK:STDOUT:     .E = %E.decl.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %E.decl.loc4: type = class_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %E.decl.loc12: type = class_decl @E [template = constants.%E] {} {}
+// CHECK:STDOUT:   %E.decl.loc8: type = class_decl @E [template = constants.%E] {} {}
+// CHECK:STDOUT:   %E.decl.loc9: type = class_decl @E [template = constants.%E] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
@@ -305,15 +307,15 @@ base class F {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .F = %F.decl.loc4
+// CHECK:STDOUT:     .F = %F.decl.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl.loc4: type = class_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc11: type = class_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc8: type = class_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: type = class_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @F {
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%F

@@ -195,8 +195,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Class>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Class | KeywordModifierSet::Access |
-                           KeywordModifierSet::Extern);
+                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
+                           (is_definition ? KeywordModifierSet::Class
+                                          : KeywordModifierSet::None));
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
 

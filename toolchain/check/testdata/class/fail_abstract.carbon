@@ -20,9 +20,10 @@ class Derived {
 
 fn Make() -> Derived {
   // TODO: This should be valid, and should construct an instance of `partial Abstract` as the base.
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:19: error: cannot construct instance of abstract class; consider using `partial Abstract` instead
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+4]]:19: error: cannot construct instance of abstract class; consider using `partial Abstract` instead
   // CHECK:STDERR:   return {.base = {.a = 1}, .d = 7};
   // CHECK:STDERR:                   ^~~~~~~~
+  // CHECK:STDERR:
   return {.base = {.a = 1}, .d = 7};
 }
 
@@ -30,6 +31,9 @@ fn Access(d: Derived) -> (i32, i32) {
   return (d.d, d.base.a);
 }
 
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: abstract class AbstractDecl;
+// CHECK:STDERR: ^~~~~~~~
 abstract class AbstractDecl;
 
 // CHECK:STDOUT: --- fail_abstract.carbon
@@ -101,14 +105,14 @@ abstract class AbstractDecl;
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.param: %Derived = param d, runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %int.make_type_32.loc29_27: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc29_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc29_35.1: %.16 = tuple_literal (%int.make_type_32.loc29_27, %int.make_type_32.loc29_32)
-// CHECK:STDOUT:     %.loc29_35.2: type = value_of_initializer %int.make_type_32.loc29_27 [template = i32]
-// CHECK:STDOUT:     %.loc29_35.3: type = converted %int.make_type_32.loc29_27, %.loc29_35.2 [template = i32]
-// CHECK:STDOUT:     %.loc29_35.4: type = value_of_initializer %int.make_type_32.loc29_32 [template = i32]
-// CHECK:STDOUT:     %.loc29_35.5: type = converted %int.make_type_32.loc29_32, %.loc29_35.4 [template = i32]
-// CHECK:STDOUT:     %.loc29_35.6: type = converted %.loc29_35.1, constants.%.17 [template = constants.%.17]
+// CHECK:STDOUT:     %int.make_type_32.loc30_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc30_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc30_35.1: %.16 = tuple_literal (%int.make_type_32.loc30_27, %int.make_type_32.loc30_32)
+// CHECK:STDOUT:     %.loc30_35.2: type = value_of_initializer %int.make_type_32.loc30_27 [template = i32]
+// CHECK:STDOUT:     %.loc30_35.3: type = converted %int.make_type_32.loc30_27, %.loc30_35.2 [template = i32]
+// CHECK:STDOUT:     %.loc30_35.4: type = value_of_initializer %int.make_type_32.loc30_32 [template = i32]
+// CHECK:STDOUT:     %.loc30_35.5: type = converted %int.make_type_32.loc30_32, %.loc30_35.4 [template = i32]
+// CHECK:STDOUT:     %.loc30_35.6: type = converted %.loc30_35.1, constants.%.17 [template = constants.%.17]
 // CHECK:STDOUT:     %return: ref %.17 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AbstractDecl.decl: type = class_decl @AbstractDecl [template = constants.%AbstractDecl] {} {}
@@ -148,33 +152,33 @@ abstract class AbstractDecl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc26_25: i32 = int_literal 1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc26_26: %.3 = struct_literal (%.loc26_25)
-// CHECK:STDOUT:   %.loc26_34: i32 = int_literal 7 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc26_35: %.15 = struct_literal (%.loc26_26, %.loc26_34)
+// CHECK:STDOUT:   %.loc27_25: i32 = int_literal 1 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc27_26: %.3 = struct_literal (%.loc27_25)
+// CHECK:STDOUT:   %.loc27_34: i32 = int_literal 7 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc27_35: %.15 = struct_literal (%.loc27_26, %.loc27_34)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: %Derived) -> %return: %.17 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref.loc30_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc30_12: %.7 = name_ref d, @Derived.%.loc18_8 [template = @Derived.%.loc18_8]
-// CHECK:STDOUT:   %.loc30_12.1: ref i32 = class_element_access %d.ref.loc30_11, element1
-// CHECK:STDOUT:   %.loc30_12.2: i32 = bind_value %.loc30_12.1
-// CHECK:STDOUT:   %d.ref.loc30_16: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc31_11: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc31_12: %.7 = name_ref d, @Derived.%.loc18_8 [template = @Derived.%.loc18_8]
+// CHECK:STDOUT:   %.loc31_12.1: ref i32 = class_element_access %d.ref.loc31_11, element1
+// CHECK:STDOUT:   %.loc31_12.2: i32 = bind_value %.loc31_12.1
+// CHECK:STDOUT:   %d.ref.loc31_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %.6 = name_ref base, @Derived.%.loc16 [template = @Derived.%.loc16]
-// CHECK:STDOUT:   %.loc30_17.1: ref %Abstract = class_element_access %d.ref.loc30_16, element0
-// CHECK:STDOUT:   %.loc30_17.2: %Abstract = bind_value %.loc30_17.1
+// CHECK:STDOUT:   %.loc31_17.1: ref %Abstract = class_element_access %d.ref.loc31_16, element0
+// CHECK:STDOUT:   %.loc31_17.2: %Abstract = bind_value %.loc31_17.1
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Abstract.%.loc12_8 [template = @Abstract.%.loc12_8]
-// CHECK:STDOUT:   %.loc30_22.1: ref i32 = class_element_access %.loc30_17.2, element0
-// CHECK:STDOUT:   %.loc30_22.2: i32 = bind_value %.loc30_22.1
-// CHECK:STDOUT:   %.loc30_24.1: %.17 = tuple_literal (%.loc30_12.2, %.loc30_22.2)
-// CHECK:STDOUT:   %.loc30_24.2: ref i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc30_24.3: init i32 = initialize_from %.loc30_12.2 to %.loc30_24.2
-// CHECK:STDOUT:   %.loc30_24.4: ref i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc30_24.5: init i32 = initialize_from %.loc30_22.2 to %.loc30_24.4
-// CHECK:STDOUT:   %.loc30_24.6: init %.17 = tuple_init (%.loc30_24.3, %.loc30_24.5) to %return
-// CHECK:STDOUT:   %.loc30_25: init %.17 = converted %.loc30_24.1, %.loc30_24.6
-// CHECK:STDOUT:   return %.loc30_25 to %return
+// CHECK:STDOUT:   %.loc31_22.1: ref i32 = class_element_access %.loc31_17.2, element0
+// CHECK:STDOUT:   %.loc31_22.2: i32 = bind_value %.loc31_22.1
+// CHECK:STDOUT:   %.loc31_24.1: %.17 = tuple_literal (%.loc31_12.2, %.loc31_22.2)
+// CHECK:STDOUT:   %.loc31_24.2: ref i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc31_24.3: init i32 = initialize_from %.loc31_12.2 to %.loc31_24.2
+// CHECK:STDOUT:   %.loc31_24.4: ref i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc31_24.5: init i32 = initialize_from %.loc31_22.2 to %.loc31_24.4
+// CHECK:STDOUT:   %.loc31_24.6: init %.17 = tuple_init (%.loc31_24.3, %.loc31_24.5) to %return
+// CHECK:STDOUT:   %.loc31_25: init %.17 = converted %.loc31_24.1, %.loc31_24.6
+// CHECK:STDOUT:   return %.loc31_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
