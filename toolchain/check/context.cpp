@@ -150,20 +150,6 @@ auto Context::CheckCompatibleImportedNodeKind(
       kind, imported_kind);
 }
 
-auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
-  FinishInst(inst_id, loc_id_and_inst.inst);
-  return inst_id;
-}
-
-auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-  inst_block_stack_.AddInstId(inst_id);
-  return inst_id;
-}
-
 auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
@@ -177,20 +163,6 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
   auto inst_id = AddPlaceholderInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
-}
-
-auto Context::AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-  pattern_block_stack_.AddInstId(inst_id);
-  return inst_id;
-}
-
-auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
-    -> SemIR::ConstantId {
-  auto const_id = constants().GetOrAdd(inst, is_symbolic);
-  CARBON_VLOG("AddConstant: {0}\n", inst);
-  return const_id;
 }
 
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
