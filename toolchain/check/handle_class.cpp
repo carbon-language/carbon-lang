@@ -486,7 +486,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
         return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
                                        base_type_id);
       },
-      std::nullopt);
+      nullptr);
 
   if (base_type_id == SemIR::TypeId::Error) {
     return BaseInfo::Error;

@@ -93,10 +93,11 @@ fn Return() -> Abstract {
 }
 
 fn Access(d: Derived) -> (i32, i32) {
+  // TODO: This should be valid - not sure how to differentiate this from the `Param(*p)` call above, though.
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:16: error: forming value of abstract type `Abstract`
   // CHECK:STDERR:   return (d.d, d.base.a);
   // CHECK:STDERR:                ^~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-88]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-89]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -108,7 +109,7 @@ fn Var() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: Variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-100]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-101]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -116,7 +117,7 @@ fn Var() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+6]]:10: error: `let` binding has abstract type `Abstract`
   // CHECK:STDERR:   let l: Abstract = {};
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-108]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-109]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   let l: Abstract = {};
@@ -333,24 +334,24 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: %Derived) -> %return: %.18 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref.loc103_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc103_12: %.8 = name_ref d, @Derived.%.loc68_8 [template = @Derived.%.loc68_8]
-// CHECK:STDOUT:   %.loc103_12.1: ref i32 = class_element_access %d.ref.loc103_11, element1
-// CHECK:STDOUT:   %.loc103_12.2: i32 = bind_value %.loc103_12.1
-// CHECK:STDOUT:   %d.ref.loc103_16: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc104_11: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc104_12: %.8 = name_ref d, @Derived.%.loc68_8 [template = @Derived.%.loc68_8]
+// CHECK:STDOUT:   %.loc104_12.1: ref i32 = class_element_access %d.ref.loc104_11, element1
+// CHECK:STDOUT:   %.loc104_12.2: i32 = bind_value %.loc104_12.1
+// CHECK:STDOUT:   %d.ref.loc104_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %.7 = name_ref base, @Derived.%.loc66 [template = @Derived.%.loc66]
-// CHECK:STDOUT:   %.loc103_17: ref %Abstract = class_element_access %d.ref.loc103_16, element0
-// CHECK:STDOUT:   %.loc103_24: <error> = tuple_literal (%.loc103_12.2, <error>)
+// CHECK:STDOUT:   %.loc104_17: ref %Abstract = class_element_access %d.ref.loc104_16, element0
+// CHECK:STDOUT:   %.loc104_24: <error> = tuple_literal (%.loc104_12.2, <error>)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Abstract.ref.loc115: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref.loc116: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %Abstract.ref.loc122: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc122: %.20 = struct_literal ()
+// CHECK:STDOUT:   %Abstract.ref.loc123: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %.loc123: %.20 = struct_literal ()
 // CHECK:STDOUT:   %l: <error> = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

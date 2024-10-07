@@ -1156,7 +1156,7 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
       return true;
     }
 
-    auto builder = (*abstract_diagnoser)();
+    auto builder = abstract_diagnoser();
     NoteAbstractClass(class_type->class_id, builder);
     builder.Emit();
     return false;
@@ -1167,7 +1167,6 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,
                               BuildDiagnosticFn diagnoser) -> bool {
-    -> bool {
   if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
   }

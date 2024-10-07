@@ -371,9 +371,9 @@ static auto HandleFunctionDefinitionAfterSignature(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type `{0}` in function definition",
               SemIR::TypeId);
-          return context.emitter().Build(param_info_inst_id,
+          return context.emitter().Build(param_info.inst_id,
                                          IncompleteTypeInFunctionParam,
-                                         parami_info.inst.type_id);
+                                         param_info.inst.type_id);
         },
         [&] {
           CARBON_DIAGNOSTIC(
