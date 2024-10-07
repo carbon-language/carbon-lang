@@ -177,7 +177,7 @@ static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
 // Given a type and an interface, searches for an impl that describes how that
 // type implements that interface, and returns the corresponding witness.
 // Returns an invalid InstId if no matching impl is found.
-static auto LookupInterfaceWitness(Context& context,
+static auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId type_const_id,
                                    SemIR::ConstantId interface_const_id)
     -> SemIR::InstId {
@@ -187,8 +187,8 @@ static auto LookupInterfaceWitness(Context& context,
   for (const auto& impl : context.impls().array_ref()) {
     auto specific_id = SemIR::SpecificId::Invalid;
     if (impl.generic_id.is_valid()) {
-      specific_id =
-          DeduceImplArguments(context, impl, type_const_id, interface_const_id);
+      specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
+                                        interface_const_id);
       if (!specific_id.is_valid()) {
         continue;
       }
@@ -229,8 +229,9 @@ static auto PerformImplLookup(
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
   auto& interface = context.interfaces().Get(interface_type.interface_id);
-  auto witness_id = LookupInterfaceWitness(
-      context, type_const_id, assoc_type.interface_type_id.AsConstantId());
+  auto witness_id =
+      LookupInterfaceWitness(context, loc_id, type_const_id,
+                             assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.is_valid()) {
     if (missing_impl_diagnoser) {
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
