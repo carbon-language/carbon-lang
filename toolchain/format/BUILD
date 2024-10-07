@@ -18,6 +18,7 @@ cc_library(
     deps = [
         "//common:ostream",
         "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
 )

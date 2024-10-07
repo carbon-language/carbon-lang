@@ -31,23 +31,15 @@ class C {
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT:
 // CHECK:STDOUT: // A comment
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn F ( ) { }
+// CHECK:STDOUT: fn F () {}
 // CHECK:STDOUT: // Another comment
-// CHECK:STDOUT:
-// CHECK:STDOUT:
 // CHECK:STDOUT: // Block
 // CHECK:STDOUT:   // comment
-// CHECK:STDOUT:
-// CHECK:STDOUT:  class C {
-// CHECK:STDOUT: // Internal comment
-// CHECK:STDOUT:
-// CHECK:STDOUT:  }
+// CHECK:STDOUT: class C {
+// CHECK:STDOUT:   // Internal comment
+// CHECK:STDOUT: }
 // CHECK:STDOUT: // Another
 // CHECK:STDOUT:   // Block
 // CHECK:STDOUT:   //
 // CHECK:STDOUT:   // Comment
-// CHECK:STDOUT:
-// CHECK:STDOUT:
