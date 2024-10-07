@@ -51,7 +51,7 @@ struct TypedInt {
 };
 
 // A type value for rendering in a diagnostic without enclosing "`"s. See
-// InstIdAsRawType for details.
+// `InstIdAsRawType` for details.
 struct TypeIdAsRawType {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
@@ -74,7 +74,7 @@ struct InstIdAsType {
   SemIR::InstId inst_id;
 };
 
-// A type expression, for rendering in a diagnostic. Like InstIdAsType, but the
+// A type expression, for rendering in a diagnostic. Like `InstIdAsType`, but the
 // type will not be enclosed in "`"s. Once we start including "aka" types for
 // sugared types, such annotations will also not be included for raw types. This
 // is intended for cases where the type is part of a larger syntactic construct
@@ -89,9 +89,9 @@ struct InstIdAsRawType {
 };
 
 // An expression whose type should be rendered in a diagnostic, including
-// enclosing "`"s. This should be used instead of TypeId as a diagnostic
+// enclosing "`"s. This should be used instead of `TypeId` as a diagnostic
 // argument wherever possible, because we should eventually be able to produce a
-// sugared type name in this case, whereas a TypeId will render as a canonical
+// sugared type name in this case, whereas a `TypeId` will render as a canonical
 // type.
 struct InstIdAsTypeOfExpr {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
