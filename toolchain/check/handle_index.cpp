@@ -65,12 +65,11 @@ static auto PerformIndex(Context& context, Parse::NodeId node_id,
                          SemIR::InstId index_inst_id) -> SemIR::InstId {
   auto args = GetIndexWithArgs(context, node_id, operand_type_id);
 
-  CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                    "type `{0}` does not support indexing", SemIR::TypeId);
-
   // If the type does not implement the `IndexWith` interface, then return
   // an error.
   if (args.empty()) {
+    CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
+                      "type `{0}` does not support indexing", SemIR::TypeId);
     context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
     return SemIR::InstId::BuiltinError;
   }
