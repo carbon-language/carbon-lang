@@ -219,12 +219,20 @@ auto HandleParseNode(Context& context,
   bool is_generic = true;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
-    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
-    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-        !scope_inst.Is<SemIR::FunctionDecl>()) {
-      context.TODO(node_id,
-                   "`let` compile time binding outside function or interface");
-      is_generic = false;
+    // Disallow `let` outside of function and interface definitions.
+    // TODO: find a less brittle way of doing this. An invalid scope_inst_id
+    // can represent a block scope, but is also used for other kinds of scopes
+    // that aren't necessarily part of an interface or function decl.
+    auto scope_inst_id = context.scope_stack().PeekInstId();
+    if (scope_inst_id.is_valid()) {
+      auto scope_inst = context.insts().Get(scope_inst_id);
+      if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
+          !scope_inst.Is<SemIR::FunctionDecl>()) {
+        context.TODO(
+            node_id,
+            "`let` compile time binding outside function or interface");
+        is_generic = false;
+      }
     }
   }
 
