@@ -12,4 +12,6 @@
 
 fn F(x: i32) -> i32 { return x; }
 
+// --- AUTOUPDATE-SPLIT
+
 // CHECK:STDOUT: fn F ( x : i32 ) -> i32 { return x ; }

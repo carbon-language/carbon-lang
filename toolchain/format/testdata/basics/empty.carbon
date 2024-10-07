@@ -9,5 +9,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/format/testdata/basics/empty.carbon
 
 // --- test.carbon
+// --- AUTOUPDATE-SPLIT
 
 // CHECK:STDOUT:
