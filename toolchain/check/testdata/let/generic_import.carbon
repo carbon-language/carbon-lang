@@ -8,26 +8,36 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/generic_import.carbon
 
-// --- implicit.carbon
+// --- fail_implicit.carbon
 
 package Implicit;
 
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: let T:! type = i32;
+// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR:
 let T:! type = i32;
 
-// --- implicit.impl.carbon
+// --- fail_implicit.impl.carbon
 
 impl package Implicit;
 
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression
+// CHECK:STDERR: var a: T*;
+// CHECK:STDERR:        ^~
+// CHECK:STDERR:
 var a: T*;
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression
+// CHECK:STDERR: var b: T = *a;
+// CHECK:STDERR:        ^
 var b: T = *a;
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,21 +69,16 @@ var b: T = *a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc4_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc4_19.2: type = converted %int.make_type_32, %.loc4_19.1 [template = i32]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, %.loc4_19.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc8_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc8_19.2: type = converted %int.make_type_32, %.loc8_19.1 [template = i32]
+// CHECK:STDOUT:   %T: type = bind_name T, %.loc8_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
-// CHECK:STDOUT: }
+// CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, inst+3, loaded [symbolic = constants.%T]
+// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, inst+3, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -97,22 +102,20 @@ var b: T = *a;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %T.ref.loc4: type = name_ref T, imports.%import_ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc4: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %T.ref.loc5: type = name_ref T, imports.%import_ref [symbolic = constants.%T]
-// CHECK:STDOUT:   %b.var: ref %T = var b
-// CHECK:STDOUT:   %b: ref %T = bind_name b, %b.var
+// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:   %.loc8: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:   %b.var: ref <error> = var b
+// CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: ref %.1 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc5_13: %.1 = bind_value %a.ref
-// CHECK:STDOUT:   %.loc5_12.1: ref %T = deref %.loc5_13
-// CHECK:STDOUT:   %.loc5_12.2: %T = bind_value %.loc5_12.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc5_12.2
+// CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a
+// CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
+// CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,7 +77,7 @@ fn Run() {
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -119,12 +119,12 @@ fn Run() {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B1.decl: %B1.type = fn_decl @B1 [template = constants.%B1] {}
+// CHECK:STDOUT:   %B1.decl: %B1.type = fn_decl @B1 [template = constants.%B1] {} {}
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B2.decl: %B2.type = fn_decl @B2 [template = constants.%B2] {}
+// CHECK:STDOUT:   %B2.decl: %B2.type = fn_decl @B2 [template = constants.%B2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B1() {
@@ -191,8 +191,8 @@ fn Run() {
 // CHECK:STDOUT:     .B2 = imports.%import_ref.4
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {}
+// CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {

@@ -12,7 +12,7 @@ fn F() {}
 // CHECK:STDERR: fail_redef.carbon:[[@LINE+6]]:1: error: redefinition of `fn F`
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: previously defined here
+// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: note: previously defined here
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 fn F() {}
@@ -29,8 +29,8 @@ fn F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl.loc11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc11: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc18: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc11: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc18: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

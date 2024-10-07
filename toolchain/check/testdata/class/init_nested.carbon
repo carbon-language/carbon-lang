@@ -73,15 +73,15 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     .MakeOuter = %MakeOuter.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
-// CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [template = constants.%MakeInner] {
-// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:     @MakeInner.%return: ref %Inner = var <return slot>
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {} {}
+// CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [template = constants.%MakeInner] {} {
+// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
+// CHECK:STDOUT:     %return: ref %Inner = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
-// CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [template = constants.%MakeOuter] {
-// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     @MakeOuter.%return: ref %Outer = var <return slot>
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
+// CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [template = constants.%MakeOuter] {} {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %return: ref %Outer = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

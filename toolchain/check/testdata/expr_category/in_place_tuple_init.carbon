@@ -62,7 +62,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc11_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_20.1: %.2 = tuple_literal (%int.make_type_32.loc11_12, %int.make_type_32.loc11_17)
@@ -71,9 +71,9 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %.loc11_20.4: type = value_of_initializer %int.make_type_32.loc11_17 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.5: type = converted %int.make_type_32.loc11_17, %.loc11_20.4 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.6: type = converted %.loc11_20.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     @F.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc13_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_20.1: %.2 = tuple_literal (%int.make_type_32.loc13_12, %int.make_type_32.loc13_17)
@@ -82,13 +82,13 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %.loc13_20.4: type = value_of_initializer %int.make_type_32.loc13_17 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.5: type = converted %int.make_type_32.loc13_17, %.loc13_20.4 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.6: type = converted %.loc13_20.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     @G.%return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     %return: ref %.3 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
-// CHECK:STDOUT:     %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32.loc19, %.loc19_11.1 [template = i32]
-// CHECK:STDOUT:     @H.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,8 +118,8 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %F.call.loc15: init %.3 = call %F.ref.loc15() to %.loc15
 // CHECK:STDOUT:   assign %v.ref, %F.call.loc15
 // CHECK:STDOUT:   %F.ref.loc16: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc13: ref %.3 = splice_block %return {}
-// CHECK:STDOUT:   %F.call.loc16: init %.3 = call %F.ref.loc16() to %.loc13
+// CHECK:STDOUT:   %.loc13_8: ref %.3 = splice_block %return {}
+// CHECK:STDOUT:   %F.call.loc16: init %.3 = call %F.ref.loc16() to %.loc13_8
 // CHECK:STDOUT:   return %F.call.loc16 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

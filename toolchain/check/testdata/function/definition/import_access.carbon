@@ -163,7 +163,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Def.decl: %Def.type = fn_decl @Def [template = constants.%Def] {}
+// CHECK:STDOUT:   %Def.decl: %Def.type = fn_decl @Def [template = constants.%Def] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def() {
@@ -199,8 +199,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: %ForwardWithDef.type = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: %ForwardWithDef.type = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: %ForwardWithDef.type = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: %ForwardWithDef.type = fn_decl @ForwardWithDef [template = constants.%ForwardWithDef] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef() {
@@ -236,7 +236,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {}
+// CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward();
@@ -543,7 +543,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %f.var: ref %.1 = var f
 // CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
-// CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {}
+// CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward() {
@@ -672,8 +672,8 @@ private fn Redecl() {}
 // CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Redecl.decl.loc4: %Redecl.type = fn_decl @Redecl [template = constants.%Redecl] {}
-// CHECK:STDOUT:   %Redecl.decl.loc6: %Redecl.type = fn_decl @Redecl [template = constants.%Redecl] {}
+// CHECK:STDOUT:   %Redecl.decl.loc4: %Redecl.type = fn_decl @Redecl [template = constants.%Redecl] {} {}
+// CHECK:STDOUT:   %Redecl.decl.loc6: %Redecl.type = fn_decl @Redecl [template = constants.%Redecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Redecl() {

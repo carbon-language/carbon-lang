@@ -88,6 +88,7 @@ cc_library(
         "file.cpp",
         "function.cpp",
         "generic.cpp",
+        "impl.cpp",
         "name.cpp",
         "type_info.cpp",
     ],

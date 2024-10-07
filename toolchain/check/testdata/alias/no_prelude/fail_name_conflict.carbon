@@ -14,7 +14,7 @@ alias a = C;
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope
 // CHECK:STDERR: var a: C = {};
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note: name is previously declared here
 // CHECK:STDERR: alias a = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
@@ -24,7 +24,7 @@ var b: C = {};
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
 alias b = C;
@@ -46,7 +46,7 @@ alias b = C;
 // CHECK:STDOUT:     .a = %a.loc13
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.loc13: type = bind_alias a, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]

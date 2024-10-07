@@ -78,11 +78,13 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [template = constants.%PartialConstant] {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type, %.loc4_23.1 [template = bool]
-// CHECK:STDOUT:     %x.loc4_20.1: bool = param x, runtime_param0
-// CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
+// CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
+// CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type.loc4, %.loc4_23.1 [template = bool]
+// CHECK:STDOUT:     %x.param: bool = param x, runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,11 +185,13 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: %KnownValueButNonConstantCondition.type = fn_decl @KnownValueButNonConstantCondition [template = constants.%KnownValueButNonConstantCondition] {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type, %.loc4_41.1 [template = bool]
-// CHECK:STDOUT:     %x.loc4_38.1: bool = param x, runtime_param0
-// CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
+// CHECK:STDOUT:     %x.patt: bool = binding_pattern x
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
+// CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type.loc4, %.loc4_41.1 [template = bool]
+// CHECK:STDOUT:     %x.param: bool = param x, runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

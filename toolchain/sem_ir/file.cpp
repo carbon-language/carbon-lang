@@ -27,11 +27,12 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
       library_id_(library_id),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
+      impls_(*this),
       type_blocks_(allocator_),
       name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
-      constants_(*this, allocator_) {
+      constants_(*this) {
   // `type` and the error type are both complete types.
   types_.SetValueRepr(TypeId::TypeType,
                       {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
@@ -411,6 +412,19 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case CARBON_KIND(WhereExpr inst): {
+        if (step.index == 0) {
+          out << "<where restriction on ";
+          steps.push_back(step.Next());
+          TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
+          push_inst_id(sem_ir.types().GetInstId(type_id));
+          // TODO: also output restrictions from the inst block
+          // inst.requirements_id
+        } else {
+          out << ">";
+        }
+        break;
+      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -421,6 +435,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
+      case BindingPattern::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
@@ -452,6 +467,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case IntLiteral::Kind:
       case Namespace::Kind:
       case Param::Kind:
+      case RequirementEquivalent::Kind:
+      case RequirementImpls::Kind:
+      case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case SpliceBlock::Kind:
@@ -460,6 +478,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case StructLiteral::Kind:
       case StructInit::Kind:
       case StructValue::Kind:
+      case SymbolicBindingPattern::Kind:
       case Temporary::Kind:
       case TemporaryStorage::Kind:
       case TupleAccess::Kind:
@@ -470,6 +489,15 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
       case VarStorage::Kind:
+        // We don't know how to print this instruction, but it might have a
+        // constant value that we can print.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(step.inst_id);
+        if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {
+          push_inst_id(const_inst_id);
+          break;
+        }
+
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
@@ -507,6 +535,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AdaptDecl::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
+      case BindingPattern::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -514,9 +543,13 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case Namespace::Kind:
+      case RequirementEquivalent::Kind:
+      case RequirementImpls::Kind:
+      case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
+      case SymbolicBindingPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -594,6 +627,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
+      case WhereExpr::Kind:
         return value_category;
 
       case CARBON_KIND(BuiltinInst inst): {

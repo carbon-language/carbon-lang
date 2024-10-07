@@ -34,7 +34,7 @@ class C3 {
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: error: `default` not allowed on declaration with `extend`
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend default base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -45,7 +45,7 @@ class C4 {
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+6]]:10: error: `extend` repeated on declaration
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: `extend` previously appeared here
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: note: `extend` previously appeared here
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend extend base: B;
@@ -95,11 +95,11 @@ class C4 {
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
-// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}
-// CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {}
-// CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
+// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
+// CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [template = constants.%C3] {} {}
+// CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [template = constants.%C4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

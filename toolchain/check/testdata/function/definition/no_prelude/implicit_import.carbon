@@ -30,13 +30,11 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "extern_api";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_api.carbon:4:1: previously declared here
+// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,13 +50,11 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+10]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: extern fn A() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "extern_impl";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: extern_impl.carbon:4:1: previously declared here
+// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -74,13 +70,11 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: error: redeclaration of `fn A` is redundant
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "redecl_after_def";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: redecl_after_def.carbon:4:1: previously declared here
+// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -96,13 +90,11 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+10]]:1: error: redefinition of `fn A`
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `fn A`
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "redef_after_def";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: redef_after_def.carbon:4:1: previously defined here
+// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -119,13 +111,11 @@ alias B = A;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: fn B() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "def_alias";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: def_alias.carbon:5:7: name is previously declared here
+// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here
 // CHECK:STDERR: alias B = A;
 // CHECK:STDERR:       ^
 fn B() {}
@@ -142,7 +132,7 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -165,7 +155,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -185,7 +175,7 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -208,7 +198,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A() {
@@ -228,7 +218,7 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -251,7 +241,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -271,7 +261,7 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -297,7 +287,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -314,7 +304,7 @@ fn B() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -340,7 +330,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -361,7 +351,7 @@ fn B() {}
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %B: %A.type = bind_alias B, %A.decl [template = constants.%A]
 // CHECK:STDOUT: }
@@ -390,7 +380,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

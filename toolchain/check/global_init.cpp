@@ -40,6 +40,7 @@ auto GlobalInit::Finalize() -> void {
         .generic_id = SemIR::GenericId::Invalid,
         .first_param_node_id = Parse::NodeId::Invalid,
         .last_param_node_id = Parse::NodeId::Invalid,
+        .pattern_block_id = SemIR::InstBlockId::Empty,
         .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
         .param_refs_id = SemIR::InstBlockId::Empty,
         .is_extern = false,

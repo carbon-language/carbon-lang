@@ -51,37 +51,37 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self.1: %.5 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Negate.type: type = interface_type @Negate [template]
+// CHECK:STDOUT:   %Self.1: %Negate.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %.5, %Op.type.1 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type %Negate.type, %Op.type.1 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self.2: %.8 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Add.type: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Self.2: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %Op.type.2 [template]
-// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %Add.type, %Op.type.2 [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [template]
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.3: %.11 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %AddAssign.type: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.3: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %Self.3 [symbolic]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type %.11, %Op.type.3 [template]
-// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.15 [template]
-// CHECK:STDOUT:   %.15: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.4: %.15 = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %.9: type = ptr_type %Self.3 [symbolic]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %AddAssign.type, %Op.type.3 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.15 [template]
+// CHECK:STDOUT:   %Inc.type: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %Self.4: %Inc.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.16: type = ptr_type %Self.4 [symbolic]
-// CHECK:STDOUT:   %.17: type = assoc_entity_type %.15, %Op.type.4 [template]
-// CHECK:STDOUT:   %.18: %.17 = assoc_entity element0, imports.%import_ref.20 [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %Self.4 [symbolic]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type %Inc.type, %Op.type.4 [template]
+// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.20 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -100,26 +100,26 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+72, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/arithmetic, inst+90, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+85, unloaded
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%Negate.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+79, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.5 = import_ref Core//prelude/operators/arithmetic, inst+96, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+91, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8: %.9 = import_ref Core//prelude/operators/arithmetic, inst+25, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.13: %.13 = import_ref Core//prelude/operators/arithmetic, inst+50, loaded [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+44, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+44, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%.15]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.18: %.17 = import_ref Core//prelude/operators/arithmetic, inst+70, loaded [template = constants.%.18]
-// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.8: %.7 = import_ref Core//prelude/operators/arithmetic, inst+27, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Core//prelude/operators/arithmetic, inst+29, loaded [template = constants.%AddAssign.type]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/arithmetic, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.13: %.10 = import_ref Core//prelude/operators/arithmetic, inst+54, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/arithmetic, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Core//prelude/operators/arithmetic, inst+56, loaded [template = constants.%Inc.type]
+// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/arithmetic, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.18: %.13 = import_ref Core//prelude/operators/arithmetic, inst+75, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/arithmetic, inst+69, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -131,28 +131,35 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     .TestRef = %TestRef.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [template = constants.%TestUnary] {
-// CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc15_14.1: %C = param a, runtime_param0
-// CHECK:STDOUT:     @TestUnary.%a: %C = bind_name a, %a.loc15_14.1
-// CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @TestUnary.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref.loc15_17: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.param: %C = param a, runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [template = constants.%TestBinary] {
-// CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc23_15.1: %C = param a, runtime_param0
-// CHECK:STDOUT:     @TestBinary.%a: %C = bind_name a, %a.loc23_15.1
-// CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc23_21.1: %C = param b, runtime_param1
-// CHECK:STDOUT:     @TestBinary.%b: %C = bind_name b, %b.loc23_21.1
-// CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @TestBinary.%return: ref %C = var <return slot>
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref.loc23_18: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.param: %C = param a, runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.param: %C = param b, runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
+// CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
-// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc31_12.1: %C = param b, runtime_param0
-// CHECK:STDOUT:     @TestRef.%b: %C = bind_name b, %b.loc31_12.1
+// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.param: %C = param b, runtime_param0
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,12 +201,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestUnary(%a: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
+// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.3 [template = constants.%.6]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %.5) {
-// CHECK:STDOUT:   %Self: %.5 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %Negate.type) {
+// CHECK:STDOUT:   %Self: %Negate.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.1.%Self (%Self.1)]() -> @Op.1.%Self (%Self.1);
 // CHECK:STDOUT: }
@@ -208,19 +215,19 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.8 [template = constants.%.10]
+// CHECK:STDOUT:   %Op.ref: %.7 = name_ref Op, imports.%import_ref.8 [template = constants.%.8]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %.8) {
-// CHECK:STDOUT:   %Self: %.8 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %Add.type) {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self.2)](%other: @Op.2.%Self (%Self.2)) -> @Op.2.%Self (%Self.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: %.1 = struct_literal ()
@@ -229,24 +236,24 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref.loc37: %.13 = name_ref Op, imports.%import_ref.13 [template = constants.%.14]
+// CHECK:STDOUT:   %Op.ref.loc37: %.10 = name_ref Op, imports.%import_ref.13 [template = constants.%.11]
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %Op.ref.loc41: %.17 = name_ref Op, imports.%import_ref.18 [template = constants.%.18]
+// CHECK:STDOUT:   %Op.ref.loc41: %.13 = name_ref Op, imports.%import_ref.18 [template = constants.%.14]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %.11) {
-// CHECK:STDOUT:   %Self: %.11 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.12)]
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %AddAssign.type) {
+// CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: @Op.3.%.2 (%.12)](%other: @Op.3.%Self (%Self.3));
+// CHECK:STDOUT:   fn[addr %self: @Op.3.%.2 (%.9)](%other: @Op.3.%Self (%Self.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %.15) {
-// CHECK:STDOUT:   %Self: %.15 = bind_symbolic_name Self 0 [symbolic = %Self (constants.%Self.4)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.16)]
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %Inc.type) {
+// CHECK:STDOUT:   %Self: %Inc.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.4)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.16)]();
+// CHECK:STDOUT:   fn[addr %self: @Op.4.%.2 (%.12)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.1) {
@@ -259,11 +266,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.3(constants.%Self.3) {
 // CHECK:STDOUT:   %Self => constants.%Self.3
-// CHECK:STDOUT:   %.2 => constants.%.12
+// CHECK:STDOUT:   %.2 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%Self.4) {
 // CHECK:STDOUT:   %Self => constants.%Self.4
-// CHECK:STDOUT:   %.2 => constants.%.16
+// CHECK:STDOUT:   %.2 => constants.%.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

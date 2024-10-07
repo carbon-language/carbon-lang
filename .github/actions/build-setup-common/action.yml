@@ -57,6 +57,12 @@ runs:
       shell: bash
       run: |
         cat >user.bazelrc <<EOF
+        # Disable the local disk cache as we use a remote cache and don't want
+        # two copies of every output taking up disk space. The only way to
+        # disable the disk cache is with an empty string:
+        # https://github.com/bazelbuild/bazel/issues/5308
+        build --disk_cache=
+
         # Enable remote cache for our CI but minimize downloads.
         build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
         build --remote_download_minimal

@@ -23,26 +23,22 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: error: redeclaration of `class Empty` is redundant
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `class Empty` is redundant
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: previously declared here
+// CHECK:STDERR: a.carbon:4:1: note: previously declared here
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:8: error: Variable has incomplete type `Incomplete`
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: Variable has incomplete type `Incomplete`
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-18]]:1: in import
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:7:1: class was forward declared here
+// CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import
+// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var a: Incomplete;
@@ -77,8 +73,8 @@ var a: Incomplete;
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {} {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
@@ -126,7 +122,7 @@ var a: Incomplete;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.3] {} {}
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%import_ref.2 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
@@ -138,7 +134,7 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3

@@ -44,6 +44,7 @@ struct EntityWithParamsBase {
   auto MergeDefinition(const EntityWithParamsBase& definition) -> void {
     first_param_node_id = definition.first_param_node_id;
     last_param_node_id = definition.last_param_node_id;
+    pattern_block_id = definition.pattern_block_id;
     implicit_param_refs_id = definition.implicit_param_refs_id;
     param_refs_id = definition.param_refs_id;
     definition_id = definition.definition_id;
@@ -88,6 +89,8 @@ struct EntityWithParamsBase {
   // definition.
   Parse::NodeId first_param_node_id;
   Parse::NodeId last_param_node_id;
+  // A block containing the pattern insts for the parameter lists.
+  InstBlockId pattern_block_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.

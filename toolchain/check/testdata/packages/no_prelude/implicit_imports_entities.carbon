@@ -131,16 +131,12 @@ import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+13]]:6: in import
-// CHECK:STDERR: impl library "import_conflict";
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:6: in import
 // CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+7]]:6: in import
-// CHECK:STDERR: impl library "import_conflict";
-// CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:6: in import
+// CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -158,16 +154,12 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: impl library "import_conflict_reverse";
-// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: import_conflict_reverse.carbon:4:1: in import
-// CHECK:STDERR: import library "local_other";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: local_other.carbon:4:1: name is previously declared here
+// CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 import Other library "o1";
@@ -184,7 +176,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
+// CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
@@ -206,7 +198,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}
+// CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -231,7 +223,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -253,7 +245,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .O1 = %O1.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %O1.decl: type = class_decl @O1 [template = constants.%O1] {}
+// CHECK:STDOUT:   %O1.decl: type = class_decl @O1 [template = constants.%O1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 {
@@ -275,7 +267,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .O2 = %O2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %O2.decl: type = class_decl @O2 [template = constants.%O2] {}
+// CHECK:STDOUT:   %O2.decl: type = class_decl @O2 [template = constants.%O2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O2 {
@@ -297,7 +289,7 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.decl: type = class_decl @Other [template = constants.%Other] {}
+// CHECK:STDOUT:   %Other.decl: type = class_decl @Other [template = constants.%Other] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Other {
@@ -673,8 +665,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc15_6.1 = import <invalid>
-// CHECK:STDOUT:   %default.import.loc15_6.2 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc11_6.1 = import <invalid>
+// CHECK:STDOUT:   %default.import.loc11_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

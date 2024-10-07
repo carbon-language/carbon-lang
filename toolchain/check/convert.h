@@ -15,9 +15,9 @@ namespace Carbon::Check {
 // Description of the target of a conversion.
 struct ConversionTarget {
   enum Kind : int8_t {
-    // Convert to a value of type `type`.
+    // Convert to a value of type `type_id`.
     Value,
-    // Convert to either a value or a reference of type `type`.
+    // Convert to either a value or a reference of type `type_id`.
     ValueOrRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
@@ -119,9 +119,20 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId;
 
+// A type that has been converted for use as a type expression.
+struct TypeExpr {
+  // The converted expression of type `type`, or `InstId::BuiltinError`.
+  SemIR::InstId inst_id;
+  // The corresponding type, or `TypeId::Error`.
+  SemIR::TypeId type_id;
+};
+
 // Converts an expression for use as a type.
+// TODO: Most of the callers of this function discard the `inst_id` and lose
+// track of the conversion. In most cases we should be retaining that as the
+// operand of some downstream instruction.
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
-    -> SemIR::TypeId;
+    -> TypeExpr;
 
 }  // namespace Carbon::Check
 

@@ -53,25 +53,29 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: bool = binding_pattern a
+// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
+// CHECK:STDOUT:     %c.patt: bool = binding_pattern c
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_9: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type.loc11_9 [template = bool]
 // CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type.loc11_9, %.loc11_9.1 [template = bool]
-// CHECK:STDOUT:     %a.loc11_6.1: bool = param a, runtime_param0
-// CHECK:STDOUT:     @F.%a: bool = bind_name a, %a.loc11_6.1
+// CHECK:STDOUT:     %a.param: bool = param a, runtime_param0
+// CHECK:STDOUT:     %a: bool = bind_name a, %a.param
 // CHECK:STDOUT:     %bool.make_type.loc11_18: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %bool.make_type.loc11_18 [template = bool]
 // CHECK:STDOUT:     %.loc11_18.2: type = converted %bool.make_type.loc11_18, %.loc11_18.1 [template = bool]
-// CHECK:STDOUT:     %b.loc11_15.1: bool = param b, runtime_param1
-// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc11_15.1
+// CHECK:STDOUT:     %b.param: bool = param b, runtime_param1
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %bool.make_type.loc11_27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_27.1: type = value_of_initializer %bool.make_type.loc11_27 [template = bool]
 // CHECK:STDOUT:     %.loc11_27.2: type = converted %bool.make_type.loc11_27, %.loc11_27.1 [template = bool]
-// CHECK:STDOUT:     %c.loc11_24.1: bool = param c, runtime_param2
-// CHECK:STDOUT:     @F.%c: bool = bind_name c, %c.loc11_24.1
+// CHECK:STDOUT:     %c.param: bool = param c, runtime_param2
+// CHECK:STDOUT:     %c: bool = bind_name c, %c.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_36.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_36.2: type = converted %int.make_type_32, %.loc11_36.1 [template = i32]
-// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -13,7 +13,7 @@ class Class {
   // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: error: redefinition of `fn F`
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: previously defined here
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: note: previously defined here
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
   fn F() {}
@@ -50,12 +50,12 @@ class Class {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc19: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc19: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

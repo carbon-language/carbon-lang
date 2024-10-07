@@ -24,10 +24,10 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: class was forward declared here
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: return type declared here
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:18: note: return type declared here
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
@@ -35,10 +35,10 @@ fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D`
   // CHECK:STDERR:   ReturnDUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: class was forward declared here
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class was forward declared here
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: return type declared here
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-20]]:18: note: return type declared here
   // CHECK:STDERR: fn ReturnDUsed() -> D;
   // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR:
@@ -54,36 +54,28 @@ library "[[@TEST_NAME]]";
 import library "incomplete_return";
 
 fn CallFAndGIncomplete() {
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+16]]:3: error: function returns incomplete type `C`
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+12]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUnused();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: in import
-  // CHECK:STDERR: import library "incomplete_return";
-  // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: class was forward declared here
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-12]]:1: in import
-  // CHECK:STDERR: import library "incomplete_return";
-  // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: return type declared here
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-10]]:1: in import
+  // CHECK:STDERR: fail_incomplete_return.carbon:7:20: note: return type declared here
   // CHECK:STDERR: fn ReturnCUnused() -> C;
   // CHECK:STDERR:                    ^~~~
   // CHECK:STDERR:
   ReturnCUnused();
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+15]]:3: error: function returns incomplete type `C`
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+11]]:3: error: function returns incomplete type `C`
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import
-  // CHECK:STDERR: import library "incomplete_return";
-  // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: class was forward declared here
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-19]]:1: in import
+  // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-29]]:1: in import
-  // CHECK:STDERR: import library "incomplete_return";
-  // CHECK:STDERR: ^~~~~~
-  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: return type declared here
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-23]]:1: in import
+  // CHECK:STDERR: fail_incomplete_return.carbon:8:18: note: return type declared here
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                  ^~~~
   ReturnCUsed();
@@ -121,26 +113,26 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     .ReturnDUsed = %ReturnDUsed.decl
 // CHECK:STDOUT:     .Call = %Call.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [template = constants.%ReturnCUnused] {
-// CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUnused.%return: ref %C = var <return slot>
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl.loc5: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %ReturnCUnused.decl: %ReturnCUnused.type = fn_decl @ReturnCUnused [template = constants.%ReturnCUnused] {} {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [template = constants.%ReturnCUsed] {
-// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     @ReturnCUsed.%return: ref %C = var <return slot>
+// CHECK:STDOUT:   %ReturnCUsed.decl: %ReturnCUsed.type = fn_decl @ReturnCUsed [template = constants.%ReturnCUsed] {} {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [template = constants.%ReturnDUnused] {
-// CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUnused.%return: ref %D = var <return slot>
+// CHECK:STDOUT:   %ReturnDUnused.decl: %ReturnDUnused.type = fn_decl @ReturnDUnused [template = constants.%ReturnDUnused] {} {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [template = constants.%ReturnDUsed] {
-// CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, %D.decl.loc5 [template = constants.%D]
-// CHECK:STDOUT:     @ReturnDUsed.%return: ref %D = var <return slot>
+// CHECK:STDOUT:   %ReturnDUsed.decl: %ReturnDUsed.type = fn_decl @ReturnDUsed [template = constants.%ReturnDUsed] {} {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl.loc5 [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {}
-// CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {} {}
+// CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -213,7 +205,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %CallFAndGIncomplete.decl: %CallFAndGIncomplete.type = fn_decl @CallFAndGIncomplete [template = constants.%CallFAndGIncomplete] {}
+// CHECK:STDOUT:   %CallFAndGIncomplete.decl: %CallFAndGIncomplete.type = fn_decl @CallFAndGIncomplete [template = constants.%CallFAndGIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -230,13 +222,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%import_ref.4 [template = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%import_ref.5 [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %.loc40_16.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc40_16.1
-// CHECK:STDOUT:   %.loc40_16.2: ref %D = temporary %.loc40_16.1, %ReturnDUnused.call
+// CHECK:STDOUT:   %.loc32_16.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc32_16.1
+// CHECK:STDOUT:   %.loc32_16.2: ref %D = temporary %.loc32_16.1, %ReturnDUnused.call
 // CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%import_ref.6 [template = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc41_14.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc41_14.1
-// CHECK:STDOUT:   %.loc41_14.2: ref %D = temporary %.loc41_14.1, %ReturnDUsed.call
+// CHECK:STDOUT:   %.loc33_14.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc33_14.1
+// CHECK:STDOUT:   %.loc33_14.2: ref %D = temporary %.loc33_14.1, %ReturnDUsed.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

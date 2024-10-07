@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:18: error: `private` repeated on declaration
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR:                  ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -20,7 +20,7 @@ private abstract private class DuplicatePrivate;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:14: error: `protected` not allowed on declaration with `private`
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -29,7 +29,7 @@ private base protected class TwoAccess {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `abstract` repeated on declaration
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract abstract class TwoAbstract;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -46,7 +46,7 @@ abstract abstract class TwoAbstract;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error: `base` not allowed on declaration with `virtual`
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: `virtual` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: note: `virtual` previously appeared here
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
@@ -55,19 +55,34 @@ protected virtual base class Virtual {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `protected` must appear before `abstract`
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract protected class WrongOrder;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract protected class WrongOrder;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `base` not allowed on declaration with `abstract`
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract base class AbstractAndBase {}
+
+abstract class AbstractWithDefinition {
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: definition of `abstract` function
+  // CHECK:STDERR:   abstract fn F() {}
+  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:
+  abstract fn F() {}
+  abstract fn G();
+}
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: definition of `abstract` function
+// CHECK:STDERR: fn AbstractWithDefinition.G() {
+// CHECK:STDERR:                               ^
+fn AbstractWithDefinition.G() {
+}
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
@@ -80,6 +95,12 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
+// CHECK:STDOUT:   %AbstractWithDefinition: type = class_type @AbstractWithDefinition [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,14 +126,17 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
+// CHECK:STDOUT:     .AbstractWithDefinition = %AbstractWithDefinition.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {}
-// CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {}
-// CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {}
-// CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {}
-// CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {}
-// CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {}
+// CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {} {}
+// CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {} {}
+// CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {} {}
+// CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {} {}
+// CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {} {}
+// CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {} {}
+// CHECK:STDOUT:   %AbstractWithDefinition.decl: type = class_decl @AbstractWithDefinition [template = constants.%AbstractWithDefinition] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
@@ -136,9 +160,30 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:   %.loc70: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc71: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @AbstractWithDefinition {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT:   %.loc80: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: abstract fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: abstract fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -19,6 +19,9 @@ void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
 
 void PrintTo(DiagnosticLevel level, std::ostream* os) {
   switch (level) {
+    case DiagnosticLevel::LocationInfo:
+      *os << "LocationInfo";
+      break;
     case DiagnosticLevel::Note:
       *os << "Note";
       break;

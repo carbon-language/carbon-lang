@@ -16,6 +16,11 @@ auto StartGenericDecl(Context& context) -> void;
 // Start processing a declaration or definition that might be a generic entity.
 auto StartGenericDefinition(Context& context) -> void;
 
+// Discard the information about the current generic entity. This should be
+// called instead of `FinishGenericDecl` if the corresponding `Generic` object
+// would not actually be used, or when recovering from an error.
+auto DiscardGenericDecl(Context& context) -> void;
+
 // Finish processing a potentially generic declaration and produce a
 // corresponding generic object. Returns SemIR::GenericId::Invalid if this
 // declaration is not actually generic.
@@ -68,11 +73,19 @@ auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
 auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
     -> bool;
 
-// Requires that a param block only contains generics. Diagnoses and updates the
-// block otherwise. This will typically be called once for each of implicit and
-// explicit parameters, and must occur before constant evaluation of the
-// parameterized instruction.
-auto RequireGenericParams(Context& context, SemIR::InstBlockId block_id)
+// Requires that a param block only contains generics, and no parameters
+// named `self`. Diagnoses and updates the block otherwise. This will typically
+// be called once for each of implicit and explicit parameters, and must occur
+// before constant evaluation of the parameterized instruction.
+auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
+    -> void;
+
+// Requires that a param block only contains generics or parameters
+// named `self`. Diagnoses and updates the block otherwise. This is used for
+// the implicit parameters of a function declaration, and must occur
+// before constant evaluation of the parameterized instruction.
+auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
+                                                SemIR::InstBlockId block_id)
     -> void;
 
 }  // namespace Carbon::Check

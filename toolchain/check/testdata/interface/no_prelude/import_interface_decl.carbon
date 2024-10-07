@@ -20,40 +20,42 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @A [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%.1] {}
-// CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %.loc3_7.1: %.2 = tuple_literal ()
-// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%.1]
+// CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc3_7.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.2 as %.1;
+// CHECK:STDOUT: impl @impl: %.loc3_7.2 as %A.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//a, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+6, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref
+// CHECK:STDOUT:     .A = imports.%import_ref.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
@@ -61,5 +63,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.1 as %.2;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.2 as imports.%import_ref.3;
 // CHECK:STDOUT:

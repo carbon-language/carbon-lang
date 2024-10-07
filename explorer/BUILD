@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
@@ -36,6 +36,7 @@ cc_library(
 cc_binary(
     name = "explorer",
     srcs = ["main_bin.cpp"],
+    data = cc_env_data(),
     env = cc_env(),
     # Running clang-tidy is slow, and explorer is currently feature frozen, so
     # don't spend time linting it.

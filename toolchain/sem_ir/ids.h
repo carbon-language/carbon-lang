@@ -86,6 +86,25 @@ constexpr InstId InstId::Invalid = InstId(InvalidIndex);
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/builtin_inst_kind.def"
 
+// An ID of an instruction that is referenced absolutely by another instruction.
+// This should only be used as the type of a field within a typed instruction
+// class.
+//
+// When a typed instruction has a field of this type, that field represents an
+// absolute reference to another instruction that typically resides in a
+// different entity. This behaves in most respects like an InstId field, but
+// substitution into the typed instruction leaves the field unchanged rather
+// than substituting into it.
+class AbsoluteInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and AbsoluteInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
@@ -513,6 +532,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId SelfValue;
   // The name of `Self`.
   static const NameId SelfType;
+  // The name of `.Self`.
+  static const NameId PeriodSelf;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
   // The name of `package`.
@@ -549,6 +570,8 @@ struct NameId : public IdBase, public Printable<NameId> {
       out << "SelfValue";
     } else if (*this == SelfType) {
       out << "SelfType";
+    } else if (*this == PeriodSelf) {
+      out << "PeriodSelf";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
     } else if (*this == PackageNamespace) {
@@ -565,10 +588,11 @@ struct NameId : public IdBase, public Printable<NameId> {
 constexpr NameId NameId::Invalid = NameId(InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
-constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 3);
-constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 4);
-constexpr NameId NameId::Base = NameId(InvalidIndex - 5);
-constexpr int NameId::NonIndexValueCount = 6;
+constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
+constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
+constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
+constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
+constexpr int NameId::NonIndexValueCount = 7;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 

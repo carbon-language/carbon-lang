@@ -20,7 +20,7 @@ let T: type = Class;
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
 // CHECK:STDERR: fn T.F() {}
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: referenced non-scope entity declared here
+// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: note: referenced non-scope entity declared here
 // CHECK:STDERR: let T: type = Class;
 // CHECK:STDERR:     ^
 fn T.F() {}
@@ -63,16 +63,16 @@ fn T.F() {}
 // CHECK:STDOUT:     .T = @__global_init.%T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

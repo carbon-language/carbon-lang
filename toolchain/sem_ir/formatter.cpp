@@ -223,15 +223,14 @@ class FormatterImpl {
   // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
-    FormatEntityStart("impl", SemIR::GenericId::Invalid, id);
-
-    out_ << ": ";
-    // TODO: Include the deduced parameter list if present.
-    FormatType(impl_info.self_id);
-    out_ << " as ";
-    FormatType(impl_info.constraint_id);
+    FormatEntityStart("impl", impl_info.generic_id, id);
 
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
+
+    out_ << ": ";
+    FormatName(impl_info.self_id);
+    out_ << " as ";
+    FormatName(impl_info.constraint_id);
 
     if (impl_info.is_defined()) {
       out_ << ' ';
@@ -256,6 +255,8 @@ class FormatterImpl {
     } else {
       out_ << ";\n";
     }
+
+    FormatEntityEnd(impl_info.generic_id);
   }
 
   // Formats a full function.
@@ -797,21 +798,35 @@ class FormatterImpl {
 
   auto FormatInstRHS(FunctionDecl inst) -> void {
     FormatArgs(inst.function_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.function_id));
+    FormatTrailingBlock(
+        sem_ir_.functions().Get(inst.function_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(ClassDecl inst) -> void {
     FormatArgs(inst.class_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.class_id));
+    FormatTrailingBlock(sem_ir_.classes().Get(inst.class_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(ImplDecl inst) -> void {
     FormatArgs(inst.impl_id);
+    llvm::SaveAndRestore class_scope(scope_,
+                                     inst_namer_->GetScopeFor(inst.impl_id));
+    FormatTrailingBlock(sem_ir_.impls().Get(inst.impl_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
   auto FormatInstRHS(InterfaceDecl inst) -> void {
     FormatArgs(inst.interface_id);
+    llvm::SaveAndRestore class_scope(
+        scope_, inst_namer_->GetScopeFor(inst.interface_id));
+    FormatTrailingBlock(
+        sem_ir_.interfaces().Get(inst.interface_id).pattern_block_id);
     FormatTrailingBlock(inst.decl_block_id);
   }
 
@@ -841,6 +856,11 @@ class FormatterImpl {
   auto FormatInstRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
     FormatTrailingBlock(inst.block_id);
+  }
+
+  auto FormatInstRHS(WhereExpr inst) -> void {
+    FormatArgs(inst.period_self_id);
+    FormatTrailingBlock(inst.requirements_id);
   }
 
   // StructTypeFields are formatted as part of their StructType.
@@ -884,7 +904,7 @@ class FormatterImpl {
     const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);
     if (info.bind_index.is_valid()) {
-      out_ << " " << info.bind_index.index;
+      out_ << ", " << info.bind_index.index;
     }
   }
 
@@ -1009,6 +1029,10 @@ class FormatterImpl {
 
   auto FormatName(InstId id) -> void {
     out_ << inst_namer_->GetNameFor(scope_, id);
+  }
+
+  auto FormatName(AbsoluteInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
   }
 
   auto FormatName(SpecificId id) -> void {

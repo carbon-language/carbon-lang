@@ -13,7 +13,7 @@ fn F() {
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope
   // CHECK:STDERR:   let a: i32 = 2;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: name is previously declared here
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: note: name is previously declared here
   // CHECK:STDERR:   let a: i32 = 1;
   // CHECK:STDERR:       ^
   let a: i32 = 2;
@@ -53,7 +53,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

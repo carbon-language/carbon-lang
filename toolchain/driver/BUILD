@@ -3,14 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    data = glob([
+        "testdata/**/*.carbon",
+        "testdata/**/*.cpp",
+    ]),
 )
 
 cc_library(
@@ -18,7 +21,7 @@ cc_library(
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
     data = [
-        "//toolchain/install:llvm_link_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     deps = [
         "//common:command_line",
@@ -26,6 +29,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
+        "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Core",
@@ -77,6 +81,8 @@ sh_test(
 cc_library(
     name = "driver",
     srcs = [
+        "clang_subcommand.cpp",
+        "clang_subcommand.h",
         "codegen_options.cpp",
         "codegen_options.h",
         "compile_subcommand.cpp",
@@ -91,7 +97,7 @@ cc_library(
         "driver_subcommand.h",
     ],
     data = [
-        "//toolchain/install:install_lib_data",
+        "//toolchain/install:install_data.no_driver",
     ],
     textual_hdrs = ["flags.def"],
     deps = [
@@ -100,6 +106,7 @@ cc_library(
         "//common:ostream",
         "//common:version",
         "//common:vlog",
+        "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
@@ -160,6 +167,7 @@ cc_fuzz_test(
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],
+    data = cc_env_data(),
     env = cc_env(),
     deps = [
         ":driver",

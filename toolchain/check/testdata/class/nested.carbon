@@ -98,19 +98,21 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
-// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %a.patt: %.4 = binding_pattern a
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41: type = ptr_type %Outer [template = constants.%.4]
-// CHECK:STDOUT:     %a.loc41_6.1: %.4 = param a, runtime_param0
-// CHECK:STDOUT:     @F.2.%a: %.4 = bind_name a, %a.loc41_6.1
+// CHECK:STDOUT:     %a.param: %.4 = param a, runtime_param0
+// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {}
-// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {}
+// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc36_15: type = ptr_type %Outer [template = constants.%.4]
 // CHECK:STDOUT:   %.loc36_9: %.8 = field_decl po, element0 [template]
@@ -142,7 +144,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc21_18: type = ptr_type %Inner [template = constants.%.2]
 // CHECK:STDOUT:   %.loc21_11: %.3 = field_decl qi, element2 [template]
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %.loc28: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -188,7 +190,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a: %.4) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:   %Outer.ref.loc42: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc42_21: type = ptr_type %Inner [template = constants.%.2]
 // CHECK:STDOUT:   %a.ref.loc42: %.4 = name_ref a, %a

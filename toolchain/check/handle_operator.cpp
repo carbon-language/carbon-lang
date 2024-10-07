@@ -48,7 +48,7 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorAsId node_id)
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
-  auto rhs_type_id = ExprAsType(context, rhs_node, rhs_id);
+  auto rhs_type_id = ExprAsType(context, rhs_node, rhs_id).type_id;
   context.node_stack().Push(
       node_id, ConvertForExplicitAs(context, node_id, lhs_id, rhs_type_id));
   return true;
@@ -213,7 +213,7 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorStarEqualId node_id)
 auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
-  auto inner_type_id = ExprAsType(context, node_id, value_id);
+  auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
   context.AddInstAndPush<SemIR::PointerType>(
       node_id,
       {.type_id = SemIR::TypeId::TypeType, .pointee_id = inner_type_id});
@@ -266,7 +266,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
                       "additional effect");
     context.emitter().Emit(node_id, RepeatedConst);
   }
-  auto inner_type_id = ExprAsType(context, node_id, value_id);
+  auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
   context.AddInstAndPush<SemIR::ConstType>(
       node_id, {.type_id = SemIR::TypeId::TypeType, .inner_id = inner_type_id});
   return true;

@@ -13,7 +13,7 @@
 // CHECK:STDERR: fail_semi_before.carbon:[[@LINE+6]]:1: error: the `library` declaration must be the first non-comment line
 // CHECK:STDERR: library "semi_before";
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_semi_before.carbon:[[@LINE-5]]:1: first non-comment line is here
+// CHECK:STDERR: fail_semi_before.carbon:[[@LINE-5]]:1: note: first non-comment line is here
 // CHECK:STDERR: ;
 // CHECK:STDERR: ^
 library "[[@TEST_NAME]]";

@@ -12,7 +12,7 @@
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: `Main//default` previously provided by `fail_main.incorrect`
 // CHECK:STDERR:
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: file extension of `.carbon` required for `api`
-// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: file extension of `.impl.carbon` only allowed for `impl`
+// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: note: file extension of `.impl.carbon` only allowed for `impl`
 // CHECK:STDERR:
 
 // --- fail_main.incorrect
@@ -72,7 +72,7 @@ impl package Package library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_swapped_ext.impl.carbon:[[@LINE+5]]:1: error: file extension of `.carbon` required for `api`
 // CHECK:STDERR: package SwappedExt;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_swapped_ext.impl.carbon: file extension of `.impl.carbon` only allowed for `impl`
+// CHECK:STDERR: fail_swapped_ext.impl.carbon: note: file extension of `.impl.carbon` only allowed for `impl`
 // CHECK:STDERR:
 package SwappedExt;
 

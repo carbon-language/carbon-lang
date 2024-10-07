@@ -18,7 +18,7 @@ class AdaptIncomplete {
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: adapted type `Incomplete` is an incomplete type
   // CHECK:STDERR:   adapt Incomplete;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: class was forward declared here
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   adapt Incomplete;
@@ -52,8 +52,8 @@ class AdaptIncomplete {
 // CHECK:STDOUT:     .AdaptIncomplete = %AdaptIncomplete.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
-// CHECK:STDOUT:   %AdaptIncomplete.decl: type = class_decl @AdaptIncomplete [template = constants.%AdaptIncomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
+// CHECK:STDOUT:   %AdaptIncomplete.decl: type = class_decl @AdaptIncomplete [template = constants.%AdaptIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

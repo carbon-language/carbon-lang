@@ -50,12 +50,12 @@ var a: A = {};
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [template = constants.%ret_a] {
-// CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:     @ret_a.%return: ref %A = var <return slot>
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [template = constants.%ret_a] {} {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %return: ref %A = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }
