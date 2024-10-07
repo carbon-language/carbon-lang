@@ -630,6 +630,16 @@ def _impl(ctx):
         enabled = True,
         flag_sets = [
             flag_set(
+                actions = all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-fuse-ld=lld",
+                        ],
+                    ),
+                ]),
+            ),
+            flag_set(
                 actions = [
                     ACTION_NAMES.cpp_link_executable,
                 ],
@@ -1003,7 +1013,7 @@ def _impl(ctx):
         feature(name = "opt"),
         feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
         feature(name = "supports_pic", enabled = True),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
+        feature(name = "supports_start_end_lib", enabled = True),
     ]
 
     # The order of the features determines the relative order of flags used.
