@@ -760,8 +760,7 @@ namespace {
 //   complete.
 class TypeCompleter {
  public:
-  TypeCompleter(Context& context,
-                std::optional<Context::BuildDiagnosticFn> diagnoser)
+  TypeCompleter(Context& context, Context::BuildDiagnosticFn diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
@@ -870,7 +869,7 @@ class TypeCompleter {
         auto& class_info = context_.classes().Get(inst.class_id);
         if (!class_info.is_defined()) {
           if (diagnoser_) {
-            auto builder = (*diagnoser_)();
+            auto builder = diagnoser_();
             context_.NoteIncompleteClass(inst.class_id, builder);
             builder.Emit();
           }
@@ -1151,19 +1150,17 @@ class TypeCompleter {
 
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
-  std::optional<Context::BuildDiagnosticFn> diagnoser_;
+  Context::BuildDiagnosticFn diagnoser_;
 };
 }  // namespace
 
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
-                                std::optional<BuildDiagnosticFn> diagnoser)
-    -> bool {
+                                BuildDiagnosticFn diagnoser) -> bool {
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,
-                              std::optional<BuildDiagnosticFn> diagnoser)
-    -> bool {
+                              BuildDiagnosticFn diagnoser) -> bool {
   if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
   }
@@ -1171,7 +1168,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
   if (auto interface = types().TryGetAs<SemIR::InterfaceType>(type_id)) {
     auto interface_id = interface->interface_id;
     if (!interfaces().Get(interface_id).is_defined()) {
-      auto builder = (*diagnoser)();
+      auto builder = diagnoser();
       NoteUndefinedInterface(interface_id, builder);
       builder.Emit();
       return false;
