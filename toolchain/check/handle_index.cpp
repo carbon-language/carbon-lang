@@ -55,6 +55,10 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   return {};
 }
 
+// Creates SemIR to perform an index with base expression `operand_inst_id` and
+// `operand_type_id` for types that are not an array. This entails, checking if
+// the base expression implements the `IndexWith` interface, if so uses the `At`
+// associative method while printing a diagnostic if it isn't.
 static auto PerformIndex(Context& context, Parse::NodeId node_id,
                          SemIR::InstId operand_inst_id,
                          SemIR::TypeId operand_type_id,
@@ -86,10 +90,7 @@ static auto PerformIndex(Context& context, Parse::NodeId node_id,
   auto cast_index =
       ConvertToValueOfType(context, node_id, index_inst_id, subscript_type_id);
 
-  auto result =
-      BuildBinaryOperator(context, node_id, op, operand_inst_id, cast_index);
-
-  return result;
+  return BuildBinaryOperator(context, node_id, op, operand_inst_id, cast_index);
 }
 
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
