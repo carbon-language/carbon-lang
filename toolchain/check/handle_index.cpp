@@ -35,11 +35,15 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
               .type_id);
 
   for (const auto& impl : context.impls().array_ref()) {
-    if (impl.self_id != self_id) {
+    auto impl_self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
+    auto impl_constraint_type_id =
+        context.GetTypeIdForTypeInst(impl.constraint_id);
+
+    if (impl_self_type_id != self_id) {
       continue;
     }
     auto interface_type =
-        context.types().TryGetAs<SemIR::InterfaceType>(impl.constraint_id);
+        context.types().TryGetAs<SemIR::InterfaceType>(impl_constraint_type_id);
     if (!interface_type) {
       continue;
     }

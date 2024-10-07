@@ -47,17 +47,17 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct: %.5 = struct_value (%.3, %.4) [template]
-// CHECK:STDOUT:   %IndexWith.type: type = generic_interface_type @IndexWith [template]
-// CHECK:STDOUT:   %IndexWith: %IndexWith.type = struct_value () [template]
-// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic]
-// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic]
-// CHECK:STDOUT:   %.7: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
-// CHECK:STDOUT:   %Self.1: @IndexWith.%.1 (%.7) = bind_symbolic_name Self 2 [symbolic]
-// CHECK:STDOUT:   %Self.2: %.7 = bind_symbolic_name Self 2 [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
+// CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %At: %At.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %At.type [symbolic]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %IndexWith.type.2, %At.type [symbolic]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,11 +75,11 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %IndexWith.type = import_ref Core//prelude/operators/index, inst+7, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -118,16 +118,16 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
-// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.7)]
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type) = struct_value () [symbolic = %At (constants.%At)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @IndexWith.%.1 (%.7), @IndexWith.%At.type (%At.type) [symbolic = %.2 (constants.%.8)]
-// CHECK:STDOUT:   %.3: @IndexWith.%.2 (%.8) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.3 (constants.%.9)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type) [symbolic = %.1 (constants.%.7)]
+// CHECK:STDOUT:   %.2: @IndexWith.%.1 (%.7) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.2 (constants.%.8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -141,11 +141,11 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @At(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%.1 (%.7)) {
-// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType 1 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %.1: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %.1 (constants.%.7)]
-// CHECK:STDOUT:   %Self: %.7 = bind_symbolic_name Self 2 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT: generic fn @At(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
+// CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self: @At.%Self (%Self.2)](%subscript: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
 // CHECK:STDOUT: }
@@ -195,7 +195,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
-// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
