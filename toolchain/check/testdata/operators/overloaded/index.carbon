@@ -400,9 +400,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc10_17.4: type = value_of_initializer %int.make_type_32.loc10_14 [template = i32]
 // CHECK:STDOUT:   %.loc10_17.5: type = converted %int.make_type_32.loc10_14, %.loc10_17.4 [template = i32]
 // CHECK:STDOUT:   %.loc10_17.6: type = converted %.loc10_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_8.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
-// CHECK:STDOUT:   %.loc18_8.2: type = converted %int.make_type_32.loc18, %.loc18_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
@@ -475,16 +475,16 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc10_27: %.3 = converted %.loc10_26, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %s: %.3 = bind_name s, %.loc10_27
 // CHECK:STDOUT:   %s.ref: %.3 = name_ref s, %s
-// CHECK:STDOUT:   %.loc18_16: i32 = int_literal 0 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc18_17.1: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc18_17.2: %.8 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.9]
-// CHECK:STDOUT:   %At.ref: %.8 = name_ref At, %.loc18_17.2 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc18_17.3: %At.type.3 = interface_witness_access @impl.%.loc4, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc18_17.4: <bound method> = bound_method %s.ref, %.loc18_17.3
-// CHECK:STDOUT:   %At.call: init i32 = call %.loc18_17.4(%s.ref, %.loc18_16)
-// CHECK:STDOUT:   %.loc18_18.1: i32 = value_of_initializer %At.call
-// CHECK:STDOUT:   %.loc18_18.2: i32 = converted %At.call, %.loc18_18.1
-// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc18_18.2
+// CHECK:STDOUT:   %.loc11_16: i32 = int_literal 0 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc11_17.1: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_17.2: %.8 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.9]
+// CHECK:STDOUT:   %At.ref: %.8 = name_ref At, %.loc11_17.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc11_17.3: %At.type.3 = interface_witness_access @impl.%.loc4, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %.loc11_17.4: <bound method> = bound_method %s.ref, %.loc11_17.3
+// CHECK:STDOUT:   %At.call: init i32 = call %.loc11_17.4(%s.ref, %.loc11_16)
+// CHECK:STDOUT:   %.loc11_18.1: i32 = value_of_initializer %At.call
+// CHECK:STDOUT:   %.loc11_18.2: i32 = converted %At.call, %.loc11_18.1
+// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc11_18.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
