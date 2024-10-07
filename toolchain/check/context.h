@@ -82,7 +82,11 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+    inst_block_stack_.AddInstId(inst_id);
+    return inst_id;
+  }
 
   // Convenience for AddInst with typed nodes.
   template <typename InstT, typename LocT>
@@ -106,7 +110,12 @@ class Context {
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+    CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
+    FinishInst(inst_id, loc_id_and_inst.inst);
+    return inst_id;
+  }
 
   // Convenience for AddInstInNoBlock with typed nodes.
   template <typename InstT, typename LocT>
@@ -128,7 +137,11 @@ class Context {
 
   // Adds an instruction to the current pattern block, returning the produced
   // ID.
-  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+    pattern_block_stack_.AddInstId(inst_id);
+    return inst_id;
+  }
 
   // Convenience for AddPatternInst with typed nodes.
   template <typename InstT>
@@ -139,7 +152,11 @@ class Context {
   }
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
+  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId {
+    auto const_id = constants().GetOrAdd(inst, is_symbolic);
+    CARBON_VLOG("AddConstant: {0}\n", inst);
+    return const_id;
+  }
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
@@ -301,9 +318,8 @@ class Context {
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
-  auto TryToCompleteType(
-      SemIR::TypeId type_id,
-      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
+  auto TryToCompleteType(SemIR::TypeId type_id,
+                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -311,15 +327,15 @@ class Context {
   //
   // This is the same as `TryToCompleteType` except for interfaces, which are
   // complete before they are fully defined.
-  auto TryToDefineType(
-      SemIR::TypeId type_id,
-      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
+  auto TryToDefineType(SemIR::TypeId type_id,
+                       BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
-  // TryToCompleteType.
+  // TryToCompleteType. `diagnoser` must not be null.
   auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
       -> SemIR::TypeId {
+    CARBON_CHECK(diagnoser);
     return TryToCompleteType(type_id, diagnoser) ? type_id
                                                  : SemIR::TypeId::Error;
   }

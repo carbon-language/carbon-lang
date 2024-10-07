@@ -150,20 +150,6 @@ auto Context::CheckCompatibleImportedNodeKind(
       kind, imported_kind);
 }
 
-auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
-  FinishInst(inst_id, loc_id_and_inst.inst);
-  return inst_id;
-}
-
-auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-  inst_block_stack_.AddInstId(inst_id);
-  return inst_id;
-}
-
 auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
@@ -177,20 +163,6 @@ auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
   auto inst_id = AddPlaceholderInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
-}
-
-auto Context::AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(loc_id_and_inst);
-  pattern_block_stack_.AddInstId(inst_id);
-  return inst_id;
-}
-
-auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
-    -> SemIR::ConstantId {
-  auto const_id = constants().GetOrAdd(inst, is_symbolic);
-  CARBON_VLOG("AddConstant: {0}\n", inst);
-  return const_id;
 }
 
 auto Context::ReplaceLocIdAndInstBeforeConstantUse(
@@ -760,8 +732,7 @@ namespace {
 //   complete.
 class TypeCompleter {
  public:
-  TypeCompleter(Context& context,
-                std::optional<Context::BuildDiagnosticFn> diagnoser)
+  TypeCompleter(Context& context, Context::BuildDiagnosticFn diagnoser)
       : context_(context), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
@@ -870,7 +841,7 @@ class TypeCompleter {
         auto& class_info = context_.classes().Get(inst.class_id);
         if (!class_info.is_defined()) {
           if (diagnoser_) {
-            auto builder = (*diagnoser_)();
+            auto builder = diagnoser_();
             context_.NoteIncompleteClass(inst.class_id, builder);
             builder.Emit();
           }
@@ -1151,19 +1122,17 @@ class TypeCompleter {
 
   Context& context_;
   llvm::SmallVector<WorkItem> work_list_;
-  std::optional<Context::BuildDiagnosticFn> diagnoser_;
+  Context::BuildDiagnosticFn diagnoser_;
 };
 }  // namespace
 
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
-                                std::optional<BuildDiagnosticFn> diagnoser)
-    -> bool {
+                                BuildDiagnosticFn diagnoser) -> bool {
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,
-                              std::optional<BuildDiagnosticFn> diagnoser)
-    -> bool {
+                              BuildDiagnosticFn diagnoser) -> bool {
   if (!TryToCompleteType(type_id, diagnoser)) {
     return false;
   }
@@ -1171,7 +1140,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
   if (auto interface = types().TryGetAs<SemIR::InterfaceType>(type_id)) {
     auto interface_id = interface->interface_id;
     if (!interfaces().Get(interface_id).is_defined()) {
-      auto builder = (*diagnoser)();
+      auto builder = diagnoser();
       NoteUndefinedInterface(interface_id, builder);
       builder.Emit();
       return false;
