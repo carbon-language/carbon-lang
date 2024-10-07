@@ -79,19 +79,6 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  // The introducer kind must match the previous declaration.
-  // TODO: The rule here is not yet decided. See #3384.
-  if (prev_class.inheritance_kind != new_class.inheritance_kind) {
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "class redeclared with different inheritance kind");
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "previously declared here");
-    context.emitter()
-        .Build(new_loc, ClassRedeclarationDifferentIntroducer)
-        .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
-        .Emit();
-  }
-
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
