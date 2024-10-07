@@ -209,6 +209,7 @@ auto Context::NoteAbstractClass(SemIR::ClassId class_id,
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "class is incomplete within its definition");
@@ -857,8 +858,6 @@ class TypeCompleter {
           }
           return false;
         }
-        /*
-         */
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
@@ -1219,8 +1218,6 @@ template <typename InstT, typename... EachArgT>
 static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
-  // FIXME: allow_abstract should probably come as a parameter to this function
-  // and passed along here.
   bool complete = context.TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Type completion should not fail");
   return type_id;
