@@ -368,7 +368,7 @@ static auto HandleFunctionDefinitionAfterSignature(
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "parameter has incomplete type {0} in function definition",
-          InstIdAsTypeOfExpr);
+          TypeOfInstId);
       return context.emitter().Build(param_info.inst_id,
                                      IncompleteTypeInFunctionParam,
                                      param_info.inst_id);

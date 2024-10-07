@@ -148,7 +148,7 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* type_expr = llvm::any_cast<InstIdAsRawType>(&arg)) {
     return StringifyTypeExpr(*sem_ir_, type_expr->inst_id);
   }
-  if (auto* type_of_expr = llvm::any_cast<InstIdAsTypeOfExpr>(&arg)) {
+  if (auto* type_of_expr = llvm::any_cast<TypeOfInstId>(&arg)) {
     if (!type_of_expr->inst_id.is_valid()) {
       return "<none>";
     }

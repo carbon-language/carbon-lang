@@ -93,11 +93,11 @@ struct InstIdAsRawType {
 // argument wherever possible, because we should eventually be able to produce a
 // sugared type name in this case, whereas a `TypeId` will render as a canonical
 // type.
-struct InstIdAsTypeOfExpr {
+struct TypeOfInstId {
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsTypeOfExpr(SemIR::InstId inst_id) : inst_id(inst_id) {}
+  TypeOfInstId(SemIR::InstId inst_id) : inst_id(inst_id) {}
 
   SemIR::InstId inst_id;
 };

@@ -12,8 +12,8 @@ namespace Carbon::SemIR {
 
 // Produces a string version of a type expression. Generally, this should not be
 // called directly. To format a string into a diagnostic, use a diagnostic
-// parameter of type `InstIdAsType`, `InstIdAsRawType`, or `InstIdAsTypeOfExpr`
-// where possible, or of type `TypeId` or `TypeIdAsRawType` if you don't have an
+// parameter of type `InstIdAsType`, `InstIdAsRawType`, or `TypeOfInstId` where
+// possible, or of type `TypeId` or `TypeIdAsRawType` if you don't have an
 // expression describing the type.
 auto StringifyTypeExpr(const File& sem_ir, InstId outer_inst_id) -> std::string;
 

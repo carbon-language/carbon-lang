@@ -406,7 +406,7 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(TupleIndexOutOfBounds, Error,
                       "tuple element index `{0}` is past the end of type {1}",
-                      TypedInt, InstIdAsTypeOfExpr);
+                      TypedInt, TypeOfInstId);
     context.emitter().Emit(loc_id, TupleIndexOutOfBounds,
                            {.type = index_inst.type_id, .value = index_val},
                            operand_inst_id);
@@ -433,7 +433,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "member access into object of incomplete type {0}",
-                          InstIdAsTypeOfExpr);
+                          TypeOfInstId);
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_id);
       })) {
@@ -465,8 +465,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                        "type {0} does not have a member `{1}`",
-                        InstIdAsTypeOfExpr, SemIR::NameId);
+                        "type {0} does not have a member `{1}`", TypeOfInstId,
+                        SemIR::NameId);
       context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
                              name_id);
       return SemIR::InstId::BuiltinError;
@@ -475,7 +475,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
     if (base_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
-                        InstIdAsTypeOfExpr);
+                        TypeOfInstId);
       context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
     }
     return SemIR::InstId::BuiltinError;
@@ -525,7 +525,7 @@ auto PerformCompoundMemberAccess(
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",
-                      InstIdAsTypeOfExpr);
+                      TypeOfInstId);
     context.emitter().Emit(loc_id, CompoundMemberAccessDoesNotUseBase,
                            member_id);
   }
@@ -544,7 +544,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
                       "type {0} does not support tuple indexing; only "
                       "tuples can be indexed that way",
-                      InstIdAsTypeOfExpr);
+                      TypeOfInstId);
     context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_inst_id);
     return SemIR::InstId::BuiltinError;
   }
