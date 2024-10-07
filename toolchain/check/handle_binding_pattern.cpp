@@ -14,7 +14,8 @@ namespace Carbon::Check {
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id).type_id;
+  auto [cast_type_inst_id, cast_type_id] =
+      ExprAsType(context, type_node, parsed_type_id);
 
   // TODO: Handle `_` bindings.
 
@@ -101,13 +102,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                          "{0} has incomplete type `{1}`", llvm::StringLiteral,
-                          SemIR::TypeId);
+                          "{0} has incomplete type {1}", llvm::StringLiteral,
+                          InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
                                        parent_class_decl
                                            ? llvm::StringLiteral("Field")
                                            : llvm::StringLiteral("Variable"),
-                                       cast_type_id);
+                                       cast_type_inst_id);
       });
       if (parent_class_decl) {
         CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,
@@ -187,10 +188,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case Parse::NodeKind::LetIntroducer: {
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type `{0}`",
-                          SemIR::TypeId);
+                          "`let` binding has incomplete type {0}",
+                          InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
-                                       cast_type_id);
+                                       cast_type_inst_id);
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
