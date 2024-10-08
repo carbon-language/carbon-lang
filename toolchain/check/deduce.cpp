@@ -61,8 +61,8 @@ class DeductionWorklist {
 
   // Adds a list of (param, arg) deductions. These are added in reverse order so
   // they are popped in forward order.
-  template <typename InnerId>
-  auto AddAll(llvm::ArrayRef<InnerId> params, llvm::ArrayRef<InnerId> args,
+  template <typename ElementId>
+  auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
               bool needs_substitution) -> void {
     if (params.size() != args.size()) {
       // TODO: Decide whether to error on this or just treat the parameter list
