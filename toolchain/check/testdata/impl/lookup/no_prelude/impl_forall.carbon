@@ -25,17 +25,10 @@ impl forall [V:! type] A(V) as I(V) {
 }
 
 fn TestGeneric[W:! type](a: A(W)) -> W {
-  // CHECK:STDERR: fail_todo_impl_forall.carbon:[[@LINE+4]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
-  // CHECK:STDERR:   return a.(I(W).F)();
-  // CHECK:STDERR:          ^~~~~~~~~~
-  // CHECK:STDERR:
   return a.(I(W).F)();
 }
 
 fn TestSpecific(a: A({})) -> {} {
-  // CHECK:STDERR: fail_todo_impl_forall.carbon:[[@LINE+3]]:10: error: cannot access member of interface `I` in type `A` that does not implement that interface
-  // CHECK:STDERR:   return a.(I({}).F)();
-  // CHECK:STDERR:          ^~~~~~~~~~~
   return a.(I({}).F)();
 }
 
@@ -86,20 +79,27 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.18: type = assoc_entity_type %I.type.4, %F.type.4 [symbolic]
 // CHECK:STDOUT:   %.19: %.18 = assoc_entity element0, @I.%F.decl [symbolic]
-// CHECK:STDOUT:   %.20: type = struct_type {} [template]
-// CHECK:STDOUT:   %A.5: type = class_type @A, @A(%.20) [template]
+// CHECK:STDOUT:   %F.type.5: type = fn_type @F.2, @impl(%W) [symbolic]
+// CHECK:STDOUT:   %F.5: %F.type.5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.20: <witness> = interface_witness (%F.5) [symbolic]
+// CHECK:STDOUT:   %.21: type = struct_type {} [template]
+// CHECK:STDOUT:   %A.5: type = class_type @A, @A(%.21) [template]
 // CHECK:STDOUT:   %TestSpecific.type: type = fn_type @TestSpecific [template]
 // CHECK:STDOUT:   %TestSpecific: %TestSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.21: type = unbound_element_type %A.5, %.20 [template]
-// CHECK:STDOUT:   %.22: type = struct_type {.n: %.20} [template]
-// CHECK:STDOUT:   %.23: <witness> = complete_type_witness %.22 [template]
-// CHECK:STDOUT:   %.24: type = struct_type {.n: %.1} [template]
-// CHECK:STDOUT:   %.25: type = ptr_type %.22 [template]
-// CHECK:STDOUT:   %I.type.5: type = interface_type @I, @I(%.20) [template]
-// CHECK:STDOUT:   %F.type.5: type = fn_type @F.1, @I(%.20) [template]
-// CHECK:STDOUT:   %F.5: %F.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %.26: type = assoc_entity_type %I.type.5, %F.type.5 [template]
-// CHECK:STDOUT:   %.27: %.26 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.22: type = unbound_element_type %A.5, %.21 [template]
+// CHECK:STDOUT:   %.23: type = struct_type {.n: %.21} [template]
+// CHECK:STDOUT:   %.24: <witness> = complete_type_witness %.23 [template]
+// CHECK:STDOUT:   %.25: type = struct_type {.n: %.1} [template]
+// CHECK:STDOUT:   %.26: type = ptr_type %.23 [template]
+// CHECK:STDOUT:   %I.type.5: type = interface_type @I, @I(%.21) [template]
+// CHECK:STDOUT:   %F.type.6: type = fn_type @F.1, @I(%.21) [template]
+// CHECK:STDOUT:   %F.6: %F.type.6 = struct_value () [template]
+// CHECK:STDOUT:   %.27: type = assoc_entity_type %I.type.5, %F.type.6 [template]
+// CHECK:STDOUT:   %.28: %.27 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.type.7: type = fn_type @F.2, @impl(%.21) [template]
+// CHECK:STDOUT:   %F.7: %F.type.7 = struct_value () [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%F.7) [template]
+// CHECK:STDOUT:   %struct: %.21 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -151,14 +151,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %a.patt: %A.5 = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
-// CHECK:STDOUT:     %.loc24_23: %.20 = struct_literal ()
-// CHECK:STDOUT:     %.loc24_21: type = converted %.loc24_23, constants.%.20 [template = constants.%.20]
-// CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%.20) [template = constants.%A.5]
+// CHECK:STDOUT:     %.loc20_23: %.21 = struct_literal ()
+// CHECK:STDOUT:     %.loc20_21: type = converted %.loc20_23, constants.%.21 [template = constants.%.21]
+// CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%.21) [template = constants.%A.5]
 // CHECK:STDOUT:     %a.param: %A.5 = param a, runtime_param0
 // CHECK:STDOUT:     %a: %A.5 = bind_name a, %a.param
-// CHECK:STDOUT:     %.loc24_31.1: %.20 = struct_literal ()
-// CHECK:STDOUT:     %.loc24_31.2: type = converted %.loc24_31.1, constants.%.20 [template = constants.%.20]
-// CHECK:STDOUT:     %return: ref %.20 = var <return slot>
+// CHECK:STDOUT:     %.loc20_31.1: %.21 = struct_literal ()
+// CHECK:STDOUT:     %.loc20_31.2: type = converted %.loc20_31.1, constants.%.21 [template = constants.%.21]
+// CHECK:STDOUT:     %return: ref %.21 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,32 +275,46 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%W.1) [symbolic = %I.type.1 (constants.%I.type.4)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @I(%W.1) [symbolic = %F.type (constants.%F.type.4)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @TestGeneric.%I.type.1 (%I.type.4), @TestGeneric.%F.type (%F.type.4) [symbolic = %.1 (constants.%.18)]
+// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @I(%W.1) [symbolic = %F.type.1 (constants.%F.type.4)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @TestGeneric.%I.type.1 (%I.type.4), @TestGeneric.%F.type.1 (%F.type.4) [symbolic = %.1 (constants.%.18)]
 // CHECK:STDOUT:   %.2: @TestGeneric.%.1 (%.18) = assoc_entity element0, @I.%F.decl [symbolic = %.2 (constants.%.19)]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%W.1) [symbolic = %F.type.2 (constants.%F.type.5)]
+// CHECK:STDOUT:   %F: @TestGeneric.%F.type.2 (%F.type.5) = struct_value () [symbolic = %F (constants.%F.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%W.loc16: type](%a: @TestGeneric.%A.1 (%A.4)) -> @TestGeneric.%W.1 (%W) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%A.1 (%A.4) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
-// CHECK:STDOUT:     %W.ref.loc21: type = name_ref W, %W.loc16 [symbolic = %W.1 (constants.%W)]
-// CHECK:STDOUT:     %I.type.loc21: type = interface_type @I, @I(constants.%W) [symbolic = %I.type.1 (constants.%I.type.4)]
-// CHECK:STDOUT:     %.loc21: @TestGeneric.%.1 (%.18) = specific_constant @I.%.loc7, @I(constants.%W) [symbolic = %.2 (constants.%.19)]
-// CHECK:STDOUT:     %F.ref: @TestGeneric.%.1 (%.18) = name_ref F, %.loc21 [symbolic = %.2 (constants.%.19)]
-// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:     %W.ref.loc17: type = name_ref W, %W.loc16 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %I.type.loc17: type = interface_type @I, @I(constants.%W) [symbolic = %I.type.1 (constants.%I.type.4)]
+// CHECK:STDOUT:     %.loc17_17: @TestGeneric.%.1 (%.18) = specific_constant @I.%.loc7, @I(constants.%W) [symbolic = %.2 (constants.%.19)]
+// CHECK:STDOUT:     %F.ref: @TestGeneric.%.1 (%.18) = name_ref F, %.loc17_17 [symbolic = %.2 (constants.%.19)]
+// CHECK:STDOUT:     %.loc17_11.1: @TestGeneric.%F.type.1 (%F.type.4) = interface_witness_access constants.%.20, element0 [symbolic = %F (constants.%F.5)]
+// CHECK:STDOUT:     %.loc17_11.2: <bound method> = bound_method %a.ref, %.loc17_11.1
+// CHECK:STDOUT:     %F.call: init @TestGeneric.%W.1 (%W) = call %.loc17_11.2(%a.ref)
+// CHECK:STDOUT:     %.loc17_22.1: @TestGeneric.%W.1 (%W) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc17_22.2: @TestGeneric.%W.1 (%W) = converted %F.call, %.loc17_22.1
+// CHECK:STDOUT:     return %.loc17_22.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestSpecific(%a: %A.5) -> %.20 {
+// CHECK:STDOUT: fn @TestSpecific(%a: %A.5) -> %.21 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A.5 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
-// CHECK:STDOUT:   %.loc28_16: %.20 = struct_literal ()
-// CHECK:STDOUT:   %.loc28_14: type = converted %.loc28_16, constants.%.20 [template = constants.%.20]
-// CHECK:STDOUT:   %I.type: type = interface_type @I, @I(constants.%.20) [template = constants.%I.type.5]
-// CHECK:STDOUT:   %.loc28_18: %.26 = specific_constant @I.%.loc7, @I(constants.%.20) [template = constants.%.27]
-// CHECK:STDOUT:   %F.ref: %.26 = name_ref F, %.loc28_18 [template = constants.%.27]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.loc21_16: %.21 = struct_literal ()
+// CHECK:STDOUT:   %.loc21_14: type = converted %.loc21_16, constants.%.21 [template = constants.%.21]
+// CHECK:STDOUT:   %I.type: type = interface_type @I, @I(constants.%.21) [template = constants.%I.type.5]
+// CHECK:STDOUT:   %.loc21_18: %.27 = specific_constant @I.%.loc7, @I(constants.%.21) [template = constants.%.28]
+// CHECK:STDOUT:   %F.ref: %.27 = name_ref F, %.loc21_18 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc21_11.1: %F.type.6 = interface_witness_access constants.%.29, element0 [template = constants.%F.7]
+// CHECK:STDOUT:   %.loc21_11.2: <bound method> = bound_method %a.ref, %.loc21_11.1
+// CHECK:STDOUT:   %F.call: init %.21 = call %.loc21_11.2(%a.ref)
+// CHECK:STDOUT:   %.loc21_21.1: ref %.21 = temporary_storage
+// CHECK:STDOUT:   %.loc21_21.2: ref %.21 = temporary %.loc21_21.1, %F.call
+// CHECK:STDOUT:   %struct: %.21 = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:   %.loc21_23: %.21 = converted %F.call, %struct [template = constants.%struct]
+// CHECK:STDOUT:   return %.loc21_23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
@@ -422,29 +436,67 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.2 => constants.%.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%W) {
+// CHECK:STDOUT:   %V.1 => constants.%W
+// CHECK:STDOUT:   %A.1 => constants.%A.4
+// CHECK:STDOUT:   %I.type.1 => constants.%I.type.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.5
+// CHECK:STDOUT:   %F => constants.%F.5
+// CHECK:STDOUT:   %.1 => constants.%.20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%W) {
+// CHECK:STDOUT:   %V => constants.%W
+// CHECK:STDOUT:   %A => constants.%A.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@TestGeneric.%W.1) {
 // CHECK:STDOUT:   %U.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%.20) {
-// CHECK:STDOUT:   %T.1 => constants.%.20
+// CHECK:STDOUT: specific @impl(@TestGeneric.%W.1) {
+// CHECK:STDOUT:   %V.1 => constants.%W
+// CHECK:STDOUT:   %A.1 => constants.%A.4
+// CHECK:STDOUT:   %I.type.1 => constants.%I.type.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%.21) {
+// CHECK:STDOUT:   %T.1 => constants.%.21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.5
-// CHECK:STDOUT:   %.1 => constants.%.21
-// CHECK:STDOUT:   %.2 => constants.%.22
-// CHECK:STDOUT:   %.3 => constants.%.23
+// CHECK:STDOUT:   %.1 => constants.%.22
+// CHECK:STDOUT:   %.2 => constants.%.23
+// CHECK:STDOUT:   %.3 => constants.%.24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(constants.%.20) {
-// CHECK:STDOUT:   %U.1 => constants.%.20
+// CHECK:STDOUT: specific @I(constants.%.21) {
+// CHECK:STDOUT:   %U.1 => constants.%.21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.5
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.5
-// CHECK:STDOUT:   %F => constants.%F.5
-// CHECK:STDOUT:   %.1 => constants.%.26
-// CHECK:STDOUT:   %.2 => constants.%.27
+// CHECK:STDOUT:   %F.type => constants.%F.type.6
+// CHECK:STDOUT:   %F => constants.%F.6
+// CHECK:STDOUT:   %.1 => constants.%.27
+// CHECK:STDOUT:   %.2 => constants.%.28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%.21) {
+// CHECK:STDOUT:   %V.1 => constants.%.21
+// CHECK:STDOUT:   %A.1 => constants.%A.5
+// CHECK:STDOUT:   %I.type.1 => constants.%I.type.5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.7
+// CHECK:STDOUT:   %F => constants.%F.7
+// CHECK:STDOUT:   %.1 => constants.%.29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.21) {
+// CHECK:STDOUT:   %V => constants.%.21
+// CHECK:STDOUT:   %A => constants.%A.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

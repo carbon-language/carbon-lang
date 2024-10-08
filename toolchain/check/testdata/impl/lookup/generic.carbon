@@ -56,10 +56,6 @@ impl forall [T:! type] C(T) as HasF {
 
 fn G(x: C({})) {
   // TODO: Implement support for deducing T in C(T).
-  // CHECK:STDERR: fail_todo_deduced_type_argument.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF` in type `C` that does not implement that interface
-  // CHECK:STDERR:   x.(HasF.F)();
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   x.(HasF.F)();
 }
 
@@ -77,10 +73,6 @@ impl forall [T:! type] {} as HasF(T) {
 
 fn G(x: {}) {
   // TODO: Implement support for deducing T in HasF(T).
-  // CHECK:STDERR: fail_todo_deduced_interface_argument.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF` in type `{}` that does not implement that interface
-  // CHECK:STDERR:   x.(HasF({}).F)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
   x.(HasF({}).F)();
 }
 
@@ -483,6 +475,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.4) [template]
+// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -597,6 +592,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %C.3 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc16()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -635,6 +632,18 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%.4) {
+// CHECK:STDOUT:   %T.1 => constants.%.4
+// CHECK:STDOUT:   %C.1 => constants.%C.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.3
+// CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.4) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_deduced_interface_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -659,6 +668,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %F.type.4: type = fn_type @F.2, @impl(%.4) [template]
+// CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -768,11 +780,13 @@ fn G(x: A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
-// CHECK:STDOUT:   %.loc18_12: %.4 = struct_literal ()
-// CHECK:STDOUT:   %.loc18_10: type = converted %.loc18_12, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_12: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc14_10: type = converted %.loc14_12, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%.4) [template = constants.%HasF.type.3]
-// CHECK:STDOUT:   %.loc18_14: %.6 = specific_constant @HasF.%.loc5, @HasF(constants.%.4) [template = constants.%.7]
-// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc18_14 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc14_14: %.6 = specific_constant @HasF.%.loc5, @HasF(constants.%.4) [template = constants.%.7]
+// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc14_14 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc14_4: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc14_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -828,6 +842,18 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.1 => constants.%.6
 // CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%.4) {
+// CHECK:STDOUT:   %T.1 => constants.%.4
+// CHECK:STDOUT:   %HasF.type.1 => constants.%HasF.type.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.4
+// CHECK:STDOUT:   %F => constants.%F.4
+// CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_deduction.carbon
 // CHECK:STDOUT:
@@ -992,7 +1018,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, @HasF.%F.decl [template]
-// CHECK:STDOUT:   %HasF.type.4: type = interface_type @HasF, @HasF(%A) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1176,14 +1201,5 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F => constants.%F.3
 // CHECK:STDOUT:   %.1 => constants.%.8
 // CHECK:STDOUT:   %.2 => constants.%.9
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%A) {
-// CHECK:STDOUT:   %T.1 => constants.%A
-// CHECK:STDOUT:   %HasF.type.1 => constants.%HasF.type.4
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(constants.%A) {
-// CHECK:STDOUT:   %T.1 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
