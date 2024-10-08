@@ -22,7 +22,6 @@ struct ConversionTarget {
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
-    // TODO: Use of an interface for conversions is not yet supported.
     ExplicitAs,
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
