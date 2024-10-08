@@ -10,22 +10,17 @@ namespace Carbon::Check {
 auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.param_patterns_stack().Push();
+  context.param_and_arg_refs_stack().Push();
   return true;
-}
-
-static auto HandleTrailingParam(Context& context) {
-  context.param_patterns_stack().AddInstId(context.node_stack().PopPattern());
 }
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
-  if (!context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
-    HandleTrailingParam(context);
-  }
-  context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::ImplicitParamListStart);
+  context.node_stack().Push(node_id, refs_id);
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
   return true;
@@ -34,23 +29,22 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
 auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.param_patterns_stack().Push();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
-  HandleTrailingParam(context);
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
-  if (!context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
-    HandleTrailingParam(context);
-  }
-  context.node_stack().Push(node_id, context.param_patterns_stack().Pop());
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::TuplePatternStart);
+  context.node_stack().Push(node_id, refs_id);
   return true;
 }
 
