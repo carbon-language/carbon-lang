@@ -134,7 +134,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
       worklist_(context),
       first_deduced_index_(0) {
   CARBON_CHECK(generic_id.is_valid(),
-                "Performing deduction for non-generic entity");
+               "Performing deduction for non-generic entity");
 
   // Initialize the deduced arguments to Invalid.
   result_arg_ids_.resize(
@@ -144,8 +144,8 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
       SemIR::InstId::Invalid);
 
   if (enclosing_specific_id.is_valid()) {
-    // Copy any outer generic arguments from the specified instance and prepare to
-    // substitute them into the function declaration.
+    // Copy any outer generic arguments from the specified instance and prepare
+    // to substitute them into the function declaration.
     auto args = context.inst_blocks().Get(
         context.specifics().Get(enclosing_specific_id).args_id);
     std::copy(args.begin(), args.end(), result_arg_ids_.begin());
