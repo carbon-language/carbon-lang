@@ -66,10 +66,12 @@ struct Function : public EntityWithParamsBase,
 
   // Given an instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
-  // corresponding entity name ID and runtime parameter index.
+  // corresponding instruction, its ID, and the entity_name_id of the underlying
+  // binding pattern.
   struct ParamPatternInfo {
+    InstId inst_id;
+    ParamPattern inst;
     EntityNameId entity_name_id;
-    SemIR::RuntimeParamIndex runtime_param_index;
 
     auto GetNameId(const File& sem_ir) -> NameId;
   };

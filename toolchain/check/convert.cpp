@@ -1195,7 +1195,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       }
       args.push_back(converted_self_id);
     } else {
-      CARBON_CHECK(!param_pattern_info.runtime_param_index.is_valid(),
+      CARBON_CHECK(!param_pattern_info.inst.runtime_index.is_valid(),
                    "Unexpected implicit parameter passed at runtime");
     }
   }
@@ -1217,7 +1217,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
     auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
                              context.sem_ir(), param_pattern_id)
-                             .runtime_param_index;
+                             .inst.runtime_index;
     if (!runtime_index.is_valid()) {
       // Not a runtime parameter: we don't pass an argument.
       continue;

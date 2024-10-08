@@ -445,6 +445,7 @@ class Context {
     return param_and_arg_refs_stack_;
   }
 
+  // FIXME try removing this
   auto param_patterns_stack() -> InstBlockStack& {
     return param_patterns_stack_;
   }

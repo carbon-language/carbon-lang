@@ -75,7 +75,7 @@ static auto CheckFunctionSignature(Context& context,
   RequireGenericOrSelfImplicitFunctionParams(
       context, name_and_params.implicit_params_id);
   SemIR::RuntimeParamIndex next_index(0);
-  for (auto [top_param_id, top_param_pattern_id] : llvm::zip(
+  for (auto [param_id, param_pattern_id] : llvm::zip(
            llvm::concat<const SemIR::InstId>(
                context.inst_blocks().GetOrEmpty(
                    name_and_params.implicit_params_id),
@@ -85,20 +85,14 @@ static auto CheckFunctionSignature(Context& context,
                    name_and_params.implicit_param_patterns_id),
                context.inst_blocks().GetOrEmpty(
                    name_and_params.param_patterns_id)))) {
-    if (top_param_id == SemIR::InstId::BuiltinError ||
-        top_param_pattern_id == SemIR::InstId::BuiltinError) {
+    if (param_id == SemIR::InstId::BuiltinError ||
+        param_pattern_id == SemIR::InstId::BuiltinError) {
       continue;
     }
-    auto param_pattern_id = top_param_pattern_id;
-    auto param_pattern = context.insts().Get(param_pattern_id);
-    if (auto addr_pattern = param_pattern.TryAs<SemIR::AddrPattern>()) {
-      param_pattern_id = addr_pattern->inner_id;
-      param_pattern = context.insts().Get(param_pattern_id);
-    }
-    auto param_pattern_inst = param_pattern.As<SemIR::ParamPattern>();
-
     auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), top_param_id);
+        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
+    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
+        context.sem_ir(), param_pattern_id);
 
     // If this is a runtime parameter, number it.
     // TODO: move this logic to pattern_match.cpp, and remove this function
@@ -107,9 +101,9 @@ static auto CheckFunctionSignature(Context& context,
         param_info.bind_name->kind == SemIR::BindName::Kind) {
       param_info.inst.runtime_index = next_index;
       context.ReplaceInstBeforeConstantUse(param_info.inst_id, param_info.inst);
-      param_pattern_inst.runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_pattern_id,
-                                           param_pattern_inst);
+      param_pattern_info.inst.runtime_index = next_index;
+      context.ReplaceInstBeforeConstantUse(param_pattern_info.inst_id,
+                                           param_pattern_info.inst);
       ++next_index.index;
     }
   }

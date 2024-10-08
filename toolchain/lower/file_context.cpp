@@ -214,13 +214,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
-    // FIXME should this be a SemIR::Function helper?
-    if (auto addr_pattern =
-            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_pattern_id)) {
-      param_pattern_id = addr_pattern->inner_id;
-    }
-    auto param_pattern =
-        sem_ir().insts().GetAs<SemIR::ParamPattern>(param_pattern_id);
+    auto param_pattern = SemIR::Function::GetParamPatternInfoFromPatternId(
+                             sem_ir(), param_pattern_id)
+                             .inst;
     if (!param_pattern.runtime_index.is_valid()) {
       continue;
     }

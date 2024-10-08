@@ -94,11 +94,21 @@ struct EntityWithParamsBase {
   Parse::NodeId last_param_node_id;
   // A block containing the pattern insts for the parameter lists.
   InstBlockId pattern_block_id;
-  // A block containing a single reference instruction per implicit parameter.
+  // A block containing, for each implicit parameter, a reference to the
+  // instruction in the entity's declaration block that depends on all other
+  // pattern-match insts pertaining to that parameter.
   InstBlockId implicit_param_refs_id;
+  // A block containing, for each implicit parameter, a reference to the
+  // instruction in the entity's pattern block that depends on all other
+  // pattern insts pertaining to that parameter.
   InstBlockId implicit_param_patterns_id;
-  // A block containing a single reference instruction per parameter.
+  // A block containing, for each explicit parameter, a reference to the
+  // instruction in the entity's declaration block that depends on all other
+  // pattern-match insts pertaining to that parameter.
   InstBlockId param_refs_id;
+  // A block containing, for each explicit parameter, a reference to the
+  // instruction in the entity's pattern block that depends on all other
+  // pattern insts pertaining to that parameter.
   InstBlockId param_patterns_id;
   // True if declarations are `extern`.
   bool is_extern;

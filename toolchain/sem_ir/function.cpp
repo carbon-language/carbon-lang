@@ -47,21 +47,26 @@ auto Function::ParamPatternInfo::GetNameId(const File& sem_ir) -> NameId {
 }
 
 auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
-                                                InstId param_pattern_id)
+                                                InstId pattern_id)
     -> ParamPatternInfo {
-  auto param_inst = sem_ir.insts().Get(param_pattern_id);
+  auto inst_id = pattern_id;
+  auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto addr_pattern = param_inst.TryAs<SemIR::AddrPattern>()) {
-    param_pattern_id = addr_pattern->inner_id;
-    param_inst = sem_ir.insts().Get(param_pattern_id);
+  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+    inst_id = addr_pattern->inner_id;
+    inst = sem_ir.insts().Get(inst_id);
   }
 
-  auto param_pattern_inst = param_inst.As<SemIR::ParamPattern>();
-  param_inst = sem_ir.insts().Get(param_pattern_inst.subpattern_id);
+  auto param_pattern_id = inst_id;
+  auto param_pattern_inst = inst.As<SemIR::ParamPattern>();
 
-  auto binding_pattern = param_inst.As<AnyBindingPattern>();
-  return {.entity_name_id = binding_pattern.entity_name_id,
-          .runtime_param_index = param_pattern_inst.runtime_index};
+  inst_id = param_pattern_inst.subpattern_id;
+  inst = sem_ir.insts().Get(inst_id);
+
+  auto binding_pattern = inst.As<AnyBindingPattern>();
+  return {.inst_id = param_pattern_id,
+          .inst = param_pattern_inst,
+          .entity_name_id = binding_pattern.entity_name_id};
 }
 
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
