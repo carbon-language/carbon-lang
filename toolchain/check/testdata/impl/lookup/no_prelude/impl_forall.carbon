@@ -62,13 +62,13 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %V: type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %A.3: type = class_type @A, @A(%V) [symbolic]
 // CHECK:STDOUT:   %.8: type = interface_type @I, @I(%V) [symbolic]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%V) [symbolic]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @I(%V) [symbolic]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type %.8, %F.type.3 [symbolic]
 // CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, @I.%F.decl [symbolic]
-// CHECK:STDOUT:   %.11: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.11: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %.12: type = unbound_element_type %A.3, %V [symbolic]
 // CHECK:STDOUT:   %.13: type = struct_type {.n: %V} [symbolic]
 // CHECK:STDOUT:   %.14: <witness> = complete_type_witness %.13 [symbolic]
@@ -201,8 +201,13 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%V.1) [symbolic = %A.1 (constants.%A.3)]
 // CHECK:STDOUT:   %.1: type = interface_type @I, @I(%V.1) [symbolic = %.1 (constants.%.8)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%V.1) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness (%F) [symbolic = %.2 (constants.%.11)]
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %A.loc10 as %.loc10_33 {
-// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%A (%A.3) = binding_pattern self
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%A.loc10 [symbolic = %A (constants.%A.3)]
@@ -211,7 +216,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.%V.loc10 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:       %return: ref @F.2.%V (%V) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc10_37: <witness> = interface_witness (%F.decl) [template = constants.%.11]
+// CHECK:STDOUT:     %.loc10_37: <witness> = interface_witness (%F.decl) [symbolic = %.2 (constants.%.11)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -358,6 +363,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %V.1 => constants.%V
 // CHECK:STDOUT:   %A.1 => constants.%A.3
 // CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(@F.2.%V) {
@@ -373,6 +383,12 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %U => constants.%V
 // CHECK:STDOUT:   %.1 => constants.%.8
 // CHECK:STDOUT:   %Self => constants.%A.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%V.1) {
+// CHECK:STDOUT:   %V.1 => constants.%V
+// CHECK:STDOUT:   %A.1 => constants.%A.3
+// CHECK:STDOUT:   %.1 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W) {

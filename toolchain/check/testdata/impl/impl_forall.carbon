@@ -27,9 +27,9 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %.1, %F.type.1 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,9 +76,14 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: generic impl @impl(%T.loc15: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.1) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
-// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [symbolic = %.1 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -104,9 +109,18 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.1) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

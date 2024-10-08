@@ -11,6 +11,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -212,6 +213,11 @@ static auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
       return SemIR::InstId::Invalid;
     }
     LoadImportRef(context, impl.witness_id);
+    if (specific_id.is_valid()) {
+      // We need a definition of the specific `impl` so we can access its
+      // witness.
+      ResolveSpecificDefinition(context, specific_id);
+    }
     return context.constant_values().GetInstId(
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                           impl.witness_id));
