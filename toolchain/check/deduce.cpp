@@ -87,7 +87,20 @@ class DeductionContext {
                    SemIR::SpecificId enclosing_specific_id, bool diagnose);
 
   auto context() const -> Context& { return *context_; }
-  auto worklist() -> DeductionWorklist& { return worklist_; }
+
+  // Adds a pending deduction of `param` from `arg`. `needs_substitution`
+  // indicates whether we need to substitute known generic parameters into
+  // `param`.
+  template <typename ParamT, typename ArgT>
+  auto Add(ParamT param, ArgT arg, bool needs_substitution) -> void {
+    worklist_.Add(param, arg, needs_substitution);
+  }
+
+  // Same as `Add` but for an array or block of operands.
+  template <typename ParamT, typename ArgT>
+  auto AddAll(ParamT param, ArgT arg, bool needs_substitution) -> void {
+    worklist_.AddAll(param, arg, needs_substitution);
+  }
 
   // Performs all deductions in the deduction worklist. Returns whether
   // deduction succeeded.
@@ -169,8 +182,7 @@ auto DeductionContext::Deduce() -> bool {
     // If the parameter has a symbolic type, deduce against that.
     auto param_type_id = context().insts().Get(param_id).type_id();
     if (param_type_id.AsConstantId().is_symbolic()) {
-      worklist_.Add(
-          context().types().GetInstId(param_type_id),
+      Add(context().types().GetInstId(param_type_id),
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
     } else {
@@ -310,7 +322,7 @@ auto DeduceGenericCallArguments(
   // Prepare to perform deduction of the explicit parameters against their
   // arguments.
   // TODO: Also perform deduction for type of self.
-  deduction.worklist().AddAll(params_id, arg_ids, /*needs_substitution=*/true);
+  deduction.AddAll(params_id, arg_ids, /*needs_substitution=*/true);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::Invalid;
@@ -330,12 +342,11 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
       /*diagnose=*/false);
 
   // Prepare to perform deduction of the type and interface.
-  deduction.worklist().Add(impl.self_id,
-                           context.constant_values().GetInstId(self_id),
-                           /*needs_substitution=*/false);
-  deduction.worklist().Add(impl.constraint_id,
-                           context.constant_values().GetInstId(constraint_id),
-                           /*needs_substitution=*/false);
+  deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id),
+                /*needs_substitution=*/false);
+  deduction.Add(impl.constraint_id,
+                context.constant_values().GetInstId(constraint_id),
+                /*needs_substitution=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::Invalid;
