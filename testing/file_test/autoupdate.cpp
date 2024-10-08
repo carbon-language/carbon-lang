@@ -347,8 +347,9 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     ++non_check_line_;
   }
 
-  // This will result in all check lines (and only check lines) being
-  // added to the split.
+  // When autoupdate_split_ was true, this will result in all check lines (and
+  // only check lines) being added to the split by FinishFile. We don't use
+  // autoupdate_split_ past this point.
   autoupdate_split_ = false;
 
   FinishFile(/*is_last_file=*/true);
