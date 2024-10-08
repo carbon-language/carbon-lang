@@ -214,6 +214,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                             CommentIterator(CommentIndex(comments_.size())));
   }
 
+  auto comments_size() const -> size_t { return comments_.size(); }
+
   // This is an upper bound on the number of output parse nodes in the absence
   // of errors.
   auto expected_max_parse_tree_size() const -> int {
@@ -456,6 +458,19 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetTokenPrintWidths(TokenIndex token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
+
+  // Adds a comment. This uses the indent to potential stitch together two
+  // adjacent comments.
+  auto AddComment(int32_t indent, int32_t start, int32_t end) -> void {
+    if (!comments_.empty()) {
+      auto& comment = comments_.back();
+      if (comment.start + comment.length + indent == start) {
+        comment.length = end - comment.start;
+        return;
+      }
+    }
+    comments_.push_back({.start = start, .length = end - start});
+  }
 
   // Used to allocate computed string literals.
   llvm::BumpPtrAllocator allocator_;

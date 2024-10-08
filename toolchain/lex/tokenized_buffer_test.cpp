@@ -11,6 +11,7 @@
 #include <iterator>
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -1104,6 +1105,111 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
                             DiagnosticKind::UnrecognizedCharacters,
                             DiagnosticLevel::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
+}
+
+// Appends comment lines to the string, to create a comment block.
+static auto AppendCommentLines(std::string& str, int count, llvm::StringRef tag)
+    -> void {
+  llvm::raw_string_ostream out(str);
+  for (int i : llvm::seq(count)) {
+    out << "// " << tag << i << "\n";
+  }
+}
+
+TEST_F(LexerTest, CommentBlock) {
+  for (int comments_before = 0; comments_before < 5; ++comments_before) {
+    std::string prefix;
+    AppendCommentLines(prefix, comments_before, "B");
+
+    for (int comments_after = 1; comments_after < 5; ++comments_after) {
+      std::string source = prefix;
+      if (comments_before > 0) {
+        source += "//\n";
+      }
+      AppendCommentLines(source, comments_after, "C");
+
+      SCOPED_TRACE(llvm::formatv(
+          "{0} comment lines before the empty comment line, {1} after",
+          comments_before, comments_after));
+
+      auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+      ASSERT_FALSE(buffer.has_errors());
+
+      EXPECT_THAT(buffer.comments_size(), Eq(1));
+    }
+  }
+}
+
+TEST_F(LexerTest, IndentedComments) {
+  for (int indent = 0; indent < 40; ++indent) {
+    SCOPED_TRACE(llvm::formatv("Indent: {0}", indent));
+
+    std::string source;
+    llvm::raw_string_ostream source_stream(source);
+    source_stream.indent(indent);
+    source_stream << "// Comment\n";
+
+    auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+    ASSERT_FALSE(buffer.has_errors());
+    EXPECT_THAT(buffer.comments_size(), Eq(1));
+
+    std::string simd_source =
+        source +
+        "\"Add a bunch of padding so that SIMD logic shouldn't hit EOF\"";
+    auto& simd_buffer = compile_helper_.GetTokenizedBuffer(source);
+    ASSERT_FALSE(simd_buffer.has_errors());
+    EXPECT_THAT(simd_buffer.comments_size(), Eq(1));
+  }
+}
+
+TEST_F(LexerTest, MultipleComments) {
+  constexpr llvm::StringLiteral Format = R"(
+{0}
+  {1}
+
+{2}
+                                                              {3}
+
+'''This is a string, not a comment. The next comment will stop SIMD due to being
+   too close to the EOF.
+   '''
+
+{4}
+x
+)";
+  constexpr llvm::StringLiteral Comments[] = {
+      // NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
+      "// This comment should be possible to parse with SIMD.\n"
+      "// This one too.\n",
+      "// This one as well, though it's a different indent.\n",
+      "// This is one comment:\n"
+      "//Invalid\n"
+      "// Valid\n"
+      "//Invalid\n"
+      "//\n"
+      "// Valid\n"
+      "//\n"
+      "// Valid\n",
+      "// This uses a high indent, which stops SIMD.\n", "//\n"};
+  std::string source = llvm::formatv(Format.data(), Comments[0], Comments[1],
+                                     Comments[2], Comments[3], Comments[4])
+                           .str();
+
+  auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+  EXPECT_TRUE(buffer.has_errors());
+
+  EXPECT_THAT(buffer.comments_size(), Eq(5));
+  for (int i :
+       llvm::seq(std::min(static_cast<int>(buffer.comments_size()), 5))) {
+    EXPECT_THAT(buffer.GetCommentText(CommentIndex(i)).str(),
+                testing::StrEq(Comments[i]));
+  }
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::FileStart},
+                          {.kind = TokenKind::StringLiteral},
+                          {.kind = TokenKind::Identifier},
+                          {.kind = TokenKind::FileEnd},
+                      }));
 }
 
 TEST_F(LexerTest, PrintingOutputYaml) {
