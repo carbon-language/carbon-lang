@@ -15,9 +15,9 @@ namespace Carbon::Check {
 // Description of the target of a conversion.
 struct ConversionTarget {
   enum Kind : int8_t {
-    // Convert to a value of type `type`.
+    // Convert to a value of type `type_id`.
     Value,
-    // Convert to either a value or a reference of type `type`.
+    // Convert to either a value or a reference of type `type_id`.
     ValueOrRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`

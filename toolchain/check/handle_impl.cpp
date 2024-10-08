@@ -127,8 +127,9 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::AnyImplDeclId node_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
-                       Parse::NodeId params_node, SemIR::TypeId constraint_id)
-    -> void {
+                       Parse::NodeId params_node,
+                       SemIR::InstId constraint_inst_id,
+                       SemIR::TypeId constraint_id) -> void {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
@@ -184,10 +185,10 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   auto& interface = context.interfaces().Get(interface_type->interface_id);
   if (!interface.is_defined()) {
     CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for interface `{0}`",
-                      SemIR::TypeId);
+                      "`extend impl` requires a definition for interface {0}",
+                      InstIdAsType);
     auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                        constraint_id);
+                                        constraint_inst_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
     diag.Emit();
     parent_scope.has_error = true;
@@ -328,7 +329,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               name.implicit_params_loc_id, constraint_type_id);
+               name.implicit_params_loc_id, constraint_inst_id,
+               constraint_type_id);
   }
 
   if (!is_definition && context.IsImplFile()) {
@@ -352,14 +354,13 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
 
   if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`", std::string,
-                      std::string);
+                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
+                      InstIdAsRawType);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "previous definition was here");
     context.emitter()
-        .Build(node_id, ImplRedefinition,
-               context.sem_ir().StringifyTypeExpr(impl_info.self_id),
-               context.sem_ir().StringifyTypeExpr(impl_info.constraint_id))
+        .Build(node_id, ImplRedefinition, impl_info.self_id,
+               impl_info.constraint_id)
         .Note(impl_info.definition_id, ImplPreviousDefinition)
         .Emit();
   } else {

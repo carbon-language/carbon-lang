@@ -512,7 +512,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
               .Get(bound->int_id)
               .ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
-                          "array index `{0}` is past the end of type `{1}`",
+                          "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
             index_inst.index_id, ArrayIndexOutOfBounds,

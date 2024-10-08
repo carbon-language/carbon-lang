@@ -83,31 +83,31 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %Action.type: type = generic_interface_type @Action [template]
+// CHECK:STDOUT:   %Action.type.1: type = generic_interface_type @Action [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Action: %Action.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @Action, @Action(%T) [symbolic]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Action: %Action.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Action.type.2: type = interface_type @Action, @Action(%T) [symbolic]
+// CHECK:STDOUT:   %Self: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, %Op.type.1 [symbolic]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Action.%Op.decl [symbolic]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %Action.type.2, %Op.type.1 [symbolic]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Action.%Op.decl [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.7: type = interface_type @Action, @Action(%B) [template]
+// CHECK:STDOUT:   %Action.type.3: type = interface_type @Action, @Action(%B) [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.1, @Action(%B) [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %Op.type.3 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, @Action.%Op.decl [template]
-// CHECK:STDOUT:   %.10: <witness> = interface_witness (%Op.2) [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Action.type.3, %Op.type.3 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @Action.%Op.decl [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%Op.2) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -118,7 +118,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Action.decl: %Action.type = interface_decl @Action [template = constants.%Action] {
+// CHECK:STDOUT:   %Action.decl: %Action.type.1 = interface_decl @Action [template = constants.%Action] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -130,9 +130,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %Action.ref: %Action.type = name_ref Action, file.%Action.decl [template = constants.%Action]
+// CHECK:STDOUT:     %Action.ref: %Action.type.1 = name_ref Action, file.%Action.decl [template = constants.%Action]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %.loc12_17: type = interface_type @Action, @Action(constants.%B) [template = constants.%.7]
+// CHECK:STDOUT:     %Action.type: type = interface_type @Action, @Action(constants.%B) [template = constants.%Action.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
@@ -149,17 +149,17 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T.1) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(%T.1) [symbolic = %Action.type (constants.%Action.type.2)]
+// CHECK:STDOUT:   %Self.2: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Action(%T.1) [symbolic = %Op.type (constants.%Op.type.1)]
 // CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.1) = struct_value () [symbolic = %Op (constants.%Op.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.2), @Action.%Op.type (%Op.type.1) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Action.%Action.type (%Action.type.2), @Action.%Op.type (%Op.type.1) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.2: @Action.%.1 (%.2) = assoc_entity element0, %Op.decl [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Action.%.1 (%.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @Action.%Action.type (%Action.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Op.decl: @Action.%Op.type (%Op.type.1) = fn_decl @Op.1 [symbolic = @Action.%Op (constants.%Op.1)] {} {}
-// CHECK:STDOUT:     %.loc5: @Action.%.2 (%.3) = assoc_entity element0, %Op.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc5: @Action.%.1 (%.2) = assoc_entity element0, %Op.decl [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -168,37 +168,37 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A.ref as %.loc12_17 {
+// CHECK:STDOUT: impl @impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {} {}
-// CHECK:STDOUT:   %.loc12_21: <witness> = interface_witness (%Op.decl) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.loc12_21
+// CHECK:STDOUT:   witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(@Action.%T.loc4: type, @Action.%Self.1: @Action.%.1 (%.2)) {
+// CHECK:STDOUT: generic fn @Op.1(@Action.%T.loc4: type, @Action.%Self.1: @Action.%Action.type (%Action.type.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -211,12 +211,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: fn @F(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %Action.ref: %Action.type = name_ref Action, file.%Action.decl [template = constants.%Action]
+// CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, file.%Action.decl [template = constants.%Action]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc16_23: type = interface_type @Action, @Action(constants.%B) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc16_26: %.8 = specific_constant @Action.%.loc5, @Action(constants.%B) [template = constants.%.9]
-// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, %.loc16_26 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc16_15: %Op.type.3 = interface_witness_access constants.%.10, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(constants.%B) [template = constants.%Action.type.3]
+// CHECK:STDOUT:   %.loc16_26: %.6 = specific_constant @Action.%.loc5, @Action(constants.%B) [template = constants.%.7]
+// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, %.loc16_26 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16_15: %Op.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%Op.2]
 // CHECK:STDOUT:   %Op.call: init %.1 = call %.loc16_15()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -238,12 +238,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt.1 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %Action.type => constants.%Action.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.3
 // CHECK:STDOUT:   %Op => constants.%Op.3
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%B, constants.%A) {}
@@ -254,47 +254,47 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %Action.type: type = generic_interface_type @Action [template]
+// CHECK:STDOUT:   %Action.type.1: type = generic_interface_type @Action [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %Action: %Action.type = struct_value () [template]
+// CHECK:STDOUT:   %Action: %Action.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @Action, @Action(%T) [symbolic]
-// CHECK:STDOUT:   %Self.1: @Action.%.1 (%.4) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Action.type.2: type = interface_type @Action, @Action(%T) [symbolic]
+// CHECK:STDOUT:   %Self.1: @Action.%Action.type (%Action.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = interface_type @Action, @Action(%B) [template]
+// CHECK:STDOUT:   %Action.type.3: type = interface_type @Action, @Action(%B) [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %.4, %Op.type.1 [symbolic]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.15 [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Action.type.2, %Op.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.15 [symbolic]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.1, @Action(%B) [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.5, %Op.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.16 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Action.type.3, %Op.type.2 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.16 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.11: %.6 = assoc_entity element0, imports.%import_ref.17 [symbolic]
+// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.17 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.12: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Action.type = import_ref Main//action, inst+7, loaded [template = constants.%Action]
+// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, inst+7, loaded [template = constants.%Action]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+33, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+36, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.8: @Action.%.2 (%.6) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.3 (constants.%.11)]
+// CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.4) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.9)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//action, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+29, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//action, inst+52, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//action, inst+52, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//action, inst+45, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.16 = import_ref Main//action, inst+16, unloaded
@@ -327,12 +327,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(%T) [symbolic = %Action.type (constants.%Action.type.2)]
+// CHECK:STDOUT:   %Self: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.1, @Action(%T) [symbolic = %Op.type (constants.%Op.type.1)]
 // CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.1) = struct_value () [symbolic = %Op (constants.%Op.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.4), @Action.%Op.type (%Op.type.1) [symbolic = %.2 (constants.%.6)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.6) = assoc_entity element0, imports.%import_ref.15 [symbolic = %.3 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Action.%Action.type (%Action.type.2), @Action.%Op.type (%Op.type.1) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @Action.%.1 (%.4) = assoc_entity element0, imports.%import_ref.15 [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -358,7 +358,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self.1: @Action.%.1 (%.4)) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -366,12 +366,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: fn @G(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %Action.ref: %Action.type = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
+// CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
-// CHECK:STDOUT:   %.loc4_23: type = interface_type @Action, @Action(constants.%B) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc4_26: %.8 = specific_constant imports.%import_ref.8, @Action(constants.%B) [template = constants.%.9]
-// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, %.loc4_26 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc4_15: %Op.type.2 = interface_witness_access constants.%.12, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(constants.%B) [template = constants.%Action.type.3]
+// CHECK:STDOUT:   %.loc4_26: %.6 = specific_constant imports.%import_ref.8, @Action(constants.%B) [template = constants.%.7]
+// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, %.loc4_26 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc4_15: %Op.type.2 = interface_witness_access constants.%.10, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %Op.call: init %.3 = call %.loc4_15()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -388,12 +388,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Action.type => constants.%Action.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.2
 // CHECK:STDOUT:   %Op => constants.%Op.2
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(@Action.%T) {
@@ -409,49 +409,49 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %Action.type: type = generic_interface_type @Action [template]
+// CHECK:STDOUT:   %Action.type.1: type = generic_interface_type @Action [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %Action: %Action.type = struct_value () [template]
+// CHECK:STDOUT:   %Action: %Action.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @Action, @Action(%T) [symbolic]
-// CHECK:STDOUT:   %Self.1: @Action.%.1 (%.4) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Action.type.2: type = interface_type @Action, @Action(%T) [symbolic]
+// CHECK:STDOUT:   %Self.1: @Action.%Action.type (%Action.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = interface_type @Action, @Action(%B) [template]
+// CHECK:STDOUT:   %Action.type.3: type = interface_type @Action, @Action(%B) [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %.4, %Op.type.1 [symbolic]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.15 [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Action.type.2, %Op.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.15 [symbolic]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op, @Action(%B) [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.5, %Op.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.16 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Action.type.3, %Op.type.2 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.16 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.11: type = interface_type @Action, @Action(%C) [template]
+// CHECK:STDOUT:   %Action.type.4: type = interface_type @Action, @Action(%C) [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op, @Action(%C) [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type %.11, %Op.type.3 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.15 [template]
-// CHECK:STDOUT:   %.14: %.6 = assoc_entity element0, imports.%import_ref.18 [symbolic]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %Action.type.4, %Op.type.3 [template]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.15 [template]
+// CHECK:STDOUT:   %.11: %.4 = assoc_entity element0, imports.%import_ref.18 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Action.type = import_ref Main//action, inst+7, loaded [template = constants.%Action]
+// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, inst+7, loaded [template = constants.%Action]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+33, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+36, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.8: @Action.%.2 (%.6) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.3 (constants.%.14)]
+// CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.4) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.11)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//action, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+29, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//action, inst+52, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//action, inst+45, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, inst+16, unloaded
@@ -486,12 +486,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Action, @Action(%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(%T) [symbolic = %Action.type (constants.%Action.type.2)]
+// CHECK:STDOUT:   %Self: %Action.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op, @Action(%T) [symbolic = %Op.type (constants.%Op.type.1)]
 // CHECK:STDOUT:   %Op: @Action.%Op.type (%Op.type.1) = struct_value () [symbolic = %Op (constants.%Op.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Action.%.1 (%.4), @Action.%Op.type (%Op.type.1) [symbolic = %.2 (constants.%.6)]
-// CHECK:STDOUT:   %.3: @Action.%.2 (%.6) = assoc_entity element0, imports.%import_ref.15 [symbolic = %.3 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Action.%Action.type (%Action.type.2), @Action.%Op.type (%Op.type.1) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @Action.%.1 (%.4) = assoc_entity element0, imports.%import_ref.15 [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -522,7 +522,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%import_ref.17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self.1: @Action.%.1 (%.4)) {
+// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -530,11 +530,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: fn @G(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %Action.ref: %Action.type = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
+// CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8_23: type = interface_type @Action, @Action(constants.%C) [template = constants.%.11]
-// CHECK:STDOUT:   %.loc8_26: %.12 = specific_constant imports.%import_ref.8, @Action(constants.%C) [template = constants.%.13]
-// CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, %.loc8_26 [template = constants.%.13]
+// CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(constants.%C) [template = constants.%Action.type.4]
+// CHECK:STDOUT:   %.loc8: %.9 = specific_constant imports.%import_ref.8, @Action(constants.%C) [template = constants.%.10]
+// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, %.loc8 [template = constants.%.10]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -548,12 +548,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Action.type => constants.%Action.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.2
 // CHECK:STDOUT:   %Op => constants.%Op.2
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(@Action.%T) {
@@ -568,12 +568,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.11
+// CHECK:STDOUT:   %Action.type => constants.%Action.type.4
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.3
 // CHECK:STDOUT:   %Op => constants.%Op.3
-// CHECK:STDOUT:   %.2 => constants.%.12
-// CHECK:STDOUT:   %.3 => constants.%.13
+// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %.2 => constants.%.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- factory.carbon
@@ -581,27 +581,27 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %Factory.type: type = generic_interface_type @Factory [template]
+// CHECK:STDOUT:   %Factory.type.1: type = generic_interface_type @Factory [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Factory: %Factory.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = interface_type @Factory, @Factory(%T) [symbolic]
-// CHECK:STDOUT:   %Self: %.2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Factory: %Factory.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Factory.type.2: type = interface_type @Factory, @Factory(%T) [symbolic]
+// CHECK:STDOUT:   %Self: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %.2, %Make.type.1 [symbolic]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @Factory.%Make.decl [symbolic]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %Factory.type.2, %Make.type.1 [symbolic]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Factory.%Make.decl [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.7: type = interface_type @Factory, @Factory(%B) [template]
+// CHECK:STDOUT:   %Factory.type.3: type = interface_type @Factory, @Factory(%B) [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make.1, @Factory(%B) [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.7, %Make.type.3 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, @Factory.%Make.decl [template]
-// CHECK:STDOUT:   %.10: <witness> = interface_witness (%Make.2) [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Factory.type.3, %Make.type.3 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @Factory.%Make.decl [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -610,7 +610,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Factory.decl: %Factory.type = interface_decl @Factory [template = constants.%Factory] {
+// CHECK:STDOUT:   %Factory.decl: %Factory.type.1 = interface_decl @Factory [template = constants.%Factory] {
 // CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -621,9 +621,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %Factory.ref: %Factory.type = name_ref Factory, file.%Factory.decl [template = constants.%Factory]
+// CHECK:STDOUT:     %Factory.ref: %Factory.type.1 = name_ref Factory, file.%Factory.decl [template = constants.%Factory]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %.loc11_18: type = interface_type @Factory, @Factory(constants.%B) [template = constants.%.7]
+// CHECK:STDOUT:     %Factory.type: type = interface_type @Factory, @Factory(constants.%B) [template = constants.%Factory.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -632,20 +632,20 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Factory, @Factory(%T.1) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %Self.2: %.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Factory.type: type = interface_type @Factory, @Factory(%T.1) [symbolic = %Factory.type (constants.%Factory.type.2)]
+// CHECK:STDOUT:   %Self.2: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make.1, @Factory(%T.1) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Factory.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Factory.%.1 (%.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: @Factory.%.2 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Factory.%Factory.type (%Factory.type.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.2: @Factory.%.1 (%.2) = assoc_entity element0, %Make.decl [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Factory.%.1 (%.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @Factory.%Factory.type (%Factory.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %Make.decl: @Factory.%Make.type (%Make.type.1) = fn_decl @Make.1 [symbolic = @Factory.%Make (constants.%Make.1)] {} {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %return: ref @Make.1.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc5: @Factory.%.2 (%.3) = assoc_entity element0, %Make.decl [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc5: @Factory.%.1 (%.2) = assoc_entity element0, %Make.decl [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -654,33 +654,33 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A.ref as %.loc11_18 {
+// CHECK:STDOUT: impl @impl: %A.ref as %Factory.type {
 // CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {} {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %return: ref %B = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_22: <witness> = interface_witness (%Make.decl) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%Make.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   witness = %.loc11_22
+// CHECK:STDOUT:   witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(@Factory.%T.loc4: type, @Factory.%Self.1: @Factory.%.1 (%.2)) {
+// CHECK:STDOUT: generic fn @Make.1(@Factory.%T.loc4: type, @Factory.%Self.1: @Factory.%Factory.type (%Factory.type.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
@@ -707,12 +707,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt.1 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %Factory.type => constants.%Factory.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
 // CHECK:STDOUT:   %Make => constants.%Make.3
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%B, constants.%A) {
@@ -725,45 +725,45 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %Factory.type: type = generic_interface_type @Factory [template]
+// CHECK:STDOUT:   %Factory.type.1: type = generic_interface_type @Factory [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %Factory: %Factory.type = struct_value () [template]
+// CHECK:STDOUT:   %Factory: %Factory.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @Factory, @Factory(%T) [symbolic]
-// CHECK:STDOUT:   %Self.1: @Factory.%.1 (%.4) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Factory.type.2: type = interface_type @Factory, @Factory(%T) [symbolic]
+// CHECK:STDOUT:   %Self.1: @Factory.%Factory.type (%Factory.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = interface_type @Factory, @Factory(%B) [template]
+// CHECK:STDOUT:   %Factory.type.3: type = interface_type @Factory, @Factory(%B) [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %.4, %Make.type.1 [symbolic]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.13 [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Factory.type.2, %Make.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.13 [symbolic]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.1, @Factory(%B) [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.5, %Make.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.14 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Factory.type.3, %Make.type.2 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.14 [template]
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [template]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.11: %.6 = assoc_entity element0, imports.%import_ref.15 [symbolic]
+// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.15 [symbolic]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.12: <witness> = interface_witness (%Make.3) [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness (%Make.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Factory.type = import_ref Main//factory, inst+7, loaded [template = constants.%Factory]
+// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, inst+7, loaded [template = constants.%Factory]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, inst+31, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//factory, inst+36, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//factory, inst+37, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6: @Factory.%.2 (%.6) = import_ref Main//factory, inst+23, loaded [symbolic = @Factory.%.3 (constants.%.11)]
+// CHECK:STDOUT:   %import_ref.6: @Factory.%.1 (%.4) = import_ref Main//factory, inst+23, loaded [symbolic = @Factory.%.2 (constants.%.9)]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//factory, inst+18, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+32, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//factory, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+42, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//factory, inst+54, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+42, loaded [template = constants.%Factory.type.3]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//factory, inst+54, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//factory, inst+47, unloaded
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, inst+18, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//factory, inst+18, unloaded
@@ -796,12 +796,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Factory, @Factory(%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Factory.type: type = interface_type @Factory, @Factory(%T) [symbolic = %Factory.type (constants.%Factory.type.2)]
+// CHECK:STDOUT:   %Self: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make.1, @Factory(%T) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Factory.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Factory.%.1 (%.4), @Factory.%Make.type (%Make.type.1) [symbolic = %.2 (constants.%.6)]
-// CHECK:STDOUT:   %.3: @Factory.%.2 (%.6) = assoc_entity element0, imports.%import_ref.13 [symbolic = %.3 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Factory.%Factory.type (%Factory.type.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @Factory.%.1 (%.4) = assoc_entity element0, imports.%import_ref.13 [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -827,7 +827,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self.1: @Factory.%.1 (%.4)) {
+// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
@@ -836,12 +836,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: fn @MakeB(%a.param_patt: %A) -> %return: %B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %Factory.ref: %Factory.type = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
+// CHECK:STDOUT:   %Factory.ref: %Factory.type.1 = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
 // CHECK:STDOUT:   %B.ref.loc5: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
-// CHECK:STDOUT:   %.loc5_20: type = interface_type @Factory, @Factory(constants.%B) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc5_23: %.8 = specific_constant imports.%import_ref.6, @Factory(constants.%B) [template = constants.%.9]
-// CHECK:STDOUT:   %Make.ref: %.8 = name_ref Make, %.loc5_23 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc5_11: %Make.type.2 = interface_witness_access constants.%.12, element0 [template = constants.%Make.3]
+// CHECK:STDOUT:   %Factory.type: type = interface_type @Factory, @Factory(constants.%B) [template = constants.%Factory.type.3]
+// CHECK:STDOUT:   %.loc5_23: %.6 = specific_constant imports.%import_ref.6, @Factory(constants.%B) [template = constants.%.7]
+// CHECK:STDOUT:   %Make.ref: %.6 = name_ref Make, %.loc5_23 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc5_11: %Make.type.2 = interface_witness_access constants.%.10, element0 [template = constants.%Make.3]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %B = call %.loc5_11() to %.loc4
 // CHECK:STDOUT:   return %Make.call to %return
@@ -859,12 +859,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Factory.type => constants.%Factory.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
 // CHECK:STDOUT:   %Make => constants.%Make.2
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(@Factory.%T) {
@@ -882,47 +882,47 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %Factory.type: type = generic_interface_type @Factory [template]
+// CHECK:STDOUT:   %Factory.type.1: type = generic_interface_type @Factory [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %Factory: %Factory.type = struct_value () [template]
+// CHECK:STDOUT:   %Factory: %Factory.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @Factory, @Factory(%T) [symbolic]
-// CHECK:STDOUT:   %Self.1: @Factory.%.1 (%.4) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Factory.type.2: type = interface_type @Factory, @Factory(%T) [symbolic]
+// CHECK:STDOUT:   %Self.1: @Factory.%Factory.type (%Factory.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = interface_type @Factory, @Factory(%B) [template]
+// CHECK:STDOUT:   %Factory.type.3: type = interface_type @Factory, @Factory(%B) [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %Self.2: %.4 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %.4, %Make.type.1 [symbolic]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.13 [symbolic]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Factory.type.2, %Make.type.1 [symbolic]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.13 [symbolic]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make, @Factory(%B) [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = assoc_entity_type %.5, %Make.type.2 [template]
-// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.14 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %Factory.type.3, %Make.type.2 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.14 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.11: type = interface_type @Factory, @Factory(%C) [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %Factory.type.4: type = interface_type @Factory, @Factory(%C) [template]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make, @Factory(%C) [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type %.11, %Make.type.3 [template]
-// CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.13 [template]
-// CHECK:STDOUT:   %.14: %.6 = assoc_entity element0, imports.%import_ref.15 [symbolic]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %Factory.type.4, %Make.type.3 [template]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.13 [template]
+// CHECK:STDOUT:   %.11: %.4 = assoc_entity element0, imports.%import_ref.15 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Factory.type = import_ref Main//factory, inst+7, loaded [template = constants.%Factory]
+// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, inst+7, loaded [template = constants.%Factory]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, inst+31, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//factory, inst+36, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//factory, inst+37, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6: @Factory.%.2 (%.6) = import_ref Main//factory, inst+23, loaded [symbolic = @Factory.%.3 (constants.%.14)]
+// CHECK:STDOUT:   %import_ref.6: @Factory.%.1 (%.4) = import_ref Main//factory, inst+23, loaded [symbolic = @Factory.%.2 (constants.%.11)]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//factory, inst+18, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+32, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//factory, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+42, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+42, loaded [template = constants.%Factory.type.3]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//factory, inst+54, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//factory, inst+47, unloaded
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, inst+18, unloaded
@@ -958,12 +958,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = interface_type @Factory, @Factory(%T) [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:   %Self: %.4 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Factory.type: type = interface_type @Factory, @Factory(%T) [symbolic = %Factory.type (constants.%Factory.type.2)]
+// CHECK:STDOUT:   %Self: %Factory.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Factory(%T) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Factory.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Factory.%.1 (%.4), @Factory.%Make.type (%Make.type.1) [symbolic = %.2 (constants.%.6)]
-// CHECK:STDOUT:   %.3: @Factory.%.2 (%.6) = assoc_entity element0, imports.%import_ref.13 [symbolic = %.3 (constants.%.7)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @Factory.%Factory.type (%Factory.type.2), @Factory.%Make.type (%Make.type.1) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @Factory.%.1 (%.4) = assoc_entity element0, imports.%import_ref.13 [symbolic = %.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -996,7 +996,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self.1: @Factory.%.1 (%.4)) {
+// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T);
@@ -1005,11 +1005,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: fn @MakeC(%a.param_patt: %A) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %Factory.ref: %Factory.type = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
+// CHECK:STDOUT:   %Factory.ref: %Factory.type.1 = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc10_20: type = interface_type @Factory, @Factory(constants.%C) [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_23: %.12 = specific_constant imports.%import_ref.6, @Factory(constants.%C) [template = constants.%.13]
-// CHECK:STDOUT:   %Make.ref: %.12 = name_ref Make, %.loc10_23 [template = constants.%.13]
+// CHECK:STDOUT:   %Factory.type: type = interface_type @Factory, @Factory(constants.%C) [template = constants.%Factory.type.4]
+// CHECK:STDOUT:   %.loc10: %.9 = specific_constant imports.%import_ref.6, @Factory(constants.%C) [template = constants.%.10]
+// CHECK:STDOUT:   %Make.ref: %.9 = name_ref Make, %.loc10 [template = constants.%.10]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1023,12 +1023,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.5
+// CHECK:STDOUT:   %Factory.type => constants.%Factory.type.3
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
 // CHECK:STDOUT:   %Make => constants.%Make.2
-// CHECK:STDOUT:   %.2 => constants.%.8
-// CHECK:STDOUT:   %.3 => constants.%.9
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(@Factory.%T) {
@@ -1045,11 +1045,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.11
+// CHECK:STDOUT:   %Factory.type => constants.%Factory.type.4
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
 // CHECK:STDOUT:   %Make => constants.%Make.3
-// CHECK:STDOUT:   %.2 => constants.%.12
-// CHECK:STDOUT:   %.3 => constants.%.13
+// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %.2 => constants.%.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
