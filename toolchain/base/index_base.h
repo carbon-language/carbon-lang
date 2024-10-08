@@ -7,8 +7,11 @@
 
 #include <compare>
 #include <concepts>
+#include <iterator>
+#include <type_traits>
 
 #include "common/ostream.h"
+#include "llvm/ADT/iterator.h"
 
 namespace Carbon {
 
@@ -73,6 +76,52 @@ template <typename IndexType>
 auto operator<=>(IndexType lhs, IndexType rhs) -> std::strong_ordering {
   return lhs.index <=> rhs.index;
 }
+
+// A random-access iterator for arrays using IndexBase-derived types.
+template <typename IndexT>
+class IndexIterator
+    : public llvm::iterator_facade_base<IndexIterator<IndexT>,
+                                        std::random_access_iterator_tag,
+                                        const IndexT, int>,
+      public Printable<IndexIterator<IndexT>> {
+ public:
+  IndexIterator() = delete;
+
+  explicit IndexIterator(IndexT index) : index_(index) {}
+
+  auto operator==(const IndexIterator& rhs) const -> bool {
+    return index_ == rhs.index_;
+  }
+  auto operator<=>(const IndexIterator& rhs) const -> std::strong_ordering {
+    return index_ <=> rhs.index_;
+  }
+
+  auto operator*() const -> const IndexT& { return index_; }
+
+  using llvm::iterator_facade_base<IndexIterator,
+                                   std::random_access_iterator_tag,
+                                   const IndexT, int>::operator-;
+  auto operator-(const IndexIterator& rhs) const -> int {
+    return index_.index - rhs.index_.index;
+  }
+
+  auto operator+=(int n) -> IndexIterator& {
+    index_.index += n;
+    return *this;
+  }
+  auto operator-=(int n) -> IndexIterator& {
+    index_.index -= n;
+    return *this;
+  }
+
+  // Prints the raw token index.
+  auto Print(llvm::raw_ostream& output) const -> void {
+    output << index_.index;
+  }
+
+ private:
+  IndexT index_;
+};
 
 }  // namespace Carbon
 

@@ -16,8 +16,20 @@ auto Format(const Lex::TokenizedBuffer& tokens, llvm::raw_ostream& out)
     // TODO: Error recovery.
     return false;
   }
+
+  auto comments = tokens.comments();
+  auto comment_it = comments.begin();
+
   llvm::ListSeparator sep(" ");
+
   for (auto token : tokens.tokens()) {
+    while (comment_it != comments.end() &&
+           tokens.IsBeforeComment(token, *comment_it)) {
+      // TODO: Fix newlines and indent.
+      out << "\n" << tokens.GetCommentText(*comment_it) << "\n";
+      ++comment_it;
+    }
+
     switch (tokens.GetKind(token)) {
       case Lex::TokenKind::FileStart:
         break;
