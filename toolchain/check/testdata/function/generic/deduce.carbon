@@ -575,12 +575,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %x.patt: @StructParam.%.1 (%.2) = binding_pattern x
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_41.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc8_41.2: type = converted %int.make_type_32, %.loc8_41.1 [template = i32]
-// CHECK:STDOUT:     %.loc8_44: type = struct_type {.a: %T, .b: i32} [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_41.2: type = converted %int.make_type_32, %.loc4_41.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_44: type = struct_type {.a: %T, .b: i32} [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:     %x.param: @StructParam.%.1 (%.2) = param x, runtime_param0
 // CHECK:STDOUT:     %x: @StructParam.%.1 (%.2) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -589,19 +589,19 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @StructParam(%T.loc8: type) {
+// CHECK:STDOUT: generic fn @StructParam(%T.loc4: type) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = struct_type {.a: @StructParam.%T.1 (%T), .b: i32} [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc8: type](%x: @StructParam.%.1 (%.2));
+// CHECK:STDOUT:   fn[%T.loc4: type](%x: @StructParam.%.1 (%.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallStructParam() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [template = constants.%StructParam]
-// CHECK:STDOUT:   %.loc18_21: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc18_29: i32 = int_literal 2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc18_30: %.5 = struct_literal (%.loc18_21, %.loc18_29)
+// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_29: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_30: %.5 = struct_literal (%.loc14_21, %.loc14_29)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -450,7 +450,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduced_type_argument.carbon
+// CHECK:STDOUT: --- deduced_type_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
@@ -590,8 +590,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %C.3 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc16: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc16()
+// CHECK:STDOUT:   %.loc15: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc15()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -642,7 +642,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.4) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduced_interface_argument.carbon
+// CHECK:STDOUT: --- deduced_interface_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -778,13 +778,13 @@ fn G(x: A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
-// CHECK:STDOUT:   %.loc14_12: %.4 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_10: type = converted %.loc14_12, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_12: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc13_10: type = converted %.loc13_12, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%.4) [template = constants.%HasF.type.3]
-// CHECK:STDOUT:   %.loc14_14: %.6 = specific_constant @HasF.%.loc5, @HasF(constants.%.4) [template = constants.%.7]
-// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc14_14 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_4: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc14_4()
+// CHECK:STDOUT:   %.loc13_14: %.6 = specific_constant @HasF.%.loc5, @HasF(constants.%.4) [template = constants.%.7]
+// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc13_14 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_4: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc13_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
