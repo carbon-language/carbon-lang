@@ -359,7 +359,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
         context.decl_name_stack().PeekParentScopeId());
   }
 
-  context.scope_stack().Push(impl_decl_id, impl_info.scope_id);
+  context.scope_stack().Push(
+      impl_decl_id, impl_info.scope_id,
+      context.generics().GetSelfSpecific(impl_info.generic_id));
+  StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
@@ -382,10 +385,12 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
-  if (!context.impls().Get(impl_id).is_defined()) {
-    context.impls().Get(impl_id).witness_id =
-        BuildImplWitness(context, impl_id);
+  auto& impl_info = context.impls().Get(impl_id);
+  if (!impl_info.is_defined()) {
+    impl_info.witness_id = BuildImplWitness(context, impl_id);
   }
+
+  FinishGenericDefinition(context, impl_info.generic_id);
 
   context.inst_block_stack().Pop();
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.

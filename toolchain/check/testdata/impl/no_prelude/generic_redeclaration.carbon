@@ -254,6 +254,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.5(%T.loc18: %I.type) {
 // CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
@@ -264,6 +266,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.6(%T.loc19: %J.type) {
 // CHECK:STDOUT:   %T.1: %J.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc19_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.2]
@@ -276,6 +280,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: generic impl @impl.7(%T.loc20: %K.type) {
 // CHECK:STDOUT:   %T.1: %K.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.3)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc20_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
@@ -286,6 +292,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.8(%T.loc21: %L.type) {
 // CHECK:STDOUT:   %T.1: %L.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc21_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.2]
@@ -388,6 +396,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(%T.loc7: %I.type) {
 // CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7_21.2 as %J.ref.loc7 {
 // CHECK:STDOUT:   !members:

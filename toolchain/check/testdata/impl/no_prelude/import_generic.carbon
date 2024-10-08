@@ -117,6 +117,8 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%.1) [symbolic = %I.type.1 (constants.%I.type.3)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc8 {
 // CHECK:STDOUT:     %.loc8_35: <witness> = interface_witness () [template = constants.%.5]
 // CHECK:STDOUT:
@@ -232,6 +234,8 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%T.1) [symbolic = %I.type.1 (constants.%I.type.2)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6 {
 // CHECK:STDOUT:     %.loc4: <witness> = interface_witness () [template = constants.%.5]
 // CHECK:STDOUT:
@@ -244,6 +248,8 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type: type = interface_type @I, @I(%.1) [symbolic = %I.type (constants.%I.type.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
 // CHECK:STDOUT:   !members:
@@ -363,6 +369,8 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %.1: type = ptr_type @impl.2.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
 // CHECK:STDOUT:   %I.type.1: type = interface_type @I, @I(%.1) [symbolic = %I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
 // CHECK:STDOUT:   !members:
