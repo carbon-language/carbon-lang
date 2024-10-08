@@ -40,7 +40,7 @@ fn G(x: {}) -> {} {
   return x.(HasF.F)();
 }
 
-// --- fail_todo_deduced_type_argument.carbon
+// --- deduced_type_argument.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -55,11 +55,10 @@ impl forall [T:! type] C(T) as HasF {
 }
 
 fn G(x: C({})) {
-  // TODO: Implement support for deducing T in C(T).
   x.(HasF.F)();
 }
 
-// --- fail_todo_deduced_interface_argument.carbon
+// --- deduced_interface_argument.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -72,7 +71,6 @@ impl forall [T:! type] {} as HasF(T) {
 }
 
 fn G(x: {}) {
-  // TODO: Implement support for deducing T in HasF(T).
   x.(HasF({}).F)();
 }
 
