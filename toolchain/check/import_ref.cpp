@@ -1817,6 +1817,7 @@ class ImportRefResolver {
     // Load constants for the definition.
     auto parent_scope_id = GetLocalNameScopeId(import_impl.parent_scope_id);
     LoadLocalParamConstantIds(import_impl.implicit_param_refs_id);
+    LoadLocalPatternConstantIds(import_impl.implicit_param_patterns_id);
     auto generic_data = GetLocalGenericData(import_impl.generic_id);
     auto self_const_id = GetLocalConstantId(
         import_ir_.constant_values().Get(import_impl.self_id));
@@ -1831,6 +1832,8 @@ class ImportRefResolver {
     new_impl.parent_scope_id = parent_scope_id;
     new_impl.implicit_param_refs_id =
         GetLocalParamRefsId(import_impl.implicit_param_refs_id);
+    new_impl.implicit_param_patterns_id =
+        GetLocalParamPatternsId(import_impl.implicit_param_patterns_id);
     CARBON_CHECK(!import_impl.param_refs_id.is_valid() &&
                  !new_impl.param_refs_id.is_valid());
     SetGenericData(import_impl.generic_id, new_impl.generic_id, generic_data);
