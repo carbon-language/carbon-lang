@@ -260,10 +260,6 @@ def _impl(ctx):
                 actions = all_link_actions,
                 flag_groups = [
                     flag_group(
-                        flags = ["-Wl,--gdb-index"],
-                        expand_if_available = "is_using_fission",
-                    ),
-                    flag_group(
                         flags = ["-Wl,-S"],
                         expand_if_available = "strip_debug_symbols",
                     ),
@@ -350,6 +346,7 @@ def _impl(ctx):
     # minimal settings if both are enabled.
     minimal_debug_info_flags = feature(
         name = "minimal_debug_info_flags",
+        implies = ["debug_info_compression_flags"],
         flag_sets = [
             flag_set(
                 actions = codegen_compile_actions,
@@ -361,28 +358,101 @@ def _impl(ctx):
             ),
         ],
     )
-    default_debug_info_flags = feature(
-        name = "default_debug_info_flags",
-        enabled = True,
+    debug_info_flags = feature(
+        name = "debug_info_flags",
+        implies = ["debug_info_compression_flags"],
         flag_sets = [
             flag_set(
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-g"],
+                        flags = ["-g", "-gsimple-template-names"],
+                    ),
+                    flag_group(
+                        flags = ["-gsplit-dwarf"],
+                        expand_if_available = "per_object_debug_info_file",
                     ),
                 ]),
-                with_features = [with_feature_set(features = ["dbg"])],
             ),
+        ],
+    )
+    debug_info_compression_flags = feature(
+        name = "debug_info_compression_flags",
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions + all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = ["-gz"],
+                    ),
+                ]),
+            ),
+        ],
+    )
+
+    # Define a set of mutually exclusive debugger flags.
+    debugger_flags = feature(name = "debugger_flags")
+    lldb_flags = feature(
+        # Use a convenient name for users to select if needed.
+        name = "lldb_flags",
+        # Default enable LLDB-optimized flags whenever debugging.
+        enabled = True,
+        requires = [feature_set(features = ["debug_info_flags"])],
+        provides = ["debugger_flags"],
+        flag_sets = [
             flag_set(
                 actions = codegen_compile_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = ["-glldb"],
+                    ),
+                    flag_group(
+                        flags = ["-gpubnames"],
+                        expand_if_available = "per_object_debug_info_file",
+                    ),
+                ]),
+            ),
+        ],
+    )
+    gdb_flags = feature(
+        # Use a convenient name for users to select if needed.
+        name = "gdb_flags",
+        requires = [feature_set(features = ["debug_info_flags"])],
+        provides = ["debugger_flags"],
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = ["-ggdb"],
+                    ),
+                    flag_group(
+                        flags = ["-ggnu-pubnames"],
+                        expand_if_available = "per_object_debug_info_file",
+                    ),
+                ]),
+            ),
+            flag_set(
+                actions = all_link_actions,
                 flag_groups = [
                     flag_group(
-                        flags = ["-gsplit-dwarf", "-g"],
+                        flags = ["-Wl,--gdb-index"],
                         expand_if_available = "per_object_debug_info_file",
                     ),
                 ],
             ),
+        ],
+    )
+
+    # An enabled feature that requires the `dbg` compilation mode. This is used
+    # to toggle on more general features to use by default, while allowing those
+    # general features to be explicitly enabled where needed.
+    enable_in_dbg = feature(
+        name = "enable_in_dbg",
+        enabled = True,
+        requires = [feature_set(["dbg"])],
+        implies = [
+            "debug_info_flags",
         ],
     )
 
@@ -1029,6 +1099,16 @@ def _impl(ctx):
         feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
         feature(name = "supports_pic", enabled = True),
         feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
+
+        # Enable split debug info whenever debug info is requested.
+        feature(
+            name = "per_object_debug_info",
+            enabled = True,
+            # This has to be directly conditioned on requesting debug info at
+            # all, otherwise Bazel will look for an extra output file and not
+            # find one.
+            requires = [feature_set(features = ["debug_info_flags"])],
+        ),
     ]
 
     # The order of the features determines the relative order of flags used.
@@ -1038,7 +1118,12 @@ def _impl(ctx):
         minimal_optimization_flags,
         default_optimization_flags,
         minimal_debug_info_flags,
-        default_debug_info_flags,
+        debug_info_flags,
+        debug_info_compression_flags,
+        debugger_flags,
+        lldb_flags,
+        gdb_flags,
+        enable_in_dbg,
         preserve_call_stacks,
         sysroot_feature,
         sanitizer_common_flags,
