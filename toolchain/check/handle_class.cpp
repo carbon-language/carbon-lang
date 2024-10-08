@@ -391,14 +391,13 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapted_type_id =
-      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
+  auto [adapted_type_inst_id, adapted_type_id] =
+      ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "adapted type `{0}` is an incomplete type",
-                      SemIR::TypeId);
+                      "adapted type {0} is an incomplete type", InstIdAsType);
     return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                   adapted_type_id);
+                                   adapted_type_inst_id);
   });
 
   // Build a SemIR representation for the declaration.
@@ -457,23 +456,24 @@ constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
 
 // Diagnoses an attempt to derive from a final type.
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
-                                SemIR::TypeId base_type_id) -> void {
+                                SemIR::InstId base_type_inst_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
-                    "deriving from final type `{0}`; base type must be an "
+                    "deriving from final type {0}; base type must be an "
                     "`abstract` or `base` class",
-                    SemIR::TypeId);
-  context.emitter().Emit(node_id, BaseIsFinal, base_type_id);
+                    InstIdAsType);
+  context.emitter().Emit(node_id, BaseIsFinal, base_type_inst_id);
 }
 
 // Checks that the specified base type is valid.
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
-  auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
+  auto [base_type_inst_id, base_type_id] =
+      ExprAsType(context, node_id, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "base `{0}` is an incomplete type", SemIR::TypeId);
+                      "base {0} is an incomplete type", InstIdAsType);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
-                                   base_type_id);
+                                   base_type_inst_id);
   });
 
   if (base_type_id == SemIR::TypeId::Error) {
@@ -488,11 +488,11 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
     // classes, produce a better diagnostic for deriving from a non-class type.
-    DiagnoseBaseIsFinal(context, node_id, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
     return BaseInfo::Error;
   }
   if (base_class_info->inheritance_kind == SemIR::Class::Final) {
-    DiagnoseBaseIsFinal(context, node_id, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
   }
 
   CARBON_CHECK(base_class_info->scope_id.is_valid(),

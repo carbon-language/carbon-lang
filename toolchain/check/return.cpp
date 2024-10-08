@@ -40,8 +40,8 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
 static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function,
                            SemIR::TypeId return_type_id) {
-  CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
-                    "return type of function is `{0}`", SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
+                    SemIR::TypeId);
   diag.Note(function.return_storage_id, ReturnTypeHereNote, return_type_id);
 }
 
@@ -80,7 +80,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   // The declared type of the var must match the return type of the function.
   if (return_info.type_id != type_id) {
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
-                      "type `{0}` of `returned var` does not match "
+                      "type {0} of `returned var` does not match "
                       "return type of enclosing function",
                       SemIR::TypeId);
     auto diag =

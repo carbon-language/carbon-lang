@@ -36,12 +36,12 @@ protected interface Protected;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @Abstract [template]
-// CHECK:STDOUT:   %Self.1: %.1 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = interface_type @Default [template]
-// CHECK:STDOUT:   %.3: type = interface_type @Virtual [template]
-// CHECK:STDOUT:   %Self.2: %.3 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_type @Protected [template]
+// CHECK:STDOUT:   %Abstract.type: type = interface_type @Abstract [template]
+// CHECK:STDOUT:   %Self.1: %Abstract.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Default.type: type = interface_type @Default [template]
+// CHECK:STDOUT:   %Virtual.type: type = interface_type @Virtual [template]
+// CHECK:STDOUT:   %Self.2: %Virtual.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Protected.type: type = interface_type @Protected [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,14 +51,14 @@ protected interface Protected;
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%.1] {} {}
-// CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%.2] {} {}
-// CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%.3] {} {}
-// CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%.4] {} {}
+// CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%Abstract.type] {} {}
+// CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%Default.type] {} {}
+// CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%Virtual.type] {} {}
+// CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%Protected.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {
-// CHECK:STDOUT:   %Self: %.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %Abstract.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -68,7 +68,7 @@ protected interface Protected;
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Virtual {
-// CHECK:STDOUT:   %Self: %.3 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %Virtual.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

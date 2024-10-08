@@ -179,6 +179,42 @@ methods for formatting arguments:
     -   This can provide additional context to a formatter.
     -   For example, formatting `SemIR::NameId` accesses the IR's name list.
 
+For `Check`, a custom diagnostic converter is provided that can convert some
+common argument types. This includes some types defined in
+[`check/diagnostic_helpers.h`](/toolchain/check/diagnostic_helpers.h) that exist
+solely to be used as diagnostic parameter types. The types specifically
+supported in `Check` diagnostics are:
+
+-   For formatting names:
+    -   `NameId` for a general name. This automatically uses raw identifier
+        syntax for names that would collide with keywords.
+    -   `LibraryNameId` for a library name string, which is formatted as either
+        `default library` or `library "foo"`.
+-   For formatting types, use the following, in order of preference:
+
+    -   A `TypeOfInstId` parameter takes an `InstId` and formats the type of
+        that instruction.
+    -   An `InstIdAsType` parameter takes an `InstId` for a type expression and
+        formats that type expression.
+    -   A `TypeId` parameter is formatted as a canonical description of the
+        type. This should be avoided when possible: `TypeId` has no context
+        information, so any information about how the type was written in the
+        source program will be lost.
+
+    The above all include enclosing `` ` ``s around the formatted types. They
+    may also include additional information about the type, such as the names
+    bound to any aliases in the type, although at present they do not.
+
+    When a type is formatted within a larger snippet of Carbon code, it can be
+    desirable to instead just format the type itself; for this, `*AsRawType`
+    parameter types are supported:
+
+    -   `InstIdAsRawType`
+    -   `TypeIdAsRawType`
+
+-   For integer constants, `TypedInt` can be used to format an `APInt` given its
+    type. The type is used to determine the signedness to use for the value.
+
 ## Diagnostic message style guide
 
 We want Carbon's diagnostics to be helpful for developers when they run into an

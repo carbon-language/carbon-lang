@@ -671,7 +671,9 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
-  // StringifyType() is used for diagnostics.
+  // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
+  // `InstId` describing how the type was written should be preferred, using
+  // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
   // The builtin TypeType.
