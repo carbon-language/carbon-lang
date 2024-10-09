@@ -9,6 +9,8 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -144,6 +146,15 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       callee_function.specific_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
+  }
+  if (callee_specific_id->is_valid()) {
+    callee_id =
+        context.AddInst(context.insts().GetLocId(callee_id),
+                        SemIR::SpecificFunction{
+                            .type_id = context.GetBuiltinType(
+                                SemIR::BuiltinInstKind::SpecificFunctionType),
+                            .callee_id = callee_id,
+                            .specific_id = *callee_specific_id});
   }
 
   // If there is a return slot, build storage for the result.

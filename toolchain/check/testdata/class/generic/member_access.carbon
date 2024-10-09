@@ -268,9 +268,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc15_11.1: %Get.type.2 = specific_constant @Class.%Get.decl, @Class(i32) [template = constants.%Get.2]
 // CHECK:STDOUT:   %Get.ref: %Get.type.2 = name_ref Get, %.loc15_11.1 [template = constants.%Get.2]
 // CHECK:STDOUT:   %.loc15_11.2: <bound method> = bound_method %x.ref, %Get.ref
-// CHECK:STDOUT:   %Get.call: init i32 = call %.loc15_11.2(%x.ref)
-// CHECK:STDOUT:   %.loc15_17.1: i32 = value_of_initializer %Get.call
-// CHECK:STDOUT:   %.loc15_17.2: i32 = converted %Get.call, %.loc15_17.1
+// CHECK:STDOUT:   %.loc15_11.3: <specific function> = specific_function %.loc15_11.2, @Get(i32)
+// CHECK:STDOUT:   %.loc15_15: init i32 = call %.loc15_11.3(%x.ref)
+// CHECK:STDOUT:   %.loc15_17.1: i32 = value_of_initializer %.loc15_15
+// CHECK:STDOUT:   %.loc15_17.2: i32 = converted %.loc15_15, %.loc15_17.1
 // CHECK:STDOUT:   return %.loc15_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,11 +282,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc19_12.2: %GetAddr.type.2 = specific_constant @Class.%GetAddr.decl, @Class(i32) [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.2 = name_ref GetAddr, %.loc19_12.2 [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %.loc19_12.3: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
-// CHECK:STDOUT:   %.loc19_12.4: %.12 = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %.13 = call %.loc19_12.3(%.loc19_12.4)
-// CHECK:STDOUT:   %.loc19_21.1: %.13 = value_of_initializer %GetAddr.call
-// CHECK:STDOUT:   %.loc19_21.2: %.13 = converted %GetAddr.call, %.loc19_21.1
-// CHECK:STDOUT:   %.loc19_10.1: ref i32 = deref %.loc19_21.2
+// CHECK:STDOUT:   %.loc19_12.4: <specific function> = specific_function %.loc19_12.3, @GetAddr(i32)
+// CHECK:STDOUT:   %.loc19_12.5: %.12 = addr_of %.loc19_12.1
+// CHECK:STDOUT:   %.loc19_21.1: init %.13 = call %.loc19_12.4(%.loc19_12.5)
+// CHECK:STDOUT:   %.loc19_21.2: %.13 = value_of_initializer %.loc19_21.1
+// CHECK:STDOUT:   %.loc19_21.3: %.13 = converted %.loc19_21.1, %.loc19_21.2
+// CHECK:STDOUT:   %.loc19_10.1: ref i32 = deref %.loc19_21.3
 // CHECK:STDOUT:   %.loc19_10.2: i32 = bind_value %.loc19_10.1
 // CHECK:STDOUT:   return %.loc19_10.2
 // CHECK:STDOUT: }
@@ -370,6 +372,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %struct: %Class.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [template]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %Make, @Make(%T) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -378,14 +381,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%Class.2) [symbolic]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%Class.2) [symbolic]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %.9: %.5 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.10: %.6 = assoc_entity element0, imports.%import_ref.6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -402,7 +405,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.6) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.10)]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
@@ -441,8 +444,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.5)]
-// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.5) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.2 (constants.%.6)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.6) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -497,25 +500,27 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:   %.loc15_18.3: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %.loc15_18.3 (constants.%.5)]
 // CHECK:STDOUT:   %ImplicitAs.type.loc15_25.2: type = interface_type @ImplicitAs, @ImplicitAs(%Class.loc8_47.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Class.loc8_47.2) [symbolic = %Convert.type (constants.%Convert.type.2)]
-// CHECK:STDOUT:   %.loc15_25.3: type = assoc_entity_type @StaticMemberFunctionCall.%ImplicitAs.type.loc15_25.2 (%ImplicitAs.type.3), @StaticMemberFunctionCall.%Convert.type (%Convert.type.2) [symbolic = %.loc15_25.3 (constants.%.7)]
-// CHECK:STDOUT:   %.loc15_25.4: @StaticMemberFunctionCall.%.loc15_25.3 (%.7) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.loc15_25.4 (constants.%.8)]
+// CHECK:STDOUT:   %.loc15_25.3: type = assoc_entity_type @StaticMemberFunctionCall.%ImplicitAs.type.loc15_25.2 (%ImplicitAs.type.3), @StaticMemberFunctionCall.%Convert.type (%Convert.type.2) [symbolic = %.loc15_25.3 (constants.%.8)]
+// CHECK:STDOUT:   %.loc15_25.4: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.loc15_25.4 (constants.%.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc8_29.1: type) -> %return: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref.loc15: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc8_29.1 [symbolic = %T.loc8_29.2 (constants.%T)]
 // CHECK:STDOUT:     %Class.loc15: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_47.2 (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc15_18: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc15_18 [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %.loc15_18.1: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc15_18.1 [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %.loc15_18.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc15_18.3 (constants.%.5)]
 // CHECK:STDOUT:     %.loc15_23.1: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary_storage
-// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = call %Make.ref() to %.loc15_23.1
+// CHECK:STDOUT:     %.loc15_23.2: init @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = call %.loc15_18.2() to %.loc15_23.1
 // CHECK:STDOUT:     %ImplicitAs.type.loc15_25.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
-// CHECK:STDOUT:     %.loc15_25.1: @StaticMemberFunctionCall.%.loc15_25.3 (%.7) = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class.2) [symbolic = %.loc15_25.4 (constants.%.8)]
-// CHECK:STDOUT:     %Convert.ref: @StaticMemberFunctionCall.%.loc15_25.3 (%.7) = name_ref Convert, %.loc15_25.1 [symbolic = %.loc15_25.4 (constants.%.8)]
-// CHECK:STDOUT:     %.loc15_23.2: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary %.loc15_23.1, %Make.call
-// CHECK:STDOUT:     %.loc15_25.2: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = converted %Make.call, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc15_25.1: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class.2) [symbolic = %.loc15_25.4 (constants.%.9)]
+// CHECK:STDOUT:     %Convert.ref: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = name_ref Convert, %.loc15_25.1 [symbolic = %.loc15_25.4 (constants.%.9)]
+// CHECK:STDOUT:     %.loc15_23.3: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary %.loc15_23.1, %.loc15_23.2
+// CHECK:STDOUT:     %.loc15_25.2: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = converted %.loc15_23.2, <error> [template = <error>]
 // CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -584,8 +589,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.1 => constants.%.7
-// CHECK:STDOUT:   %.2 => constants.%.8
+// CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT:   %.2 => constants.%.9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Make(@StaticMemberFunctionCall.%T.loc8_29.2) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class.loc5_21.1 => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@StaticMemberFunctionCall.%Class.loc8_47.2) {

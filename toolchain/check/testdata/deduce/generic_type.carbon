@@ -82,6 +82,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%D) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -171,9 +172,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %C.3 = name_ref p, %p
+// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%D) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %F.ref(%p.ref) to %.loc9
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc10_11: init %D = call %.loc10_10(%p.ref) to %.loc9
+// CHECK:STDOUT:   return %.loc10_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -217,6 +219,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -306,9 +309,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %I.3 = name_ref p, %p
+// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %C = call %F.ref(%p.ref) to %.loc9
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc10_11: init %C = call %.loc10_10(%p.ref) to %.loc9
+// CHECK:STDOUT:   return %.loc10_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -365,6 +369,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.4, %.4) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.10: <specific function> = specific_function %F, @F(%C, %D) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -507,9 +512,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %Inner.4 = name_ref p, %p
+// CHECK:STDOUT:   %.loc16_10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc15_28: ref %.7 = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %.7 = call %F.ref(%p.ref) to %.loc15_28
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc16_11: init %.7 = call %.loc16_10(%p.ref) to %.loc15_28
+// CHECK:STDOUT:   return %.loc16_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
@@ -590,6 +596,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %WithNontype.3: type = class_type @WithNontype, @WithNontype(%.5) [template]
 // CHECK:STDOUT:   %struct: %WithNontype.3 = struct_value () [template]
+// CHECK:STDOUT:   %.6: <specific function> = specific_function %F, @F(%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -690,10 +697,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.3 = class_init (), %.loc9_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_13.4: ref %WithNontype.3 = temporary %.loc9_13.2, %.loc9_13.3
 // CHECK:STDOUT:   %.loc9_15.1: ref %WithNontype.3 = converted %.loc9_13.1, %.loc9_13.4
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.5) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_15.2: %WithNontype.3 = bind_value %.loc9_15.1
-// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc9_15.2)
-// CHECK:STDOUT:   %.loc9_33.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc9_33.2: i32 = converted %F.call, %.loc9_33.1
+// CHECK:STDOUT:   %.loc9_11: init i32 = call %.loc9_10(%.loc9_15.2)
+// CHECK:STDOUT:   %.loc9_33.1: i32 = value_of_initializer %.loc9_11
+// CHECK:STDOUT:   %.loc9_33.2: i32 = converted %.loc9_11, %.loc9_33.1
 // CHECK:STDOUT:   return %.loc9_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,6 +77,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,9 +145,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.5 = name_ref p, %p
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc8_13: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %C = call %F.ref(%p.ref) to %.loc8_13
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc9_11: init %C = call %.loc9_10(%p.ref) to %.loc8_13
+// CHECK:STDOUT:   return %.loc9_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -176,6 +178,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -246,9 +249,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.7 = name_ref p, %p
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc8_19: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %C = call %F.ref(%p.ref) to %.loc8_19
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc9_11: init %C = call %.loc9_10(%p.ref) to %.loc8_19
+// CHECK:STDOUT:   return %.loc9_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -279,6 +283,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.8: <specific function> = specific_function %F, @F(%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -348,9 +353,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.5) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc8_19: ref %.5 = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %.5 = call %F.ref(%p.ref) to %.loc8_19
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc9_11: init %.5 = call %.loc9_10(%p.ref) to %.loc8_19
+// CHECK:STDOUT:   return %.loc9_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

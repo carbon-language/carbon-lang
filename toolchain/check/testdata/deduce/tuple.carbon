@@ -72,6 +72,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.7, %.7) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.10: <specific function> = specific_function %F, @F(%C, %D) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -156,9 +157,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %.6 = name_ref pair, %pair
+// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc9_20: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %F.ref(%pair.ref) to %.loc9_20
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   %.loc10_11: init %D = call %.loc10_10(%pair.ref) to %.loc9_20
+// CHECK:STDOUT:   return %.loc10_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
@@ -201,6 +203,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.4: type = class_type @HasPair, @HasPair(%tuple.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.10: <specific function> = specific_function %F, @F(%.8, %.9) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -322,9 +325,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %h.ref: %HasPair.4 = name_ref h, %h
-// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%h.ref)
-// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.8, constants.%.9) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc9_11: init i32 = call %.loc9_10(%h.ref)
+// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %.loc9_11
+// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %.loc9_11, %.loc9_14.1
 // CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

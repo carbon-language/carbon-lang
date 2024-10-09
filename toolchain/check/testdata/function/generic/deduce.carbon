@@ -127,10 +127,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %CallExplicitGenericParam.type: type = fn_type @CallExplicitGenericParam [template]
 // CHECK:STDOUT:   %CallExplicitGenericParam: %CallExplicitGenericParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [symbolic]
+// CHECK:STDOUT:   %.4: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(i32) [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: %T} [symbolic]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [symbolic]
 // CHECK:STDOUT:   %CallExplicitGenericParamWithGenericArg.type: type = fn_type @CallExplicitGenericParamWithGenericArg [template]
 // CHECK:STDOUT:   %CallExplicitGenericParamWithGenericArg: %CallExplicitGenericParamWithGenericArg.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%.5) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -178,9 +180,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10_43.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_43.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc10_43.1 [symbolic = %T.loc10_43.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc10_62.1: type = struct_type {.a: %T} [symbolic = %.loc10_62.2 (constants.%.4)]
-// CHECK:STDOUT:     %.loc10_63.1: type = ptr_type %.4 [symbolic = %.loc10_63.2 (constants.%.5)]
-// CHECK:STDOUT:     %return: ref @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.5) = var <return slot>
+// CHECK:STDOUT:     %.loc10_62.1: type = struct_type {.a: %T} [symbolic = %.loc10_62.2 (constants.%.5)]
+// CHECK:STDOUT:     %.loc10_63.1: type = ptr_type %.5 [symbolic = %.loc10_63.2 (constants.%.6)]
+// CHECK:STDOUT:     %return: ref @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.6) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,27 +201,30 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_30.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_30.2: type = converted %int.make_type_32.loc7, %.loc7_30.1 [template = i32]
-// CHECK:STDOUT:   %ExplicitGenericParam.call: init %.3 = call %ExplicitGenericParam.ref()
-// CHECK:STDOUT:   %.loc7_35.1: %.3 = value_of_initializer %ExplicitGenericParam.call
-// CHECK:STDOUT:   %.loc7_35.2: %.3 = converted %ExplicitGenericParam.call, %.loc7_35.1
+// CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(i32) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_30.3: init %.3 = call %.loc7_10()
+// CHECK:STDOUT:   %.loc7_35.1: %.3 = value_of_initializer %.loc7_30.3
+// CHECK:STDOUT:   %.loc7_35.2: %.3 = converted %.loc7_30.3, %.loc7_35.1
 // CHECK:STDOUT:   return %.loc7_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallExplicitGenericParamWithGenericArg(%T.loc10_43.1: type) {
 // CHECK:STDOUT:   %T.loc10_43.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_43.2 (constants.%T)]
-// CHECK:STDOUT:   %.loc10_62.2: type = struct_type {.a: @CallExplicitGenericParamWithGenericArg.%T.loc10_43.2 (%T)} [symbolic = %.loc10_62.2 (constants.%.4)]
-// CHECK:STDOUT:   %.loc10_63.2: type = ptr_type @CallExplicitGenericParamWithGenericArg.%.loc10_62.2 (%.4) [symbolic = %.loc10_63.2 (constants.%.5)]
+// CHECK:STDOUT:   %.loc10_62.2: type = struct_type {.a: @CallExplicitGenericParamWithGenericArg.%T.loc10_43.2 (%T)} [symbolic = %.loc10_62.2 (constants.%.5)]
+// CHECK:STDOUT:   %.loc10_63.2: type = ptr_type @CallExplicitGenericParamWithGenericArg.%.loc10_62.2 (%.5) [symbolic = %.loc10_63.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc11_10.2: <specific function> = specific_function constants.%ExplicitGenericParam, @ExplicitGenericParam(%.loc10_62.2) [symbolic = %.loc11_10.2 (constants.%.7)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc10_43.1: type) -> @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.5) {
+// CHECK:STDOUT:   fn(%T.loc10_43.1: type) -> @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %ExplicitGenericParam.ref: %ExplicitGenericParam.type = name_ref ExplicitGenericParam, file.%ExplicitGenericParam.decl [template = constants.%ExplicitGenericParam]
 // CHECK:STDOUT:     %T.ref.loc11: type = name_ref T, %T.loc10_43.1 [symbolic = %T.loc10_43.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc11_37: type = struct_type {.a: %T} [symbolic = %.loc10_62.2 (constants.%.4)]
-// CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.5) = call %ExplicitGenericParam.ref()
-// CHECK:STDOUT:     %.loc11_39.1: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.5) = value_of_initializer %ExplicitGenericParam.call
-// CHECK:STDOUT:     %.loc11_39.2: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.5) = converted %ExplicitGenericParam.call, %.loc11_39.1
+// CHECK:STDOUT:     %.loc11_37: type = struct_type {.a: %T} [symbolic = %.loc10_62.2 (constants.%.5)]
+// CHECK:STDOUT:     %.loc11_10.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%.5) [symbolic = %.loc11_10.2 (constants.%.7)]
+// CHECK:STDOUT:     %.loc11_30: init @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.6) = call %.loc11_10.1()
+// CHECK:STDOUT:     %.loc11_39.1: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.6) = value_of_initializer %.loc11_30
+// CHECK:STDOUT:     %.loc11_39.2: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.6) = converted %.loc11_30, %.loc11_39.1
 // CHECK:STDOUT:     return %.loc11_39.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -236,13 +241,18 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamWithGenericArg(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_43.2 => constants.%T
-// CHECK:STDOUT:   %.loc10_62.2 => constants.%.4
-// CHECK:STDOUT:   %.loc10_63.2 => constants.%.5
+// CHECK:STDOUT:   %.loc10_62.2 => constants.%.5
+// CHECK:STDOUT:   %.loc10_63.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(constants.%.4) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%.4
-// CHECK:STDOUT:   %.loc4_39.2 => constants.%.5
+// CHECK:STDOUT: specific @ExplicitGenericParam(constants.%.5) {
+// CHECK:STDOUT:   %T.loc4_25.2 => constants.%.5
+// CHECK:STDOUT:   %.loc4_39.2 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%.loc10_62.2) {
+// CHECK:STDOUT:   %T.loc4_25.2 => constants.%.5
+// CHECK:STDOUT:   %.loc4_39.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_explicit_vs_deduced.carbon
@@ -358,6 +368,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %CallImplicitGenericParam.type: type = fn_type @CallImplicitGenericParam [template]
 // CHECK:STDOUT:   %CallImplicitGenericParam: %CallImplicitGenericParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: <specific function> = specific_function %ImplicitGenericParam, @ImplicitGenericParam(i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -424,9 +435,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ImplicitGenericParam.ref: %ImplicitGenericParam.type = name_ref ImplicitGenericParam, file.%ImplicitGenericParam.decl [template = constants.%ImplicitGenericParam]
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %ImplicitGenericParam.call: init %.3 = call %ImplicitGenericParam.ref(%n.ref)
-// CHECK:STDOUT:   %.loc7_33.1: %.3 = value_of_initializer %ImplicitGenericParam.call
-// CHECK:STDOUT:   %.loc7_33.2: %.3 = converted %ImplicitGenericParam.call, %.loc7_33.1
+// CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %ImplicitGenericParam.ref, @ImplicitGenericParam(i32) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_30: init %.3 = call %.loc7_10(%n.ref)
+// CHECK:STDOUT:   %.loc7_33.1: %.3 = value_of_initializer %.loc7_30
+// CHECK:STDOUT:   %.loc7_33.2: %.3 = converted %.loc7_30, %.loc7_33.1
 // CHECK:STDOUT:   return %.loc7_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -456,7 +468,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %TupleParam, @TupleParam(i32) [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %tuple: %.6 = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -515,9 +528,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_15: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7_19: %.6 = tuple_literal (%.loc7_15, %.loc7_18)
+// CHECK:STDOUT:   %.loc7_3: <specific function> = specific_function %TupleParam.ref, @TupleParam(i32) [template = constants.%.7]
 // CHECK:STDOUT:   %tuple: %.6 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_13: %.6 = converted %.loc7_19, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %TupleParam.call: init %.1 = call %TupleParam.ref(%.loc7_13)
+// CHECK:STDOUT:   %.loc7_13.1: %.6 = converted %.loc7_19, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_13.2: init %.1 = call %.loc7_3(%.loc7_13.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

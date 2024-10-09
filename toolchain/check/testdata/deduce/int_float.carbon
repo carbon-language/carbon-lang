@@ -52,6 +52,7 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -137,9 +138,10 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: %.4 = name_ref a, %a
-// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%a.ref)
-// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.3) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_11: init i32 = call %.loc9_10(%a.ref)
+// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %.loc9_11
+// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %.loc9_11, %.loc9_14.1
 // CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
