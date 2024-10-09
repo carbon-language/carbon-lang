@@ -860,6 +860,7 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
+  int32_t comment_start = position;
 
   // Any comment must be the only non-whitespace on the line.
   const auto* line_info = current_line_info();
@@ -874,6 +875,9 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     // whitespace, which already is designed to skip over any erroneous text at
     // the end of the line.
     LexVerticalWhitespace(source_text, position);
+    buffer_.comments_.push_back(
+        {.start = comment_start,
+         .length = static_cast<int32_t>(position) - comment_start});
     return;
   }
 
@@ -976,6 +980,10 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       skip_to_next_line();
     }
   }
+
+  buffer_.comments_.push_back(
+      {.start = comment_start,
+       .length = static_cast<int32_t>(position) - comment_start});
 
   // Now compute the indent of this next line before we finish.
   ssize_t line_start = position;

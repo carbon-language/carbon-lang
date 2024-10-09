@@ -8,7 +8,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/format/testdata/basics/fail_invalid_comment.carbon
 
-
 // --- fail_test.carbon
 
 //f

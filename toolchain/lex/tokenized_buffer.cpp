@@ -345,15 +345,24 @@ auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
+auto TokenizedBuffer::IsAfterComment(TokenIndex token,
+                                     CommentIndex comment_index) const -> bool {
+  const auto& comment_data = comments_[comment_index.index];
+  return GetTokenInfo(token).byte_offset() > comment_data.start;
+}
+
+auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
+    -> llvm::StringRef {
+  const auto& comment_data = comments_[comment_index.index];
+  return source_->text().substr(comment_data.start, comment_data.length);
+}
+
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
   mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Add(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
   mem_usage.Add(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
-}
-
-auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
-  output << token_.index;
+  mem_usage.Add(MemUsage::ConcatLabel(label, "comments_"), comments_);
 }
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
