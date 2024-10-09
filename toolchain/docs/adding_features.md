@@ -248,8 +248,9 @@ If the resulting SemIR needs a new instruction:
     ```cpp
     struct NewInstKindName {
         static constexpr auto Kind =
-            // `Parse::SomeId` should be some type from `parse/node_ids.h`,
-            // specifying the kind of parse nodes for this instruction.
+            // `Parse::SomeId` should be one of:
+            // - A node ID from `parse/node_ids.h`,
+            //   specifying the kind of parse nodes for this instruction.
             // - `Parse::NodeId` if it can be any kind of parse node.
             // - `Parse::InvalidNodeId` if no associated parse node.
             InstKind::NewInstKindName.Define<Parse::SomeId>(
