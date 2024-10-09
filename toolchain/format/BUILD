@@ -13,7 +13,11 @@ filegroup(
 
 cc_library(
     name = "format",
-    srcs = ["format.cpp"],
+    srcs = [
+        "format.cpp",
+        "formatter.cpp",
+        "formatter.h",
+    ],
     hdrs = ["format.h"],
     deps = [
         "//common:ostream",
