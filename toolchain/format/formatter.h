@@ -42,13 +42,14 @@ class Formatter {
     WantsSpace,
   };
 
-  // May indent output, dependent on line state.
+  // May output spaces for `indent_`, dependent on line state.
   auto AddIndent() -> void;
 
-  // May output a newline, dependent on line state.
+  // May output a newline, dependent on line state. Does not indent, allowing
+  // blank lines.
   auto AddNewline() -> void;
 
-  // May indent output or just add a space, dependent on line state.
+  // May do `AddIndent` or output a separator space, dependent on line state.
   auto AddWhitespace() -> void;
 
   // Returns the next token index.
@@ -56,9 +57,16 @@ class Formatter {
     return *(Lex::TokenIterator(token) + 1);
   }
 
+  // The tokens being formatted.
   const Lex::TokenizedBuffer* tokens_;
+
+  // The output stream for formatted content.
   llvm::raw_ostream* out_;
+
+  // The state of the line currently written to output.
   LineState line_state_ = LineState::Empty;
+
+  // The current code indent level, to be added to new lines.
   int indent_ = 0;
 };
 
