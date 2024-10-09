@@ -258,11 +258,12 @@ If the resulting SemIR needs a new instruction:
                 // Other parameters have defaults.
             );
 
-        // Optional: omit if this sem_ir instruction does not produce a value.
+        // Optional: Include if this instruction produces a value used in
+        // an expression.
         TypeId type_id;
 
-        // 0-2 id fields, with types from sem_ir/ids.h or sem_ir/builtin_kind.h
-        // For example, fields would look like:
+        // 0-2 id fields, with types from sem_ir/ids.h or
+        // sem_ir/builtin_kind.h. For example, fields would look like:
         StringId name_id;
         InstId value_id;
     };
@@ -271,9 +272,9 @@ If the resulting SemIR needs a new instruction:
     -   [`sem_ir/inst_kind.h`](/toolchain/sem_ir/inst_kind.h) documents the
         different options when defining a new instruction, as well as their
         defaults, see `InstKind::DefinitionInfo`.
-    -   If an instruction doesn't have a `type_id`, it won't produce a value,
-        and so won't be given a label when formatted, and can't be the argument
-        of another instruction.
+    -   Instructions If an instruction doesn't have a `type_id`, it won't
+        produce a value, and so won't be given a label when formatted, and can't
+        be the argument of another instruction.
     -   If an instruction always produces a type:
 
         -   set `.is_type = InstIsType::Always` in its `Kind` definition;
