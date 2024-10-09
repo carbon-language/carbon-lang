@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/no_prelude/impl_forall.carbon
 
-// --- fail_todo_impl_forall.carbon
+// --- impl_forall.carbon
 
 class A(T:! type) {
   var n: T;
@@ -32,7 +32,7 @@ fn TestSpecific(a: A({})) -> {} {
   return a.(I({}).F)();
 }
 
-// CHECK:STDOUT: --- fail_todo_impl_forall.carbon
+// CHECK:STDOUT: --- impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
