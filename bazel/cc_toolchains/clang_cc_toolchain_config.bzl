@@ -404,11 +404,7 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-glldb"],
-                    ),
-                    flag_group(
-                        flags = ["-gpubnames"],
-                        expand_if_available = "per_object_debug_info_file",
+                        flags = ["-glldb", "-gpubnames"],
                     ),
                 ]),
             ),
