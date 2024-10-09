@@ -116,8 +116,9 @@ build --enable_platform_specific_config
 build:linux --define=pfm=1
 
 # Enable split debug info on Linux, which is significantly more space efficient
-# and should work well with modern debuggers. Note that this is not currently
-# supported on macOS.
+# and should work well with modern debuggers. Note that this is Linux specific
+# as macOS has its own approach that is always partially but not completely
+# split.
 #
 # Note: if using GDB, see documentation to get that working:
 # https://docs.carbon-lang.dev/docs/project/contribution_tools.html#debugging-with-gdb-instead-of-lldb
