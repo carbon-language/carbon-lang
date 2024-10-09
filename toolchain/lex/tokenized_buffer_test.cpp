@@ -1028,10 +1028,10 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   code.append(Count, '9');
 
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
-                  DiagnosticKind::TooManyDigits, DiagnosticLevel::Error, 1, 2,
-                  HasSubstr(llvm::formatv(" {0} ", Count)))));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TooManyTypeBitWidthDigits,
+                            DiagnosticLevel::Error, 1, 2,
+                            HasSubstr(llvm::formatv(" {0} ", Count)))));
   auto& buffer = compile_helper_.GetTokenizedBuffer(code, &consumer);
   EXPECT_TRUE(buffer.has_errors());
   ASSERT_THAT(buffer,
