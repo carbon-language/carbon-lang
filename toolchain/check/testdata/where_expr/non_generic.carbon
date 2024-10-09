@@ -11,6 +11,9 @@
 interface I { let T:! type; }
 
 // Ensure that we don't crash when checking this `where` in a non-generic context.
+// CHECK:STDERR: non_generic.carbon:[[@LINE+3]]:27: error: semantics TODO: `unimplemented access to facet member`
+// CHECK:STDERR: fn NotGenericF(U: I where .T == i32) {}
+// CHECK:STDERR:                           ^~
 fn NotGenericF(U: I where .T == i32) {}
 
 // CHECK:STDOUT: --- non_generic.carbon
@@ -59,8 +62,8 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I.type] {
-// CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
+// CHECK:STDOUT:     %.loc17: type = where_expr %.Self [template = constants.%I.type] {
+// CHECK:STDOUT:       requirement_equivalent <error>, %int.make_type_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type = param U, runtime_param0
 // CHECK:STDOUT:     %U: %I.type = bind_name U, %U.param
