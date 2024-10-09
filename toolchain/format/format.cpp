@@ -9,6 +9,7 @@
 
 namespace Carbon::Format {
 
+// TODO: Add support for formatting line ranges (will need flags too).
 auto Format(const Lex::TokenizedBuffer& tokens, llvm::raw_ostream& out)
     -> bool {
   if (tokens.has_errors()) {

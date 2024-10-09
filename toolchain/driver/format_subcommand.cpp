@@ -59,7 +59,7 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return result;
   }
 
-  auto per_file_error = [&]() {
+  auto mark_per_file_error = [&]() {
     result.success = false;
     result.per_file_success.back().second = false;
   };
@@ -70,9 +70,10 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     result.per_file_success.push_back({f.str(), true});
 
     // TODO: Consider refactoring this for sharing with compile.
+    // TODO: Decide what to do with `-` when there are multiple arguments.
     auto source = SourceBuffer::MakeFromFileOrStdin(driver_env.fs, f, consumer);
     if (!source) {
-      per_file_error();
+      mark_per_file_error();
       continue;
     }
     SharedValueStores value_stores;
@@ -87,7 +88,7 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       // TODO: Use --output values (and default to overwrite).
       driver_env.output_stream << buffer_str;
     } else {
-      per_file_error();
+      mark_per_file_error();
       driver_env.output_stream << source->text();
     }
   }
