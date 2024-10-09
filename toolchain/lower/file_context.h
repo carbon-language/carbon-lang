@@ -47,6 +47,25 @@ class FileContext {
     return functions_[function_id.index];
   }
 
+  // Gets a or creates callable's function. Returns nullptr for a builtin.
+  auto GetOrCreateFunction(SemIR::FunctionId function_id,
+                           SemIR::SpecificId specific_id) -> llvm::Function* {
+    // Non-generic functions are declared eagerly.
+    if (!specific_id.is_valid()) {
+      return GetFunction(function_id);
+    }
+
+    if (auto* result = specific_functions_[specific_id.index]) {
+      return result;
+    }
+
+    auto* result = BuildFunctionDecl(function_id, specific_id);
+    // TODO: Add this function to a list of specific functions whose definitions
+    // we need to emit.
+    specific_functions_[specific_id.index] = result;
+    return result;
+  }
+
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     // InvalidType should not be passed in.
@@ -86,7 +105,9 @@ class FileContext {
  private:
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
-  auto BuildFunctionDecl(SemIR::FunctionId function_id) -> llvm::Function*;
+  auto BuildFunctionDecl(SemIR::FunctionId function_id,
+                         SemIR::SpecificId specific_id =
+                             SemIR::SpecificId::Invalid) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing.
@@ -130,18 +151,25 @@ class FileContext {
 
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  // We resize this directly to the (often large) correct size.
+  // Vector indexes correspond to `FunctionId` indexes. We resize this directly
+  // to the correct size.
   llvm::SmallVector<llvm::Function*, 0> functions_;
 
+  // Maps specific callables to lowered functions. Vector indexes correspond to
+  // `SpecificId` indexes. We resize this directly to the correct size.
+  llvm::SmallVector<llvm::Function*, 0> specific_functions_;
+
   // Provides lowered versions of types.
-  // We resize this directly to the (often large) correct size.
+  // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We
+  // resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Type*, 0> types_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
 
   // Maps constants to their lowered values.
-  // We resize this directly to the (often large) correct size.
+  // Vector indexes correspond to `InstId` indexes for constant instructions. We
+  // resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Constant*, 0> constants_;
 
   // Maps global variables to their lowered variant.
