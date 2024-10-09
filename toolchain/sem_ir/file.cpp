@@ -270,6 +270,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntType::Kind:
       case Param::Kind:
       case PointerType::Kind:
+      case SpecificFunction::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:
