@@ -9,15 +9,22 @@
 namespace Carbon::Check {
 
 static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
+                               bool allowed_in_definition,
                                Lex::TokenKind decl_kind,
                                llvm::StringRef context_string,
                                SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}", Lex::TokenKind,
                     Lex::TokenKind, std::string);
-  auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
-                                      context.token_kind(modifier_node),
-                                      decl_kind, context_string.str());
+  CARBON_DIAGNOSTIC(
+      ModifierNotAllowedOnDeclOnly, Error,
+      "`{0}` not allowed on `{1}` declaration, only definition{2}",
+      Lex::TokenKind, Lex::TokenKind, std::string);
+  auto diag = context.emitter().Build(
+      modifier_node,
+      allowed_in_definition ? ModifierNotAllowedOnDeclOnly
+                            : ModifierNotAllowedOn,
+      context.token_kind(modifier_node), decl_kind, context_string.str());
   if (context_loc_id.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
     diag.Note(context_loc_id, ModifierNotInContext);
@@ -39,8 +46,12 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
 
 auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
                            KeywordModifierSet forbidden,
+                           KeywordModifierSet allowed_on_definition,
                            llvm::StringRef context_string,
                            SemIR::LocId context_loc_id) -> void {
+  CARBON_CHECK((allowed_on_definition & ~forbidden).empty(),
+               "allowed_on_definition modifiers must only be a subset of those "
+               "already forbidden");
   auto not_allowed = introducer.modifier_set & forbidden;
   if (not_allowed.empty()) {
     return;
@@ -50,8 +61,10 @@ auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
        order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
     auto order = static_cast<ModifierOrder>(order_index);
     if (not_allowed.HasAnyOf(ModifierOrderAsSet(order))) {
-      DiagnoseNotAllowed(context, introducer.modifier_node_id(order),
-                         introducer.kind, context_string, context_loc_id);
+      DiagnoseNotAllowed(
+          context, introducer.modifier_node_id(order),
+          allowed_on_definition.HasAnyOf(ModifierOrderAsSet(order)),
+          introducer.kind, context_string, context_loc_id);
       introducer.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }
@@ -71,6 +84,7 @@ auto CheckAccessModifiersOnDecl(Context& context,
       // scope.
       ForbidModifiersOnDecl(
           context, introducer, KeywordModifierSet::Protected,
+          KeywordModifierSet::None,
           " at file scope, `protected` is only allowed on class members");
       return;
     }

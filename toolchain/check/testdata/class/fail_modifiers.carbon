@@ -17,7 +17,7 @@
 // CHECK:STDERR:
 private private class DuplicatePrivate;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` declaration, only definition
 // CHECK:STDERR: abstract class AbstractDecl;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ abstract class AbstractDecl;
 // CHECK:STDERR:
 private protected class TwoAccess;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration, only definition
 // CHECK:STDERR: base class BaseDecl;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:

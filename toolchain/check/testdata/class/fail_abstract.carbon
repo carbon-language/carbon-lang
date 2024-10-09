@@ -31,7 +31,7 @@ fn Access(d: Derived) -> (i32, i32) {
   return (d.d, d.base.a);
 }
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `class` declaration
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `class` declaration, only definition
 // CHECK:STDERR: abstract class AbstractDecl;
 // CHECK:STDERR: ^~~~~~~~
 abstract class AbstractDecl;

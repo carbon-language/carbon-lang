@@ -99,7 +99,7 @@ fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return 
 // It would be OK to reject this if we start actually looking in the struct type.
 fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).n; }
 
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration, only definition
 // CHECK:STDERR: base class Incomplete;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
