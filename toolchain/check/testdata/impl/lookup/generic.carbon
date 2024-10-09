@@ -233,7 +233,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_4.1: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.5) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_13: init %.1 = call %.loc13_4.2()
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -409,11 +409,11 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc13_11.1: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc13_11.2: <bound method> = bound_method %x.ref, %.loc13_11.1
 // CHECK:STDOUT:   %.loc13_11.3: <specific function> = specific_function %.loc13_11.2, @F.2(constants.%.5)
-// CHECK:STDOUT:   %.loc13_20.1: init %.5 = call %.loc13_11.3(%x.ref)
-// CHECK:STDOUT:   %.loc13_20.2: ref %.5 = temporary_storage
-// CHECK:STDOUT:   %.loc13_20.3: ref %.5 = temporary %.loc13_20.2, %.loc13_20.1
+// CHECK:STDOUT:   %F.call: init %.5 = call %.loc13_11.3(%x.ref)
+// CHECK:STDOUT:   %.loc13_20.1: ref %.5 = temporary_storage
+// CHECK:STDOUT:   %.loc13_20.2: ref %.5 = temporary %.loc13_20.1, %F.call
 // CHECK:STDOUT:   %struct: %.5 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_22: %.5 = converted %.loc13_20.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_22: %.5 = converted %F.call, %struct [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc13_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -600,7 +600,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc15_4.1: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc15_4.2: <specific function> = specific_function %.loc15_4.1, @F.2(constants.%.4) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc15_13: init %.1 = call %.loc15_4.2()
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc15_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -797,7 +797,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc13_14 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc13_4.1: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
 // CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.4) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_17: init %.1 = call %.loc13_4.2()
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

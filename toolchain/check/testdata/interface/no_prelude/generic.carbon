@@ -285,7 +285,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
 // CHECK:STDOUT:     %T.ref: %Simple.type.3 = name_ref T, %T.loc25_9.1 [symbolic = %T.loc25_9.2 (constants.%T.2)]
 // CHECK:STDOUT:     %.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.2) [symbolic = %.loc26_3.2 (constants.%.11)]
-// CHECK:STDOUT:     %.loc26_10: init %.1 = call %.loc26_3.1()
+// CHECK:STDOUT:     %Receive.call: init %.1 = call %.loc26_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

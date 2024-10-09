@@ -147,9 +147,9 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%.loc6_20.2 (%.3) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_37.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc6_37.2 (constants.%.5)]
-// CHECK:STDOUT:     %.loc6_38: init @F.%T.loc6_6.2 (%T) = call %.loc6_37.1(%p.ref)
-// CHECK:STDOUT:     %.loc6_41.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %.loc6_38
-// CHECK:STDOUT:     %.loc6_41.2: @F.%T.loc6_6.2 (%T) = converted %.loc6_38, %.loc6_41.1
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.2 (%T) = call %.loc6_37.1(%p.ref)
+// CHECK:STDOUT:     %.loc6_41.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc6_41.2: @F.%T.loc6_6.2 (%T) = converted %F.call, %.loc6_41.1
 // CHECK:STDOUT:     return %.loc6_41.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -158,10 +158,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc9: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc8_13: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc9_11: init %C = call %.loc9_10(%p.ref) to %.loc8_13
-// CHECK:STDOUT:   return %.loc9_11 to %return
+// CHECK:STDOUT:   %F.call: init %C = call %.loc9(%p.ref) to %.loc8_13
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -275,9 +275,9 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%.loc6_26.2 (%.4) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_43.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc6_43.2 (constants.%.6)]
-// CHECK:STDOUT:     %.loc6_44: init @F.%T.loc6_6.2 (%T) = call %.loc6_43.1(%p.ref)
-// CHECK:STDOUT:     %.loc6_47.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %.loc6_44
-// CHECK:STDOUT:     %.loc6_47.2: @F.%T.loc6_6.2 (%T) = converted %.loc6_44, %.loc6_47.1
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.2 (%T) = call %.loc6_43.1(%p.ref)
+// CHECK:STDOUT:     %.loc6_47.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc6_47.2: @F.%T.loc6_6.2 (%T) = converted %F.call, %.loc6_47.1
 // CHECK:STDOUT:     return %.loc6_47.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -286,10 +286,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc9: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.10]
 // CHECK:STDOUT:   %.loc8_19: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc9_11: init %C = call %.loc9_10(%p.ref) to %.loc8_19
-// CHECK:STDOUT:   return %.loc9_11 to %return
+// CHECK:STDOUT:   %F.call: init %C = call %.loc9(%p.ref) to %.loc8_19
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -404,9 +404,9 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%.loc6_20.2 (%.3) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_37.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc6_37.2 (constants.%.5)]
-// CHECK:STDOUT:     %.loc6_38: init @F.%T.loc6_6.2 (%T) = call %.loc6_37.1(%p.ref)
-// CHECK:STDOUT:     %.loc6_41.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %.loc6_38
-// CHECK:STDOUT:     %.loc6_41.2: @F.%T.loc6_6.2 (%T) = converted %.loc6_38, %.loc6_41.1
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.2 (%T) = call %.loc6_37.1(%p.ref)
+// CHECK:STDOUT:     %.loc6_41.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc6_41.2: @F.%T.loc6_6.2 (%T) = converted %F.call, %.loc6_41.1
 // CHECK:STDOUT:     return %.loc6_41.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -415,10 +415,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %.7 = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.6) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc9: <specific function> = specific_function %F.ref, @F(constants.%.6) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc8_19: ref %.6 = splice_block %return {}
-// CHECK:STDOUT:   %.loc9_11: init %.6 = call %.loc9_10(%p.ref) to %.loc8_19
-// CHECK:STDOUT:   return %.loc9_11 to %return
+// CHECK:STDOUT:   %F.call: init %.6 = call %.loc9(%p.ref) to %.loc8_19
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -531,9 +531,9 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%.loc6_26.2 (%.4) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_43.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc6_43.2 (constants.%.6)]
-// CHECK:STDOUT:     %.loc6_44: init @F.%T.loc6_6.2 (%T) = call %.loc6_43.1(%p.ref)
-// CHECK:STDOUT:     %.loc6_47.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %.loc6_44
-// CHECK:STDOUT:     %.loc6_47.2: @F.%T.loc6_6.2 (%T) = converted %.loc6_44, %.loc6_47.1
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.2 (%T) = call %.loc6_43.1(%p.ref)
+// CHECK:STDOUT:     %.loc6_47.1: @F.%T.loc6_6.2 (%T) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc6_47.2: @F.%T.loc6_6.2 (%T) = converted %F.call, %.loc6_47.1
 // CHECK:STDOUT:     return %.loc6_47.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

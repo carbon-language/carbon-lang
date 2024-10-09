@@ -500,15 +500,15 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc6: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc6_7: ref %CompleteClass.3 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.3 = call %F.ref.loc6() to %.loc6_7
-// CHECK:STDOUT:   assign %v.var, %F.call
+// CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.3 = call %F.ref.loc6() to %.loc6_7
+// CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.3 = name_ref v, %v
 // CHECK:STDOUT:   %.loc7_11.1: %F.type.2 = specific_constant imports.%import_ref.7, @CompleteClass(i32) [template = constants.%F.2]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type.2 = name_ref F, %.loc7_11.1 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc7_11.2: <specific function> = specific_function %F.ref.loc7, @F.1(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_13: init i32 = call %.loc7_11.2()
-// CHECK:STDOUT:   %.loc7_15.1: i32 = value_of_initializer %.loc7_13
-// CHECK:STDOUT:   %.loc7_15.2: i32 = converted %.loc7_13, %.loc7_15.1
+// CHECK:STDOUT:   %F.call.loc7: init i32 = call %.loc7_11.2()
+// CHECK:STDOUT:   %.loc7_15.1: i32 = value_of_initializer %F.call.loc7
+// CHECK:STDOUT:   %.loc7_15.2: i32 = converted %F.call.loc7, %.loc7_15.1
 // CHECK:STDOUT:   return %.loc7_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

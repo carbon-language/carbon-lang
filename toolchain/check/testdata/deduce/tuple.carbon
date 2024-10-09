@@ -160,9 +160,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %pair.ref: @F.%.loc7_37.3 (%.4) = name_ref pair, %pair
 // CHECK:STDOUT:     %.loc7_54.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %.loc7_54.2 (constants.%.7)]
-// CHECK:STDOUT:     %.loc7_55: init @F.%U.loc7_16.2 (%U) = call %.loc7_54.1(%pair.ref)
-// CHECK:STDOUT:     %.loc7_61.1: @F.%U.loc7_16.2 (%U) = value_of_initializer %.loc7_55
-// CHECK:STDOUT:     %.loc7_61.2: @F.%U.loc7_16.2 (%U) = converted %.loc7_55, %.loc7_61.1
+// CHECK:STDOUT:     %F.call: init @F.%U.loc7_16.2 (%U) = call %.loc7_54.1(%pair.ref)
+// CHECK:STDOUT:     %.loc7_61.1: @F.%U.loc7_16.2 (%U) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc7_61.2: @F.%U.loc7_16.2 (%U) = converted %F.call, %.loc7_61.1
 // CHECK:STDOUT:     return %.loc7_61.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -171,10 +171,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %.8 = name_ref pair, %pair
-// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc9_20: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %.loc10_11: init %D = call %.loc10_10(%pair.ref) to %.loc9_20
-// CHECK:STDOUT:   return %.loc10_11 to %return
+// CHECK:STDOUT:   %F.call: init %D = call %.loc10(%pair.ref) to %.loc9_20
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
@@ -352,9 +352,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %h.ref: %HasPair.4 = name_ref h, %h
 // CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.8, constants.%.9) [template = constants.%.10]
-// CHECK:STDOUT:   %.loc9_11: init i32 = call %.loc9_10(%h.ref)
-// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %.loc9_11
-// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %.loc9_11, %.loc9_14.1
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc9_10(%h.ref)
+// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
 // CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

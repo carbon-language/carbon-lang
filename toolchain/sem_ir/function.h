@@ -93,7 +93,9 @@ struct CalleeFunction {
   // The function. Invalid if not a function.
   SemIR::FunctionId function_id;
   // The specific that contains the function.
-  SemIR::SpecificId specific_id;
+  SemIR::SpecificId enclosing_specific_id;
+  // The specific for the callee itself, in a resolved call.
+  SemIR::SpecificId resolved_specific_id;
   // The bound `self` parameter. Invalid if not a method.
   SemIR::InstId self_id;
   // True if an error instruction was found.

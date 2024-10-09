@@ -199,9 +199,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %ExplicitGenericParam.ref: %ExplicitGenericParam.type = name_ref ExplicitGenericParam, file.%ExplicitGenericParam.decl [template = constants.%ExplicitGenericParam]
 // CHECK:STDOUT:     %T.ref.loc4_71: type = name_ref T, %T.loc4_25.1 [symbolic = %T.loc4_25.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_50.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%T) [symbolic = %.loc4_50.2 (constants.%.3)]
-// CHECK:STDOUT:     %.loc4_70: init @ExplicitGenericParam.%.loc4_39.2 (%.1) = call %.loc4_50.1()
-// CHECK:STDOUT:     %.loc4_73.1: @ExplicitGenericParam.%.loc4_39.2 (%.1) = value_of_initializer %.loc4_70
-// CHECK:STDOUT:     %.loc4_73.2: @ExplicitGenericParam.%.loc4_39.2 (%.1) = converted %.loc4_70, %.loc4_73.1
+// CHECK:STDOUT:     %ExplicitGenericParam.call: init @ExplicitGenericParam.%.loc4_39.2 (%.1) = call %.loc4_50.1()
+// CHECK:STDOUT:     %.loc4_73.1: @ExplicitGenericParam.%.loc4_39.2 (%.1) = value_of_initializer %ExplicitGenericParam.call
+// CHECK:STDOUT:     %.loc4_73.2: @ExplicitGenericParam.%.loc4_39.2 (%.1) = converted %ExplicitGenericParam.call, %.loc4_73.1
 // CHECK:STDOUT:     return %.loc4_73.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -215,9 +215,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_30.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_30.2: type = converted %int.make_type_32.loc7, %.loc7_30.1 [template = i32]
 // CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(i32) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_30.3: init %.4 = call %.loc7_10()
-// CHECK:STDOUT:   %.loc7_35.1: %.4 = value_of_initializer %.loc7_30.3
-// CHECK:STDOUT:   %.loc7_35.2: %.4 = converted %.loc7_30.3, %.loc7_35.1
+// CHECK:STDOUT:   %ExplicitGenericParam.call: init %.4 = call %.loc7_10()
+// CHECK:STDOUT:   %.loc7_35.1: %.4 = value_of_initializer %ExplicitGenericParam.call
+// CHECK:STDOUT:   %.loc7_35.2: %.4 = converted %ExplicitGenericParam.call, %.loc7_35.1
 // CHECK:STDOUT:   return %.loc7_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,9 +235,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %T.ref.loc11: type = name_ref T, %T.loc10_43.1 [symbolic = %T.loc10_43.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_37: type = struct_type {.a: %T} [symbolic = %.loc10_62.2 (constants.%.6)]
 // CHECK:STDOUT:     %.loc11_10.1: <specific function> = specific_function %ExplicitGenericParam.ref, @ExplicitGenericParam(constants.%.6) [symbolic = %.loc11_10.2 (constants.%.8)]
-// CHECK:STDOUT:     %.loc11_30: init @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = call %.loc11_10.1()
-// CHECK:STDOUT:     %.loc11_39.1: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = value_of_initializer %.loc11_30
-// CHECK:STDOUT:     %.loc11_39.2: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = converted %.loc11_30, %.loc11_39.1
+// CHECK:STDOUT:     %ExplicitGenericParam.call: init @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = call %.loc11_10.1()
+// CHECK:STDOUT:     %.loc11_39.1: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = value_of_initializer %ExplicitGenericParam.call
+// CHECK:STDOUT:     %.loc11_39.2: @CallExplicitGenericParamWithGenericArg.%.loc10_63.2 (%.7) = converted %ExplicitGenericParam.call, %.loc11_39.1
 // CHECK:STDOUT:     return %.loc11_39.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -462,9 +462,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %ImplicitGenericParam.ref: %ImplicitGenericParam.type = name_ref ImplicitGenericParam, file.%ImplicitGenericParam.decl [template = constants.%ImplicitGenericParam]
 // CHECK:STDOUT:     %x.ref: @ImplicitGenericParam.%T.loc4_25.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc4_56.1: <specific function> = specific_function %ImplicitGenericParam.ref, @ImplicitGenericParam(constants.%T) [symbolic = %.loc4_56.2 (constants.%.3)]
-// CHECK:STDOUT:     %.loc4_76: init @ImplicitGenericParam.%.loc4_45.2 (%.1) = call %.loc4_56.1(%x.ref)
-// CHECK:STDOUT:     %.loc4_79.1: @ImplicitGenericParam.%.loc4_45.2 (%.1) = value_of_initializer %.loc4_76
-// CHECK:STDOUT:     %.loc4_79.2: @ImplicitGenericParam.%.loc4_45.2 (%.1) = converted %.loc4_76, %.loc4_79.1
+// CHECK:STDOUT:     %ImplicitGenericParam.call: init @ImplicitGenericParam.%.loc4_45.2 (%.1) = call %.loc4_56.1(%x.ref)
+// CHECK:STDOUT:     %.loc4_79.1: @ImplicitGenericParam.%.loc4_45.2 (%.1) = value_of_initializer %ImplicitGenericParam.call
+// CHECK:STDOUT:     %.loc4_79.2: @ImplicitGenericParam.%.loc4_45.2 (%.1) = converted %ImplicitGenericParam.call, %.loc4_79.1
 // CHECK:STDOUT:     return %.loc4_79.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -476,9 +476,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ImplicitGenericParam.ref: %ImplicitGenericParam.type = name_ref ImplicitGenericParam, file.%ImplicitGenericParam.decl [template = constants.%ImplicitGenericParam]
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %ImplicitGenericParam.ref, @ImplicitGenericParam(i32) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_30: init %.4 = call %.loc7_10(%n.ref)
-// CHECK:STDOUT:   %.loc7_33.1: %.4 = value_of_initializer %.loc7_30
-// CHECK:STDOUT:   %.loc7_33.2: %.4 = converted %.loc7_30, %.loc7_33.1
+// CHECK:STDOUT:   %ImplicitGenericParam.call: init %.4 = call %.loc7_10(%n.ref)
+// CHECK:STDOUT:   %.loc7_33.1: %.4 = value_of_initializer %ImplicitGenericParam.call
+// CHECK:STDOUT:   %.loc7_33.2: %.4 = converted %ImplicitGenericParam.call, %.loc7_33.1
 // CHECK:STDOUT:   return %.loc7_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -587,8 +587,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_19: %.7 = tuple_literal (%.loc7_15, %.loc7_18)
 // CHECK:STDOUT:   %.loc7_3: <specific function> = specific_function %TupleParam.ref, @TupleParam(i32) [template = constants.%.8]
 // CHECK:STDOUT:   %tuple: %.7 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_13.1: %.7 = converted %.loc7_19, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_13.2: init %.1 = call %.loc7_3(%.loc7_13.1)
+// CHECK:STDOUT:   %.loc7_13: %.7 = converted %.loc7_19, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %TupleParam.call: init %.1 = call %.loc7_3(%.loc7_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

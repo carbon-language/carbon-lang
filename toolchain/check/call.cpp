@@ -143,7 +143,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
       context, loc_id, callable, "function", callable.generic_id,
-      callee_function.specific_id, callee_function.self_id, arg_ids);
+      callee_function.enclosing_specific_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }

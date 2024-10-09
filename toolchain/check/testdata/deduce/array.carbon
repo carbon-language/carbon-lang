@@ -221,8 +221,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc8: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %.loc10_12: %.9 = bind_value %a.ref
-// CHECK:STDOUT:   %.loc10_11: init %C = call %.loc10_10(%.loc10_12) to %.loc8
-// CHECK:STDOUT:   return %.loc10_11 to %return
+// CHECK:STDOUT:   %F.call: init %C = call %.loc10_10(%.loc10_12) to %.loc8
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -668,8 +668,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc21_11.2: %.19 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.14) [template = constants.%.20]
 // CHECK:STDOUT:   %Convert.ref: %.19 = name_ref Convert, %.loc21_11.2 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc21_11.3: %.14 = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21_11.4: init %C = call %.loc21_10(<invalid>) [template = <error>]
-// CHECK:STDOUT:   return %.loc21_11.4 to %return
+// CHECK:STDOUT:   %F.call: init %C = call %.loc21_10(<invalid>) [template = <error>]
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {

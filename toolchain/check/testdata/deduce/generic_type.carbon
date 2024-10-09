@@ -174,9 +174,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%C.loc7_20.2 (%C.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc7_39.2 (constants.%.5)]
-// CHECK:STDOUT:     %.loc7_40: init @F.%T.loc7_6.2 (%T) = call %.loc7_39.1(%p.ref)
-// CHECK:STDOUT:     %.loc7_43.1: @F.%T.loc7_6.2 (%T) = value_of_initializer %.loc7_40
-// CHECK:STDOUT:     %.loc7_43.2: @F.%T.loc7_6.2 (%T) = converted %.loc7_40, %.loc7_43.1
+// CHECK:STDOUT:     %F.call: init @F.%T.loc7_6.2 (%T) = call %.loc7_39.1(%p.ref)
+// CHECK:STDOUT:     %.loc7_43.1: @F.%T.loc7_6.2 (%T) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc7_43.2: @F.%T.loc7_6.2 (%T) = converted %F.call, %.loc7_43.1
 // CHECK:STDOUT:     return %.loc7_43.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -185,10 +185,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %C.3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%D) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10: <specific function> = specific_function %F.ref, @F(constants.%D) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %.loc10_11: init %D = call %.loc10_10(%p.ref) to %.loc9
-// CHECK:STDOUT:   return %.loc10_11 to %return
+// CHECK:STDOUT:   %F.call: init %D = call %.loc10(%p.ref) to %.loc9
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -338,8 +338,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %p.ref: @F.%I.loc7_20.2 (%I.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc7_39.2 (constants.%.5)]
 // CHECK:STDOUT:     %.loc7_25: ref %C = splice_block %return {}
-// CHECK:STDOUT:     %.loc7_40: init %C = call %.loc7_39.1(%p.ref) to %.loc7_25
-// CHECK:STDOUT:     return %.loc7_40 to %return
+// CHECK:STDOUT:     %F.call: init %C = call %.loc7_39.1(%p.ref) to %.loc7_25
+// CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,10 +347,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %I.3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc10_11: init %C = call %.loc10_10(%p.ref) to %.loc9
-// CHECK:STDOUT:   return %.loc10_11 to %return
+// CHECK:STDOUT:   %F.call: init %C = call %.loc10(%p.ref) to %.loc9
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -567,18 +567,18 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %p.ref: @F.%Inner.loc13_43.2 (%Inner.2) = name_ref p, %p
 // CHECK:STDOUT:     %.loc13_67.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %.loc13_67.2 (constants.%.8)]
 // CHECK:STDOUT:     %.loc13_68.1: ref @F.%.loc13_56.3 (%.6) = temporary_storage
-// CHECK:STDOUT:     %.loc13_68.2: init @F.%.loc13_56.3 (%.6) = call %.loc13_67.1(%p.ref) to %.loc13_68.1
-// CHECK:STDOUT:     %.loc13_68.3: ref @F.%.loc13_56.3 (%.6) = temporary %.loc13_68.1, %.loc13_68.2
-// CHECK:STDOUT:     %.loc13_68.4: ref @F.%T.loc13_6.2 (%T) = tuple_access %.loc13_68.3, element0
-// CHECK:STDOUT:     %.loc13_68.5: @F.%T.loc13_6.2 (%T) = bind_value %.loc13_68.4
-// CHECK:STDOUT:     %.loc13_68.6: ref @F.%T.loc13_6.2 (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc13_68.7: init @F.%T.loc13_6.2 (%T) = initialize_from %.loc13_68.5 to %.loc13_68.6
-// CHECK:STDOUT:     %.loc13_68.8: ref @F.%U.loc13_16.2 (%U) = tuple_access %.loc13_68.3, element1
-// CHECK:STDOUT:     %.loc13_68.9: @F.%U.loc13_16.2 (%U) = bind_value %.loc13_68.8
-// CHECK:STDOUT:     %.loc13_68.10: ref @F.%U.loc13_16.2 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc13_68.11: init @F.%U.loc13_16.2 (%U) = initialize_from %.loc13_68.9 to %.loc13_68.10
-// CHECK:STDOUT:     %.loc13_68.12: init @F.%.loc13_56.3 (%.6) = tuple_init (%.loc13_68.7, %.loc13_68.11) to %return
-// CHECK:STDOUT:     %.loc13_71: init @F.%.loc13_56.3 (%.6) = converted %.loc13_68.2, %.loc13_68.12
+// CHECK:STDOUT:     %F.call: init @F.%.loc13_56.3 (%.6) = call %.loc13_67.1(%p.ref) to %.loc13_68.1
+// CHECK:STDOUT:     %.loc13_68.2: ref @F.%.loc13_56.3 (%.6) = temporary %.loc13_68.1, %F.call
+// CHECK:STDOUT:     %.loc13_68.3: ref @F.%T.loc13_6.2 (%T) = tuple_access %.loc13_68.2, element0
+// CHECK:STDOUT:     %.loc13_68.4: @F.%T.loc13_6.2 (%T) = bind_value %.loc13_68.3
+// CHECK:STDOUT:     %.loc13_68.5: ref @F.%T.loc13_6.2 (%T) = tuple_access %return, element0
+// CHECK:STDOUT:     %.loc13_68.6: init @F.%T.loc13_6.2 (%T) = initialize_from %.loc13_68.4 to %.loc13_68.5
+// CHECK:STDOUT:     %.loc13_68.7: ref @F.%U.loc13_16.2 (%U) = tuple_access %.loc13_68.2, element1
+// CHECK:STDOUT:     %.loc13_68.8: @F.%U.loc13_16.2 (%U) = bind_value %.loc13_68.7
+// CHECK:STDOUT:     %.loc13_68.9: ref @F.%U.loc13_16.2 (%U) = tuple_access %return, element1
+// CHECK:STDOUT:     %.loc13_68.10: init @F.%U.loc13_16.2 (%U) = initialize_from %.loc13_68.8 to %.loc13_68.9
+// CHECK:STDOUT:     %.loc13_68.11: init @F.%.loc13_56.3 (%.6) = tuple_init (%.loc13_68.6, %.loc13_68.10) to %return
+// CHECK:STDOUT:     %.loc13_71: init @F.%.loc13_56.3 (%.6) = converted %F.call, %.loc13_68.11
 // CHECK:STDOUT:     return %.loc13_71 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -587,10 +587,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %Inner.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc16_10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc16: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc15_28: ref %.9 = splice_block %return {}
-// CHECK:STDOUT:   %.loc16_11: init %.9 = call %.loc16_10(%p.ref) to %.loc15_28
-// CHECK:STDOUT:   return %.loc16_11 to %return
+// CHECK:STDOUT:   %F.call: init %.9 = call %.loc16(%p.ref) to %.loc15_28
+// CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
@@ -792,9 +792,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_15.1: ref %WithNontype.3 = converted %.loc9_13.1, %.loc9_13.4
 // CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.5) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_15.2: %WithNontype.3 = bind_value %.loc9_15.1
-// CHECK:STDOUT:   %.loc9_11: init i32 = call %.loc9_10(%.loc9_15.2)
-// CHECK:STDOUT:   %.loc9_33.1: i32 = value_of_initializer %.loc9_11
-// CHECK:STDOUT:   %.loc9_33.2: i32 = converted %.loc9_11, %.loc9_33.1
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc9_10(%.loc9_15.2)
+// CHECK:STDOUT:   %.loc9_33.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc9_33.2: i32 = converted %F.call, %.loc9_33.1
 // CHECK:STDOUT:   return %.loc9_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -164,9 +164,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %x.ref: @CallGeneric.%T.loc8_16.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc9_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T) [symbolic = %.loc9_10.2 (constants.%.2)]
-// CHECK:STDOUT:     %.loc9_18: init @CallGeneric.%T.loc8_16.2 (%T) = call %.loc9_10.1(%x.ref)
-// CHECK:STDOUT:     %.loc9_24.1: @CallGeneric.%T.loc8_16.2 (%T) = value_of_initializer %.loc9_18
-// CHECK:STDOUT:     %.loc9_24.2: @CallGeneric.%T.loc8_16.2 (%T) = converted %.loc9_18, %.loc9_24.1
+// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.loc8_16.2 (%T) = call %.loc9_10.1(%x.ref)
+// CHECK:STDOUT:     %.loc9_24.1: @CallGeneric.%T.loc8_16.2 (%T) = value_of_initializer %Function.call
+// CHECK:STDOUT:     %.loc9_24.2: @CallGeneric.%T.loc8_16.2 (%T) = converted %Function.call, %.loc9_24.1
 // CHECK:STDOUT:     return %.loc9_24.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -185,9 +185,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %.loc13_20: type = ptr_type %T [symbolic = %.loc12_33.2 (constants.%.3)]
 // CHECK:STDOUT:     %x.ref: @CallGenericPtr.%.loc12_33.2 (%.3) = name_ref x, %x
 // CHECK:STDOUT:     %.loc13_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%.3) [symbolic = %.loc13_10.2 (constants.%.4)]
-// CHECK:STDOUT:     %.loc13_18: init @CallGenericPtr.%.loc12_33.2 (%.3) = call %.loc13_10.1(%x.ref)
-// CHECK:STDOUT:     %.loc13_25.1: @CallGenericPtr.%.loc12_33.2 (%.3) = value_of_initializer %.loc13_18
-// CHECK:STDOUT:     %.loc13_25.2: @CallGenericPtr.%.loc12_33.2 (%.3) = converted %.loc13_18, %.loc13_25.1
+// CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%.loc12_33.2 (%.3) = call %.loc13_10.1(%x.ref)
+// CHECK:STDOUT:     %.loc13_25.1: @CallGenericPtr.%.loc12_33.2 (%.3) = value_of_initializer %Function.call
+// CHECK:STDOUT:     %.loc13_25.2: @CallGenericPtr.%.loc12_33.2 (%.3) = converted %Function.call, %.loc13_25.1
 // CHECK:STDOUT:     return %.loc13_25.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -197,10 +197,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc19_10: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc19_18: init %C = call %.loc19_10(%x.ref) to %.loc18
-// CHECK:STDOUT:   return %.loc19_18 to %return
+// CHECK:STDOUT:   %Function.call: init %C = call %.loc19(%x.ref) to %.loc18
+// CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T) {
@@ -349,9 +349,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %x.ref: @CallGeneric.%T.loc8_16.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc9_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T) [symbolic = %.loc9_10.2 (constants.%.2)]
-// CHECK:STDOUT:     %.loc9_18: init @CallGeneric.%T.loc8_16.2 (%T) = call %.loc9_10.1(%x.ref)
-// CHECK:STDOUT:     %.loc9_21.1: @CallGeneric.%T.loc8_16.2 (%T) = value_of_initializer %.loc9_18
-// CHECK:STDOUT:     %.loc9_21.2: @CallGeneric.%T.loc8_16.2 (%T) = converted %.loc9_18, %.loc9_21.1
+// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.loc8_16.2 (%T) = call %.loc9_10.1(%x.ref)
+// CHECK:STDOUT:     %.loc9_21.1: @CallGeneric.%T.loc8_16.2 (%T) = value_of_initializer %Function.call
+// CHECK:STDOUT:     %.loc9_21.2: @CallGeneric.%T.loc8_16.2 (%T) = converted %Function.call, %.loc9_21.1
 // CHECK:STDOUT:     return %.loc9_21.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -368,9 +368,9 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:     %x.ref: @CallGenericPtr.%.loc12_33.2 (%.3) = name_ref x, %x
 // CHECK:STDOUT:     %.loc13_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%.3) [symbolic = %.loc13_10.2 (constants.%.4)]
-// CHECK:STDOUT:     %.loc13_18: init @CallGenericPtr.%.loc12_33.2 (%.3) = call %.loc13_10.1(%x.ref)
-// CHECK:STDOUT:     %.loc13_21.1: @CallGenericPtr.%.loc12_33.2 (%.3) = value_of_initializer %.loc13_18
-// CHECK:STDOUT:     %.loc13_21.2: @CallGenericPtr.%.loc12_33.2 (%.3) = converted %.loc13_18, %.loc13_21.1
+// CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%.loc12_33.2 (%.3) = call %.loc13_10.1(%x.ref)
+// CHECK:STDOUT:     %.loc13_21.1: @CallGenericPtr.%.loc12_33.2 (%.3) = value_of_initializer %Function.call
+// CHECK:STDOUT:     %.loc13_21.2: @CallGenericPtr.%.loc12_33.2 (%.3) = converted %Function.call, %.loc13_21.1
 // CHECK:STDOUT:     return %.loc13_21.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -379,10 +379,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc19_10: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc19_18: init %C = call %.loc19_10(%x.ref) to %.loc18
-// CHECK:STDOUT:   return %.loc19_18 to %return
+// CHECK:STDOUT:   %Function.call: init %C = call %.loc19(%x.ref) to %.loc18
+// CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T) {

@@ -142,9 +142,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl [template = constants.%Defined]
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %Defined.ref, @Defined(i32) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_17: init i32 = call %.loc9_10(%.loc9_18)
-// CHECK:STDOUT:   %.loc9_20.1: i32 = value_of_initializer %.loc9_17
-// CHECK:STDOUT:   %.loc9_20.2: i32 = converted %.loc9_17, %.loc9_20.1
+// CHECK:STDOUT:   %Defined.call: init i32 = call %.loc9_10(%.loc9_18)
+// CHECK:STDOUT:   %.loc9_20.1: i32 = value_of_initializer %Defined.call
+// CHECK:STDOUT:   %.loc9_20.2: i32 = converted %Defined.call, %.loc9_20.1
 // CHECK:STDOUT:   return %.loc9_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -246,9 +246,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl.loc4 [template = constants.%Defined]
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %Defined.ref, @Defined(i32) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc7_17: init i32 = call %.loc7_10(%.loc7_18)
-// CHECK:STDOUT:   %.loc7_20.1: i32 = value_of_initializer %.loc7_17
-// CHECK:STDOUT:   %.loc7_20.2: i32 = converted %.loc7_17, %.loc7_20.1
+// CHECK:STDOUT:   %Defined.call: init i32 = call %.loc7_10(%.loc7_18)
+// CHECK:STDOUT:   %.loc7_20.1: i32 = value_of_initializer %Defined.call
+// CHECK:STDOUT:   %.loc7_20.2: i32 = converted %Defined.call, %.loc7_20.1
 // CHECK:STDOUT:   return %.loc7_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,9 +332,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Undefined.ref: %Undefined.type = name_ref Undefined, file.%Undefined.decl [template = constants.%Undefined]
 // CHECK:STDOUT:   %.loc14_20: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_10: <specific function> = specific_function %Undefined.ref, @Undefined(i32) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_19: init i32 = call %.loc14_10(%.loc14_20)
-// CHECK:STDOUT:   %.loc14_22.1: i32 = value_of_initializer %.loc14_19
-// CHECK:STDOUT:   %.loc14_22.2: i32 = converted %.loc14_19, %.loc14_22.1
+// CHECK:STDOUT:   %Undefined.call: init i32 = call %.loc14_10(%.loc14_20)
+// CHECK:STDOUT:   %.loc14_22.1: i32 = value_of_initializer %Undefined.call
+// CHECK:STDOUT:   %.loc14_22.2: i32 = converted %Undefined.call, %.loc14_22.1
 // CHECK:STDOUT:   return %.loc14_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,7 +429,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
 // CHECK:STDOUT:   %.loc12_18: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_3: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%.3) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_17: init %.1 = call %.loc12_3()
+// CHECK:STDOUT:   %ErrorIfNIsZero.call: init %.1 = call %.loc12_3()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -141,9 +141,9 @@ fn G() {
 // CHECK:STDOUT:     %.loc12_27.1: @Make.%Make.type (%Make.type.1) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.1) = name_ref Make, %.loc12_27.1 [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:     %.loc12_27.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc12_27.3 (constants.%.4)]
-// CHECK:STDOUT:     %.loc12_31: init @Make.%T (%T) = call %.loc12_27.2()
-// CHECK:STDOUT:     %.loc12_33.1: @Make.%T (%T) = value_of_initializer %.loc12_31
-// CHECK:STDOUT:     %.loc12_33.2: @Make.%T (%T) = converted %.loc12_31, %.loc12_33.1
+// CHECK:STDOUT:     %Make.call: init @Make.%T (%T) = call %.loc12_27.2()
+// CHECK:STDOUT:     %.loc12_33.1: @Make.%T (%T) = value_of_initializer %Make.call
+// CHECK:STDOUT:     %.loc12_33.2: @Make.%T (%T) = converted %Make.call, %.loc12_33.1
 // CHECK:STDOUT:     return %.loc12_33.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -165,8 +165,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc18_25.1: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(i32) [template = constants.%Make.2]
 // CHECK:STDOUT:   %Make.ref.loc18: %Make.type.2 = name_ref Make, %.loc18_25.1 [template = constants.%Make.2]
 // CHECK:STDOUT:   %.loc18_25.2: <specific function> = specific_function %Make.ref.loc18, @Make(i32) [template = constants.%.12]
-// CHECK:STDOUT:   %.loc18_30: init i32 = call %.loc18_25.2()
-// CHECK:STDOUT:   assign %a.var, %.loc18_30
+// CHECK:STDOUT:   %Make.call.loc18: init i32 = call %.loc18_25.2()
+// CHECK:STDOUT:   assign %a.var, %Make.call.loc18
 // CHECK:STDOUT:   %.loc19_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_11.2: type = converted %.loc19_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b
@@ -178,8 +178,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc19_23.1: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%.1) [template = constants.%Make.3]
 // CHECK:STDOUT:   %Make.ref.loc19: %Make.type.3 = name_ref Make, %.loc19_23.1 [template = constants.%Make.3]
 // CHECK:STDOUT:   %.loc19_23.2: <specific function> = specific_function %Make.ref.loc19, @Make(constants.%.1) [template = constants.%.13]
-// CHECK:STDOUT:   %.loc19_28: init %.1 = call %.loc19_23.2()
-// CHECK:STDOUT:   assign %b.var, %.loc19_28
+// CHECK:STDOUT:   %Make.call.loc19: init %.1 = call %.loc19_23.2()
+// CHECK:STDOUT:   assign %b.var, %Make.call.loc19
 // CHECK:STDOUT:   %C.ref.loc20_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
@@ -190,8 +190,8 @@ fn G() {
 // CHECK:STDOUT:   %Make.ref.loc20: %Make.type.4 = name_ref Make, %.loc20_21.1 [template = constants.%Make.4]
 // CHECK:STDOUT:   %.loc20_21.2: <specific function> = specific_function %Make.ref.loc20, @Make(constants.%C) [template = constants.%.16]
 // CHECK:STDOUT:   %.loc20_7: ref %C = splice_block %c.var {}
-// CHECK:STDOUT:   %.loc20_26: init %C = call %.loc20_21.2() to %.loc20_7
-// CHECK:STDOUT:   assign %c.var, %.loc20_26
+// CHECK:STDOUT:   %Make.call.loc20: init %C = call %.loc20_21.2() to %.loc20_7
+// CHECK:STDOUT:   assign %c.var, %Make.call.loc20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
