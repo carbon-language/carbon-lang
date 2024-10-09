@@ -153,6 +153,8 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT: specific @F(constants.%.3) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%.3
 // CHECK:STDOUT:   %.loc4_26 => constants.%.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_float.carbon

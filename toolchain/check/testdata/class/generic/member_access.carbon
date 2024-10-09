@@ -347,6 +347,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Get(i32) {
 // CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:   %Class => constants.%Class.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc5_42.3 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(i32) {
@@ -354,6 +357,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.3
 // CHECK:STDOUT:   %.loc7_29.1 => constants.%.12
 // CHECK:STDOUT:   %.loc7_38.1 => constants.%.13
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc7_54.3 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_static_member_fn_call.carbon
@@ -548,6 +554,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Make(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc5_21.1 => constants.%Class.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %struct => constants.%struct
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T.loc4_13.2) {

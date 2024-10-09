@@ -452,6 +452,9 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: specific @F.2(constants.%W) {
 // CHECK:STDOUT:   %V => constants.%W
 // CHECK:STDOUT:   %A => constants.%A.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc12_16.3 => constants.%.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@TestGeneric.%W.loc16_16.2) {
@@ -500,5 +503,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: specific @F.2(constants.%.21) {
 // CHECK:STDOUT:   %V => constants.%.21
 // CHECK:STDOUT:   %A => constants.%A.5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc12_16.3 => constants.%.22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

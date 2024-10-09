@@ -155,6 +155,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                                 SemIR::BuiltinInstKind::SpecificFunctionType),
                             .callee_id = callee_id,
                             .specific_id = *callee_specific_id});
+    context.definitions_required().push_back(callee_id);
   }
 
   // If there is a return slot, build storage for the result.

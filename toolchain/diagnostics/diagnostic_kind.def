@@ -159,6 +159,8 @@ CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
 CARBON_DIAGNOSTIC_KIND(ExportFromImpl)
 CARBON_DIAGNOSTIC_KIND(MissingDefinitionInImpl)
+CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinition)
+CARBON_DIAGNOSTIC_KIND(MissingGenericFunctionDefinitionHere)
 
 // Merge-related redeclaration checking.
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDecl)

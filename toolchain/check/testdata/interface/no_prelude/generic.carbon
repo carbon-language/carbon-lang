@@ -32,7 +32,7 @@ class C {
 
 interface WithImplicitArgs[T:! type](N:! T);
 
-fn Receive(T:! Simple(C));
+fn Receive(T:! Simple(C)) {}
 fn Pass(T:! Simple(C)) {
   Receive(T);
 }
@@ -266,7 +266,12 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: generic fn @Receive(%T.loc24_12.1: %Simple.type.3) {
 // CHECK:STDOUT:   %T.loc24_12.2: %Simple.type.3 = bind_symbolic_name T, 0 [symbolic = %T.loc24_12.2 (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc24_12.1: %Simple.type.3);
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc24_12.1: %Simple.type.3) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Pass(%T.loc25_9.1: %Simple.type.3) {
@@ -332,6 +337,8 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.2) {
 // CHECK:STDOUT:   %T.loc24_12.2 => constants.%T.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.2) {

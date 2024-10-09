@@ -265,7 +265,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc8_34.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%.5) {}
+// CHECK:STDOUT: specific @F.2(constants.%.5) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_type_subst.carbon
 // CHECK:STDOUT:
@@ -451,6 +453,8 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.5) {
 // CHECK:STDOUT:   %T => constants.%.5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_type_argument.carbon
@@ -645,7 +649,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc10_37.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%.4) {}
+// CHECK:STDOUT: specific @F.2(constants.%.4) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_interface_argument.carbon
 // CHECK:STDOUT:
@@ -858,7 +864,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc8_38.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%.4) {}
+// CHECK:STDOUT: specific @F.2(constants.%.4) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_deduction.carbon
 // CHECK:STDOUT:

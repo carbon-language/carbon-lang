@@ -205,6 +205,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%T) {
@@ -222,6 +224,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%.3) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(@CallGenericPtr.%.loc12_33.2) {
@@ -230,6 +234,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced.carbon
@@ -381,6 +387,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%T) {
@@ -398,6 +406,8 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%.3) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(@CallGenericPtr.%.loc12_33.2) {
@@ -406,5 +416,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

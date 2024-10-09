@@ -233,6 +233,8 @@ fn G() -> C {
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %.loc6_24.2 => constants.%.9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_bound_only.carbon
@@ -686,6 +688,8 @@ fn G() -> C {
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %.loc6_24.2 => constants.%.14
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {

@@ -11,8 +11,8 @@
 class Class(T:! type) {
   // `Self` is the same as `Class(T)` here.
   // TODO: Find a better way to test two types are the same.
-  fn MakeSelf() -> Self;
-  fn MakeClass() -> Class(T);
+  fn MakeSelf() -> Self { return {}; }
+  fn MakeClass() -> Class(T) { return {}; }
   fn F() {
     var c: Class(T) = MakeSelf();
     var s: Self = MakeClass();
@@ -36,6 +36,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %struct: %Class.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.5: <specific function> = specific_function %MakeSelf, @MakeSelf(%T) [symbolic]
 // CHECK:STDOUT:   %.6: <specific function> = specific_function %MakeClass, @MakeClass(%T) [symbolic]
 // CHECK:STDOUT: }
@@ -80,8 +81,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = @Class.%MakeSelf (constants.%MakeSelf)] {} {
-// CHECK:STDOUT:       %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14 [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %.loc14_20: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14_20 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %return: ref @MakeSelf.%Class (%Class.2) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = @Class.%MakeClass (constants.%MakeClass)] {} {
@@ -105,14 +106,32 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @MakeSelf.%Class (%Class.2);
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %struct: @MakeSelf.%Class (%Class.2) = struct_value () [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> %return: @MakeSelf.%Class (%Class.2) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc14_35.1: %.2 = struct_literal ()
+// CHECK:STDOUT:     %.loc14_35.2: init @MakeSelf.%Class (%Class.2) = class_init (), %return [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:     %.loc14_36: init @MakeSelf.%Class (%Class.2) = converted %.loc14_35.1, %.loc14_35.2 [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:     return %.loc14_36 to %return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @MakeClass(@Class.%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class.loc15_26.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc15_26.1 (constants.%Class.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @MakeClass.%Class.loc15_26.1 (%Class.2);
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %struct: @MakeClass.%Class.loc15_26.1 (%Class.2) = struct_value () [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> %return: @MakeClass.%Class.loc15_26.1 (%Class.2) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc15_40.1: %.2 = struct_literal ()
+// CHECK:STDOUT:     %.loc15_40.2: init @MakeClass.%Class.loc15_26.1 (%Class.2) = class_init (), %return [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:     %.loc15_41: init @MakeClass.%Class.loc15_26.1 (%Class.2) = converted %.loc15_40.1, %.loc15_40.2 [symbolic = %struct (constants.%struct)]
+// CHECK:STDOUT:     return %.loc15_41 to %return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Class.%T.loc11_13.1: type) {
@@ -172,6 +191,9 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @MakeSelf(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %struct => constants.%struct
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@MakeClass.%T) {
@@ -181,6 +203,9 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @MakeClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc15_26.1 => constants.%Class.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %struct => constants.%struct
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}

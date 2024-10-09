@@ -161,6 +161,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
 // CHECK:STDOUT:   %.loc4_20.2 => constants.%.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc7_10.2 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(@F.%T.loc4_6.2) {
