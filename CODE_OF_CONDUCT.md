@@ -152,7 +152,6 @@ the following members:
 -   Céline Dedaj (@celineausberlin on Discord and GitHub)
 -   Christopher Di Bella (@cjdb.work on Discord, @cjdb on GitHub)
 -   Lexi Bromfield (@lexinadia on Discord and @lexi-nadia on GitHub)
--   flysand (@flysand on Discord and @flysand7 on GitHub)
 
 More details about the team and its management are on the
 [conduct team page](/docs/project/teams/conduct_team.md).
