@@ -141,7 +141,7 @@ class D {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %I.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_15.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt: %I.type = symbolic_binding_pattern U, 0
@@ -155,7 +155,7 @@ class D {
 // CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc10_41
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc10: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc10_17.1: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt: type = symbolic_binding_pattern V, 0
@@ -167,7 +167,7 @@ class D {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc12: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc12_18.1: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,34 +182,34 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8: %I.type) {
-// CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: %I.type) {
+// CHECK:STDOUT:   %T.loc8_15.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc8: %I.type);
+// CHECK:STDOUT:   fn(%T.loc8_15.1: %I.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10: %I.type) {
-// CHECK:STDOUT:   %U.1: %I.type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %I.type) {
+// CHECK:STDOUT:   %U.loc10_17.2: %I.type = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc10: %I.type);
+// CHECK:STDOUT:   fn(%U.loc10_17.1: %I.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12: type) {
-// CHECK:STDOUT:   %V.1: type = bind_symbolic_name V, 0 [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: type) {
+// CHECK:STDOUT:   %V.loc12_18.2: type = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.loc12: type);
+// CHECK:STDOUT:   fn(%V.loc12_18.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc10_17.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %V.1 => constants.%V
+// CHECK:STDOUT:   %V.loc12_18.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_member.carbon
@@ -260,7 +260,7 @@ class D {
 // CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %J.type = param W, runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc12: %J.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc12_19.1: %J.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,14 +275,14 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12: %J.type) {
-// CHECK:STDOUT:   %W.1: %J.type = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12_19.1: %J.type) {
+// CHECK:STDOUT:   %W.loc12_19.2: %J.type = bind_symbolic_name W, 0 [symbolic = %W.loc12_19.2 (constants.%W)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.loc12: %J.type);
+// CHECK:STDOUT:   fn(%W.loc12_19.1: %J.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMismatch(constants.%W) {
-// CHECK:STDOUT:   %W.1 => constants.%W
+// CHECK:STDOUT:   %W.loc12_19.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_designator_matches_var.carbon

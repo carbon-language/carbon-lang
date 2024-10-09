@@ -57,44 +57,44 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc12: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc12_6.1: type) {
+// CHECK:STDOUT:   %T.loc12_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: type = ptr_type @F.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %.2: type = const_type @F.%T.1 (%T) [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: type = tuple_type (@F.%.1 (%.2), @F.%.2 (%.3)) [symbolic = %.3 (constants.%.5)]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: @F.%T.1 (%T)} [symbolic = %.4 (constants.%.8)]
-// CHECK:STDOUT:   %.5: type = array_type constants.%.9, @F.%T.1 (%T) [symbolic = %.5 (constants.%.10)]
+// CHECK:STDOUT:   %.loc13_12.2: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_12.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_15.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc13_22.3: type = tuple_type (@F.%.loc13_12.2 (%.2), @F.%.loc13_15.2 (%.3)) [symbolic = %.loc13_22.3 (constants.%.5)]
+// CHECK:STDOUT:   %.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %.loc14_16.2 (constants.%.8)]
+// CHECK:STDOUT:   %.loc15_15.2: type = array_type constants.%.9, @F.%T.loc12_6.2 (%T) [symbolic = %.loc15_15.2 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc12: type) {
+// CHECK:STDOUT:   fn(%T.loc12_6.1: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc13_11: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc13_12: type = ptr_type %T [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:     %T.ref.loc13_21: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc13_15: type = const_type %T [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:     %.loc13_22.1: %.4 = tuple_literal (%.loc13_12, %.loc13_15)
-// CHECK:STDOUT:     %.loc13_22.2: type = converted %.loc13_22.1, constants.%.5 [symbolic = %.3 (constants.%.5)]
-// CHECK:STDOUT:     %u.var: ref @F.%.3 (%.5) = var u
-// CHECK:STDOUT:     %u: ref @F.%.3 (%.5) = bind_name u, %u.var
-// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc14: type = struct_type {.a: %T} [symbolic = %.4 (constants.%.8)]
-// CHECK:STDOUT:     %v.var: ref @F.%.4 (%.8) = var v
-// CHECK:STDOUT:     %v: ref @F.%.4 (%.8) = bind_name v, %v.var
-// CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc13_11: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc13_12.1: type = ptr_type %T [symbolic = %.loc13_12.2 (constants.%.2)]
+// CHECK:STDOUT:     %T.ref.loc13_21: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc13_15.1: type = const_type %T [symbolic = %.loc13_15.2 (constants.%.3)]
+// CHECK:STDOUT:     %.loc13_22.1: %.4 = tuple_literal (%.loc13_12.1, %.loc13_15.1)
+// CHECK:STDOUT:     %.loc13_22.2: type = converted %.loc13_22.1, constants.%.5 [symbolic = %.loc13_22.3 (constants.%.5)]
+// CHECK:STDOUT:     %u.var: ref @F.%.loc13_22.3 (%.5) = var u
+// CHECK:STDOUT:     %u: ref @F.%.loc13_22.3 (%.5) = bind_name u, %u.var
+// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc14_16.1: type = struct_type {.a: %T} [symbolic = %.loc14_16.2 (constants.%.8)]
+// CHECK:STDOUT:     %v.var: ref @F.%.loc14_16.2 (%.8) = var v
+// CHECK:STDOUT:     %v: ref @F.%.loc14_16.2 (%.8) = bind_name v, %v.var
+// CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc15_14: i32 = int_literal 5 [template = constants.%.9]
-// CHECK:STDOUT:     %.loc15_15: type = array_type %.loc15_14, %T [symbolic = %.5 (constants.%.10)]
-// CHECK:STDOUT:     %w.var: ref @F.%.5 (%.10) = var w
-// CHECK:STDOUT:     %w: ref @F.%.5 (%.10) = bind_name w, %w.var
+// CHECK:STDOUT:     %.loc15_15.1: type = array_type %.loc15_14, %T [symbolic = %.loc15_15.2 (constants.%.10)]
+// CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.10) = var w
+// CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.10) = bind_name w, %w.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc12_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

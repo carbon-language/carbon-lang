@@ -277,12 +277,12 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %self.param.loc14: @F.%C (%C.2) = param self, runtime_param0
 // CHECK:STDOUT:       %self.loc14: @F.%C (%C.2) = bind_name self, %self.param.loc14
 // CHECK:STDOUT:       %U.param.loc14: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc14: type = bind_symbolic_name U, 1, %U.param.loc14 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:       %u.param.loc14: @F.%U.1 (%U) = param u, runtime_param1
-// CHECK:STDOUT:       %u.loc14: @F.%U.1 (%U) = bind_name u, %u.param.loc14
-// CHECK:STDOUT:       %U.ref.loc14_41: type = name_ref U, %U.loc14 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:       %return.var.loc14: ref @F.%U.1 (%U) = var <return slot>
+// CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1, %U.param.loc14 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:       %u.param.loc14: @F.%U.loc14_22.1 (%U) = param u, runtime_param1
+// CHECK:STDOUT:       %u.loc14: @F.%U.loc14_22.1 (%U) = bind_name u, %u.param.loc14
+// CHECK:STDOUT:       %U.ref.loc14_41: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:       %return.var.loc14: ref @F.%U.loc14_22.1 (%U) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -292,16 +292,16 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type, %U.loc14: type) {
+// CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type, %U.loc14_22.2: type) {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 1 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %U.loc14_22.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.loc20: %C.2](%U.loc20: type, %u.loc20: %U) -> %U {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %u.ref: @F.%U.1 (%U) = name_ref u, %u.loc20
+// CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -318,7 +318,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%U) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C.2
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@C.%Self) {}
