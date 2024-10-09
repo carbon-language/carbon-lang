@@ -651,10 +651,41 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
   }
 
+  bool has_virtual_functions = llvm::any_of(
+      context.inst_block_stack().PeekCurrentBlockContents(),
+      [&](SemIR::InstId inst_id) {
+        if (auto function_decl =
+                context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
+          return context.functions()
+                     .Get(function_decl->function_id)
+                     .virtual_modifier ==
+                 SemIR::Function::VirtualModifier::Virtual;
+        }
+        return false;
+      });
+
+  llvm::SmallVector<SemIR::InstId> object_rep_fields;
+  auto fields = context.inst_blocks().Get(fields_id);
+  if (has_virtual_functions) {
+    if (!fields.empty()) {
+      auto field =
+          context.insts().GetAs<SemIR::StructTypeField>(fields.front());
+      object_rep_fields.push_back(
+          context.AddInstInNoBlock<SemIR::StructTypeField>(
+              Parse::NodeId::Invalid,
+              {.name_id = SemIR::NameId::Vptr,
+               .field_type_id = context.GetPointerType(field.field_type_id)}));
+    }
+  }
+
+  object_rep_fields.append(fields.begin(), fields.end());
+
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
-       .object_repr_id = context.GetStructType(fields_id)});
+       .object_repr_id = context.GetStructType(
+           has_virtual_functions ? context.inst_blocks().Add(object_rep_fields)
+                                 : fields_id)});
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)

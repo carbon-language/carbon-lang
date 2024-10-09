@@ -540,6 +540,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId PackageNamespace;
   // The name of `base`.
   static const NameId Base;
+  // The name of `vptr`.
+  static const NameId Vptr;
 
   // The number of non-index (<0) that exist, and will need storage in name
   // lookup.
@@ -592,9 +594,10 @@ constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
 constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
 constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
 constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
-constexpr int NameId::NonIndexValueCount = 7;
+constexpr NameId NameId::Vptr = NameId(InvalidIndex - 7);
+constexpr int NameId::NonIndexValueCount = 8;
 // Enforce the link between SpecialValueCount and the last special value.
-static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
+static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {

@@ -37,7 +37,7 @@ fn Create() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { i32 }, align 8, !dbg !12
+// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
