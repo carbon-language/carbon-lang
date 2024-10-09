@@ -232,8 +232,8 @@ auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
              GetBazelCommand(BazelMode::Test, test_name_),
              GetBazelCommand(BazelMode::Dump, test_name_),
              context.input_content, filenames, *context.autoupdate_line_number,
-             context.non_check_lines, context.stdout, context.stderr,
-             GetDefaultFileRE(expected_filenames),
+             context.autoupdate_split, context.non_check_lines, context.stdout,
+             context.stderr, GetDefaultFileRE(expected_filenames),
              GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) { DoExtraCheckReplacements(line); })
       .Run(dry_run);
@@ -907,11 +907,29 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
   }
 
   if (!found_autoupdate) {
-    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
+    return Error("Missing AUTOUPDATE/NOAUTOUPDATE setting");
   }
 
   context.has_splits = split.has_splits();
   CARBON_RETURN_IF_ERROR(FinishSplit(test_name_, &split, &context.test_files));
+
+  // Validate AUTOUPDATE-SPLIT use, and remove it from test files if present.
+  if (context.has_splits) {
+    constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";
+    for (const auto& test_file :
+         llvm::ArrayRef(context.test_files).drop_back()) {
+      if (test_file.filename == AutoupdateSplit) {
+        return Error("AUTOUPDATE-SPLIT must be the last split");
+      }
+    }
+    if (context.test_files.back().filename == AutoupdateSplit) {
+      if (!context.autoupdate_line_number) {
+        return Error("AUTOUPDATE-SPLIT requires AUTOUPDATE");
+      }
+      context.autoupdate_split = true;
+      context.test_files.pop_back();
+    }
+  }
 
   // Assume there is always a suffix `\n` in output.
   if (!context.expected_stdout.empty()) {

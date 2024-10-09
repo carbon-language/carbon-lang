@@ -235,7 +235,7 @@ auto FileTestAutoupdater::AddTips() -> void {
 
 auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
                                              bool to_file_end) const -> bool {
-  return check_lines.cursor != check_lines.lines.end() &&
+  return !autoupdate_split_ && check_lines.cursor != check_lines.lines.end() &&
          (check_lines.cursor->file_number() < output_file_number_ ||
           (check_lines.cursor->file_number() == output_file_number_ &&
            (to_file_end || check_lines.cursor->line_number() <=
@@ -312,9 +312,11 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // lines after AUTOUPDATE.
   AddRemappedNonCheckLine();
   AddTips();
-  AddCheckLines(stderr_, /*to_file_end=*/false);
-  if (any_attached_stdout_lines_) {
-    AddCheckLines(stdout_, /*to_file_end=*/false);
+  if (!autoupdate_split_) {
+    AddCheckLines(stderr_, /*to_file_end=*/false);
+    if (any_attached_stdout_lines_) {
+      AddCheckLines(stdout_, /*to_file_end=*/false);
+    }
   }
   ++non_check_line_;
 
@@ -323,6 +325,10 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     if (output_file_number_ < non_check_line_->file_number()) {
       FinishFile(/*is_last_file=*/false);
       StartSplitFile();
+      if (autoupdate_split_ &&
+          output_file_number_ == static_cast<int>(filenames_.size())) {
+        break;
+      }
       continue;
     }
 
@@ -340,6 +346,11 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
 
     ++non_check_line_;
   }
+
+  // When autoupdate_split_ was true, this will result in all check lines (and
+  // only check lines) being added to the split by FinishFile. We don't use
+  // autoupdate_split_ past this point.
+  autoupdate_split_ = false;
 
   FinishFile(/*is_last_file=*/true);
 
