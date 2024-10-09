@@ -24,7 +24,7 @@ auto Format(const Lex::TokenizedBuffer& tokens, llvm::raw_ostream& out)
 
   for (auto token : tokens.tokens()) {
     while (comment_it != comments.end() &&
-           tokens.IsBeforeComment(token, *comment_it)) {
+           tokens.IsAfterComment(token, *comment_it)) {
       // TODO: Fix newlines and indent.
       out << "\n" << tokens.GetCommentText(*comment_it) << "\n";
       ++comment_it;

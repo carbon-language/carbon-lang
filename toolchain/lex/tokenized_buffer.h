@@ -163,7 +163,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetPrevLine(LineIndex line) const -> LineIndex;
 
   // Returns true if the token comes after the comment.
-  auto IsBeforeComment(TokenIndex token, CommentIndex comment_index) const
+  auto IsAfterComment(TokenIndex token, CommentIndex comment_index) const
       -> bool;
 
   // Returns the comment's full text range.

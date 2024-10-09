@@ -345,11 +345,10 @@ auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
-auto TokenizedBuffer::IsBeforeComment(TokenIndex token,
-                                      CommentIndex comment_index) const
-    -> bool {
+auto TokenizedBuffer::IsAfterComment(TokenIndex token,
+                                     CommentIndex comment_index) const -> bool {
   const auto& comment_data = comments_[comment_index.index];
-  return comment_data.start < GetTokenInfo(token).byte_offset();
+  return GetTokenInfo(token).byte_offset() > comment_data.start;
 }
 
 auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
