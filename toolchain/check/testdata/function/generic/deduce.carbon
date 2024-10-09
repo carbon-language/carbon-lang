@@ -52,30 +52,27 @@ fn CallImplicitGenericParam(n: i32) -> i32* {
   return ImplicitGenericParam(n);
 }
 
-// --- fail_todo_deduce_nested.carbon
+// --- deduce_nested_tuple.carbon
 
 library "[[@TEST_NAME]]";
 
 fn TupleParam[T:! type](x: (T, i32));
 
 fn CallTupleParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T`
-  // CHECK:STDERR:   TupleParam((1, 2));
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
-  // CHECK:STDERR: fn TupleParam[T:! type](x: (T, i32));
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   TupleParam((1, 2));
 }
+
+// --- fail_todo_deduce_nested_struct.carbon
+
+library "[[@TEST_NAME]]";
 
 fn StructParam[T:! type](x: {.a: T, .b: i32});
 
 fn CallStructParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T`
+  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T`
   // CHECK:STDERR:   StructParam({.a = 1, .b = 2});
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
   // CHECK:STDERR: fn StructParam[T:! type](x: {.a: T, .b: i32});
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -443,7 +440,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduce_nested.carbon
+// CHECK:STDOUT: --- deduce_nested_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -459,12 +456,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.a: %T, .b: i32} [symbolic]
-// CHECK:STDOUT:   %StructParam.type: type = fn_type @StructParam [template]
-// CHECK:STDOUT:   %StructParam: %StructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %CallStructParam.type: type = fn_type @CallStructParam [template]
-// CHECK:STDOUT:   %CallStructParam: %CallStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %tuple: %.6 = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -487,8 +480,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .TupleParam = %TupleParam.decl
 // CHECK:STDOUT:     .CallTupleParam = %CallTupleParam.decl
-// CHECK:STDOUT:     .StructParam = %StructParam.decl
-// CHECK:STDOUT:     .CallStructParam = %CallStructParam.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TupleParam.decl: %TupleParam.type = fn_decl @TupleParam [template = constants.%TupleParam] {
@@ -507,21 +498,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %x: @TupleParam.%.1 (%.3) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTupleParam.decl: %CallTupleParam.type = fn_decl @CallTupleParam [template = constants.%CallTupleParam] {} {}
-// CHECK:STDOUT:   %StructParam.decl: %StructParam.type = fn_decl @StructParam [template = constants.%StructParam] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @StructParam.%.1 (%.7) = binding_pattern x
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc17: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc17 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc17_41.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc17_41.2: type = converted %int.make_type_32, %.loc17_41.1 [template = i32]
-// CHECK:STDOUT:     %.loc17_44: type = struct_type {.a: %T, .b: i32} [symbolic = %.1 (constants.%.7)]
-// CHECK:STDOUT:     %x.param: @StructParam.%.1 (%.7) = param x, runtime_param0
-// CHECK:STDOUT:     %x: @StructParam.%.1 (%.7) = bind_name x, %x.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CallStructParam.decl: %CallStructParam.type = fn_decl @CallStructParam [template = constants.%CallStructParam] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -536,25 +512,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: fn @CallTupleParam() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TupleParam.ref: %TupleParam.type = name_ref TupleParam, file.%TupleParam.decl [template = constants.%TupleParam]
-// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_18: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_19: %.6 = tuple_literal (%.loc14_15, %.loc14_18)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @StructParam(%T.loc17: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: @StructParam.%T.1 (%T), .b: i32} [symbolic = %.1 (constants.%.7)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc17: type](%x: @StructParam.%.1 (%.7));
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallStructParam() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [template = constants.%StructParam]
-// CHECK:STDOUT:   %.loc27_21: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc27_29: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc27_30: %.8 = struct_literal (%.loc27_21, %.loc27_29)
+// CHECK:STDOUT:   %.loc7_15: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_19: %.6 = tuple_literal (%.loc7_15, %.loc7_18)
+// CHECK:STDOUT:   %tuple: %.6 = tuple_value (%.loc7_15, %.loc7_18) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_13: %.6 = converted %.loc7_19, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %TupleParam.call: init %.1 = call %TupleParam.ref(%.loc7_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -563,9 +526,88 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @TupleParam(i32) {
+// CHECK:STDOUT:   %T.1 => i32
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_deduce_nested_struct.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: %T, .b: i32} [symbolic]
+// CHECK:STDOUT:   %StructParam.type: type = fn_type @StructParam [template]
+// CHECK:STDOUT:   %StructParam: %StructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %CallStructParam.type: type = fn_type @CallStructParam [template]
+// CHECK:STDOUT:   %CallStructParam: %CallStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .StructParam = %StructParam.decl
+// CHECK:STDOUT:     .CallStructParam = %CallStructParam.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %StructParam.decl: %StructParam.type = fn_decl @StructParam [template = constants.%StructParam] {
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %x.patt: @StructParam.%.1 (%.2) = binding_pattern x
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_41.2: type = converted %int.make_type_32, %.loc4_41.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_44: type = struct_type {.a: %T, .b: i32} [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:     %x.param: @StructParam.%.1 (%.2) = param x, runtime_param0
+// CHECK:STDOUT:     %x: @StructParam.%.1 (%.2) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallStructParam.decl: %CallStructParam.type = fn_decl @CallStructParam [template = constants.%CallStructParam] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @StructParam(%T.loc4: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: @StructParam.%T.1 (%T), .b: i32} [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.loc4: type](%x: @StructParam.%.1 (%.2));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallStructParam() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [template = constants.%StructParam]
+// CHECK:STDOUT:   %.loc14_21: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_29: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_30: %.5 = struct_literal (%.loc14_21, %.loc14_29)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @StructParam(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_incomplete.carbon

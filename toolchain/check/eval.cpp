@@ -1433,15 +1433,14 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // `const (const T)` evaluates to `const T`. Otherwise, `const T` evaluates
     // to itself.
     case CARBON_KIND(SemIR::ConstType typed_inst): {
-      auto inner_id = eval_context.GetConstantValue(typed_inst.inner_id);
-      if (inner_id.is_constant() &&
-          eval_context.insts()
-              .Get(eval_context.constant_values().GetInstId(inner_id))
-              .Is<SemIR::ConstType>()) {
-        return inner_id;
+      auto phase = Phase::Template;
+      auto inner_id =
+          GetConstantValue(eval_context, typed_inst.inner_id, &phase);
+      if (eval_context.context().types().Is<SemIR::ConstType>(inner_id)) {
+        return eval_context.context().types().GetConstantId(inner_id);
       }
-      return MakeConstantResult(eval_context.context(), inst,
-                                GetPhase(inner_id));
+      typed_inst.inner_id = inner_id;
+      return MakeConstantResult(eval_context.context(), typed_inst, phase);
     }
 
     // These cases are either not expressions or not constant.

@@ -1,0 +1,471 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/deduce/tuple.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/deduce/tuple.carbon
+
+// --- tuple_type.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {}
+class D {}
+
+fn F[T:! type, U:! type](pair: (T, U)) -> U;
+
+fn G(pair: (C, D)) -> D {
+  return F(pair);
+}
+
+// --- tuple_value.carbon
+
+library "[[@TEST_NAME]]";
+
+class HasPair(Pair:! (i32, i32)) {}
+
+fn F[A:! i32, B:! i32](h: HasPair((A, B))) -> i32 { return B; }
+
+fn G(h: HasPair((1, 2))) -> i32 {
+  return F(h);
+}
+
+// --- fail_inconsistent.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {}
+class D {}
+
+fn F[T:! type](pair: (T, T)) -> T;
+
+fn G(pair: (C, D)) -> D {
+  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE+6]]:10: error: inconsistent deductions for value of generic parameter `T`
+  // CHECK:STDERR:   return F(pair);
+  // CHECK:STDERR:          ^~
+  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
+  // CHECK:STDERR: fn F[T:! type](pair: (T, T)) -> T;
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  return F(pair);
+}
+
+// CHECK:STDOUT: --- tuple_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (%T, %U) [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = tuple_type (%C, %D) [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.8: type = tuple_type (%.7, %.7) [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 1
+// CHECK:STDOUT:     %pair.patt: @F.%.1 (%.4) = binding_pattern pair
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc7: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc7: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %U.ref.loc7_36: type = name_ref U, %U.loc7 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc7_37.1: %.3 = tuple_literal (%T.ref, %U.ref.loc7_36)
+// CHECK:STDOUT:     %.loc7_37.2: type = converted %.loc7_37.1, constants.%.4 [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:     %pair.param: @F.%.1 (%.4) = param pair, runtime_param0
+// CHECK:STDOUT:     %pair: @F.%.1 (%.4) = bind_name pair, %pair.param
+// CHECK:STDOUT:     %U.ref.loc7_43: type = name_ref U, %U.loc7 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %return: ref @F.%U.1 (%U) = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %pair.patt: %.6 = binding_pattern pair
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %D.ref.loc9_16: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %.loc9_17.1: %.3 = tuple_literal (%C.ref, %D.ref.loc9_16)
+// CHECK:STDOUT:     %.loc9_17.2: type = converted %.loc9_17.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %pair.param: %.6 = param pair, runtime_param0
+// CHECK:STDOUT:     %pair: %.6 = bind_name pair, %pair.param
+// CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T.loc7: type, %U.loc7: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 1 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:   %.1: type = tuple_type (@F.%T.1 (%T), @F.%U.1 (%U)) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.loc7: type, %U.loc7: type](%pair: @F.%.1 (%.4)) -> @F.%U.1 (%U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%pair: %.6) -> %return: %D {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %pair.ref: %.6 = name_ref pair, %pair
+// CHECK:STDOUT:   %.loc9_20: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %D = call %F.ref(%pair.ref) to %.loc9_20
+// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
+// CHECK:STDOUT:   %T.1 => constants.%C
+// CHECK:STDOUT:   %U.1 => constants.%D
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- tuple_value.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %Pair: %.3 = bind_symbolic_name Pair, 0 [symbolic]
+// CHECK:STDOUT:   %HasPair.type: type = generic_class_type @HasPair [template]
+// CHECK:STDOUT:   %HasPair.1: %HasPair.type = struct_value () [template]
+// CHECK:STDOUT:   %HasPair.2: type = class_type @HasPair, @HasPair(%Pair) [symbolic]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %A: i32 = bind_symbolic_name A, 0 [symbolic]
+// CHECK:STDOUT:   %B: i32 = bind_symbolic_name B, 1 [symbolic]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %tuple.1: %.3 = tuple_value (%A, %B) [symbolic]
+// CHECK:STDOUT:   %HasPair.3: type = class_type @HasPair, @HasPair(%tuple.1) [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %tuple.2: %.3 = tuple_value (%.8, %.9) [template]
+// CHECK:STDOUT:   %HasPair.4: type = class_type @HasPair, @HasPair(%tuple.2) [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .HasPair = %HasPair.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %HasPair.decl: %HasPair.type = class_decl @HasPair [template = constants.%HasPair.1] {
+// CHECK:STDOUT:     %Pair.patt: %.3 = symbolic_binding_pattern Pair, 0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int.make_type_32.loc4_23: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc4_28: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_31.1: %.2 = tuple_literal (%int.make_type_32.loc4_23, %int.make_type_32.loc4_28)
+// CHECK:STDOUT:     %.loc4_31.2: type = value_of_initializer %int.make_type_32.loc4_23 [template = i32]
+// CHECK:STDOUT:     %.loc4_31.3: type = converted %int.make_type_32.loc4_23, %.loc4_31.2 [template = i32]
+// CHECK:STDOUT:     %.loc4_31.4: type = value_of_initializer %int.make_type_32.loc4_28 [template = i32]
+// CHECK:STDOUT:     %.loc4_31.5: type = converted %int.make_type_32.loc4_28, %.loc4_31.4 [template = i32]
+// CHECK:STDOUT:     %.loc4_31.6: type = converted %.loc4_31.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %Pair.param: %.3 = param Pair, runtime_param<invalid>
+// CHECK:STDOUT:     %Pair.loc4: %.3 = bind_symbolic_name Pair, 0, %Pair.param [symbolic = %Pair.1 (constants.%Pair)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %A.patt: i32 = symbolic_binding_pattern A, 0
+// CHECK:STDOUT:     %B.patt: i32 = symbolic_binding_pattern B, 1
+// CHECK:STDOUT:     %h.patt: @F.%HasPair.1 (%HasPair.3) = binding_pattern h
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_10.1: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
+// CHECK:STDOUT:     %.loc6_10.2: type = converted %int.make_type_32.loc6_10, %.loc6_10.1 [template = i32]
+// CHECK:STDOUT:     %A.param: i32 = param A, runtime_param<invalid>
+// CHECK:STDOUT:     %A.loc6: i32 = bind_symbolic_name A, 0, %A.param [symbolic = %A.1 (constants.%A)]
+// CHECK:STDOUT:     %int.make_type_32.loc6_19: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_19.1: type = value_of_initializer %int.make_type_32.loc6_19 [template = i32]
+// CHECK:STDOUT:     %.loc6_19.2: type = converted %int.make_type_32.loc6_19, %.loc6_19.1 [template = i32]
+// CHECK:STDOUT:     %B.param: i32 = param B, runtime_param<invalid>
+// CHECK:STDOUT:     %B.loc6: i32 = bind_symbolic_name B, 1, %B.param [symbolic = %B.1 (constants.%B)]
+// CHECK:STDOUT:     %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [template = constants.%HasPair.1]
+// CHECK:STDOUT:     %A.ref: i32 = name_ref A, %A.loc6 [symbolic = %A.1 (constants.%A)]
+// CHECK:STDOUT:     %B.ref.loc6_39: i32 = name_ref B, %B.loc6 [symbolic = %B.1 (constants.%B)]
+// CHECK:STDOUT:     %.loc6_40: %.3 = tuple_literal (%A.ref, %B.ref.loc6_39)
+// CHECK:STDOUT:     %tuple.loc6: %.3 = tuple_value (%A.ref, %B.ref.loc6_39) [symbolic = %tuple.1 (constants.%tuple.1)]
+// CHECK:STDOUT:     %.loc6_34: %.3 = converted %.loc6_40, %tuple.loc6 [symbolic = %tuple.1 (constants.%tuple.1)]
+// CHECK:STDOUT:     %HasPair.loc6: type = class_type @HasPair, @HasPair(constants.%tuple.1) [symbolic = %HasPair.1 (constants.%HasPair.3)]
+// CHECK:STDOUT:     %h.param: @F.%HasPair.1 (%HasPair.3) = param h, runtime_param0
+// CHECK:STDOUT:     %h: @F.%HasPair.1 (%HasPair.3) = bind_name h, %h.param
+// CHECK:STDOUT:     %int.make_type_32.loc6_47: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_47.1: type = value_of_initializer %int.make_type_32.loc6_47 [template = i32]
+// CHECK:STDOUT:     %.loc6_47.2: type = converted %int.make_type_32.loc6_47, %.loc6_47.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %h.patt: %HasPair.4 = binding_pattern h
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [template = constants.%HasPair.1]
+// CHECK:STDOUT:     %.loc8_18: i32 = int_literal 1 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc8_21: i32 = int_literal 2 [template = constants.%.9]
+// CHECK:STDOUT:     %.loc8_22: %.3 = tuple_literal (%.loc8_18, %.loc8_21)
+// CHECK:STDOUT:     %tuple: %.3 = tuple_value (%.loc8_18, %.loc8_21) [template = constants.%tuple.2]
+// CHECK:STDOUT:     %.loc8_16: %.3 = converted %.loc8_22, %tuple [template = constants.%tuple.2]
+// CHECK:STDOUT:     %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.2) [template = constants.%HasPair.4]
+// CHECK:STDOUT:     %h.param: %HasPair.4 = param h, runtime_param0
+// CHECK:STDOUT:     %h: %HasPair.4 = bind_name h, %h.param
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_29.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc8_29.2: type = converted %int.make_type_32, %.loc8_29.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @HasPair(%Pair.loc4: %.3) {
+// CHECK:STDOUT:   %Pair.1: %.3 = bind_symbolic_name Pair, 0 [symbolic = %Pair.1 (constants.%Pair)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %.loc4_35: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%HasPair.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%A.loc6: i32, %B.loc6: i32) {
+// CHECK:STDOUT:   %A.1: i32 = bind_symbolic_name A, 0 [symbolic = %A.1 (constants.%A)]
+// CHECK:STDOUT:   %B.1: i32 = bind_symbolic_name B, 1 [symbolic = %B.1 (constants.%B)]
+// CHECK:STDOUT:   %tuple.1: %.3 = tuple_value (%A.1, %B.1) [symbolic = %tuple.1 (constants.%tuple.1)]
+// CHECK:STDOUT:   %HasPair.1: type = class_type @HasPair, @HasPair(%tuple.1) [symbolic = %HasPair.1 (constants.%HasPair.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%A.loc6: i32, %B.loc6: i32](%h: @F.%HasPair.1 (%HasPair.3)) -> i32 {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %B.ref.loc6_60: i32 = name_ref B, %B.loc6 [symbolic = %B.1 (constants.%B)]
+// CHECK:STDOUT:     return %B.ref.loc6_60
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%h: %HasPair.4) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %h.ref: %HasPair.4 = name_ref h, %h
+// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%h.ref)
+// CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
+// CHECK:STDOUT:   return %.loc9_14.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasPair(constants.%Pair) {
+// CHECK:STDOUT:   %Pair.1 => constants.%Pair
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasPair(constants.%tuple.1) {
+// CHECK:STDOUT:   %Pair.1 => constants.%tuple.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasPair(@F.%tuple.1) {
+// CHECK:STDOUT:   %Pair.1 => constants.%tuple.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
+// CHECK:STDOUT:   %A.1 => constants.%A
+// CHECK:STDOUT:   %B.1 => constants.%B
+// CHECK:STDOUT:   %tuple.1 => constants.%tuple.1
+// CHECK:STDOUT:   %HasPair.1 => constants.%HasPair.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasPair(constants.%tuple.2) {
+// CHECK:STDOUT:   %Pair.1 => constants.%tuple.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%.8, constants.%.9) {
+// CHECK:STDOUT:   %A.1 => constants.%.8
+// CHECK:STDOUT:   %B.1 => constants.%.9
+// CHECK:STDOUT:   %tuple.1 => constants.%tuple.2
+// CHECK:STDOUT:   %HasPair.1 => constants.%HasPair.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_inconsistent.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (%T, %T) [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = tuple_type (%C, %D) [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.8: type = tuple_type (%.7, %.7) [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %pair.patt: @F.%.1 (%.4) = binding_pattern pair
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc7: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc7_23: type = name_ref T, %T.loc7 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc7_26: type = name_ref T, %T.loc7 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc7_27.1: %.3 = tuple_literal (%T.ref.loc7_23, %T.ref.loc7_26)
+// CHECK:STDOUT:     %.loc7_27.2: type = converted %.loc7_27.1, constants.%.4 [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:     %pair.param: @F.%.1 (%.4) = param pair, runtime_param0
+// CHECK:STDOUT:     %pair: @F.%.1 (%.4) = bind_name pair, %pair.param
+// CHECK:STDOUT:     %T.ref.loc7_33: type = name_ref T, %T.loc7 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %pair.patt: %.6 = binding_pattern pair
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %D.ref.loc9_16: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %.loc9_17.1: %.3 = tuple_literal (%C.ref, %D.ref.loc9_16)
+// CHECK:STDOUT:     %.loc9_17.2: type = converted %.loc9_17.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %pair.param: %.6 = param pair, runtime_param0
+// CHECK:STDOUT:     %pair: %.6 = bind_name pair, %pair.param
+// CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %return: ref %D = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T.loc7: type) {
+// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:   %.1: type = tuple_type (@F.%T.1 (%T), @F.%T.1 (%T)) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.loc7: type](%pair: @F.%.1 (%.4)) -> @F.%T.1 (%T);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%pair: %.6) -> %return: %D {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %pair.ref: %.6 = name_ref pair, %pair
+// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
