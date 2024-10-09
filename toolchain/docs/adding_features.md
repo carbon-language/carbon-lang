@@ -251,6 +251,9 @@ If the resulting SemIR needs a new instruction:
             // `Parse::SomeId` should be one of:
             // - A node ID from `parse/node_ids.h`,
             //   specifying the kind of parse nodes for this instruction.
+            //   This could be a node kind from `parse/node_kind.def`
+            //   suffixed by `Id`, or one of the `Any`...`Id` alias
+            //   declarations that match multiple kinds of parse nodes.
             // - `Parse::NodeId` if it can be any kind of parse node.
             // - `Parse::InvalidNodeId` if no associated parse node.
             InstKind::NewInstKindName.Define<Parse::SomeId>(
@@ -273,9 +276,6 @@ If the resulting SemIR needs a new instruction:
     -   [`sem_ir/inst_kind.h`](/toolchain/sem_ir/inst_kind.h) documents the
         different options when defining a new instruction, as well as their
         defaults, see `InstKind::DefinitionInfo`.
-    -   Instructions If an instruction doesn't have a `type_id`, it won't
-        produce a value, and so won't be given a label when formatted, and can't
-        be the argument of another instruction.
     -   If an instruction always produces a type:
 
         -   set `.is_type = InstIsType::Always` in its `Kind` definition;
@@ -288,12 +288,14 @@ If the resulting SemIR needs a new instruction:
                 node_id, {.type_id = SemIR::TypeId::TypeType, ...});
             ```
 
-    -   If an instruction produces a value, but not one that has an ordinary
-        type, you can make a new builtin type for its output. For example, we
-        have builtin types for bound methods, namespaces, and witnesses. These
-        are defined in
+    -   If an instruction produces a value used in an expression, but not one
+        that has an ordinary type, you can make a new builtin type for its
+        output. This is used, for example, when an expression implicitly uses a
+        value as parat of SemIR evaluation or as part of desugaring. For
+        example, we have builtin types for bound methods, namespaces, and
+        witnesses. These are defined in
         [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
-        To get a type id for one of these builtin type, use something like
+        To get a type id for one of these builtin types, use something like
         `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
 
         ```
@@ -302,6 +304,9 @@ If the resulting SemIR needs a new instruction:
         SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
             node_id, {.type_id = witness_type_id, ...});
         ```
+
+    -   Instructions without types may still be used as arguments to
+        instructions.
 
 Once those are added, a rebuild will give errors showing what needs to be
 updated. The updates needed, can depend on whether the instruction produces a
