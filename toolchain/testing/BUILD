@@ -20,6 +20,7 @@ file_test(
         "//toolchain/codegen:testdata",
         "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
+        "//toolchain/format:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",
         "//toolchain/parse:testdata",
