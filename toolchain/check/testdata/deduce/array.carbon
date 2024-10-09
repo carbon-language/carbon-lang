@@ -147,17 +147,17 @@ fn G() -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %a.patt: @F.%.1 (%.4) = binding_pattern a
+// CHECK:STDOUT:     %a.patt: @F.%.loc6_24.2 (%.4) = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_23: i32 = int_literal 3 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_24: type = array_type %.loc6_23, %T [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:     %a.param: @F.%.1 (%.4) = param a, runtime_param0
-// CHECK:STDOUT:     %a: @F.%.1 (%.4) = bind_name a, %a.param
-// CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %return: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
+// CHECK:STDOUT:     %a.param: @F.%.loc6_24.2 (%.4) = param a, runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %a.param
+// CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -172,19 +172,19 @@ fn G() -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc6: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %.1: type = array_type constants.%.3, @F.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
+// CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:   %.loc6_24.2: type = array_type constants.%.3, @F.%T.loc6_6.2 (%T) [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc6: type](%a: @F.%.1 (%.4)) -> @F.%T.1 (%T) {
+// CHECK:STDOUT:   fn[%T.loc6_6.1: type](%a: @F.%.loc6_24.2 (%.4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %a.ref: @F.%.1 (%.4) = name_ref a, %a
+// CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
 // CHECK:STDOUT:     %.loc6_43: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.1 (%.4) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.1 (%T) = array_index %.loc6_44.1, %.loc6_43
-// CHECK:STDOUT:     %.loc6_44.3: @F.%T.1 (%T) = bind_value %.loc6_44.2
+// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
+// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43
+// CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -224,13 +224,13 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %.loc6_24.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
-// CHECK:STDOUT:   %T.1 => constants.%C
-// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %.loc6_24.2 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_bound_only.carbon
@@ -291,9 +291,9 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_10.1: type = value_of_initializer %int.make_type_32.loc10_10 [template = i32]
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %int.make_type_32.loc10_10, %.loc10_10.1 [template = i32]
 // CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %N.ref.loc10_22: i32 = name_ref N, %N.loc10 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc10_22: i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc10_23: type = array_type %N.ref.loc10_22, %C [template = <error>]
 // CHECK:STDOUT:     %a.param: <error> = param a, runtime_param0
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
@@ -317,14 +317,14 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc10: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @F(%N.loc10_6.1: i32) {
+// CHECK:STDOUT:   %N.loc10_6.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.loc10: i32](%a: <error>) -> i32 {
+// CHECK:STDOUT:   fn[%N.loc10_6.1: i32](%a: <error>) -> i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc10_42: i32 = name_ref N, %N.loc10 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc10_42: i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc10_42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -361,7 +361,7 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %N.loc10_6.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_type_and_bound.carbon
@@ -421,19 +421,19 @@ fn G() -> C {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_6.2 (constants.%T)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc10_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc10_20.2: type = converted %int.make_type_32, %.loc10_20.1 [template = i32]
 // CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10: i32 = bind_symbolic_name N, 1, %N.param [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:     %T.ref.loc10_29: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc10 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc10_16.1: i32 = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc10_16.2 (constants.%N)]
+// CHECK:STDOUT:     %T.ref.loc10_29: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
+// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc10_16.1 [symbolic = %N.loc10_16.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc10_33: type = array_type %N.ref, %T [template = <error>]
 // CHECK:STDOUT:     %a.param: <error> = param a, runtime_param0
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
-// CHECK:STDOUT:     %T.ref.loc10_39: type = name_ref T, %T.loc10 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %return: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %T.ref.loc10_39: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @F.%T.loc10_6.2 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -450,11 +450,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc10: type, %N.loc10: i32) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 1 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @F(%T.loc10_6.1: type, %N.loc10_16.1: i32) {
+// CHECK:STDOUT:   %T.loc10_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_6.2 (constants.%T)]
+// CHECK:STDOUT:   %N.loc10_16.2: i32 = bind_symbolic_name N, 1 [symbolic = %N.loc10_16.2 (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc10: type, %N.loc10: i32](%a: <error>) -> @F.%T.1 (%T);
+// CHECK:STDOUT:   fn[%T.loc10_6.1: type, %N.loc10_16.1: i32](%a: <error>) -> @F.%T.loc10_6.2 (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: %C {
@@ -489,8 +489,8 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %T.loc10_6.2 => constants.%T
+// CHECK:STDOUT:   %N.loc10_16.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bound_mismatch.carbon
@@ -568,17 +568,17 @@ fn G() -> C {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %a.patt: @F.%.1 (%.4) = binding_pattern a
+// CHECK:STDOUT:     %a.patt: @F.%.loc6_24.2 (%.4) = binding_pattern a
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc6_23: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc6_24: type = array_type %.loc6_23, %T [symbolic = %.1 (constants.%.4)]
-// CHECK:STDOUT:     %a.param: @F.%.1 (%.4) = param a, runtime_param0
-// CHECK:STDOUT:     %a: @F.%.1 (%.4) = bind_name a, %a.param
-// CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %return: ref @F.%T.1 (%T) = var <return slot>
+// CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
+// CHECK:STDOUT:     %a.param: @F.%.loc6_24.2 (%.4) = param a, runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %a.param
+// CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -612,19 +612,19 @@ fn G() -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc6: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %.1: type = array_type constants.%.3, @F.%T.1 (%T) [symbolic = %.1 (constants.%.4)]
+// CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
+// CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:   %.loc6_24.2: type = array_type constants.%.3, @F.%T.loc6_6.2 (%T) [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc6: type](%a: @F.%.1 (%.4)) -> @F.%T.1 (%T) {
+// CHECK:STDOUT:   fn[%T.loc6_6.1: type](%a: @F.%.loc6_24.2 (%.4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %a.ref: @F.%.1 (%.4) = name_ref a, %a
+// CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
 // CHECK:STDOUT:     %.loc6_43: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.1 (%.4) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.1 (%T) = array_index %.loc6_44.1, %.loc6_43
-// CHECK:STDOUT:     %.loc6_44.3: @F.%T.1 (%T) = bind_value %.loc6_44.2
+// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
+// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43
+// CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -675,13 +675,13 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %.loc6_24.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
-// CHECK:STDOUT:   %T.1 => constants.%C
-// CHECK:STDOUT:   %.1 => constants.%.14
+// CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %.loc6_24.2 => constants.%.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -775,9 +775,9 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_10.1: type = value_of_initializer %int.make_type_32.loc10_10 [template = i32]
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %int.make_type_32.loc10_10, %.loc10_10.1 [template = i32]
 // CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %N.ref.loc10_22: i32 = name_ref N, %N.loc10 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc10_22: i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc10_23: type = array_type %N.ref.loc10_22, %C [template = <error>]
 // CHECK:STDOUT:     %a.param: <error> = param a, runtime_param0
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
@@ -808,14 +808,14 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc10: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @F(%N.loc10_6.1: i32) {
+// CHECK:STDOUT:   %N.loc10_6.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.loc10: i32](%a: <error>) -> i32 {
+// CHECK:STDOUT:   fn[%N.loc10_6.1: i32](%a: <error>) -> i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc10_42: i32 = name_ref N, %N.loc10 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc10_42: i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc10_42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -852,6 +852,6 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %N.loc10_6.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -341,7 +341,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b.param: %.2 = param b, runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc10: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10_8.1: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_17: %.1 = tuple_literal ()
@@ -373,13 +373,13 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%b.loc10: %.2) {
-// CHECK:STDOUT:   %b.1: %.2 = bind_symbolic_name b, 0 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT: generic fn @F(%b.loc10_8.1: %.2) {
+// CHECK:STDOUT:   %b.loc10_8.2: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %c.1: %.7 = bind_symbolic_name c, 1 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:   %c.loc11_9.2: %.7 = bind_symbolic_name c, 1 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%b.loc10: %.2) {
+// CHECK:STDOUT:   fn(%b.loc10_8.1: %.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_19: %.1 = tuple_literal ()
@@ -396,7 +396,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc11_31.3: %.1 = converted %.loc11_30, %tuple.loc11_30 [template = constants.%tuple.1]
 // CHECK:STDOUT:     %tuple.loc11_31: %.7 = tuple_value (%.loc11_31.2, %.loc11_31.3) [template = constants.%tuple.3]
 // CHECK:STDOUT:     %.loc11_32: %.7 = converted %.loc11_31.1, %tuple.loc11_31 [template = constants.%tuple.3]
-// CHECK:STDOUT:     %c.loc11: %.7 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:     %c.loc11_9.1: %.7 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc13_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a1.var: ref %.1 = var a1
@@ -411,7 +411,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b1.var: ref %.2 = var b1
 // CHECK:STDOUT:     %b1: ref %.2 = bind_name b1, %b1.var
-// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.1 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:     %.loc14_21.1: %.1 = tuple_access %b.ref, element0
 // CHECK:STDOUT:     %.loc14_21.2: ref %.1 = tuple_access %b1.var, element0
 // CHECK:STDOUT:     %.loc14_21.3: init %.1 = tuple_init () to %.loc14_21.2 [template = constants.%tuple.1]
@@ -427,7 +427,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc15_20.4: type = converted %.loc15_20.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:     %c1.var: ref %.7 = var c1
 // CHECK:STDOUT:     %c1: ref %.7 = bind_name c1, %c1.var
-// CHECK:STDOUT:     %c.ref: %.7 = name_ref c, %c.loc11 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:     %c.ref: %.7 = name_ref c, %c.loc11_9.1 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc15_24.1: %.1 = tuple_access %c.ref, element0
 // CHECK:STDOUT:     %.loc15_24.2: ref %.1 = tuple_access %c1.var, element0
 // CHECK:STDOUT:     %.loc15_24.3: init %.1 = tuple_init () to %.loc15_24.2 [template = constants.%tuple.1]
@@ -470,7 +470,7 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
-// CHECK:STDOUT:   %b.1 => constants.%b
+// CHECK:STDOUT:   %b.loc10_8.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon

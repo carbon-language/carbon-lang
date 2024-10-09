@@ -135,13 +135,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CompleteClass.decl: %CompleteClass.type = class_decl @CompleteClass [template = constants.%CompleteClass.1] {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_21.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_21.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, file.%CompleteClass.decl [template = constants.%CompleteClass.1]
@@ -153,26 +153,26 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Class(%T.loc4_13.1: type) {
+// CHECK:STDOUT:   %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(%T.loc6: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic class @CompleteClass(%T.loc6_21.1: type) {
+// CHECK:STDOUT:   %T.loc6_21.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_21.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T.1) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.2), i32 [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T.1) [symbolic = %F.type (constants.%F.type.1)]
+// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T.loc6_21.2) [symbolic = %CompleteClass (constants.%CompleteClass.2)]
+// CHECK:STDOUT:   %.loc7_8.2: type = unbound_element_type @CompleteClass.%CompleteClass (%CompleteClass.2), i32 [symbolic = %.loc7_8.2 (constants.%.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @CompleteClass(%T.loc6_21.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc7_10.2: type = converted %int.make_type_32, %.loc7_10.1 [template = i32]
-// CHECK:STDOUT:     %.loc7_8: @CompleteClass.%.1 (%.2) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc7_8.1: @CompleteClass.%.loc7_8.2 (%.2) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %F.decl: @CompleteClass.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @CompleteClass.%F (constants.%F.1)] {} {
 // CHECK:STDOUT:       %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:       %.loc8_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -183,14 +183,14 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%CompleteClass.2
-// CHECK:STDOUT:     .n = %.loc7_8
+// CHECK:STDOUT:     .n = %.loc7_8.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@CompleteClass.%T.loc6: type) {
+// CHECK:STDOUT: generic fn @F.1(@CompleteClass.%T.loc6_21.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> i32 {
@@ -203,27 +203,27 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc6_21.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.2
-// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.loc7_8.2 => constants.%.2
 // CHECK:STDOUT:   %F.type => constants.%F.type.1
 // CHECK:STDOUT:   %F => constants.%F.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @CompleteClass(@CompleteClass.%T.loc6_21.2) {
+// CHECK:STDOUT:   %T.loc6_21.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(i32) {
-// CHECK:STDOUT:   %T.1 => i32
+// CHECK:STDOUT:   %T.loc6_21.2 => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- foo.impl.carbon
@@ -310,18 +310,18 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Class.%.2 (%.3) [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.loc5_8.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %.loc6_1.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @Class.%.loc6_1.2 (%.3) [symbolic = %.loc6_1.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc5: @Class.%.1 (%.2) = field_decl x, element0 [template]
-// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %.3 [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc5_8.1: @Class.%.loc5_8.2 (%.2) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc6_1.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
-// CHECK:STDOUT:     .x = %.loc5
+// CHECK:STDOUT:     .x = %.loc5_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -840,7 +840,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc12: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_13.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc12_13.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -850,8 +850,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%U.loc12: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic class @.1(%U.loc12_13.1: type) {
+// CHECK:STDOUT:   %U.loc12_13.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc12_13.2 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -871,6 +871,6 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc12_13.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

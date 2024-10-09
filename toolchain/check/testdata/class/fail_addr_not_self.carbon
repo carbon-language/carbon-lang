@@ -65,7 +65,7 @@ class Class {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.param: %.1 = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc16: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc16_13.1: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc16_13.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
@@ -83,15 +83,15 @@ class Class {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%a.loc16: %.1) {
-// CHECK:STDOUT:   %a.1: %.1 = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic fn @F(%a.loc16_13.1: %.1) {
+// CHECK:STDOUT:   %a.loc16_13.2: %.1 = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.2 (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.loc16: %.1]();
+// CHECK:STDOUT:   fn[%a.loc16_13.1: %.1]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc16_13.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

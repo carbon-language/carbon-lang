@@ -84,22 +84,22 @@ fn G() {
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Wrap(%T.loc11: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Wrap(%T.loc11_12.1: type) {
+// CHECK:STDOUT:   %T.loc11_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.1) [symbolic = %Make.type (constants.%Make.type.1)]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc11_12.2) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Wrap.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.1) = fn_decl @Make [symbolic = @Wrap.%Make (constants.%Make.1)] {} {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = var <return slot>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -124,7 +124,7 @@ fn G() {
 // CHECK:STDOUT:   .arr = %.loc15_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11: type) {
+// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11_12.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T);
@@ -175,19 +175,19 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(@Wrap.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @Wrap(@Wrap.%T.loc11_12.2) {
+// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(i32) {
-// CHECK:STDOUT:   %T.1 => i32
+// CHECK:STDOUT:   %T.loc11_12.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
@@ -199,7 +199,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%.1) {
-// CHECK:STDOUT:   %T.1 => constants.%.1
+// CHECK:STDOUT:   %T.loc11_12.2 => constants.%.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
@@ -211,7 +211,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
-// CHECK:STDOUT:   %T.1 => constants.%C
+// CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.4

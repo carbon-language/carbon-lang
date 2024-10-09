@@ -219,7 +219,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc11_37
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_15.1: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_15.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [template = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt: %J.type = symbolic_binding_pattern V, 0
@@ -234,7 +234,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls %.loc13_22.2, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %J.type = param V, runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc13: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc13_10.1: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc13_10.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %W.patt: %I.type = symbolic_binding_pattern W, 0
@@ -253,7 +253,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc15_50
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %I.type = param W, runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc15: %I.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc15_8.1: %I.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_8.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -280,34 +280,34 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   witness = (%Member, %Second)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EqualEqual(%U.loc11: %I.type) {
-// CHECK:STDOUT:   %U.1: %I.type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @EqualEqual(%U.loc11_15.1: %I.type) {
+// CHECK:STDOUT:   %U.loc11_15.2: %I.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_15.2 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc11: %I.type);
+// CHECK:STDOUT:   fn(%U.loc11_15.1: %I.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(%V.loc13: %J.type) {
-// CHECK:STDOUT:   %V.1: %J.type = bind_symbolic_name V, 0 [symbolic = %V.1 (constants.%V)]
+// CHECK:STDOUT: generic fn @Impls(%V.loc13_10.1: %J.type) {
+// CHECK:STDOUT:   %V.loc13_10.2: %J.type = bind_symbolic_name V, 0 [symbolic = %V.loc13_10.2 (constants.%V)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.loc13: %J.type);
+// CHECK:STDOUT:   fn(%V.loc13_10.1: %J.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @And(%W.loc15: %I.type) {
-// CHECK:STDOUT:   %W.1: %I.type = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT: generic fn @And(%W.loc15_8.1: %I.type) {
+// CHECK:STDOUT:   %W.loc15_8.2: %I.type = bind_symbolic_name W, 0 [symbolic = %W.loc15_8.2 (constants.%W)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.loc15: %I.type);
+// CHECK:STDOUT:   fn(%W.loc15_8.1: %I.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc11_15.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
-// CHECK:STDOUT:   %V.1 => constants.%V
+// CHECK:STDOUT:   %V.loc13_10.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @And(constants.%W) {
-// CHECK:STDOUT:   %W.1 => constants.%W
+// CHECK:STDOUT:   %W.loc15_8.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_equal_constraint.carbon
@@ -388,7 +388,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_rewrite %P.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %N.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15: %N.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_10.1: %N.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -430,10 +430,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(%T.loc15: %N.type) {
-// CHECK:STDOUT:   %T.1: %N.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @Equal(%T.loc15_10.1: %N.type) {
+// CHECK:STDOUT:   %T.loc15_10.2: %N.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_10.2 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc15: %N.type);
+// CHECK:STDOUT:   fn(%T.loc15_10.1: %N.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -467,7 +467,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_10.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_associated_type_impls.carbon
@@ -552,7 +552,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls <error>, %M.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %K.type = param W, runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc18: %K.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc18_24.1: %K.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc18_24.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -611,10 +611,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.5)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc18: %K.type) {
-// CHECK:STDOUT:   %W.1: %K.type = bind_symbolic_name W, 0 [symbolic = %W.1 (constants.%W)]
+// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc18_24.1: %K.type) {
+// CHECK:STDOUT:   %W.loc18_24.2: %K.type = bind_symbolic_name W, 0 [symbolic = %W.loc18_24.2 (constants.%W)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.loc18: %K.type);
+// CHECK:STDOUT:   fn(%W.loc18_24.1: %K.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -648,7 +648,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
-// CHECK:STDOUT:   %W.1 => constants.%W
+// CHECK:STDOUT:   %W.loc18_24.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
@@ -741,7 +741,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: %I.type = param X, runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc16: %I.type = bind_symbolic_name X, 0, %X.param [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc16_24.1: %I.type = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc16_24.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -780,10 +780,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X.loc16: %I.type) {
-// CHECK:STDOUT:   %X.1: %I.type = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X.loc16_24.1: %I.type) {
+// CHECK:STDOUT:   %X.loc16_24.2: %I.type = bind_symbolic_name X, 0 [symbolic = %X.loc16_24.2 (constants.%X)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%X.loc16: %I.type);
+// CHECK:STDOUT:   fn(%X.loc16_24.1: %I.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -817,7 +817,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RewriteTypeMismatch(constants.%X) {
-// CHECK:STDOUT:   %X.1 => constants.%X
+// CHECK:STDOUT:   %X.loc16_24.2 => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_left_of_impls_non_type.carbon
@@ -886,7 +886,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls <error>, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -917,10 +917,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NonTypeImpls(%U.loc11: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @NonTypeImpls(%U.loc11_17.1: type) {
+// CHECK:STDOUT:   %U.loc11_17.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc11: type);
+// CHECK:STDOUT:   fn(%U.loc11_17.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -954,7 +954,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonTypeImpls(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_right_of_impls_non_type.carbon
@@ -1024,7 +1024,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1055,10 +1055,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11_17.1: type) {
+// CHECK:STDOUT:   %U.loc11_17.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc11: type);
+// CHECK:STDOUT:   fn(%U.loc11_17.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -1092,7 +1092,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsNonType(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_right_of_impls_non_facet_type.carbon
@@ -1140,20 +1140,20 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc8: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc8_24.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc8_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplsOfNonFacetType(%U.loc8: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @ImplsOfNonFacetType(%U.loc8_24.1: type) {
+// CHECK:STDOUT:   %U.loc8_24.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc8_24.2 (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc8: type);
+// CHECK:STDOUT:   fn(%U.loc8_24.1: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsOfNonFacetType(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
+// CHECK:STDOUT:   %U.loc8_24.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_enforce_constraint.carbon
@@ -1253,7 +1253,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Y.param: %J.type = param Y, runtime_param<invalid>
-// CHECK:STDOUT:     %Y.loc26: %J.type = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.1 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc26_16.1: %J.type = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -1322,10 +1322,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26: %J.type) {
-// CHECK:STDOUT:   %Y.1: %J.type = bind_symbolic_name Y, 0 [symbolic = %Y.1 (constants.%Y)]
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26_16.1: %J.type) {
+// CHECK:STDOUT:   %Y.loc26_16.2: %J.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Y.loc26: %J.type);
+// CHECK:STDOUT:   fn(%Y.loc26_16.1: %J.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
@@ -1374,6 +1374,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %Y.1 => constants.%Y
+// CHECK:STDOUT:   %Y.loc26_16.2 => constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
