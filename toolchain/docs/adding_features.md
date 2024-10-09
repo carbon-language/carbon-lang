@@ -290,10 +290,10 @@ If the resulting SemIR needs a new instruction:
 
     -   If an instruction produces a value used in an expression, but not one
         that has an ordinary type, you can make a new builtin type for its
-        output. This is used, for example, when an expression implicitly uses a
-        value as parat of SemIR evaluation or as part of desugaring. For
-        example, we have builtin types for bound methods, namespaces, and
-        witnesses. These are defined in
+        output. This is rare, but used, for example, when an expression
+        implicitly uses a value as part of SemIR evaluation or as part of
+        desugaring. We have builtin types for bound methods, namespaces,
+        witnesses, among others. These are defined in
         [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
         To get a type id for one of these builtin types, use something like
         `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
@@ -313,10 +313,17 @@ updated. The updates needed, can depend on whether the instruction produces a
 type. Look to the comments on those functions for instructions on what is
 needed.
 
-If the instruction owns references other instructions, add a case to
-`InstNamer::CollectNamesInBlock` in
-[`sem_ir/inst_namer.cpp`](/toolchain/sem_ir/inst_namer.cpp) to visit those other
-instructions.
+Instructions won't be given a name unless
+[`InstNamer::CollectNamesInBlock](/toolchain/sem_ir/inst_namer.cpp) is called on
+the `InstBlockId` they are a member of. As of this writing,
+`InstNamer::CollectNamesInBlock` should only be called once per `InstBlockId`.
+To accomplish this, there should be one instruction kind that "owns" the
+instruction block, and will have a case in `InstNamer::CollectNamesInBlock` that
+visits the `InstBlockId` recursively. That instruction kind will typically use
+`FormatTrailingBlock` in the `sem_ir/formatter.cpp` to list the instructions in
+curly braces (`{`...`}`). Other instructions that reference that `InstBlockId`
+will use the default rendering that has just the instruction names in parens
+(`(`...`)`).
 
 Adding an instruction will generally also require a handler in the Lower step.
 
