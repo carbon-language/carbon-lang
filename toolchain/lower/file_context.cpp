@@ -412,6 +412,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
       // storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(context.llvm_context());
+    case SemIR::BuiltinInstKind::SpecificFunctionType:
     case SemIR::BuiltinInstKind::StringType:
       // TODO: Decide how we want to represent `StringType`.
       return llvm::PointerType::get(context.llvm_context(), 0);

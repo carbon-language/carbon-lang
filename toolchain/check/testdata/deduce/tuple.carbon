@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-fn F[T:! type, U:! type](pair: (T, U)) -> U;
+fn F[T:! type, U:! type](pair: (T, U)) -> U { return F(pair); }
 
 fn G(pair: (C, D)) -> D {
   return F(pair);
@@ -66,12 +66,15 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = tuple_type (%C, %D) [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.4 [symbolic]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
+// CHECK:STDOUT:   %.8: type = tuple_type (%C, %D) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.8: type = tuple_type (%.7, %.7) [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.10: type = tuple_type (%.9, %.9) [template]
+// CHECK:STDOUT:   %.11: type = ptr_type %.10 [template]
+// CHECK:STDOUT:   %.12: <specific function> = specific_function %F, @F(%C, %D) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,14 +120,14 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return: ref @F.%U.loc7_16.2 (%U) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %pair.patt: %.6 = binding_pattern pair
+// CHECK:STDOUT:     %pair.patt: %.8 = binding_pattern pair
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %D.ref.loc9_16: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc9_17.1: %.3 = tuple_literal (%C.ref, %D.ref.loc9_16)
-// CHECK:STDOUT:     %.loc9_17.2: type = converted %.loc9_17.1, constants.%.6 [template = constants.%.6]
-// CHECK:STDOUT:     %pair.param: %.6 = param pair, runtime_param0
-// CHECK:STDOUT:     %pair: %.6 = bind_name pair, %pair.param
+// CHECK:STDOUT:     %.loc9_17.2: type = converted %.loc9_17.1, constants.%.8 [template = constants.%.8]
+// CHECK:STDOUT:     %pair.param: %.8 = param pair, runtime_param0
+// CHECK:STDOUT:     %pair: %.8 = bind_name pair, %pair.param
 // CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %return: ref %D = var <return slot>
 // CHECK:STDOUT:   }
@@ -149,19 +152,41 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %U.loc7_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc7_16.2 (constants.%U)]
 // CHECK:STDOUT:   %.loc7_37.3: type = tuple_type (@F.%T.loc7_6.2 (%T), @F.%U.loc7_16.2 (%U)) [symbolic = %.loc7_37.3 (constants.%.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.loc7_6.1: type, %U.loc7_16.1: type](%pair: @F.%.loc7_37.3 (%.4)) -> @F.%U.loc7_16.2 (%U);
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2, %U.loc7_16.2) [symbolic = %.loc7_54.2 (constants.%.7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.loc7_6.1: type, %U.loc7_16.1: type](%pair: @F.%.loc7_37.3 (%.4)) -> @F.%U.loc7_16.2 (%U) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
+// CHECK:STDOUT:     %pair.ref: @F.%.loc7_37.3 (%.4) = name_ref pair, %pair
+// CHECK:STDOUT:     %.loc7_54.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %.loc7_54.2 (constants.%.7)]
+// CHECK:STDOUT:     %F.call: init @F.%U.loc7_16.2 (%U) = call %.loc7_54.1(%pair.ref)
+// CHECK:STDOUT:     %.loc7_61.1: @F.%U.loc7_16.2 (%U) = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc7_61.2: @F.%U.loc7_16.2 (%U) = converted %F.call, %.loc7_61.1
+// CHECK:STDOUT:     return %.loc7_61.2
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%pair: %.6) -> %return: %D {
+// CHECK:STDOUT: fn @G(%pair: %.8) -> %return: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %pair.ref: %.6 = name_ref pair, %pair
+// CHECK:STDOUT:   %pair.ref: %.8 = name_ref pair, %pair
+// CHECK:STDOUT:   %.loc10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.12]
 // CHECK:STDOUT:   %.loc9_20: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %F.ref(%pair.ref) to %.loc9_20
+// CHECK:STDOUT:   %F.call: init %D = call %.loc10(%pair.ref) to %.loc9_20
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %U.loc7_16.2 => constants.%U
+// CHECK:STDOUT:   %.loc7_37.3 => constants.%.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc7_54.2 => constants.%.7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(@F.%T.loc7_6.2, @F.%U.loc7_16.2) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %U.loc7_16.2 => constants.%U
 // CHECK:STDOUT:   %.loc7_37.3 => constants.%.4
@@ -170,7 +195,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%C
 // CHECK:STDOUT:   %U.loc7_16.2 => constants.%D
-// CHECK:STDOUT:   %.loc7_37.3 => constants.%.6
+// CHECK:STDOUT:   %.loc7_37.3 => constants.%.8
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc7_54.2 => constants.%.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- tuple_value.carbon
@@ -201,6 +229,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.4: type = class_type @HasPair, @HasPair(%tuple.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.10: <specific function> = specific_function %F, @F(%.8, %.9) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -322,7 +351,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %h.ref: %HasPair.4 = name_ref h, %h
-// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%h.ref)
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.8, constants.%.9) [template = constants.%.10]
+// CHECK:STDOUT:   %F.call: init i32 = call %.loc9_10(%h.ref)
 // CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
 // CHECK:STDOUT:   return %.loc9_14.2
@@ -360,6 +390,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %B.loc6_15.2 => constants.%.9
 // CHECK:STDOUT:   %tuple.loc6_40.2 => constants.%tuple.2
 // CHECK:STDOUT:   %HasPair.loc6_34.2 => constants.%HasPair.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inconsistent.carbon

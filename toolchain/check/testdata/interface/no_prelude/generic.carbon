@@ -32,7 +32,7 @@ class C {
 
 interface WithImplicitArgs[T:! type](N:! T);
 
-fn Receive(T:! Simple(C));
+fn Receive(T:! Simple(C)) {}
 fn Pass(T:! Simple(C)) {
   Receive(T);
 }
@@ -99,6 +99,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Receive: %Receive.type = struct_value () [template]
 // CHECK:STDOUT:   %Pass.type: type = fn_type @Pass [template]
 // CHECK:STDOUT:   %Pass: %Pass.type = struct_value () [template]
+// CHECK:STDOUT:   %.11: <specific function> = specific_function %Receive, @Receive(%T.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -265,19 +266,26 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: generic fn @Receive(%T.loc24_12.1: %Simple.type.3) {
 // CHECK:STDOUT:   %T.loc24_12.2: %Simple.type.3 = bind_symbolic_name T, 0 [symbolic = %T.loc24_12.2 (constants.%T.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc24_12.1: %Simple.type.3);
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.loc24_12.1: %Simple.type.3) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Pass(%T.loc25_9.1: %Simple.type.3) {
 // CHECK:STDOUT:   %T.loc25_9.2: %Simple.type.3 = bind_symbolic_name T, 0 [symbolic = %T.loc25_9.2 (constants.%T.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc26_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc25_9.2) [symbolic = %.loc26_3.2 (constants.%.11)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.loc25_9.1: %Simple.type.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
 // CHECK:STDOUT:     %T.ref: %Simple.type.3 = name_ref T, %T.loc25_9.1 [symbolic = %T.loc25_9.2 (constants.%T.2)]
-// CHECK:STDOUT:     %Receive.call: init %.1 = call %Receive.ref()
+// CHECK:STDOUT:     %.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.2) [symbolic = %.loc26_3.2 (constants.%.11)]
+// CHECK:STDOUT:     %Receive.call: init %.1 = call %.loc26_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -329,10 +337,16 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.2) {
 // CHECK:STDOUT:   %T.loc24_12.2 => constants.%T.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.2) {
 // CHECK:STDOUT:   %T.loc25_9.2 => constants.%T.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Receive(@Pass.%T.loc25_9.2) {
+// CHECK:STDOUT:   %T.loc24_12.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon

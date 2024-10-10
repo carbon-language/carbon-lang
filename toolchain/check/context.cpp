@@ -918,6 +918,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
       case SemIR::BuiltinInstKind::WitnessType:
+      case SemIR::BuiltinInstKind::SpecificFunctionType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinInstKind::StringType:

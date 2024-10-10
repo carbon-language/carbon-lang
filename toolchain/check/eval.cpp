@@ -1190,8 +1190,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildAndValidateIfFieldsAreConstant(
           eval_context, inst,
           [&](SemIR::IntType result) {
-            return ValidateIntType(eval_context.context(),
-                                   int_type.bit_width_id, result);
+            return ValidateIntType(
+                eval_context.context(),
+                inst_id.is_valid() ? inst_id : int_type.bit_width_id, result);
           },
           &SemIR::IntType::bit_width_id);
     }
@@ -1207,6 +1208,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           },
           &SemIR::FloatType::bit_width_id);
     }
+    case SemIR::SpecificFunction::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::SpecificFunction::callee_id,
+                                        &SemIR::SpecificFunction::specific_id);
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::StructType::fields_id);
