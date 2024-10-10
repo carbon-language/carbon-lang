@@ -53,7 +53,7 @@ class Formatter {
   // state.
   auto PrepareForSpacedContent() -> void;
 
-  // Requires that the correct line is indented, but not necessarily a separator
+  // Requires that the current line is indented, but not necessarily a separator
   // space. May output spaces for `indent_`, dependent on line state.
   auto PrepareForPackedContent() -> void;
 
