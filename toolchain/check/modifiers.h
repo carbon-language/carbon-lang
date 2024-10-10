@@ -30,35 +30,26 @@ auto CheckMethodModifiersOnFunction(
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_loc_id`) specifying the context in
-// which those modifiers are forbidden. `allowed_on_definition` specifies
-// modifiers that are forbidden, but would be valid if the declaration was a
-// definition.
+// which those modifiers are forbidden.
 // TODO: Take another look at diagnostic phrasing for callers.
 auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
                            KeywordModifierSet forbidden,
-                           KeywordModifierSet allowed_on_definition,
                            llvm::StringRef context_string,
                            SemIR::LocId context_loc_id = SemIR::LocId::Invalid)
     -> void;
 
-inline auto ForbidModifiersOnDecl(
-    Context& context, DeclIntroducerState& introducer,
-    KeywordModifierSet forbidden, llvm::StringRef context_string,
-    SemIR::LocId context_loc_id = SemIR::LocId::Invalid) -> void {
-  ForbidModifiersOnDecl(context, introducer, forbidden,
-                        KeywordModifierSet::None, context_string,
-                        context_loc_id);
-}
-
 // Reports a diagnostic (using `decl_kind`) if modifiers on this declaration are
 // not in `allowed`. Updates `introducer`.
-inline auto LimitModifiersOnDecl(
-    Context& context, DeclIntroducerState& introducer,
-    KeywordModifierSet allowed,
-    KeywordModifierSet allowed_on_definition = KeywordModifierSet::None)
-    -> void {
-  ForbidModifiersOnDecl(context, introducer, ~allowed, allowed_on_definition,
-                        "");
+inline auto LimitModifiersOnDecl(Context& context,
+                                 DeclIntroducerState& introducer,
+                                 KeywordModifierSet allowed) -> void {
+  ForbidModifiersOnDecl(context, introducer, ~allowed, "");
+}
+
+inline auto LimitModifiersOnNotDefinition(Context& context,
+                                          DeclIntroducerState& introducer,
+                                          KeywordModifierSet allowed) -> void {
+  ForbidModifiersOnDecl(context, introducer, ~allowed, ", only definition");
 }
 
 // Restricts the `extern` modifier to only be used on namespace-scoped
