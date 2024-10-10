@@ -10,7 +10,7 @@ namespace Carbon::SemIR {
 
 auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
   auto result = map_.Insert(inst, [&] {
-    auto inst_id = sem_ir_.insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
+    auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::Invalid;
     if (is_symbolic) {
       // The instruction in the constants store is an abstract symbolic
@@ -20,11 +20,11 @@ auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
                            .generic_id = GenericId::Invalid,
                            .index = GenericInstIndex::Invalid};
       const_id =
-          sem_ir_.constant_values().AddSymbolicConstant(symbolic_constant);
+          sem_ir_->constant_values().AddSymbolicConstant(symbolic_constant);
     } else {
       const_id = SemIR::ConstantId::ForTemplateConstant(inst_id);
     }
-    sem_ir_.constant_values().Set(inst_id, const_id);
+    sem_ir_->constant_values().Set(inst_id, const_id);
     constants_.push_back(inst_id);
     return const_id;
   });
