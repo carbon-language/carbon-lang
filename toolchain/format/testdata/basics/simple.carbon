@@ -10,8 +10,10 @@
 
 // --- test.carbon
 
-fn F(x: i32) -> i32 { return x; }
+fn  F  (  x  :  i32  )  ->  i32  {  return  x  ;  }
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: fn F ( x : i32 ) -> i32 { return x ; }
+// CHECK:STDOUT: fn F (x: i32) -> i32 {
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }

@@ -10,5 +10,3 @@
 
 // --- test.carbon
 // --- AUTOUPDATE-SPLIT
-
-// CHECK:STDOUT:
