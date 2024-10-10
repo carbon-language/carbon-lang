@@ -1181,7 +1181,9 @@ x
       // NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
       "// This comment should be possible to parse with SIMD.\n"
       "// This one too.\n",
-      "// This one as well, though it's a different indent.\n",
+      "// This one as well, though it's a different indent.\n"
+      "        // And mixes indent.\n"
+      "   // And mixes indent more.\n",
       "// This is one comment:\n"
       "//Invalid\n"
       "// Valid\n"
