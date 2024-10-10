@@ -75,9 +75,9 @@ auto Formatter::Run() -> bool {
           PrepareForSpacedContent();
         }
         *out_ << tokens_->GetTokenText(token);
-        if (!token_kind.is_opening_symbol()) {
-          line_state_ = LineState::NeedsSeparator;
-        }
+        line_state_ = token_kind.is_opening_symbol()
+                          ? LineState::HasSeparator
+                          : LineState::NeedsSeparator;
         break;
     }
   }
