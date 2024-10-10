@@ -23,8 +23,9 @@ class Mangler {
   explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
 
   // Produce a deterministically unique mangled name for the function specified
-  // by `function_id`.
-  auto Mangle(SemIR::FunctionId function_id) -> std::string;
+  // by `function_id` and `specific_id`.
+  auto Mangle(SemIR::FunctionId function_id, SemIR::SpecificId specific_id)
+      -> std::string;
 
  private:
   // Mangle this qualified name with inner scope first, working outwards. This

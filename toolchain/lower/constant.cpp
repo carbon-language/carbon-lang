@@ -215,9 +215,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/,
+static auto EmitAsConstant(ConstantContext& context,
                            SemIR::SpecificFunction inst) -> llvm::Constant* {
-  CARBON_FATAL("TODO: Add support: {0}", inst);
+  return context.GetUnusedConstant(inst.type_id);
 }
 
 static auto EmitAsConstant(ConstantContext& /*context*/,
