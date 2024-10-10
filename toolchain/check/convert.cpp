@@ -533,15 +533,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
-  if (dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
-    CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
-                      "cannot construct instance of abstract class; "
-                      "consider using `partial {0}` instead",
-                      SemIR::TypeId);
-    context.emitter().Emit(value_id, ConstructionOfAbstractClass,
-                           target.type_id);
-    return SemIR::InstId::BuiltinError;
-  }
+  CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::TypeId::Error) {
