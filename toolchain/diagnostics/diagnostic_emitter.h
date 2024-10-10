@@ -55,7 +55,7 @@ class DiagnosticEmitter {
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
     auto operator=(DiagnosticBuilder&&) noexcept
         -> DiagnosticBuilder& = default;
-    DiagnosticBuilder() = default;
+    DiagnosticBuilder() : emitter_(nullptr) {}
 
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
