@@ -278,8 +278,8 @@ If the resulting SemIR needs a new instruction:
         defaults, see `InstKind::DefinitionInfo`.
     -   If an instruction always produces a type:
 
-        -   set `.is_type = InstIsType::Always` in its `Kind` definition;
-        -   when constructing instructions of this kind, pass
+        -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
+        -   When constructing instructions of this kind, pass
             `SemIR::TypeId::TypeType` in as the value of the `type_id` field, as
             in:
 
@@ -288,9 +288,7 @@ If the resulting SemIR needs a new instruction:
                 node_id, {.type_id = SemIR::TypeId::TypeType, ...});
             ```
 
-    -   If an instruction produces a value used in an expression, but not one
-        that has an ordinary type, you can make a new builtin type for its
-        output. This is rare, but used, for example, when an expression
+    -   Although most instructions have distinct types represented by instructions like `ClassType`, we also have builtin types for cases where types don't need to be distinct per-entity. This is rare, but used, for example, when an expression
         implicitly uses a value as part of SemIR evaluation or as part of
         desugaring. We have builtin types for bound methods, namespaces,
         witnesses, among others. These are defined in
@@ -319,7 +317,7 @@ the `InstBlockId` they are a member of. As of this writing,
 `InstNamer::CollectNamesInBlock` should only be called once per `InstBlockId`.
 To accomplish this, there should be one instruction kind that "owns" the
 instruction block, and will have a case in `InstNamer::CollectNamesInBlock` that
-visits the `InstBlockId` recursively. That instruction kind will typically use
+visits the `InstBlockId`. That instruction kind will typically use
 `FormatTrailingBlock` in the `sem_ir/formatter.cpp` to list the instructions in
 curly braces (`{`...`}`). Other instructions that reference that `InstBlockId`
 will use the default rendering that has just the instruction names in parens
