@@ -197,22 +197,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     case Parse::NodeKind::LetIntroducer: {
-      cast_type_id = context.AsCompleteType(
-          cast_type_id,
-          [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                              "`let` binding has incomplete type `{0}`",
-                              SemIR::TypeId);
-            return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
-                                           cast_type_id);
-          },
-          [&] {
-            CARBON_DIAGNOSTIC(AbstractTypeInLetDecl, Error,
-                              "`let` binding has abstract type `{0}`",
-                              SemIR::TypeId);
-            return context.emitter().Build(type_node, AbstractTypeInLetDecl,
-                                           cast_type_id);
-          });
+      cast_type_id = context.AsCompleteType(cast_type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
+                          "`let` binding has incomplete type `{0}`",
+                          SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
+                                       cast_type_id);
+      });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold

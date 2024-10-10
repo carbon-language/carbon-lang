@@ -87,21 +87,14 @@ fn Access(d: Derived) -> (i32, i32) {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: variable has abstract type `Abstract`
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+6]]:10: error: variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE-82]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var v: Abstract;
-  // TODO: The initializer here should be invalid, though the let itself should be valid...
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+6]]:10: error: `let` binding has abstract type `Abstract`
-  // CHECK:STDERR:   let l: Abstract = {};
-  // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-91]]:1: note: class was declared abstract here
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // TODO: The initializer here should be invalid (though the `let` is itself valid)
   let l: Abstract = {};
 }
 
@@ -329,12 +322,12 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Abstract.ref.loc97: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref.loc96: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %Abstract.ref.loc105: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc105: %.20 = struct_literal ()
-// CHECK:STDOUT:   %l: <error> = bind_name l, <error>
+// CHECK:STDOUT:   %Abstract.ref.loc98: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:   %.loc98: %.20 = struct_literal ()
+// CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
