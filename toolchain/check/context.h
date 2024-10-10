@@ -322,10 +322,9 @@ class Context {
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
-  auto TryToCompleteType(
-      SemIR::TypeId type_id,
-      BuildDiagnosticFn diagnoser = nullptr,
-      BuildDiagnosticFn abstract_diagnoser = nullptr)
+  auto TryToCompleteType(SemIR::TypeId type_id,
+                         BuildDiagnosticFn diagnoser = nullptr,
+                         BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
@@ -341,7 +340,7 @@ class Context {
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType. `diagnoser` must not be null.
   auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser)
+                      BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
                ? type_id

@@ -478,15 +478,12 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
   auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
-  base_type_id = context.AsCompleteType(
-      base_type_id,
-      [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                          "base `{0}` is an incomplete type", SemIR::TypeId);
-        return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
-                                       base_type_id);
-      },
-      nullptr);
+  base_type_id = context.AsCompleteType(base_type_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                      "base `{0}` is an incomplete type", SemIR::TypeId);
+    return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                   base_type_id);
+  });
 
   if (base_type_id == SemIR::TypeId::Error) {
     return BaseInfo::Error;
