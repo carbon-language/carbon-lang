@@ -48,7 +48,7 @@ class Formatter {
   // state. Does not indent, allowing blank lines.
   auto RequireEmptyLine() -> void;
 
-  // Ensures there is spacing before adding new content. May do
+  // Ensures there is a separator before adding new content. May do
   // `PrepareForPackedContent` or output a separator space, dependent on line
   // state.
   auto PrepareForSpacedContent() -> void;
