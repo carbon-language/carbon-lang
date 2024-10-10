@@ -23,15 +23,14 @@
 namespace Carbon::Lex {
 namespace {
 
+using ::Carbon::Testing::ExpectedToken;
+using ::Carbon::Testing::IsSingleDiagnostic;
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Pair;
-
-using ::Carbon::Testing::ExpectedToken;
-using ::Carbon::Testing::IsSingleDiagnostic;
-using ::Carbon::Testing::TestRawOstream;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 

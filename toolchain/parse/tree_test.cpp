@@ -23,10 +23,9 @@
 namespace Carbon::Parse {
 namespace {
 
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
 using ::testing::Pair;
-
-using ::Carbon::Testing::TestRawOstream;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
