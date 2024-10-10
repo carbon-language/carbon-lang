@@ -107,8 +107,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                               llvm::StringLiteral, SemIR::TypeId);
             return context.emitter().Build(
                 type_node, IncompleteTypeInVarDecl,
-                parent_class_decl ? llvm::StringLiteral("Field")
-                                  : llvm::StringLiteral("Variable"),
+                parent_class_decl ? llvm::StringLiteral("field")
+                                  : llvm::StringLiteral("variable"),
                 cast_type_id);
           },
           [&] {
@@ -117,8 +117,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                               llvm::StringLiteral, SemIR::TypeId);
             return context.emitter().Build(
                 type_node, AbstractTypeInVarDecl,
-                parent_class_decl ? llvm::StringLiteral("Field")
-                                  : llvm::StringLiteral("Variable"),
+                parent_class_decl ? llvm::StringLiteral("field")
+                                  : llvm::StringLiteral("variable"),
                 cast_type_id);
           });
       if (parent_class_decl) {
