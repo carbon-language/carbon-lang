@@ -200,8 +200,6 @@ class [[clang::internal_linkage]] Lexer {
  private:
   class ErrorRecoveryBuffer;
 
-  auto AddLexedComment() -> void;
-
   TokenizedBuffer buffer_;
 
   ssize_t line_index_;
@@ -860,75 +858,6 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
   CARBON_CHECK(result, "Failed to form a token!");
 }
 
-// Lexes for a comment prefix using SIMD support. Returns true if the end of
-// lines with the provided prefix has been found. Returns false if it's unable
-// to finish lexing (but may be partially lexed).
-//
-// TODO: We should extend this to 32-byte SIMD on platforms with support.
-static auto LexCommentPrefixInSimd(llvm::StringRef source_text,
-                                   ssize_t& position, ssize_t prefix_size,
-                                   ssize_t first_line_start,
-                                   llvm::function_ref<void()> skip_to_next_line)
-    -> bool {
-  constexpr ssize_t ByteSize = 16;
-  if (!CARBON_USE_SIMD ||
-      position + ByteSize >= static_cast<ssize_t>(source_text.size()) ||
-      prefix_size > ByteSize) {
-    return false;
-  }
-
-  // Load a mask based on the amount of text we want to compare.
-  auto mask = PrefixMasks[prefix_size];
-#if __ARM_NEON
-  // Load and mask the prefix of the current line.
-  auto prefix = vld1q_u8(
-      reinterpret_cast<const uint8_t*>(source_text.data() + first_line_start));
-  prefix = vandq_u8(mask, prefix);
-#elif __x86_64__
-  // Use the current line's prefix as the exemplar to compare against.
-  // We don't mask here as we will mask when doing the comparison.
-  auto prefix = _mm_loadu_si128(
-      reinterpret_cast<const __m128i*>(source_text.data() + first_line_start));
-#else
-#error "Unsupported SIMD architecture!"
-#endif
-
-  while (true) {
-#if __ARM_NEON
-    // Load and mask the next line to consider's prefix.
-    auto next_prefix = vld1q_u8(
-        reinterpret_cast<const uint8_t*>(source_text.data() + position));
-    next_prefix = vandq_u8(mask, next_prefix);
-    // Compare the two prefixes and if any lanes differ, break.
-    auto compare = vceqq_u8(prefix, next_prefix);
-    bool has_prefix = vminvq_u8(compare) != 0;
-#elif __x86_64__
-    // Load the next line to consider's prefix.
-    auto next_prefix = _mm_loadu_si128(
-        reinterpret_cast<const __m128i*>(source_text.data() + position));
-    // Compute the difference between the next line and our exemplar. Again,
-    // we don't mask the difference because the comparison below will be
-    // masked.
-    auto prefix_diff = _mm_xor_si128(prefix, next_prefix);
-    // If we have any differences (non-zero bits) within the mask, we can't
-    // skip the next line too.
-    bool has_prefix = _mm_test_all_zeros(mask, prefix_diff);
-#else
-#error "Unsupported SIMD architecture!"
-#endif
-
-    if (!has_prefix) {
-      return true;
-    }
-
-    skip_to_next_line();
-
-    if (position + ByteSize >= static_cast<ssize_t>(source_text.size())) {
-      return false;
-    }
-  }
-}
-
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
@@ -971,11 +900,14 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   // A very common pattern is a long block of comment lines all with the same
   // indent and comment start. We skip these comment blocks in bulk both for
   // speed and to reduce redundant diagnostics if each line has the same
-  // erroneous comment start, such as `//!`.
+  // erroneous comment start like `//!`.
   //
   // When we have SIMD support this is even more important for speed, as short
   // indents can be scanned extremely quickly with SIMD and we expect these to
   // be the dominant cases.
+  //
+  // TODO: We should extend this to 32-byte SIMD on platforms with support.
+  constexpr int MaxIndent = 13;
   const int indent = line_info->indent;
   const ssize_t first_line_start = line_info->start;
   ssize_t prefix_size = indent + (is_valid_after_slashes ? 3 : 2);
@@ -987,8 +919,59 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     next_line_info->indent = indent;
     position = next_line_info->start;
   };
-  if (!LexCommentPrefixInSimd(source_text, position, prefix_size,
-                              first_line_start, skip_to_next_line)) {
+  if (CARBON_USE_SIMD &&
+      position + 16 < static_cast<ssize_t>(source_text.size()) &&
+      indent <= MaxIndent) {
+    // Load a mask based on the amount of text we want to compare.
+    auto mask = PrefixMasks[prefix_size];
+#if __ARM_NEON
+    // Load and mask the prefix of the current line.
+    auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(source_text.data() +
+                                                            first_line_start));
+    prefix = vandq_u8(mask, prefix);
+    do {
+      // Load and mask the next line to consider's prefix.
+      auto next_prefix = vld1q_u8(
+          reinterpret_cast<const uint8_t*>(source_text.data() + position));
+      next_prefix = vandq_u8(mask, next_prefix);
+      // Compare the two prefixes and if any lanes differ, break.
+      auto compare = vceqq_u8(prefix, next_prefix);
+      if (vminvq_u8(compare) == 0) {
+        break;
+      }
+
+      skip_to_next_line();
+    } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#elif __x86_64__
+    // Use the current line's prefix as the exemplar to compare against.
+    // We don't mask here as we will mask when doing the comparison.
+    auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
+        source_text.data() + first_line_start));
+    do {
+      // Load the next line to consider's prefix.
+      auto next_prefix = _mm_loadu_si128(
+          reinterpret_cast<const __m128i*>(source_text.data() + position));
+      // Compute the difference between the next line and our exemplar. Again,
+      // we don't mask the difference because the comparison below will be
+      // masked.
+      auto prefix_diff = _mm_xor_si128(prefix, next_prefix);
+      // If we have any differences (non-zero bits) within the mask, we can't
+      // skip the next line too.
+      if (!_mm_test_all_zeros(mask, prefix_diff)) {
+        break;
+      }
+
+      skip_to_next_line();
+    } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#else
+#error "Unsupported SIMD architecture!"
+#endif
+    // TODO: If we finish the loop due to the position approaching the end of
+    // the buffer we may fail to skip the last line in a comment block that
+    // has an invalid initial sequence and thus emit extra diagnostics. We
+    // should really fall through to the generic skipping logic, but the code
+    // organization will need to change significantly to allow that.
+  } else {
     while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
            memcmp(source_text.data() + first_line_start,
                   source_text.data() + position, prefix_size) == 0) {
