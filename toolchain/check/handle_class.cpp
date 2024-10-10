@@ -79,19 +79,6 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  // The introducer kind must match the previous declaration.
-  // TODO: The rule here is not yet decided. See #3384.
-  if (prev_class.inheritance_kind != new_class.inheritance_kind) {
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "class redeclared with different inheritance kind");
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "previously declared here");
-    context.emitter()
-        .Build(new_loc, ClassRedeclarationDifferentIntroducer)
-        .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
-        .Emit();
-  }
-
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
@@ -194,9 +181,14 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Class>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  auto always_acceptable_modifiers =
+      KeywordModifierSet::Access | KeywordModifierSet::Extern;
   LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Class | KeywordModifierSet::Access |
-                           KeywordModifierSet::Extern);
+                       always_acceptable_modifiers | KeywordModifierSet::Class);
+  if (!is_definition) {
+    LimitModifiersOnNotDefinition(context, introducer,
+                                  always_acceptable_modifiers);
+  }
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
 

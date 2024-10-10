@@ -9,8 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/redeclaration_introducer.carbon
 
 class A;
-base class B;
-abstract class C;
+class B;
+class C;
 
 class A {}
 base class B {}
