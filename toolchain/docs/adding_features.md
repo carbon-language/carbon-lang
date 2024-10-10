@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parse](#parse)
     -   [Typed parse node metadata implementation](#typed-parse-node-metadata-implementation)
 -   [Check](#check)
+    -   [Adding a new SemIR instruction](#adding-a-new-semir-instruction)
     -   [SemIR typed instruction metadata implementation](#semir-typed-instruction-metadata-implementation)
 -   [Lower](#lower)
 -   [Tests and debugging](#tests-and-debugging)
@@ -232,42 +233,108 @@ Note: this is broadly similar to
 Each parse node kind requires adding a `Handle<kind>` function in a
 `check/handle_*.cpp` file.
 
+### Adding a new SemIR instruction
+
 If the resulting SemIR needs a new instruction:
 
--   add a new kind to [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def)
+-   Add a new kind to [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def).
+
     -   Add a `CARBON_SEM_IR_INST_KIND(NewInstKindName)` line in alphabetical
         order
--   a new struct definition to
+
+-   Add a new struct definition to
     [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h), such as:
 
     ```cpp
     struct NewInstKindName {
-        static constexpr auto Kind = InstKind::NewInstKindName.Define(
-            // the name used in textual IR
-            "new_inst_kind_name"
-            // Optional: , TerminatorKind::KindOfTerminator
+        static constexpr auto Kind =
+            // `Parse::SomeId` should be one of:
+            // - A node ID from `parse/node_ids.h`,
+            //   specifying the kind of parse nodes for this instruction.
+            //   This could be a node kind from `parse/node_kind.def`
+            //   suffixed by `Id`, or one of the `Any`...`Id` alias
+            //   declarations that match multiple kinds of parse nodes.
+            // - `Parse::NodeId` if it can be any kind of parse node.
+            // - `Parse::InvalidNodeId` if no associated parse node.
+            InstKind::NewInstKindName.Define<Parse::SomeId>(
+                // The name used in textual IR:
+                {.ir_name = "new_inst_kind_name"}
+                // Other parameters have defaults.
             );
 
-        // Optional: omit if not associated with a parse node.
-        Parse::Node parse_node;
-
-        // Optional: omit if this sem_ir instruction does not produce a value.
+        // Optional: Include if this instruction produces a value used in
+        // an expression.
         TypeId type_id;
 
-        // 0-2 id fields, with types from sem_ir/ids.h or sem_ir/builtin_kind.h
-        // For example, fields would look like:
+        // 0-2 id fields, with types from sem_ir/ids.h or
+        // sem_ir/builtin_kind.h. For example, fields would look like:
         StringId name_id;
         InstId value_id;
     };
     ```
 
-Adding an instruction will also require a handler in the Lower step.
+    -   [`sem_ir/inst_kind.h`](/toolchain/sem_ir/inst_kind.h) documents the
+        different options when defining a new instruction, as well as their
+        defaults, see `InstKind::DefinitionInfo`.
+    -   If an instruction always produces a type:
+
+        -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
+        -   When constructing instructions of this kind, pass
+            `SemIR::TypeId::TypeType` in as the value of the `type_id` field, as
+            in:
+
+            ```
+            SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
+                node_id, {.type_id = SemIR::TypeId::TypeType, ...});
+            ```
+
+    -   Although most instructions have distinct types represented by
+        instructions like `ClassType`, we also have builtin types for cases
+        where types don't need to be distinct per-entity. This is rare, but
+        used, for example, when an expression implicitly uses a value as part of
+        SemIR evaluation or as part of desugaring. We have builtin types for
+        bound methods, namespaces, witnesses, among others. These are defined in
+        [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
+        To get a type id for one of these builtin types, use something like
+        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
+
+        ```
+        SemIR::TypeId witness_type_id =
+            context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType);
+        SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
+            node_id, {.type_id = witness_type_id, ...});
+        ```
+
+    -   Instructions without types may still be used as arguments to
+        instructions.
+
+Once those are added, a rebuild will give errors showing what needs to be
+updated. The updates needed, can depend on whether the instruction produces a
+type. Look to the comments on those functions for instructions on what is
+needed.
+
+Instructions won't be given a name unless
+[`InstNamer::CollectNamesInBlock](/toolchain/sem_ir/inst_namer.cpp) is called on
+the `InstBlockId` they are a member of. As of this writing,
+`InstNamer::CollectNamesInBlock` should only be called once per `InstBlockId`.
+To accomplish this, there should be one instruction kind that "owns" the
+instruction block, and will have a case in `InstNamer::CollectNamesInBlock` that
+visits the `InstBlockId`. That instruction kind will typically use
+`FormatTrailingBlock` in the `sem_ir/formatter.cpp` to list the instructions in
+curly braces (`{`...`}`). Other instructions that reference that `InstBlockId`
+will use the default rendering that has just the instruction names in parens
+(`(`...`)`).
+
+Adding an instruction will generally also require a handler in the Lower step.
 
 Most new instructions will automatically be formatted reasonably by the SemIR
-formatter.
+formatter. If not, then add a `FormatInst` overload to
+[`sem_ir/formatter.cpp`](/toolchain/sem_ir/formatter.cpp). If only the arguments
+need custom formatting, then a `FormatInstRHS` overload can be implemented
+instead.
 
 If the resulting SemIR needs a new built-in, add it to
-[builtin_inst_kind.def](/toolchain/sem_ir/builtin_inst_kind.def).
+[`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
 
 ### SemIR typed instruction metadata implementation
 
