@@ -1200,9 +1200,9 @@ x
   auto& buffer = compile_helper_.GetTokenizedBuffer(source);
   EXPECT_TRUE(buffer.has_errors());
 
-  EXPECT_THAT(buffer.comments_size(), Eq(5));
+  EXPECT_THAT(buffer.comments_size(), Eq(std::size(Comments)));
   for (int i :
-       llvm::seq(std::min(static_cast<int>(buffer.comments_size()), 5))) {
+       llvm::seq(std::min<int>(buffer.comments_size(), std::size(Comments)))) {
     EXPECT_THAT(buffer.GetCommentText(CommentIndex(i)).str(),
                 testing::StrEq(Comments[i]));
   }
