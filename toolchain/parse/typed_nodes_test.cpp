@@ -46,8 +46,6 @@ namespace {
 
 class TypedNodeTest : public ::testing::Test {
  protected:
-  using Peer = TypedNodesTestPeer;
-
   Testing::CompileHelper compile_helper_;
 };
 
@@ -142,8 +140,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto library =
-      Peer::VerifyExtractAs<LibraryDecl>(tree, file.decls[0], &trace);
+  auto library = TypedNodesTestPeer::VerifyExtractAs<LibraryDecl>(
+      tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -167,7 +165,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace);
+  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
+      tree, file.decls[0], &trace);
   ASSERT_TRUE(var.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -198,7 +197,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace1;
-  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace1);
+  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
+      tree, file.decls[0], &trace1);
   ASSERT_TRUE(var.has_value());
   Error err1 = trace1;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -223,7 +223,7 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto value = Peer::VerifyExtractAs<MemberAccessExpr>(
+  auto value = TypedNodesTestPeer::VerifyExtractAs<MemberAccessExpr>(
       tree, var->initializer->value, &trace2);
   ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
@@ -244,8 +244,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto class_decl =
-      Peer::VerifyExtractAs<ClassDecl>(tree, file.decls[0], &trace);
+  auto class_decl = TypedNodesTestPeer::VerifyExtractAs<ClassDecl>(
+      tree, file.decls[0], &trace);
   EXPECT_TRUE(class_decl.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -314,13 +314,14 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   ASSERT_TRUE(f_intro.has_value());
 
   // Change the kind of the introducer and check we get a good trace log.
-  Peer::SetNodeKind(tree.tree(), f_sig->introducer, NodeKind::ClassIntroducer);
+  TypedNodesTestPeer::SetNodeKind(tree.tree(), f_sig->introducer,
+                                  NodeKind::ClassIntroducer);
 
   // The introducer should not extract as a FunctionIntroducer any more because
   // the kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionIntroducer>(
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionIntroducer>(
         tree, f_sig->introducer, &trace));
 
     Error err = trace;
@@ -333,8 +334,8 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // token kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<ClassIntroducer>(tree, f_sig->introducer,
-                                                        &trace));
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<ClassIntroducer>(
+        tree, f_sig->introducer, &trace));
 
     Error err = trace;
     EXPECT_THAT(err.message(),
@@ -346,7 +347,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // kind for the introducer is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionDefinitionStart>(
+    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionDefinitionStart>(
         tree, f_fn->signature, &trace));
 
     Error err = trace;
