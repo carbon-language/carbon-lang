@@ -143,7 +143,7 @@ class ConstantValueStore {
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  explicit ConstantStore(File& sem_ir) : sem_ir_(sem_ir) {}
+  explicit ConstantStore(File* sem_ir) : sem_ir_(sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.
@@ -166,7 +166,7 @@ class ConstantStore {
   auto size() const -> int { return constants_.size(); }
 
  private:
-  File& sem_ir_;
+  File* const sem_ir_;
   Map<Inst, ConstantId> map_;
   llvm::SmallVector<InstId, 0> constants_;
 };
