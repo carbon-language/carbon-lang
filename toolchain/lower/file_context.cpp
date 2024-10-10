@@ -165,6 +165,25 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
                sem_ir().insts().Get(inst_id));
 }
 
+auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
+                                      SemIR::SpecificId specific_id)
+    -> llvm::Function* {
+  // Non-generic functions are declared eagerly.
+  if (!specific_id.is_valid()) {
+    return GetFunction(function_id);
+  }
+
+  if (auto* result = specific_functions_[specific_id.index]) {
+    return result;
+  }
+
+  auto* result = BuildFunctionDecl(function_id, specific_id);
+  // TODO: Add this function to a list of specific functions whose definitions
+  // we need to emit.
+  specific_functions_[specific_id.index] = result;
+  return result;
+}
+
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id)
     -> llvm::Function* {
