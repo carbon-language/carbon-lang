@@ -55,6 +55,7 @@ class DiagnosticEmitter {
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
     auto operator=(DiagnosticBuilder&&) noexcept
         -> DiagnosticBuilder& = default;
+    DiagnosticBuilder() = default;
 
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
@@ -63,6 +64,9 @@ class DiagnosticEmitter {
     auto Note(LocT loc,
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+      if (!emitter_) {
+        return *this;
+      }
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
                        diagnostic_base.Level == DiagnosticLevel::LocationInfo,
                    "{0}", static_cast<int>(diagnostic_base.Level));
@@ -74,11 +78,16 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
+      if (!emitter_) {
+        return;
+      }
       for (auto annotate_fn : emitter_->annotate_fns_) {
         annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
+
+    explicit operator bool() { return emitter_; }
 
    private:
     friend class DiagnosticEmitter<LocT>;
@@ -99,6 +108,9 @@ class DiagnosticEmitter {
     auto AddMessage(LocT loc,
                     const Internal::DiagnosticBase<Args...>& diagnostic_base,
                     llvm::SmallVector<llvm::Any> args) -> void {
+      if (!emitter_) {
+        return;
+      }
       AddMessageWithDiagnosticLoc(
           emitter_->converter_->ConvertLoc(
               loc,
@@ -117,7 +129,10 @@ class DiagnosticEmitter {
     auto AddMessageWithDiagnosticLoc(
         DiagnosticLoc loc,
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) {
+        llvm::SmallVector<llvm::Any> args) -> void {
+      if (!emitter_) {
+        return;
+      }
       diagnostic_.messages.emplace_back(DiagnosticMessage{
           .kind = diagnostic_base.Kind,
           .level = diagnostic_base.Level,

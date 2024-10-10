@@ -963,19 +963,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
                               "initialization of abstract type `{0}`",
                               SemIR::TypeId);
-            CARBON_DIAGNOSTIC(AbstractTypeInValueConversion, Error,
-                              "forming value of abstract type `{0}`",
-                              SemIR::TypeId);
-            CARBON_DIAGNOSTIC(AbstractTypeInConversion, Error,
-                              "invalid use of abstract type `{0}`",
-                              SemIR::TypeId);
-            return context.emitter().Build(
-                loc_id,
-                target.is_initializer() ? AbstractTypeInInit
-                : target.kind == ConversionTarget::Value
-                    ? AbstractTypeInValueConversion
-                    : AbstractTypeInConversion,
-                target.type_id);
+            if (!target.is_initializer()) {
+              return DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder();
+            }
+            // return // add support for creating a null DiagnosticBuilder and
+            //  return one here. Include null-testability and use that
+            //  to skip adding notes in the caller if it's null.
+            return context.emitter().Build(loc_id, AbstractTypeInInit,
+                                           target.type_id);
           })) {
     return SemIR::InstId::BuiltinError;
   }

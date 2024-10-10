@@ -1156,6 +1156,9 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
     }
 
     auto builder = abstract_diagnoser();
+    if (!builder) {
+      return false;
+    }
     NoteAbstractClass(class_type->class_id, builder);
     builder.Emit();
     return false;

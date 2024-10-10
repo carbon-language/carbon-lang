@@ -276,12 +276,10 @@ CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(NoPeriodSelfForDesignator)
 
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInAdaptDecl)
-CARBON_DIAGNOSTIC_KIND(AbstractTypeInConversion)  // untested?
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInInit)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInLetDecl)
-CARBON_DIAGNOSTIC_KIND(AbstractTypeInValueConversion)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarDecl)
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
