@@ -459,7 +459,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
 
-  // Adds a comment. This uses the indent to potential stitch together two
+  // Adds a comment. This uses the indent to potentially stitch together two
   // adjacent comments.
   auto AddComment(int32_t indent, int32_t start, int32_t end) -> void {
     if (!comments_.empty()) {
