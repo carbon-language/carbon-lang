@@ -875,9 +875,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     // whitespace, which already is designed to skip over any erroneous text at
     // the end of the line.
     LexVerticalWhitespace(source_text, position);
-    buffer_.comments_.push_back(
-        {.start = comment_start,
-         .length = static_cast<int32_t>(position) - comment_start});
+    buffer_.AddComment(line_info->indent, comment_start, position);
     return;
   }
 
@@ -981,9 +979,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     }
   }
 
-  buffer_.comments_.push_back(
-      {.start = comment_start,
-       .length = static_cast<int32_t>(position) - comment_start});
+  buffer_.AddComment(indent, comment_start, position);
 
   // Now compute the indent of this next line before we finish.
   ssize_t line_start = position;

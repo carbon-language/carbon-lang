@@ -47,11 +47,7 @@ class C {
 // CHECK:STDOUT:  }
 // CHECK:STDOUT: // Another
 // CHECK:STDOUT:   // Block
-// CHECK:STDOUT:
-// CHECK:STDOUT:
-// CHECK:STDOUT: //
-// CHECK:STDOUT:
-// CHECK:STDOUT:
-// CHECK:STDOUT: // Comment
+// CHECK:STDOUT:   //
+// CHECK:STDOUT:   // Comment
 // CHECK:STDOUT:
 // CHECK:STDOUT:
