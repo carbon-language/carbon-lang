@@ -44,17 +44,20 @@ class Formatter {
     NeedsSeparator,
   };
 
-  // Ensure output is on an empty line. May output a newline, dependent on line
-  // state. Does not indent, allowing blank lines.
+  // Ensure output is on an empty line, setting line_state_ to Empty. May output
+  // a newline, dependent on line state. Does not indent, allowing blank lines.
   auto RequireEmptyLine() -> void;
 
   // Ensures there is a separator before adding new content. May do
   // `PrepareForPackedContent` or output a separator space, dependent on line
-  // state.
+  // state. Always results in line_state_ being HasSeparator; the caller is
+  // responsible for adjusting state if needed.
   auto PrepareForSpacedContent() -> void;
 
   // Requires that the current line is indented, but not necessarily a separator
-  // space. May output spaces for `indent_`, dependent on line state.
+  // space. May output spaces for `indent_`, dependent on line state. Only
+  // guarantees the line_state_ is not Empty; the caller is responsible for
+  // adjusting state if needed.
   auto PrepareForPackedContent() -> void;
 
   // Returns the next token index.
