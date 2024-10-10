@@ -26,8 +26,8 @@ namespace Carbon::Check {
 // `self_id` and `arg_ids` are the self argument and explicit arguments in the
 // call.
 //
-// Returns a SpecificId for the specific callee, or `nullopt` if an error has
-// been diagnosed.
+// Returns a `SpecificId` for the specific callee, `SpecificId::Invalid` if the
+// callee is not generic, or `nullopt` if an error has been diagnosed.
 static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
                                 llvm::StringLiteral entity_kind_for_diagnostic,
