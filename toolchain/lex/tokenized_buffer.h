@@ -461,16 +461,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Adds a comment. This uses the indent to potentially stitch together two
   // adjacent comments.
-  auto AddComment(int32_t indent, int32_t start, int32_t end) -> void {
-    if (!comments_.empty()) {
-      auto& comment = comments_.back();
-      if (comment.start + comment.length + indent == start) {
-        comment.length = end - comment.start;
-        return;
-      }
-    }
-    comments_.push_back({.start = start, .length = end - start});
-  }
+  auto AddComment(int32_t indent, int32_t start, int32_t end) -> void;
 
   // Used to allocate computed string literals.
   llvm::BumpPtrAllocator allocator_;

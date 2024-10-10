@@ -357,6 +357,18 @@ auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
   return source_->text().substr(comment_data.start, comment_data.length);
 }
 
+auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end)
+    -> void {
+  if (!comments_.empty()) {
+    auto& comment = comments_.back();
+    if (comment.start + comment.length + indent == start) {
+      comment.length = end - comment.start;
+      return;
+    }
+  }
+  comments_.push_back({.start = start, .length = end - start});
+}
+
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
   mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
