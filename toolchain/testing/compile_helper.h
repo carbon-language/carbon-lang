@@ -22,54 +22,25 @@ class CompileHelper {
   // Returns the result of lex.
   auto GetTokenizedBuffer(llvm::StringRef text,
                           DiagnosticConsumer* consumer = nullptr)
-      -> Lex::TokenizedBuffer& {
-    auto& source = GetSourceBuffer(text);
+      -> Lex::TokenizedBuffer&;
 
-    value_store_storage_.emplace_front();
-    token_storage_.push_front(Lex::Lex(value_store_storage_.front(), source,
-                                       consumer ? *consumer : consumer_));
-    return token_storage_.front();
-  }
-
+  // Returns the result of lex along with shared values.
   auto GetTokenizedBufferWithSharedValueStore(llvm::StringRef text)
-      -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&> {
-    auto& tokens = GetTokenizedBuffer(text);
-    return {tokens, value_store_storage_.front()};
-  }
+      -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&>;
 
   // Returns the result of parse.
-  auto GetTree(llvm::StringRef text) -> Parse::Tree& {
-    auto& tokens = GetTokenizedBuffer(text);
-    tree_storage_.push_front(Parse::Parse(tokens, consumer_,
-                                          /*vlog_stream=*/nullptr));
-    return tree_storage_.front();
-  }
+  auto GetTree(llvm::StringRef text) -> Parse::Tree&;
 
   // Returns the result of parse (with extra subtree information).
-  auto GetTreeAndSubtrees(llvm::StringRef text) -> Parse::TreeAndSubtrees& {
-    auto& tree = GetTree(text);
-    tree_and_subtrees_storage_.push_front(
-        Parse::TreeAndSubtrees(token_storage_.front(), tree));
-    return tree_and_subtrees_storage_.front();
-  }
+  auto GetTreeAndSubtrees(llvm::StringRef text) -> Parse::TreeAndSubtrees&;
 
   // Returns the results of both lex and parse (with extra subtree information).
   auto GetTokenizedBufferWithTreeAndSubtrees(llvm::StringRef text)
-      -> std::pair<Lex::TokenizedBuffer&, Parse::TreeAndSubtrees&> {
-    auto& tree_and_subtrees = GetTreeAndSubtrees(text);
-    return {token_storage_.front(), tree_and_subtrees};
-  }
+      -> std::pair<Lex::TokenizedBuffer&, Parse::TreeAndSubtrees&>;
 
  private:
-  // Produces a source buffer for the input text.s
-  auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer& {
-    std::string filename = llvm::formatv("test{0}.carbon", ++file_index_);
-    CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
-                             llvm::MemoryBuffer::getMemBuffer(text)));
-    source_storage_.push_front(
-        std::move(*SourceBuffer::MakeFromFile(fs_, filename, consumer_)));
-    return source_storage_.front();
-  }
+  // Produces a source buffer for the input text.
+  auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer&;
 
   // Diagnostics will be printed to console.
   DiagnosticConsumer& consumer_ = ConsoleDiagnosticConsumer();

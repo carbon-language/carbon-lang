@@ -20,19 +20,23 @@
 #include "toolchain/testing/compile_helper.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Parse {
 namespace {
 
 using ::testing::ElementsAre;
 using ::testing::Pair;
 
+using ::Carbon::Testing::TestRawOstream;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
+
 class TreeTest : public ::testing::Test {
  protected:
-  CompileHelper compile_helper_;
+  Testing::CompileHelper compile_helper_;
 };
 
 TEST_F(TreeTest, IsValid) {
-  Parse::Tree& tree = compile_helper_.GetTree("");
+  Tree& tree = compile_helper_.GetTree("");
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
@@ -43,45 +47,43 @@ TEST_F(TreeTest, AsAndTryAs) {
   ASSERT_FALSE(tree.has_errors());
   auto it = tree_and_subtrees.roots().begin();
   // A FileEnd node, so won't match.
-  Parse::NodeId n = *it;
+  NodeId n = *it;
 
   // NodeIdForKind
-  std::optional<Parse::FunctionDeclId> fn_decl_id =
-      tree.TryAs<Parse::FunctionDeclId>(n);
+  std::optional<FunctionDeclId> fn_decl_id = tree.TryAs<FunctionDeclId>(n);
   EXPECT_FALSE(fn_decl_id.has_value());
   // NodeIdOneOf
-  std::optional<Parse::AnyFunctionDeclId> any_fn_decl_id =
-      tree.TryAs<Parse::AnyFunctionDeclId>(n);
+  std::optional<AnyFunctionDeclId> any_fn_decl_id =
+      tree.TryAs<AnyFunctionDeclId>(n);
   EXPECT_FALSE(any_fn_decl_id.has_value());
   // NodeIdInCategory
-  std::optional<Parse::AnyDeclId> any_decl_id = tree.TryAs<Parse::AnyDeclId>(n);
+  std::optional<AnyDeclId> any_decl_id = tree.TryAs<AnyDeclId>(n);
   EXPECT_FALSE(any_decl_id.has_value());
 
   ++it;
   n = *it;
   // A FunctionDecl node, so will match.
-  fn_decl_id = tree.TryAs<Parse::FunctionDeclId>(n);
+  fn_decl_id = tree.TryAs<FunctionDeclId>(n);
   ASSERT_TRUE(fn_decl_id.has_value());
   EXPECT_TRUE(*fn_decl_id == n);
   // Under normal usage, this function should be used with `auto`, but for
   // a test it is nice to verify that it is returning the expected type.
   // NOLINTNEXTLINE(modernize-use-auto).
-  Parse::FunctionDeclId fn_decl_id2 = tree.As<Parse::FunctionDeclId>(n);
+  FunctionDeclId fn_decl_id2 = tree.As<FunctionDeclId>(n);
   EXPECT_TRUE(*fn_decl_id == fn_decl_id2);
 
-  any_fn_decl_id = tree.TryAs<Parse::AnyFunctionDeclId>(n);
+  any_fn_decl_id = tree.TryAs<AnyFunctionDeclId>(n);
   ASSERT_TRUE(any_fn_decl_id.has_value());
   EXPECT_TRUE(*any_fn_decl_id == n);
   // NOLINTNEXTLINE(modernize-use-auto).
-  Parse::AnyFunctionDeclId any_fn_decl_id2 =
-      tree.As<Parse::AnyFunctionDeclId>(n);
+  AnyFunctionDeclId any_fn_decl_id2 = tree.As<AnyFunctionDeclId>(n);
   EXPECT_TRUE(*any_fn_decl_id == any_fn_decl_id2);
 
-  any_decl_id = tree.TryAs<Parse::AnyDeclId>(n);
+  any_decl_id = tree.TryAs<AnyDeclId>(n);
   ASSERT_TRUE(any_decl_id.has_value());
   EXPECT_TRUE(*any_decl_id == n);
   // NOLINTNEXTLINE(modernize-use-auto).
-  Parse::AnyDeclId any_decl_id2 = tree.As<Parse::AnyDeclId>(n);
+  AnyDeclId any_decl_id2 = tree.As<AnyDeclId>(n);
   EXPECT_TRUE(*any_decl_id == any_decl_id2);
 }
 
@@ -163,9 +165,9 @@ TEST_F(TreeTest, HighRecursion) {
   Lex::TokenizedBuffer& tokens = compile_helper_.GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  Parse::Tree tree = Parse::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Parse

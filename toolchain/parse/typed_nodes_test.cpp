@@ -36,22 +36,19 @@ class TypedNodesTestPeer {
   }
 };
 
-}  // namespace Carbon::Parse
-
-namespace Carbon::Testing {
 namespace {
 
 // Check that each node kind defines a Kind member using the correct
 // NodeKind enumerator.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  static_assert(Parse::Name::Kind == Parse::NodeKind::Name, #Name);
+  static_assert(Name::Kind == NodeKind::Name, #Name);
 #include "toolchain/parse/node_kind.def"
 
 class TypedNodeTest : public ::testing::Test {
  protected:
-  using Peer = Parse::TypedNodesTestPeer;
+  using Peer = TypedNodesTestPeer;
 
-  CompileHelper compile_helper_;
+  Testing::CompileHelper compile_helper_;
 };
 
 TEST_F(TypedNodeTest, Empty) {
@@ -59,15 +56,15 @@ TEST_F(TypedNodeTest, Empty) {
   auto file = tree.ExtractFile();
 
   EXPECT_TRUE(tree.tree().IsValid(file.start));
-  EXPECT_TRUE(tree.ExtractAs<Parse::FileStart>(file.start).has_value());
+  EXPECT_TRUE(tree.ExtractAs<FileStart>(file.start).has_value());
   EXPECT_TRUE(tree.Extract(file.start).has_value());
 
   EXPECT_TRUE(tree.tree().IsValid(file.end));
-  EXPECT_TRUE(tree.ExtractAs<Parse::FileEnd>(file.end).has_value());
+  EXPECT_TRUE(tree.ExtractAs<FileEnd>(file.end).has_value());
   EXPECT_TRUE(tree.Extract(file.end).has_value());
 
-  EXPECT_FALSE(tree.tree().IsValid<Parse::FileEnd>(file.start));
-  EXPECT_FALSE(tree.ExtractAs<Parse::FileEnd>(file.start).has_value());
+  EXPECT_FALSE(tree.tree().IsValid<FileEnd>(file.start));
+  EXPECT_FALSE(tree.ExtractAs<FileEnd>(file.start).has_value());
 }
 
 TEST_F(TypedNodeTest, Function) {
@@ -79,14 +76,14 @@ TEST_F(TypedNodeTest, Function) {
 
   ASSERT_EQ(file.decls.size(), 2);
 
-  auto f_fn = tree.ExtractAs<Parse::FunctionDefinition>(file.decls[0]);
+  auto f_fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
   auto f_sig = tree.Extract(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.has_value());
   EXPECT_TRUE(f_sig->modifiers.empty());
 
-  auto g_fn = tree.ExtractAs<Parse::FunctionDecl>(file.decls[1]);
+  auto g_fn = tree.ExtractAs<FunctionDecl>(file.decls[1]);
   ASSERT_TRUE(g_fn.has_value());
   EXPECT_TRUE(g_fn->return_type.has_value());
   EXPECT_FALSE(g_fn->modifiers.empty());
@@ -100,19 +97,15 @@ TEST_F(TypedNodeTest, ModifierOrder) {
 
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto decl = tree.ExtractAs<Parse::InterfaceDecl>(file.decls[0]);
+  auto decl = tree.ExtractAs<InterfaceDecl>(file.decls[0]);
   ASSERT_TRUE(decl.has_value());
   ASSERT_EQ(decl->modifiers.size(), 4);
   // Note that the order here matches the source order, but is reversed from
   // sibling iteration order.
-  ASSERT_TRUE(
-      tree.ExtractAs<Parse::PrivateModifier>(decl->modifiers[0]).has_value());
-  ASSERT_TRUE(
-      tree.ExtractAs<Parse::AbstractModifier>(decl->modifiers[1]).has_value());
-  ASSERT_TRUE(
-      tree.ExtractAs<Parse::VirtualModifier>(decl->modifiers[2]).has_value());
-  ASSERT_TRUE(
-      tree.ExtractAs<Parse::DefaultModifier>(decl->modifiers[3]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<PrivateModifier>(decl->modifiers[0]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<AbstractModifier>(decl->modifiers[1]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<VirtualModifier>(decl->modifiers[2]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<DefaultModifier>(decl->modifiers[3]).has_value());
 }
 
 TEST_F(TypedNodeTest, For) {
@@ -126,20 +119,18 @@ TEST_F(TypedNodeTest, For) {
   auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
-  auto fn = tree.ExtractAs<Parse::FunctionDefinition>(file.decls[0]);
+  auto fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(fn.has_value());
   ASSERT_EQ(fn->body.size(), 1);
-  auto for_stmt = tree.ExtractAs<Parse::ForStatement>(fn->body[0]);
+  auto for_stmt = tree.ExtractAs<ForStatement>(fn->body[0]);
   ASSERT_TRUE(for_stmt.has_value());
   auto for_header = tree.Extract(for_stmt->header);
   ASSERT_TRUE(for_header.has_value());
   auto for_var = tree.Extract(for_header->var);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding =
-      tree.ExtractAs<Parse::BindingPattern>(for_var->pattern);
+  auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var->pattern);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name =
-      tree.ExtractAs<Parse::IdentifierName>(for_var_binding->name);
+  auto for_var_name = tree.ExtractAs<IdentifierName>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 
@@ -152,7 +143,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
   auto library =
-      Peer::VerifyExtractAs<Parse::LibraryDecl>(tree, file.decls[0], &trace);
+      Peer::VerifyExtractAs<LibraryDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -176,8 +167,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto var =
-      Peer::VerifyExtractAs<Parse::VariableDecl>(tree, file.decls[0], &trace);
+  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace);
   ASSERT_TRUE(var.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -208,8 +198,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace1;
-  auto var =
-      Peer::VerifyExtractAs<Parse::VariableDecl>(tree, file.decls[0], &trace1);
+  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace1);
   ASSERT_TRUE(var.has_value());
   Error err1 = trace1;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -234,7 +223,7 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto value = Peer::VerifyExtractAs<Parse::MemberAccessExpr>(
+  auto value = Peer::VerifyExtractAs<MemberAccessExpr>(
       tree, var->initializer->value, &trace2);
   ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
@@ -256,7 +245,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
   auto class_decl =
-      Peer::VerifyExtractAs<Parse::ClassDecl>(tree, file.decls[0], &trace);
+      Peer::VerifyExtractAs<ClassDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(class_decl.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -296,15 +285,15 @@ TEST_F(TypedNodeTest, Token) {
 
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto n_var = tree.ExtractAs<Parse::VariableDecl>(file.decls[0]);
+  auto n_var = tree.ExtractAs<VariableDecl>(file.decls[0]);
   ASSERT_TRUE(n_var.has_value());
   EXPECT_EQ(tokens.GetKind(n_var->token), Lex::TokenKind::Semi);
 
-  auto n_intro = tree.ExtractAs<Parse::VariableIntroducer>(n_var->introducer);
+  auto n_intro = tree.ExtractAs<VariableIntroducer>(n_var->introducer);
   ASSERT_TRUE(n_intro.has_value());
   EXPECT_EQ(tokens.GetKind(n_intro->token), Lex::TokenKind::Var);
 
-  auto n_patt = tree.ExtractAs<Parse::BindingPattern>(n_var->pattern);
+  auto n_patt = tree.ExtractAs<BindingPattern>(n_var->pattern);
   ASSERT_TRUE(n_patt.has_value());
   EXPECT_EQ(tokens.GetKind(n_patt->token), Lex::TokenKind::Colon);
 }
@@ -317,22 +306,21 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   auto file = tree.ExtractFile();
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto f_fn = tree.ExtractAs<Parse::FunctionDefinition>(file.decls[0]);
+  auto f_fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
-  auto f_sig = tree.ExtractAs<Parse::FunctionDefinitionStart>(f_fn->signature);
+  auto f_sig = tree.ExtractAs<FunctionDefinitionStart>(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
-  auto f_intro = tree.ExtractAs<Parse::FunctionIntroducer>(f_sig->introducer);
+  auto f_intro = tree.ExtractAs<FunctionIntroducer>(f_sig->introducer);
   ASSERT_TRUE(f_intro.has_value());
 
   // Change the kind of the introducer and check we get a good trace log.
-  Peer::SetNodeKind(tree.tree(), f_sig->introducer,
-                    Parse::NodeKind::ClassIntroducer);
+  Peer::SetNodeKind(tree.tree(), f_sig->introducer, NodeKind::ClassIntroducer);
 
   // The introducer should not extract as a FunctionIntroducer any more because
   // the kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<Parse::FunctionIntroducer>(
+    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionIntroducer>(
         tree, f_sig->introducer, &trace));
 
     Error err = trace;
@@ -345,8 +333,8 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // token kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<Parse::ClassIntroducer>(
-        tree, f_sig->introducer, &trace));
+    EXPECT_FALSE(Peer::VerifyExtractAs<ClassIntroducer>(tree, f_sig->introducer,
+                                                        &trace));
 
     Error err = trace;
     EXPECT_THAT(err.message(),
@@ -358,7 +346,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // kind for the introducer is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(Peer::VerifyExtractAs<Parse::FunctionDefinitionStart>(
+    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionDefinitionStart>(
         tree, f_fn->signature, &trace));
 
     Error err = trace;
@@ -370,16 +358,16 @@ Error: ClassIntroducer node left unconsumed.)Trace"));
   }
 }
 
-auto CategoryMatches(const Parse::NodeKind::Definition& def,
-                     Parse::NodeKind kind, const char* name) {
+auto CategoryMatches(const NodeKind::Definition& def, NodeKind kind,
+                     const char* name) {
   EXPECT_EQ(def.category(), kind.category()) << name;
 }
 
 TEST_F(TypedNodeTest, CategoryMatches) {
 #define CARBON_PARSE_NODE_KIND(Name) \
-  CategoryMatches(Parse::Name::Kind, Parse::NodeKind::Name, #Name);
+  CategoryMatches(Name::Kind, NodeKind::Name, #Name);
 #include "toolchain/parse/node_kind.def"
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Parse

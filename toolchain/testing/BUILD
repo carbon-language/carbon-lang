@@ -11,6 +11,7 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "compile_helper",
     testonly = 1,
+    srcs = ["compile_helper.cpp"],
     hdrs = ["compile_helper.h"],
     deps = [
         "//toolchain/diagnostics:diagnostic_emitter",
