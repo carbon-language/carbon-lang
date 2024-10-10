@@ -13,7 +13,7 @@ abstract class Abstract {
 }
 
 class Contains {
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: Field has abstract type `Abstract`
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: field has abstract type `Abstract`
   // CHECK:STDERR:   var a: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:1: note: class was declared abstract here
@@ -87,7 +87,7 @@ fn Access(d: Derived) -> (i32, i32) {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: Variable has abstract type `Abstract`
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE-82]]:1: note: class was declared abstract here
