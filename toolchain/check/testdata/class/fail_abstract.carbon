@@ -42,13 +42,6 @@ fn Call(p: Abstract*) {
   Param(*p);
 }
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: parameter has abstract type `Abstract` in function definition
-// CHECK:STDERR: fn Param(a: Abstract) {
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE-37]]:1: note: class was declared abstract here
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn Param(a: Abstract) {
 }
 
@@ -63,7 +56,7 @@ fn Make() -> Derived {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:10: error: initialization of abstract type `Abstract`
   // CHECK:STDERR:   return {.base = {.a = 1}, .d = 7};
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-55]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-48]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -75,7 +68,7 @@ fn Return() -> Abstract {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract`
   // CHECK:STDERR:   return d.base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-67]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-60]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -90,7 +83,7 @@ fn Var() {
   // CHECK:STDERR: fail_abstract.carbon:[[@LINE+6]]:10: error: variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-82]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-75]]:1: note: class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   var v: Abstract;
