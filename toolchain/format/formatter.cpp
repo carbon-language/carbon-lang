@@ -26,8 +26,8 @@ auto Formatter::Run() -> bool {
 
     while (comment_it != comments.end() &&
            tokens_->IsAfterComment(token, *comment_it)) {
-      AddNewline();
-      AddWhitespace();
+      RequireEmptyLine();
+      PrepareForSpacedContent();
       // TODO: We do need to adjust the indent of multi-line comments.
       *out_ << tokens_->GetCommentText(*comment_it);
       // Comment text includes a terminating newline, so just update the state.
@@ -40,43 +40,43 @@ auto Formatter::Run() -> bool {
         break;
 
       case Lex::TokenKind::FileEnd:
-        AddNewline();
+        RequireEmptyLine();
         break;
 
       case Lex::TokenKind::OpenCurlyBrace:
-        AddWhitespace();
+        PrepareForSpacedContent();
         *out_ << "{";
         // Check for `{}`.
         if (NextToken(token) != tokens_->GetMatchedClosingToken(token)) {
-          AddNewline();
+          RequireEmptyLine();
         }
         indent_ += 2;
         break;
 
       case Lex::TokenKind::CloseCurlyBrace:
         indent_ -= 2;
-        AddIndent();
+        PrepareForPackedContent();
         *out_ << "}";
-        AddNewline();
+        RequireEmptyLine();
         break;
 
       case Lex::TokenKind::Semi:
-        AddIndent();
+        PrepareForPackedContent();
         *out_ << ";";
-        AddNewline();
+        RequireEmptyLine();
         break;
 
       default:
         if (token_kind.IsOneOf(
                 {Lex::TokenKind::CloseParen, Lex::TokenKind::Colon,
                  Lex::TokenKind::ColonExclaim, Lex::TokenKind::Comma})) {
-          AddIndent();
+          PrepareForPackedContent();
         } else {
-          AddWhitespace();
+          PrepareForSpacedContent();
         }
         *out_ << tokens_->GetTokenText(token);
         if (!token_kind.is_opening_symbol()) {
-          line_state_ = LineState::WantsSpace;
+          line_state_ = LineState::NeedsSeparator;
         }
         break;
     }
@@ -84,26 +84,26 @@ auto Formatter::Run() -> bool {
   return true;
 }
 
-auto Formatter::AddIndent() -> void {
+auto Formatter::PrepareForPackedContent() -> void {
   if (line_state_ == LineState::Empty) {
     out_->indent(indent_);
-    line_state_ = LineState::HasContent;
+    line_state_ = LineState::HasSeparator;
   }
 }
 
-auto Formatter::AddNewline() -> void {
+auto Formatter::RequireEmptyLine() -> void {
   if (line_state_ != LineState::Empty) {
     *out_ << "\n";
     line_state_ = LineState::Empty;
   }
 }
 
-auto Formatter::AddWhitespace() -> void {
-  if (line_state_ == LineState::WantsSpace) {
+auto Formatter::PrepareForSpacedContent() -> void {
+  if (line_state_ == LineState::NeedsSeparator) {
     *out_ << " ";
-    line_state_ = LineState::HasContent;
+    line_state_ = LineState::HasSeparator;
   } else {
-    AddIndent();
+    PrepareForPackedContent();
   }
 }
 

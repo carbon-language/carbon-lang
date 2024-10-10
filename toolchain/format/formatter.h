@@ -36,21 +36,26 @@ class Formatter {
   enum class LineState : uint8_t {
     // There is no output for the current line.
     Empty,
-    // The current line has been indented, and may have text.
-    HasContent,
-    // If more output is added to the current line, add a space first.
-    WantsSpace,
+    // The current line has content (possibly just an indent), and does not need
+    // a separator added.
+    HasSeparator,
+    // The current line has content, and will need a separator, typically a
+    // single space or newline.
+    NeedsSeparator,
   };
 
-  // May output spaces for `indent_`, dependent on line state.
-  auto AddIndent() -> void;
+  // Ensure output is on an empty line. May output a newline, dependent on line
+  // state. Does not indent, allowing blank lines.
+  auto RequireEmptyLine() -> void;
 
-  // May output a newline, dependent on line state. Does not indent, allowing
-  // blank lines.
-  auto AddNewline() -> void;
+  // Ensures there is spacing before adding new content. May do
+  // `PrepareForPackedContent` or output a separator space, dependent on line
+  // state.
+  auto PrepareForSpacedContent() -> void;
 
-  // May do `AddIndent` or output a separator space, dependent on line state.
-  auto AddWhitespace() -> void;
+  // Requires that the correct line is indented, but not necessarily a separator
+  // space. May output spaces for `indent_`, dependent on line state.
+  auto PrepareForPackedContent() -> void;
 
   // Returns the next token index.
   static auto NextToken(Lex::TokenIndex token) -> Lex::TokenIndex {
