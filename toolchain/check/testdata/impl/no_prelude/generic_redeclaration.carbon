@@ -102,10 +102,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.param: %I.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %.loc11_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %.loc11_21.2: type = converted %T.ref, %.loc11_21.1 [symbolic = %T.1 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc11_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc11_14.1 [symbolic = %T.loc11_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc11_21.1: type = facet_type_access %T.ref [symbolic = %T.loc11_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc11_21.2: type = converted %T.ref, %.loc11_21.1 [symbolic = %T.loc11_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {
@@ -113,10 +113,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %T.param: %J.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %.loc12_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %.loc12_21.2: type = converted %T.ref, %.loc12_21.1 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %T.loc12_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc12_21.1: type = facet_type_access %T.ref [symbolic = %T.loc12_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc12_21.2: type = converted %T.ref, %.loc12_21.1 [symbolic = %T.loc12_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {
@@ -124,10 +124,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:     %T.param: %K.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %T.ref: %K.type = name_ref T, %T.loc13 [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %.loc13_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %.loc13_21.2: type = converted %T.ref, %.loc13_21.1 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT:     %T.loc13_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %T.ref: %K.type = name_ref T, %T.loc13_14.1 [symbolic = %T.loc13_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %.loc13_21.1: type = facet_type_access %T.ref [symbolic = %T.loc13_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %.loc13_21.2: type = converted %T.ref, %.loc13_21.1 [symbolic = %T.loc13_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {
@@ -135,10 +135,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [template = constants.%L.type]
 // CHECK:STDOUT:     %T.param: %L.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %T.ref: %L.type = name_ref T, %T.loc14 [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %.loc14_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref, %.loc14_21.1 [symbolic = %T.1 (constants.%T.4)]
+// CHECK:STDOUT:     %T.loc14_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %T.ref: %L.type = name_ref T, %T.loc14_14.1 [symbolic = %T.loc14_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %.loc14_21.1: type = facet_type_access %T.ref [symbolic = %T.loc14_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref, %.loc14_21.1 [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {
@@ -146,10 +146,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.param: %I.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc18: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc18 [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %.loc18_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:     %.loc18_21.2: type = converted %T.ref, %.loc18_21.1 [symbolic = %T.1 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc18_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc18_14.1 [symbolic = %T.loc18_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc18_21.1: type = facet_type_access %T.ref [symbolic = %T.loc18_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %.loc18_21.2: type = converted %T.ref, %.loc18_21.1 [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {
@@ -157,10 +157,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %T.param: %J.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc19: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc19 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %.loc19_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:     %.loc19_21.2: type = converted %T.ref, %.loc19_21.1 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %T.loc19_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc19_14.1 [symbolic = %T.loc19_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc19_21.1: type = facet_type_access %T.ref [symbolic = %T.loc19_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %.loc19_21.2: type = converted %T.ref, %.loc19_21.1 [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {
@@ -168,10 +168,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:     %T.param: %K.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc20: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %T.ref: %K.type = name_ref T, %T.loc20 [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %.loc20_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.3)]
-// CHECK:STDOUT:     %.loc20_21.2: type = converted %T.ref, %.loc20_21.1 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT:     %T.loc20_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc20_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %T.ref: %K.type = name_ref T, %T.loc20_14.1 [symbolic = %T.loc20_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %.loc20_21.1: type = facet_type_access %T.ref [symbolic = %T.loc20_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %.loc20_21.2: type = converted %T.ref, %.loc20_21.1 [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {
@@ -179,10 +179,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [template = constants.%L.type]
 // CHECK:STDOUT:     %T.param: %L.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc21: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %T.ref: %L.type = name_ref T, %T.loc21 [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %.loc21_21.1: type = facet_type_access %T.ref [symbolic = %T.1 (constants.%T.4)]
-// CHECK:STDOUT:     %.loc21_21.2: type = converted %T.ref, %.loc21_21.1 [symbolic = %T.1 (constants.%T.4)]
+// CHECK:STDOUT:     %T.loc21_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %T.ref: %L.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %.loc21_21.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %.loc21_21.2: type = converted %T.ref, %.loc21_21.1 [symbolic = %T.loc21_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -227,32 +227,34 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(%T.loc11: %I.type) {
-// CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
+// CHECK:STDOUT: generic impl @impl.1(%T.loc11_14.1: %I.type) {
+// CHECK:STDOUT:   %T.loc11_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc11_14.2 (constants.%T.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc11_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(%T.loc12: %J.type) {
-// CHECK:STDOUT:   %T.1: %J.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT: generic impl @impl.2(%T.loc12_14.1: %J.type) {
+// CHECK:STDOUT:   %T.loc12_14.2: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc12_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.3(%T.loc13: %K.type) {
-// CHECK:STDOUT:   %T.1: %K.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT: generic impl @impl.3(%T.loc13_14.1: %K.type) {
+// CHECK:STDOUT:   %T.loc13_14.2: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_14.2 (constants.%T.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc13_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.4(%T.loc14: %L.type) {
-// CHECK:STDOUT:   %T.1: %L.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.4)]
+// CHECK:STDOUT: generic impl @impl.4(%T.loc14_14.1: %L.type) {
+// CHECK:STDOUT:   %T.loc14_14.2: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc14_21.2 as %Interface.ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.5(%T.loc18: %I.type) {
-// CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
+// CHECK:STDOUT: generic impl @impl.5(%T.loc18_14.1: %I.type) {
+// CHECK:STDOUT:   %T.loc18_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc18_14.2 (constants.%T.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.2]
@@ -262,8 +264,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.6(%T.loc19: %J.type) {
-// CHECK:STDOUT:   %T.1: %J.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT: generic impl @impl.6(%T.loc19_14.1: %J.type) {
+// CHECK:STDOUT:   %T.loc19_14.2: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_14.2 (constants.%T.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc19_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.2]
@@ -273,8 +277,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.7(%T.loc20: %K.type) {
-// CHECK:STDOUT:   %T.1: %K.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.3)]
+// CHECK:STDOUT: generic impl @impl.7(%T.loc20_14.1: %K.type) {
+// CHECK:STDOUT:   %T.loc20_14.2: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc20_14.2 (constants.%T.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc20_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.2]
@@ -284,8 +290,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.8(%T.loc21: %L.type) {
-// CHECK:STDOUT:   %T.1: %L.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.4)]
+// CHECK:STDOUT: generic impl @impl.8(%T.loc21_14.1: %L.type) {
+// CHECK:STDOUT:   %T.loc21_14.2: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc21_14.2 (constants.%T.4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc21_21.2 as %Interface.ref {
 // CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.2]
@@ -296,35 +304,35 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.1(constants.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT:   %T.loc11_14.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T.2) {
-// CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.3(constants.%T.3) {
-// CHECK:STDOUT:   %T.1 => constants.%T.3
+// CHECK:STDOUT:   %T.loc13_14.2 => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.4(constants.%T.4) {
-// CHECK:STDOUT:   %T.1 => constants.%T.4
+// CHECK:STDOUT:   %T.loc14_14.2 => constants.%T.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.5(constants.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T.1
+// CHECK:STDOUT:   %T.loc18_14.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.6(constants.%T.2) {
-// CHECK:STDOUT:   %T.1 => constants.%T.2
+// CHECK:STDOUT:   %T.loc19_14.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.7(constants.%T.3) {
-// CHECK:STDOUT:   %T.1 => constants.%T.3
+// CHECK:STDOUT:   %T.loc20_14.2 => constants.%T.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.8(constants.%T.4) {
-// CHECK:STDOUT:   %T.1 => constants.%T.4
+// CHECK:STDOUT:   %T.loc21_14.2 => constants.%T.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
@@ -351,10 +359,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.param.loc7: %I.type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc7: %I.type = bind_symbolic_name T, 0, %T.param.loc7 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc7: %I.type = name_ref T, %T.loc7 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_21.1: type = facet_type_access %T.ref.loc7 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_21.2: type = converted %T.ref.loc7, %.loc7_21.1 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0, %T.param.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc7: %I.type = name_ref T, %T.loc7_14.1 [symbolic = %T.loc7_14.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc7_21.1: type = facet_type_access %T.ref.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc7_21.2: type = converted %T.ref.loc7, %.loc7_21.1 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:     %J.ref.loc7: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
@@ -386,8 +394,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc7: %I.type) {
-// CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic impl @impl(%T.loc7_14.1: %I.type) {
+// CHECK:STDOUT:   %T.loc7_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_14.2 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7_21.2 as %J.ref.loc7 {
 // CHECK:STDOUT:   !members:
@@ -396,7 +406,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- same_type_different_spelling.carbon

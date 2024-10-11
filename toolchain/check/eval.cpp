@@ -512,7 +512,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
               .Get(bound->int_id)
               .ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
-                          "array index `{0}` is past the end of type `{1}`",
+                          "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
             index_inst.index_id, ArrayIndexOutOfBounds,
@@ -1190,8 +1190,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildAndValidateIfFieldsAreConstant(
           eval_context, inst,
           [&](SemIR::IntType result) {
-            return ValidateIntType(eval_context.context(),
-                                   int_type.bit_width_id, result);
+            return ValidateIntType(
+                eval_context.context(),
+                inst_id.is_valid() ? inst_id : int_type.bit_width_id, result);
           },
           &SemIR::IntType::bit_width_id);
     }
@@ -1207,6 +1208,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           },
           &SemIR::FloatType::bit_width_id);
     }
+    case SemIR::SpecificFunction::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::SpecificFunction::callee_id,
+                                        &SemIR::SpecificFunction::specific_id);
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::StructType::fields_id);
@@ -1433,15 +1438,14 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // `const (const T)` evaluates to `const T`. Otherwise, `const T` evaluates
     // to itself.
     case CARBON_KIND(SemIR::ConstType typed_inst): {
-      auto inner_id = eval_context.GetConstantValue(typed_inst.inner_id);
-      if (inner_id.is_constant() &&
-          eval_context.insts()
-              .Get(eval_context.constant_values().GetInstId(inner_id))
-              .Is<SemIR::ConstType>()) {
-        return inner_id;
+      auto phase = Phase::Template;
+      auto inner_id =
+          GetConstantValue(eval_context, typed_inst.inner_id, &phase);
+      if (eval_context.context().types().Is<SemIR::ConstType>(inner_id)) {
+        return eval_context.context().types().GetConstantId(inner_id);
       }
-      return MakeConstantResult(eval_context.context(), inst,
-                                GetPhase(inner_id));
+      typed_inst.inner_id = inner_id;
+      return MakeConstantResult(eval_context.context(), typed_inst, phase);
     }
 
     // These cases are either not expressions or not constant.

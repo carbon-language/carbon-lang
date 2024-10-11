@@ -59,6 +59,10 @@ class ToolchainFileTest : public FileTestBase {
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
+    if (component_ == "format") {
+      return {"format", "%s"};
+    }
+
     llvm::SmallVector<std::string> args = {"compile",
                                            "--phase=" + component_.str()};
 

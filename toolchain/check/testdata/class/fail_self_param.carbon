@@ -52,13 +52,13 @@ var v: C(0);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %self.patt: type = symbolic_binding_pattern self, 0
-// CHECK:STDOUT:     %x.patt: @C.%self.1 (%self) = symbolic_binding_pattern x, 1
+// CHECK:STDOUT:     %x.patt: @C.%self.loc14_9.2 (%self) = symbolic_binding_pattern x, 1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: type = param self, runtime_param<invalid>
-// CHECK:STDOUT:     %self.loc14: type = bind_symbolic_name self, 0, %self.param [symbolic = %self.1 (constants.%self)]
-// CHECK:STDOUT:     %self.ref: type = name_ref self, %self.loc14 [symbolic = %self.1 (constants.%self)]
-// CHECK:STDOUT:     %x.param: @C.%self.1 (%self) = param x, runtime_param<invalid>
-// CHECK:STDOUT:     %x.loc14: @C.%self.1 (%self) = bind_symbolic_name x, 1, %x.param [symbolic = %x.1 (constants.%x)]
+// CHECK:STDOUT:     %self.loc14_9.1: type = bind_symbolic_name self, 0, %self.param [symbolic = %self.loc14_9.2 (constants.%self)]
+// CHECK:STDOUT:     %self.ref: type = name_ref self, %self.loc14_9.1 [symbolic = %self.loc14_9.2 (constants.%self)]
+// CHECK:STDOUT:     %x.param: @C.%self.loc14_9.2 (%self) = param x, runtime_param<invalid>
+// CHECK:STDOUT:     %x.loc14_22.1: @C.%self.loc14_9.2 (%self) = bind_symbolic_name x, 1, %x.param [symbolic = %x.loc14_22.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.4]
@@ -67,9 +67,9 @@ var v: C(0);
 // CHECK:STDOUT:   %v: ref %C.3 = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%self.loc14: type, %x.loc14: @C.%self.1 (%self)) {
-// CHECK:STDOUT:   %self.1: type = bind_symbolic_name self, 0 [symbolic = %self.1 (constants.%self)]
-// CHECK:STDOUT:   %x.1: %self = bind_symbolic_name x, 1 [symbolic = %x.1 (constants.%x)]
+// CHECK:STDOUT: generic class @C(%self.loc14_9.1: type, %x.loc14_22.1: @C.%self.loc14_9.2 (%self)) {
+// CHECK:STDOUT:   %self.loc14_9.2: type = bind_symbolic_name self, 0 [symbolic = %self.loc14_9.2 (constants.%self)]
+// CHECK:STDOUT:   %x.loc14_22.2: %self = bind_symbolic_name x, 1 [symbolic = %x.loc14_22.2 (constants.%x)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -82,13 +82,13 @@ var v: C(0);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%self, constants.%x) {
-// CHECK:STDOUT:   %self.1 => constants.%self
-// CHECK:STDOUT:   %x.1 => constants.%x
+// CHECK:STDOUT:   %self.loc14_9.2 => constants.%self
+// CHECK:STDOUT:   %x.loc14_22.2 => constants.%x
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(i32, constants.%.4) {
-// CHECK:STDOUT:   %self.1 => i32
-// CHECK:STDOUT:   %x.1 => constants.%.4
+// CHECK:STDOUT:   %self.loc14_9.2 => i32
+// CHECK:STDOUT:   %x.loc14_22.2 => constants.%.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

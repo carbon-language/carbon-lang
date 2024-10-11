@@ -34,7 +34,7 @@ auto CheckFunctionTypeMatches(Context& context,
                                                   prev_return_type_id)) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
-        "function redeclaration differs because return type is `{0}`",
+        "function redeclaration differs because return type is {0}",
         SemIR::TypeId);
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
@@ -48,7 +48,7 @@ auto CheckFunctionTypeMatches(Context& context,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
-                        "previously declared with return type `{0}`",
+                        "previously declared with return type {0}",
                         SemIR::TypeId);
       diag.Note(prev_function.latest_decl_id(),
                 FunctionRedeclReturnTypePrevious, prev_return_type_id);
@@ -77,8 +77,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
   if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "function returns incomplete type `{0}`",
-                        SemIR::TypeId);
+                        "function returns incomplete type {0}", SemIR::TypeId);
       return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                      return_info.type_id);
     };

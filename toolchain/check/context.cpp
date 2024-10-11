@@ -363,7 +363,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   auto class_info = context.classes().Get(class_type->class_id);
 
   CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "cannot access {0} member `{1}` of type `{2}`",
+                    "cannot access {0} member `{1}` of type {2}",
                     SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
                     "the {0} member `{1}` is defined here", SemIR::AccessKind,
@@ -929,6 +929,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
       case SemIR::BuiltinInstKind::WitnessType:
+      case SemIR::BuiltinInstKind::SpecificFunctionType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinInstKind::StringType:
@@ -1109,7 +1110,7 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     // Use overload resolution to select the implementation, producing compile
-    // errors when BuildTypeForInst isn't defined for a given instruction.
+    // errors when BuildValueReprForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                  \
   case CARBON_KIND(SemIR::Name typed_inst): {          \

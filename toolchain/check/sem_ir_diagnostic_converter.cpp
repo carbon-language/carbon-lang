@@ -4,6 +4,7 @@
 
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 
+#include "toolchain/sem_ir/stringify_type.h"
 namespace Carbon::Check {
 
 auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
@@ -132,8 +133,33 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* name_id = llvm::any_cast<SemIR::NameId>(&arg)) {
     return sem_ir_->names().GetFormatted(*name_id).str();
   }
+  if (auto* type_of_expr = llvm::any_cast<TypeOfInstId>(&arg)) {
+    if (!type_of_expr->inst_id.is_valid()) {
+      return "<none>";
+    }
+    // TODO: Where possible, produce a better description of the type based on
+    // the expression.
+    return "`" +
+           StringifyTypeExpr(
+               *sem_ir_,
+               sem_ir_->types().GetInstId(
+                   sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
+           "`";
+  }
+  if (auto* type_expr = llvm::any_cast<InstIdAsType>(&arg)) {
+    return "`" + StringifyTypeExpr(*sem_ir_, type_expr->inst_id) + "`";
+  }
+  if (auto* type_expr = llvm::any_cast<InstIdAsRawType>(&arg)) {
+    return StringifyTypeExpr(*sem_ir_, type_expr->inst_id);
+  }
+  if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
+    return StringifyTypeExpr(*sem_ir_,
+                             sem_ir_->types().GetInstId(type->type_id));
+  }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
-    return sem_ir_->StringifyType(*type_id);
+    return "`" +
+           StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) +
+           "`";
   }
   if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
     return llvm::APSInt(typed_int->value,

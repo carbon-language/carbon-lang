@@ -67,7 +67,7 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: <error> = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc7: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_6.1: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,13 +75,13 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc7: <error>) {
-// CHECK:STDOUT:   %T.1: <error> = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc7_6.1: <error>) {
+// CHECK:STDOUT:   %T.loc7_6.2: <error> = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc7: <error>);
+// CHECK:STDOUT:   fn(%T.loc7_6.1: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

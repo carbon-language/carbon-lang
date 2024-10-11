@@ -218,7 +218,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param.loc7: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type.1 = interface_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
@@ -232,7 +232,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param.loc10: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc10: %C = bind_symbolic_name a, 0, %a.param.loc10 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc10_15.1: %C = bind_symbolic_name a, 0, %a.param.loc10 [symbolic = %a.loc10_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type.1 = interface_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
@@ -243,11 +243,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc7_15.1: %C) {
+// CHECK:STDOUT:   %a.loc7_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.1) [symbolic = %Foo.type (constants.%Foo.type.2)]
+// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.loc7_15.2) [symbolic = %Foo.type (constants.%Foo.type.2)]
 // CHECK:STDOUT:   %Self.2: %Foo.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -259,11 +259,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar(%a.loc10: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Bar(%a.loc10_15.1: %C) {
+// CHECK:STDOUT:   %a.loc10_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc10_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Bar.type: type = interface_type @Bar, @Bar(%a.1) [symbolic = %Bar.type (constants.%Bar.type.2)]
+// CHECK:STDOUT:   %Bar.type: type = interface_type @Bar, @Bar(%a.loc10_15.2) [symbolic = %Bar.type (constants.%Bar.type.2)]
 // CHECK:STDOUT:   %Self.2: %Bar.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -283,19 +283,19 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(@Foo.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @Foo(@Foo.%a.loc7_15.2) {
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc10_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(@Bar.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @Bar(@Bar.%a.loc10_15.2) {
+// CHECK:STDOUT:   %a.loc10_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
@@ -323,7 +323,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param.loc6: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_21.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_21.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.1 = interface_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
@@ -334,11 +334,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc6: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc6_21.1: %C) {
+// CHECK:STDOUT:   %a.loc6_21.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_21.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.1) [symbolic = %Foo.type (constants.%Foo.type.2)]
+// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.loc6_21.2) [symbolic = %Foo.type (constants.%Foo.type.2)]
 // CHECK:STDOUT:   %Self.2: %Foo.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -358,11 +358,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc6_21.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(@Foo.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @Foo(@Foo.%a.loc6_21.2) {
+// CHECK:STDOUT:   %a.loc6_21.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
@@ -392,28 +392,28 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.1 = interface_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc14: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc14_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc14_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc6: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc6_15.1: %C) {
+// CHECK:STDOUT:   %a.loc6_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc14: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc14_15.1: %C) {
+// CHECK:STDOUT:   %a.loc14_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc14_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc14_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -433,15 +433,15 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc14_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc14_15.2) {
+// CHECK:STDOUT:   %a.loc14_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
@@ -469,7 +469,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param.loc6: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_15.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.1 = interface_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
@@ -480,11 +480,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc6: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc6_15.1: %C) {
+// CHECK:STDOUT:   %a.loc6_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.1) [symbolic = %Foo.type (constants.%Foo.type.2)]
+// CHECK:STDOUT:   %Foo.type: type = interface_type @Foo, @Foo(%a.loc6_15.2) [symbolic = %Foo.type (constants.%Foo.type.2)]
 // CHECK:STDOUT:   %Self.2: %Foo.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -504,11 +504,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(@Foo.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @Foo(@Foo.%a.loc6_15.2) {
+// CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
@@ -540,25 +540,25 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = interface_decl @Bar [template = constants.%Bar] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc8_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc8_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc7_15.1: %C) {
+// CHECK:STDOUT:   %a.loc7_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar(%a.loc8: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Bar(%a.loc8_15.1: %C) {
+// CHECK:STDOUT:   %a.loc8_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc8_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
@@ -571,11 +571,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc8_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_two_file.impl.carbon
@@ -622,14 +622,14 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc12: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc12_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc12_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc21: %.type.3 = interface_decl @.2 [template = constants.%.5] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc21: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc21_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc21_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -639,11 +639,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc12: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc12_15.1: %C) {
+// CHECK:STDOUT:   %a.loc12_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc12_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc12_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -661,11 +661,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.2(%a.loc21: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.2(%a.loc21_15.1: %C) {
+// CHECK:STDOUT:   %a.loc21_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc21_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.2, @.2(%a.1) [symbolic = %.type (constants.%.type.4)]
+// CHECK:STDOUT:   %.type: type = interface_type @.2, @.2(%a.loc21_15.2) [symbolic = %.type (constants.%.type.4)]
 // CHECK:STDOUT:   %Self.2: %.type.4 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -687,11 +687,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc12_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc12_15.2) {
+// CHECK:STDOUT:   %a.loc12_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
@@ -699,11 +699,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.2(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc21_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.2(@.2.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.2(@.2.%a.loc21_15.2) {
+// CHECK:STDOUT:   %a.loc21_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
@@ -737,28 +737,28 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.1 = interface_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %b.patt: %C = symbolic_binding_pattern b, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %b.param: %C = param b, runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc15: %C = bind_symbolic_name b, 0, %b.param [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc15_15.1: %C = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc15_15.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc7_15.1: %C) {
+// CHECK:STDOUT:   %a.loc7_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%b.loc15: %C) {
-// CHECK:STDOUT:   %b.1: %C = bind_symbolic_name b, 0 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT: generic interface @.1(%b.loc15_15.1: %C) {
+// CHECK:STDOUT:   %b.loc15_15.2: %C = bind_symbolic_name b, 0 [symbolic = %b.loc15_15.2 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%b.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%b.loc15_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -778,15 +778,15 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%b) {
-// CHECK:STDOUT:   %b.1 => constants.%b
+// CHECK:STDOUT:   %b.loc15_15.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%b.1) {
-// CHECK:STDOUT:   %b.1 => constants.%b
+// CHECK:STDOUT: specific @.1(@.1.%b.loc15_15.2) {
+// CHECK:STDOUT:   %b.loc15_15.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
@@ -819,28 +819,28 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.1 = interface_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc15: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc7_15.1: %C) {
+// CHECK:STDOUT:   %a.loc7_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc15: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc15_15.1: %C) {
+// CHECK:STDOUT:   %a.loc15_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc15_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -860,15 +860,15 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc15_15.2) {
+// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
@@ -901,28 +901,28 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.1 = interface_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc15: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc7_15.1: %C) {
+// CHECK:STDOUT:   %a.loc7_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc15: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc15_15.1: %C) {
+// CHECK:STDOUT:   %a.loc15_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc15_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -942,15 +942,15 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc15_15.2) {
+// CHECK:STDOUT:   %a.loc15_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -976,12 +976,12 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc6: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc6_15.1: %C) {
+// CHECK:STDOUT:   %a.loc6_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
@@ -994,7 +994,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias_two_file.impl.carbon
@@ -1034,7 +1034,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc17: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc17_15.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc17_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1044,11 +1044,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc17: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc17_15.1: %C) {
+// CHECK:STDOUT:   %a.loc17_15.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc17_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc17_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -1070,11 +1070,11 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc17_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc17_15.2) {
+// CHECK:STDOUT:   %a.loc17_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
@@ -1106,7 +1106,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %a.param: %.3 = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc6_15.1: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type.1 = interface_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %a.patt: %.3 = symbolic_binding_pattern a, 0
@@ -1115,21 +1115,21 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:     %.loc17_26: type = const_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %.loc17_19: type = const_type %.3 [template = constants.%.3]
 // CHECK:STDOUT:     %a.param: %.3 = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc17: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc17_15.1: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc17_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(%a.loc6: %.3) {
-// CHECK:STDOUT:   %a.1: %.3 = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo(%a.loc6_15.1: %.3) {
+// CHECK:STDOUT:   %a.loc6_15.2: %.3 = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @.1(%a.loc17: %.3) {
-// CHECK:STDOUT:   %a.1: %.3 = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @.1(%a.loc17_15.1: %.3) {
+// CHECK:STDOUT:   %a.loc17_15.2: %.3 = bind_symbolic_name a, 0 [symbolic = %a.loc17_15.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.1) [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = interface_type @.1, @.1(%a.loc17_15.2) [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -1149,14 +1149,14 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc17_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%a.1) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT: specific @.1(@.1.%a.loc17_15.2) {
+// CHECK:STDOUT:   %a.loc17_15.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

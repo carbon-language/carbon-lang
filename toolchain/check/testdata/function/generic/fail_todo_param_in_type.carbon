@@ -53,9 +53,9 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc14_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_6.2 (constants.%N)]
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc14 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc14_6.1 [symbolic = %N.loc14_6.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
@@ -67,13 +67,13 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc14: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @F(%N.loc14_6.1: i32) {
+// CHECK:STDOUT:   %N.loc14_6.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc14_6.2 (constants.%N)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc14: i32, %a: <error>);
+// CHECK:STDOUT:   fn(%N.loc14_6.1: i32, %a: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.1 => constants.%N
+// CHECK:STDOUT:   %N.loc14_6.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

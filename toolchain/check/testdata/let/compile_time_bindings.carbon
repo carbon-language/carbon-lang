@@ -89,6 +89,18 @@ fn F() -> i32 {
   return Zero;
 }
 
+// --- use_in_block.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> i32 {
+  if (true) {
+    let Zero:! i32 = 0;
+    return Zero;
+  }
+  return 1;
+}
+
 // --- fail_return_in_interface.carbon
 
 library "[[@TEST_NAME]]";
@@ -131,10 +143,24 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
 let T:! type = i32;
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+3]]:11: error: cannot evaluate type expression
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression
 // CHECK:STDERR: fn F() -> T;
 // CHECK:STDERR:           ^
+// CHECK:STDERR:
 fn F() -> T;
+
+// --- fail_use_in_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+interface Empty {}
+
+impl i32 as Empty {
+  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR:   let Zero:! i32 = 0;
+  // CHECK:STDERR:       ^~~~~~~~~~
+  let Zero:! i32 = 0;
+}
 
 // CHECK:STDOUT: --- fail_let_after.carbon
 // CHECK:STDOUT:
@@ -315,7 +341,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b.param: %.2 = param b, runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc10: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10_8.1: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_17: %.1 = tuple_literal ()
@@ -347,13 +373,13 @@ fn F() -> T;
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%b.loc10: %.2) {
-// CHECK:STDOUT:   %b.1: %.2 = bind_symbolic_name b, 0 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT: generic fn @F(%b.loc10_8.1: %.2) {
+// CHECK:STDOUT:   %b.loc10_8.2: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %c.1: %.7 = bind_symbolic_name c, 1 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:   %c.loc11_9.2: %.7 = bind_symbolic_name c, 1 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%b.loc10: %.2) {
+// CHECK:STDOUT:   fn(%b.loc10_8.1: %.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_19: %.1 = tuple_literal ()
@@ -370,7 +396,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc11_31.3: %.1 = converted %.loc11_30, %tuple.loc11_30 [template = constants.%tuple.1]
 // CHECK:STDOUT:     %tuple.loc11_31: %.7 = tuple_value (%.loc11_31.2, %.loc11_31.3) [template = constants.%tuple.3]
 // CHECK:STDOUT:     %.loc11_32: %.7 = converted %.loc11_31.1, %tuple.loc11_31 [template = constants.%tuple.3]
-// CHECK:STDOUT:     %c.loc11: %.7 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:     %c.loc11_9.1: %.7 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc13_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a1.var: ref %.1 = var a1
@@ -385,7 +411,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b1.var: ref %.2 = var b1
 // CHECK:STDOUT:     %b1: ref %.2 = bind_name b1, %b1.var
-// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10 [symbolic = %b.1 (constants.%b)]
+// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.1 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:     %.loc14_21.1: %.1 = tuple_access %b.ref, element0
 // CHECK:STDOUT:     %.loc14_21.2: ref %.1 = tuple_access %b1.var, element0
 // CHECK:STDOUT:     %.loc14_21.3: init %.1 = tuple_init () to %.loc14_21.2 [template = constants.%tuple.1]
@@ -401,7 +427,7 @@ fn F() -> T;
 // CHECK:STDOUT:     %.loc15_20.4: type = converted %.loc15_20.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:     %c1.var: ref %.7 = var c1
 // CHECK:STDOUT:     %c1: ref %.7 = bind_name c1, %c1.var
-// CHECK:STDOUT:     %c.ref: %.7 = name_ref c, %c.loc11 [symbolic = %c.1 (constants.%c)]
+// CHECK:STDOUT:     %c.ref: %.7 = name_ref c, %c.loc11_9.1 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc15_24.1: %.1 = tuple_access %c.ref, element0
 // CHECK:STDOUT:     %.loc15_24.2: ref %.1 = tuple_access %c1.var, element0
 // CHECK:STDOUT:     %.loc15_24.3: init %.1 = tuple_init () to %.loc15_24.2 [template = constants.%tuple.1]
@@ -444,7 +470,7 @@ fn F() -> T;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
-// CHECK:STDOUT:   %b.1 => constants.%b
+// CHECK:STDOUT:   %b.loc10_8.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon
@@ -558,6 +584,70 @@ fn F() -> T;
 // CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0, %.loc5_20 [symbolic = constants.%Zero]
 // CHECK:STDOUT:   %Zero.ref: i32 = name_ref Zero, %Zero [symbolic = constants.%Zero]
 // CHECK:STDOUT:   return %Zero.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_in_block.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0 [symbolic]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
+// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   if %.loc5 br !if.then else br !if.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.then:
+// CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
+// CHECK:STDOUT:   %.loc6_16.2: type = converted %int.make_type_32.loc6, %.loc6_16.1 [template = i32]
+// CHECK:STDOUT:   %.loc6_22: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0, %.loc6_22 [symbolic = constants.%Zero]
+// CHECK:STDOUT:   %Zero.ref: i32 = name_ref Zero, %Zero [symbolic = constants.%Zero]
+// CHECK:STDOUT:   return %Zero.ref
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_in_interface.carbon
@@ -821,4 +911,69 @@ fn F() -> T;
 // CHECK:STDOUT:   %T: type = bind_name T, %.loc8_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_use_in_impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Empty.type: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Empty = %Empty.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%Empty.type] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
+// CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_32.loc6, %.loc6_6.1 [template = i32]
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc6_6.2 as %Empty.ref {
+// CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
+// CHECK:STDOUT:   %.loc10_14.2: type = converted %int.make_type_32.loc10, %.loc10_14.1 [template = i32]
+// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %Zero: i32 = bind_name Zero, %.loc10_20
+// CHECK:STDOUT:   %.loc6_19: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Zero = %Zero
+// CHECK:STDOUT:   witness = %.loc6_19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

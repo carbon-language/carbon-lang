@@ -14,7 +14,8 @@ namespace Carbon::Check {
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id).type_id;
+  auto [cast_type_inst_id, cast_type_id] =
+      ExprAsType(context, type_node, parsed_type_id);
 
   // TODO: Handle `_` bindings.
 
@@ -199,10 +200,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case Parse::NodeKind::LetIntroducer: {
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type `{0}`",
-                          SemIR::TypeId);
+                          "`let` binding has incomplete type {0}",
+                          InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
-                                       cast_type_id);
+                                       cast_type_inst_id);
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
@@ -231,12 +232,20 @@ auto HandleParseNode(Context& context,
   bool is_generic = true;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
-    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
-    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-        !scope_inst.Is<SemIR::FunctionDecl>()) {
-      context.TODO(node_id,
-                   "`let` compile time binding outside function or interface");
-      is_generic = false;
+    // Disallow `let` outside of function and interface definitions.
+    // TODO: find a less brittle way of doing this. An invalid scope_inst_id
+    // can represent a block scope, but is also used for other kinds of scopes
+    // that aren't necessarily part of an interface or function decl.
+    auto scope_inst_id = context.scope_stack().PeekInstId();
+    if (scope_inst_id.is_valid()) {
+      auto scope_inst = context.insts().Get(scope_inst_id);
+      if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
+          !scope_inst.Is<SemIR::FunctionDecl>()) {
+        context.TODO(
+            node_id,
+            "`let` compile time binding outside function or interface");
+        is_generic = false;
+      }
     }
   }
 

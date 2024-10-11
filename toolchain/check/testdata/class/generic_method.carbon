@@ -54,7 +54,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class.2 = binding_pattern self
@@ -72,20 +72,20 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(%T.loc11: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Class(%T.loc11_13.1: type) {
+// CHECK:STDOUT:   %T.loc11_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.1 (%T) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T.1) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:   %.loc12_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc11_13.2 (%T) [symbolic = %.loc12_8.2 (constants.%.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: @Class.%T.1 (%T)} [symbolic = %.2 (constants.%.3)]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Class.%.2 (%.3) [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.a: @Class.%T.loc11_13.2 (%T)} [symbolic = %.loc14_1.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc14_1.3: <witness> = complete_type_witness @Class.%.loc14_1.2 (%.3) [symbolic = %.loc14_1.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc12: @Class.%.1 (%.2) = field_decl a, element0 [template]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc12_8.1: @Class.%.loc12_8.2 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: %Class.2 = binding_pattern self
 // CHECK:STDOUT:       %n.patt: %T = binding_pattern n
@@ -94,22 +94,22 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %Self.ref.loc13: type = name_ref Self, %.loc13 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class.2) = param self, runtime_param0
 // CHECK:STDOUT:       %self.loc13: @F.%Class (%Class.2) = bind_name self, %self.param.loc13
-// CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, @Class.%T.loc11 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:       %n.param.loc13: @F.%T.1 (%T) = param n, runtime_param1
-// CHECK:STDOUT:       %n.loc13: @F.%T.1 (%T) = bind_name n, %n.param.loc13
+// CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T.loc13 (constants.%T)]
+// CHECK:STDOUT:       %n.param.loc13: @F.%T.loc13 (%T) = param n, runtime_param1
+// CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %n.param.loc13
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc14: <witness> = complete_type_witness %.3 [symbolic = %.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc14_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc14_1.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
-// CHECK:STDOUT:     .a = %.loc12
+// CHECK:STDOUT:     .a = %.loc12_8.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@Class.%T.loc11: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT: generic fn @F(@Class.%T.loc11_13.1: type) {
+// CHECK:STDOUT:   %T.loc13: type = bind_symbolic_name T, 0 [symbolic = %T.loc13 (constants.%T)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc13) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -120,27 +120,27 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.2
-// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.loc12_8.2 => constants.%.2
 // CHECK:STDOUT:   %F.type => constants.%F.type
 // CHECK:STDOUT:   %F => constants.%F
-// CHECK:STDOUT:   %.2 => constants.%.3
-// CHECK:STDOUT:   %.3 => constants.%.4
+// CHECK:STDOUT:   %.loc14_1.2 => constants.%.3
+// CHECK:STDOUT:   %.loc14_1.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@F.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @Class(@F.%T.loc13) {
+// CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT:   %T.loc13 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T
+// CHECK:STDOUT: specific @Class(@Class.%T.loc11_13.2) {
+// CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

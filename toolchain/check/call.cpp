@@ -9,6 +9,8 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -24,8 +26,8 @@ namespace Carbon::Check {
 // `self_id` and `arg_ids` are the self argument and explicit arguments in the
 // call.
 //
-// Returns a SpecificId for the specific callee, or `nullopt` if an error has
-// been diagnosed.
+// Returns a `SpecificId` for the specific callee, `SpecificId::Invalid` if the
+// callee is not generic, or `nullopt` if an error has been diagnosed.
 static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
                                 llvm::StringLiteral entity_kind_for_diagnostic,
@@ -128,10 +130,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       default: {
         if (!callee_function.is_error) {
           CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                            "value of type `{0}` is not callable",
-                            SemIR::TypeId);
-          context.emitter().Emit(loc_id, CallToNonCallable,
-                                 context.insts().Get(callee_id).type_id());
+                            "value of type {0} is not callable", TypeOfInstId);
+          context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
         }
         return SemIR::InstId::BuiltinError;
       }
@@ -143,9 +143,19 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
       context, loc_id, callable, "function", callable.generic_id,
-      callee_function.specific_id, callee_function.self_id, arg_ids);
+      callee_function.enclosing_specific_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
+  }
+  if (callee_specific_id->is_valid()) {
+    callee_id =
+        context.AddInst(context.insts().GetLocId(callee_id),
+                        SemIR::SpecificFunction{
+                            .type_id = context.GetBuiltinType(
+                                SemIR::BuiltinInstKind::SpecificFunctionType),
+                            .callee_id = callee_id,
+                            .specific_id = *callee_specific_id});
+    context.definitions_required().push_back(callee_id);
   }
 
   // If there is a return slot, build storage for the result.

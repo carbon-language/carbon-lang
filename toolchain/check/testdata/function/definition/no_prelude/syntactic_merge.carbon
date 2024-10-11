@@ -628,14 +628,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %a.patt: %C = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = param a, runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc15: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc15_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,29 +646,29 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic fn @Foo(%a.loc7_8.1: %C) {
+// CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.loc7: %C]();
+// CHECK:STDOUT:   fn[%a.loc7_8.1: %C]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%a.loc15: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT: generic fn @.1(%a.loc15_8.1: %C) {
+// CHECK:STDOUT:   %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.loc15: %C]() {
+// CHECK:STDOUT:   fn[%a.loc15_8.1: %C]() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
+// CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

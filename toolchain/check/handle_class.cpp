@@ -79,19 +79,6 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  // The introducer kind must match the previous declaration.
-  // TODO: The rule here is not yet decided. See #3384.
-  if (prev_class.inheritance_kind != new_class.inheritance_kind) {
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "class redeclared with different inheritance kind");
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "previously declared here");
-    context.emitter()
-        .Build(new_loc, ClassRedeclarationDifferentIntroducer)
-        .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
-        .Emit();
-  }
-
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
@@ -194,9 +181,14 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Class>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  auto always_acceptable_modifiers =
+      KeywordModifierSet::Access | KeywordModifierSet::Extern;
   LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Class | KeywordModifierSet::Access |
-                           KeywordModifierSet::Extern);
+                       always_acceptable_modifiers | KeywordModifierSet::Class);
+  if (!is_definition) {
+    LimitModifiersOnNotDefinition(context, introducer,
+                                  always_acceptable_modifiers);
+  }
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
 
@@ -466,23 +458,24 @@ constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
 
 // Diagnoses an attempt to derive from a final type.
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
-                                SemIR::TypeId base_type_id) -> void {
+                                SemIR::InstId base_type_inst_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
-                    "deriving from final type `{0}`; base type must be an "
+                    "deriving from final type {0}; base type must be an "
                     "`abstract` or `base` class",
-                    SemIR::TypeId);
-  context.emitter().Emit(node_id, BaseIsFinal, base_type_id);
+                    InstIdAsType);
+  context.emitter().Emit(node_id, BaseIsFinal, base_type_inst_id);
 }
 
 // Checks that the specified base type is valid.
 static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
-  auto base_type_id = ExprAsType(context, node_id, base_expr_id).type_id;
+  auto [base_type_inst_id, base_type_id] =
+      ExprAsType(context, node_id, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "base `{0}` is an incomplete type", SemIR::TypeId);
+                      "base {0} is an incomplete type", InstIdAsType);
     return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
-                                   base_type_id);
+                                   base_type_inst_id);
   });
 
   if (base_type_id == SemIR::TypeId::Error) {
@@ -497,11 +490,11 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
     // classes, produce a better diagnostic for deriving from a non-class type.
-    DiagnoseBaseIsFinal(context, node_id, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
     return BaseInfo::Error;
   }
   if (base_class_info->inheritance_kind == SemIR::Class::Final) {
-    DiagnoseBaseIsFinal(context, node_id, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
   }
 
   CARBON_CHECK(base_class_info->scope_id.is_valid(),
