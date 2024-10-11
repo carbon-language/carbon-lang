@@ -1184,7 +1184,7 @@ direct call to the method does.
 
 ##### Virtual modifier keywords
 
-A method is declared as virtual by using a _virtual override keyword_ in its
+A method is declared as virtual by using a _virtual modifier keyword_ in its
 declaration before `fn`.
 
 ```
@@ -1204,7 +1204,7 @@ _non-virtual_. This means:
 -   they have an implementation in the current class, and that implementation
     must work for all derived classes.
 
-There are three virtual override keywords:
+There are three virtual modifier keywords:
 
 -   `virtual` - This marks a method as not present in bases of this class and
     having an implementation in this class. That implementation may be
