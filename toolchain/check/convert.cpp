@@ -956,7 +956,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                               "initialization of abstract type `{0}`",
                               SemIR::TypeId);
             if (!target.is_initializer()) {
-              return DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder();
+              return context.emitter().BuildSuppressed();
             }
             return context.emitter().Build(loc_id, AbstractTypeInInit,
                                            target.type_id);

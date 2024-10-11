@@ -55,7 +55,6 @@ class DiagnosticEmitter {
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
     auto operator=(DiagnosticBuilder&&) noexcept
         -> DiagnosticBuilder& = default;
-    DiagnosticBuilder() : emitter_(nullptr) {}
 
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
@@ -87,6 +86,9 @@ class DiagnosticEmitter {
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
 
+    // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
+    // to avoid excess work computing notes, etc, if no diagnostic is going to
+    // be emitted anyway.
     explicit operator bool() { return emitter_; }
 
    private:
@@ -101,6 +103,10 @@ class DiagnosticEmitter {
       AddMessage(loc, diagnostic_base, std::move(args));
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
+
+    // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+    // be silently ignored.
+    DiagnosticBuilder() : emitter_(nullptr) {}
 
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
@@ -197,6 +203,10 @@ class DiagnosticEmitter {
     return DiagnosticBuilder(this, loc, diagnostic_base,
                              {MakeAny<Args>(args)...});
   }
+
+  // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+  // be silently ignored.
+  auto BuildSuppressed() -> DiagnosticBuilder { return DiagnosticBuilder(); }
 
  private:
   // Converts an argument to llvm::Any for storage, handling input to storage
