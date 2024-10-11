@@ -88,6 +88,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
+  if (driver_env_.installation->error()) {
+    llvm::errs() << "error: " << *driver_env_.installation->error() << "\n";
+    return {.success = false};
+  }
+
   Options options;
 
   CommandLine::ParseResult result = CommandLine::Parse(

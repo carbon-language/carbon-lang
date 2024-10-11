@@ -70,6 +70,25 @@ cc_library(
     ],
 )
 
+# This target doesn't include prelude libraries. To get a target that has the
+# prelude available, use //toolchain.
+cc_binary(
+    name = "carbon-busybox",
+    srcs = ["busybox_main.cpp"],
+    env = cc_env(),
+    deps = [
+        ":install_paths",
+        "//common:all_llvm_targets",
+        "//common:bazel_working_dir",
+        "//common:error",
+        "//common:exe_path",
+        "//common:init_llvm",
+        "//common:version_stamp",
+        "//toolchain/driver",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
@@ -86,23 +105,41 @@ lld_aliases = [
 #
 # This will be how installs are provided on Unix-y platforms, and is loosely
 # based on the FHS (Filesystem Hierarchy Standard).
+#
+# TODO: For the scripts, figure out whether this is the approach we want.
+# Options are:
+# - Shell scripts (current): Less cross-platform and slower than alternatives.
+# - Binaries: Would need to stop using `custom_malloc` to set tcmalloc in order
+#   to have small binaries (~2.3 MB vs ~6 KB).
+# - Symlinks: Bazel doesn't like symlinks, and we'd need to be careful to
+#   resolve user-created symlinks but not Carbon-created symlinks.
 install_dirs = {
     "bin": [
         install_target(
             "carbon",
-            "//toolchain/driver:carbon",
+            "scripts/carbon",
             executable = True,
-            is_driver = True,
         ),
     ],
     "lib/carbon": [
         install_target("carbon_install.txt", "carbon_install.txt"),
+        install_target(
+            "carbon-busybox",
+            ":carbon-busybox",
+            executable = True,
+            is_driver = True,
+        ),
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
         install_target(
             "lld",
             "@llvm-project//lld:lld",
+            executable = True,
+        ),
+        install_target(
+            "clang",
+            "scripts/clang",
             executable = True,
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
@@ -123,6 +160,9 @@ pkg_naming_variables(
 # We build both a compressed and uncompressed tar file with the same code here.
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
+#
+# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
+# `carbon_toolchain_tar_gz_rule`.
 pkg_tar_and_test(
     srcs = [":pkg_data"],
     name_base = "carbon_toolchain",
