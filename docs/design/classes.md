@@ -45,7 +45,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Alias](#alias)
     -   [Inheritance](#inheritance)
         -   [Virtual methods](#virtual-methods)
-            -   [Virtual override keywords](#virtual-override-keywords)
+            -   [Virtual modifier keywords](#virtual-modifier-keywords)
         -   [Subtyping](#subtyping)
         -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
@@ -1182,9 +1182,9 @@ direct call to the method does.
 
 [Class functions](#class-functions) may not be declared virtual.
 
-##### Virtual override keywords
+##### Virtual modifier keywords
 
-A method is declared as virtual by using a _virtual override keyword_ in its
+A method is declared as virtual by using a _virtual modifier keyword_ in its
 declaration before `fn`.
 
 ```
@@ -1204,7 +1204,7 @@ _non-virtual_. This means:
 -   they have an implementation in the current class, and that implementation
     must work for all derived classes.
 
-There are three virtual override keywords:
+There are three virtual modifier keywords:
 
 -   `virtual` - This marks a method as not present in bases of this class and
     having an implementation in this class. That implementation may be
@@ -1230,6 +1230,12 @@ There are three virtual override keywords:
 | `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
 | `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
 
+Since validating a method with a virtual modifier keyword involves looking for
+methods with the same name in the base class, virtual methods must be declared
+after the `extend base` declaration when present in a class definition. This
+simplifies the compiler, and follows the
+[information accumulation principle](/docs/project/principles/information_accumulation.md).
+
 #### Subtyping
 
 A pointer to a base class, like `MyBaseClass*` is actually considered to be a
@@ -1246,11 +1252,16 @@ or _vtable_. Any calls to virtual methods will perform
 the method using the function pointer in the vtable, to get the overridden
 implementation from the most derived class that implements the method.
 
+This data layout is reflected in the order of declarations in a class
+definition. An `extend base` declaration, when present in a class definition,
+must appear before any other declarations adding data to the class instances,
+such as instance variables.
+
 Since a final class may not be extended, the compiler can bypass the vtable and
 use [static dispatch](https://en.wikipedia.org/wiki/Static_dispatch). In
 general, you can use a combination of an abstract base class and a final class
-instead of an extensible class if you need to distinguish between exactly a type
-and possibly a subtype.
+instead of an extensible class if you need to distinguish between "exactly a
+type" and "possibly a subtype."
 
 ```
 base class Extensible { ... }
@@ -1713,7 +1724,7 @@ declaration. Access modifiers are how Carbon supports
 [encapsulation](#encapsulated-types).
 
 The [access modifier](https://en.wikipedia.org/wiki/Access_modifiers) is written
-before any [virtual override keyword](#virtual-override-keywords).
+before any [virtual modifier keyword](#virtual-modifier-keywords).
 
 **Rationale:** Carbon makes members public by default for a few reasons:
 
