@@ -958,9 +958,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             if (!target.is_initializer()) {
               return DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder();
             }
-            // return // add support for creating a null DiagnosticBuilder and
-            //  return one here. Include null-testability and use that
-            //  to skip adding notes in the caller if it's null.
             return context.emitter().Build(loc_id, AbstractTypeInInit,
                                            target.type_id);
           })) {
