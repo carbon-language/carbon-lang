@@ -89,9 +89,9 @@ class InstallPathsTest : public ::testing::Test {
   std::unique_ptr<Runfiles> test_runfiles_;
 };
 
-TEST_F(InstallPathsTest, PrefixRootDriver) {
+TEST_F(InstallPathsTest, PrefixRootBusybox) {
   std::string installed_driver_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/install/prefix_root/bin/carbon");
+      "carbon/toolchain/install/prefix_root/lib/carbon/carbon-busybox");
 
   auto paths = InstallPaths::MakeExeRelative(installed_driver_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();

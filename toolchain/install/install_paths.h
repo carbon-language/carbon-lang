@@ -84,6 +84,9 @@ class InstallPaths {
   // The directory containing LLVM install binaries. Computed on demand.
   auto llvm_install_bin() const -> std::string;
 
+  // The path to `clang`.
+  auto clang_path() const -> std::string;
+
  private:
   friend class InstallPathsTestPeer;
 
