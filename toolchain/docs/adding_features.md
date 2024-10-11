@@ -314,8 +314,8 @@ type. Look to the comments on those functions for instructions on what is
 needed.
 
 Instructions won't be given a name unless
-[`InstNamer::CollectNamesInBlock](/toolchain/sem_ir/inst_namer.cpp) is called on
-the `InstBlockId` they are a member of. As of this writing,
+[`InstNamer::CollectNamesInBlock`](/toolchain/sem_ir/inst_namer.cpp) is called
+on the `InstBlockId` they are a member of. As of this writing,
 `InstNamer::CollectNamesInBlock` should only be called once per `InstBlockId`.
 To accomplish this, there should be one instruction kind that "owns" the
 instruction block, and will have a case in `InstNamer::CollectNamesInBlock` that
