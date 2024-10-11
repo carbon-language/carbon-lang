@@ -389,14 +389,14 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
       adapted_type_id,
       [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                          "adapted type `{0}` is an incomplete type",
+                          "adapted type {0} is an incomplete type",
                           SemIR::TypeId);
         return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
                                        adapted_type_id);
       },
       [&] {
         CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
-                          "adapted type `{0}` is an abstract type",
+                          "adapted type {0} is an abstract type",
                           SemIR::TypeId);
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_type_id);

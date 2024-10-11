@@ -933,13 +933,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           target.type_id,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
-                              "initialization of incomplete type `{0}`",
+                              "initialization of incomplete type {0}",
                               SemIR::TypeId);
             CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                              "forming value of incomplete type `{0}`",
+                              "forming value of incomplete type {0}",
                               SemIR::TypeId);
             CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                              "invalid use of incomplete type `{0}`",
+                              "invalid use of incomplete type {0}",
                               SemIR::TypeId);
             assert(!target.is_initializer());
             assert(target.kind == ConversionTarget::Value);
@@ -953,7 +953,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           },
           [&] {
             CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
-                              "initialization of abstract type `{0}`",
+                              "initialization of abstract type {0}",
                               SemIR::TypeId);
             if (!target.is_initializer()) {
               return context.emitter().BuildSuppressed();

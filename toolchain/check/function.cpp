@@ -83,7 +83,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     };
     auto diagnose_abstract_return_type = [&] {
       CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
-                        "function returns abstract type `{0}`", SemIR::TypeId);
+                        "function returns abstract type {0}", SemIR::TypeId);
       return context.emitter().Build(loc, AbstractTypeInFunctionReturnType,
                                      return_info.type_id);
     };

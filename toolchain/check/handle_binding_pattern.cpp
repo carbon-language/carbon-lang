@@ -104,7 +104,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           cast_type_id,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "{0} has incomplete type `{1}`",
+                              "{0} has incomplete type {1}",
                               llvm::StringLiteral, SemIR::TypeId);
             return context.emitter().Build(
                 type_node, IncompleteTypeInVarDecl,
@@ -114,8 +114,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           },
           [&] {
             CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
-                              "{0} has abstract type `{1}`",
-                              llvm::StringLiteral, SemIR::TypeId);
+                              "{0} has abstract type {1}", llvm::StringLiteral,
+                              SemIR::TypeId);
             return context.emitter().Build(
                 type_node, AbstractTypeInVarDecl,
                 parent_class_decl ? llvm::StringLiteral("field")
