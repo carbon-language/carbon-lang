@@ -10,7 +10,7 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: error: Variable has incomplete type `(i32, Incomplete)`
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: error: variable has incomplete type `(i32, Incomplete)`
 // CHECK:STDERR: var t: (i32, Incomplete);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here

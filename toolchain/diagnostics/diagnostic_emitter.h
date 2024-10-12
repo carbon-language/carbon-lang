@@ -63,6 +63,9 @@ class DiagnosticEmitter {
     auto Note(LocT loc,
               const Internal::DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+      if (!emitter_) {
+        return *this;
+      }
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
                        diagnostic_base.Level == DiagnosticLevel::LocationInfo,
                    "{0}", static_cast<int>(diagnostic_base.Level));
@@ -74,11 +77,19 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
+      if (!emitter_) {
+        return;
+      }
       for (auto annotate_fn : emitter_->annotate_fns_) {
         annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
+
+    // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
+    // to avoid excess work computing notes, etc, if no diagnostic is going to
+    // be emitted anyway.
+    explicit operator bool() { return emitter_; }
 
    private:
     friend class DiagnosticEmitter<LocT>;
@@ -93,12 +104,19 @@ class DiagnosticEmitter {
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
 
+    // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+    // be silently ignored.
+    DiagnosticBuilder() : emitter_(nullptr) {}
+
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
     template <typename... Args>
     auto AddMessage(LocT loc,
                     const Internal::DiagnosticBase<Args...>& diagnostic_base,
                     llvm::SmallVector<llvm::Any> args) -> void {
+      if (!emitter_) {
+        return;
+      }
       AddMessageWithDiagnosticLoc(
           emitter_->converter_->ConvertLoc(
               loc,
@@ -117,7 +135,10 @@ class DiagnosticEmitter {
     auto AddMessageWithDiagnosticLoc(
         DiagnosticLoc loc,
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) {
+        llvm::SmallVector<llvm::Any> args) -> void {
+      if (!emitter_) {
+        return;
+      }
       diagnostic_.messages.emplace_back(DiagnosticMessage{
           .kind = diagnostic_base.Kind,
           .level = diagnostic_base.Level,
@@ -182,6 +203,10 @@ class DiagnosticEmitter {
     return DiagnosticBuilder(this, loc, diagnostic_base,
                              {MakeAny<Args>(args)...});
   }
+
+  // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+  // be silently ignored.
+  auto BuildSuppressed() -> DiagnosticBuilder { return DiagnosticBuilder(); }
 
  private:
   // Converts an argument to llvm::Any for storage, handling input to storage

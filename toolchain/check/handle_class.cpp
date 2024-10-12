@@ -383,14 +383,24 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto [adapted_type_inst_id, adapted_type_id] =
-      ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "adapted type {0} is an incomplete type", InstIdAsType);
-    return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                   adapted_type_inst_id);
-  });
+  auto adapted_type_id =
+      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
+  adapted_type_id = context.AsCompleteType(
+      adapted_type_id,
+      [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
+                          "adapted type {0} is an incomplete type",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
+                                       adapted_type_id);
+      },
+      [&] {
+        CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
+                          "adapted type {0} is an abstract type",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
+                                       adapted_type_id);
+      });
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(
