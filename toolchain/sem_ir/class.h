@@ -30,6 +30,9 @@ struct ClassFields {
   // TODO: The rules here are not yet decided. See #3384.
   InheritanceKind inheritance_kind;
 
+  // Whether this class or any base class has at least one virtual function.
+  bool is_dynamic = false;
+
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
