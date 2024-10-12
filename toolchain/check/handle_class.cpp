@@ -661,10 +661,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   bool defining_vtable_ptr = class_info.is_dynamic;
   if (class_info.base_id.is_valid()) {
     auto base_info = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
-    auto base_type_info =
-        context.types().GetAs<SemIR::ClassType>(base_info.base_type_id);
-    auto base_class_info = context.classes().Get(base_type_info.class_id);
-    if (base_class_info.is_dynamic) {
+    if (auto* base_class_info = TryGetAsClass(context, base_info.base_type_id);
+        base_class_info && base_class_info->is_dynamic) {
       defining_vtable_ptr = false;
     }
   }

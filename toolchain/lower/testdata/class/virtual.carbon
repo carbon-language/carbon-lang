@@ -8,36 +8,45 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/class/virtual.carbon
 
-base class Foo {
-  virtual fn Fn() {}
-  var v: i32;
-};
-
-fn Use(v: Foo*) {
-  v->Fn();
+base class Base {
+}
+base class Intermediate {
+  extend base: Base;
+  virtual fn Fn();
+}
+class Derived {
+  extend base: Intermediate;
+  impl fn Fn();
 }
 
 fn Create() {
-  var v: Foo;
+  var b: Base;
+  var i: Intermediate;
+  var d: Derived;
+}
+
+fn Use(v: Intermediate*) {
+  v->Fn();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'virtual.carbon'
 // CHECK:STDOUT: source_filename = "virtual.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CFn.Foo.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
-// CHECK:STDOUT: }
+// CHECK:STDOUT: declare void @_CFn.Intermediate.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CUse.Main(ptr %v) !dbg !8 {
+// CHECK:STDOUT: declare void @_CFn.Derived.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CCreate.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CFn.Foo.Main(), !dbg !9
+// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %i.var = alloca { ptr, {} }, align 8, !dbg !8
+// CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CCreate.Main() !dbg !11 {
+// CHECK:STDOUT: define void @_CUse.Main(ptr %v) !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !12
+// CHECK:STDOUT:   call void @_CFn.Intermediate.Main(), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,13 +57,13 @@ fn Create() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "virtual.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Foo.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Create", linkageName: "_CCreate.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 1, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Create", linkageName: "_CCreate.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 21, column: 7, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 20, column: 1, scope: !11)
+// CHECK:STDOUT: !7 = !DILocation(line: 26, column: 7, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 27, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 28, column: 7, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 25, column: 1, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 31, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 32, column: 3, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 31, column: 1, scope: !11)
