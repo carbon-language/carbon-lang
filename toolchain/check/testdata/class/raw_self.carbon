@@ -68,7 +68,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt.loc17_17: %.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt.loc17_21: %.1 = param_pattern %self.patt.loc17_17, runtime_param0
-// CHECK:STDOUT:     %.loc17_12: %Class = addr_pattern %self.param_patt.loc17_21
+// CHECK:STDOUT:     %.loc17_12: auto = addr_pattern %self.param_patt.loc17_21
 // CHECK:STDOUT:     %self.patt.loc17_30: i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc17_36: i32 = param_pattern %self.patt.loc17_30, runtime_param1
 // CHECK:STDOUT:   } {
@@ -112,7 +112,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt.loc17_17: %.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt.loc17_21: %.1 = param_pattern %self.patt.loc17_17, runtime_param0
-// CHECK:STDOUT:     %.loc17_12: %Class = addr_pattern %self.param_patt.loc17_21
+// CHECK:STDOUT:     %.loc17_12: auto = addr_pattern %self.param_patt.loc17_21
 // CHECK:STDOUT:     %self.patt.loc17_30: i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc17_36: i32 = param_pattern %self.patt.loc17_30, runtime_param1
 // CHECK:STDOUT:   } {

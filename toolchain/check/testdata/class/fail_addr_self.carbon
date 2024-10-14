@@ -92,7 +92,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc12_8: %Class = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_24: type = ptr_type %Class [template = constants.%.1]

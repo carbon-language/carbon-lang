@@ -702,6 +702,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   // The builtin TypeType.
   static const TypeId TypeType;
 
+  // The builtin placeholder type for patterns with deduced types.
+  static const TypeId AutoType;
+
   // The builtin Error.
   static const TypeId Error;
 
@@ -724,6 +727,8 @@ struct TypeId : public IdBase, public Printable<TypeId> {
     out << "type";
     if (*this == TypeType) {
       out << "TypeType";
+    } else if (*this == AutoType) {
+      out << "AutoType";
     } else if (*this == Error) {
       out << "Error";
     } else {
@@ -736,6 +741,8 @@ struct TypeId : public IdBase, public Printable<TypeId> {
 
 constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
     ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
+constexpr TypeId TypeId::AutoType = TypeId::ForTypeConstant(
+    ConstantId::ForTemplateConstant(InstId::BuiltinAutoType));
 constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 

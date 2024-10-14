@@ -264,7 +264,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
     if (pointer_type) {
       auto addr_pattern_id = context.AddPatternInst<SemIR::AddrPattern>(
           node_id,
-          {.type_id = pointer_type->pointee_id, .inner_id = param_pattern_id});
+          {.type_id = SemIR::TypeId::AutoType, .inner_id = param_pattern_id});
       context.node_stack().Push(node_id, addr_pattern_id);
     } else {
       CARBON_DIAGNOSTIC(

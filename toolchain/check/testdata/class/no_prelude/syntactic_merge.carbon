@@ -1145,7 +1145,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.6] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.3 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16_11: %Base = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc16_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc16_26: type = ptr_type %Base [template = constants.%.3]
@@ -1161,7 +1161,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.3 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc7_8: %Base = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc7_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc7_23: type = ptr_type %Base [template = constants.%.3]

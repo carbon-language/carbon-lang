@@ -102,7 +102,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr)] {
 // CHECK:STDOUT:       %self.patt: @GetAddr.%.1 (%.2) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @GetAddr.%.1 (%.2) = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:       %.loc12_14: @GetAddr.%Class (%Class.2) = addr_pattern %self.param_patt
+// CHECK:STDOUT:       %.loc12_14: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc12_25 [symbolic = %Class (constants.%Class.2)]

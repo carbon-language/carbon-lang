@@ -240,7 +240,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.5 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.5 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc20_9: %C = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc20_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {

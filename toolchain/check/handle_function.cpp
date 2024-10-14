@@ -75,7 +75,7 @@ static auto CheckFunctionSignature(Context& context,
   RequireGenericOrSelfImplicitFunctionParams(
       context, name_and_params.implicit_params_id);
   SemIR::RuntimeParamIndex next_index(0);
-  for (auto [param_id, param_pattern_id] : llvm::zip(
+  for (auto [param_id, param_pattern_id] : llvm::zip_equal(
            llvm::concat<const SemIR::InstId>(
                context.inst_blocks().GetOrEmpty(
                    name_and_params.implicit_params_id),

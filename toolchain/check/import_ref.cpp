@@ -813,9 +813,8 @@ class ImportRefResolver {
         import_ir_.inst_blocks().Get(param_patterns_id);
     llvm::SmallVector<SemIR::InstId> new_patterns;
     for (auto param_id : param_patterns) {
-      // Figure out the param structure. This echoes
-      // Function::GetParamFromParamRefId.
-      // TODO: Consider a different parameter handling to simplify import logic.
+      // Figure out the pattern structure. This echoes
+      // Function::GetParamPatternInfoFromPatternId.
       auto addr_pattern_id = param_id;
       auto addr_inst =
           import_ir_.insts().TryGetAs<SemIR::AddrPattern>(addr_pattern_id);
@@ -831,7 +830,7 @@ class ImportRefResolver {
       auto binding =
           import_ir_.insts().GetAs<SemIR::AnyBindingPattern>(binding_id);
 
-      // Rebuild the param instruction.
+      // Rebuild the pattern.
       auto entity_name = import_ir_.entity_names().Get(binding.entity_name_id);
       auto name_id = GetLocalNameId(entity_name.name_id);
       auto type_id = context_.GetTypeIdForTypeConstant(
@@ -1135,10 +1134,6 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::BindAlias inst): {
         return TryResolveTypedInst(inst);
-      }
-      case SemIR::BindingPattern::Kind: {
-        // TODO: Should we be resolving BindingPatterns at all?
-        return ResolveAsConstant(SemIR::ConstantId::NotConstant);
       }
       case SemIR::BindName::Kind: {
         // TODO: Should we be resolving BindNames at all?

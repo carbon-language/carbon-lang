@@ -427,14 +427,6 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
   return true;
 }
 
-// Replace the parameter with an invalid instruction so that we don't try
-// constructing a generic based on it. Note this is updating the param
-// refs block, not the actual params block, so will not be directly
-// reflected in SemIR output.
-static auto ReplaceInstructionWithError(SemIR::InstId& inst_id) -> void {
-  inst_id = SemIR::InstId::BuiltinError;
-}
-
 auto RequireGenericParamsOnType(Context& context,
                                 SemIR::InstBlockId pattern_block_id) -> void {
   if (!pattern_block_id.is_valid() ||
@@ -450,13 +442,13 @@ auto RequireGenericParamsOnType(Context& context,
                         "`self` parameter only allowed on functions");
       context.emitter().Emit(inst_id, SelfParameterNotAllowed);
 
-      ReplaceInstructionWithError(inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     } else if (!context.constant_values().Get(inst_id).is_constant()) {
       CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                         "parameters of generic types must be constant");
       context.emitter().Emit(inst_id, GenericParamMustBeConstant);
 
-      ReplaceInstructionWithError(inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     }
   }
 }
@@ -477,7 +469,7 @@ auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
           "implicit parameters of functions must be constant or `self`");
       context.emitter().Emit(inst_id, ImplictParamMustBeConstant);
 
-      ReplaceInstructionWithError(inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     }
   }
 }

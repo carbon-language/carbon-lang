@@ -78,7 +78,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc22_12: %Class = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc22_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc22: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc22_27: type = ptr_type %Class [template = constants.%.2]
@@ -107,7 +107,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc22_12: %Class = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc22_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]

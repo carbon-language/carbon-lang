@@ -102,7 +102,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc12_8: %A = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]

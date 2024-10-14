@@ -46,6 +46,9 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType, "type")
 // need to issue further diagnostics.
 CARBON_SEM_IR_BUILTIN_INST_KIND(Error, "<error>")
 
+// Used for the type of patterns that do not match a fixed type.
+CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType, "auto")
+
 // -----------------------------------------------------------------------------
 // TODO: Below types are all placeholders. While the above may last, the below
 // are expected to need to change in order to better reflect Carbon's design.

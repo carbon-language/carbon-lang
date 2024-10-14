@@ -235,7 +235,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc13_8: %Class = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc13_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.2]

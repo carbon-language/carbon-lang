@@ -133,7 +133,7 @@ fn Run() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.7 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc15_8: %ForwardDeclared = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc15_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.7]
