@@ -208,11 +208,16 @@ auto HandleExprInPostfix(Context& context) -> void {
       break;
     }
     default: {
+      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
+      context.emitter().Emit(*context.position(), ExpectedExpr);
+
+      // Fallthrough to the error token case -- we don't need to diagnose those.
+      [[fallthrough]];
+    }
+    case Lex::TokenKind::Error: {
       // Add a node to keep the parse tree balanced.
       context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                           /*has_error=*/true);
-      CARBON_DIAGNOSTIC(ExpectedExpr, Error, "expected expression");
-      context.emitter().Emit(*context.position(), ExpectedExpr);
       context.ReturnErrorOnState();
       break;
     }
