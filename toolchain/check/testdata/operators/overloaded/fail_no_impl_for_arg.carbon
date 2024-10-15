@@ -27,9 +27,9 @@ fn Test(a: C, b: D) -> C {
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:3: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:18: note: initializing function parameter
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR:
   return a + b;
 }
@@ -42,9 +42,9 @@ fn TestAssign(b: D) {
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:3: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note: initializing function parameter
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                        ^~~~~~~~
   a += b;
 }
 

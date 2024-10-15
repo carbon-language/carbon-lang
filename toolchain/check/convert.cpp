@@ -1211,21 +1211,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     }
   }
 
-  int diag_param_index;
-  DiagnosticAnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(
-            InCallToFunctionParam, Note,
-            "initializing parameter {0} of function declared here", int);
-        builder.Note(callee.callee_loc, InCallToFunctionParam,
-                     diag_param_index + 1);
-      });
-
   // Check type conversions per-element.
   for (auto [i, arg_id, param_pattern_id] :
        llvm::enumerate(arg_refs, param_patterns)) {
-    diag_param_index = i;
-
     auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
                              context.sem_ir(), param_pattern_id)
                              .inst.runtime_index;
@@ -1233,6 +1221,13 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
       // Not a runtime parameter: we don't pass an argument.
       continue;
     }
+
+    DiagnosticAnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
+                            "initializing function parameter");
+          builder.Note(param_pattern_id, InCallToFunctionParam);
+        });
 
     auto converted_arg_id = CallerPatternMatch(context, callee_specific_id,
                                                param_pattern_id, arg_id);
