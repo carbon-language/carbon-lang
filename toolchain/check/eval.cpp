@@ -1356,7 +1356,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       break;
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-      // TODO: address code duplication with BindSymbolicName
+      // TODO: disable constant evaluation of SymbolicBindingPattern once
+      // DeduceGenericCallArguments no longer needs implicit params to have
+      // constant values.
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
 

@@ -175,8 +175,6 @@ auto DeduceGenericCallArguments(
     CARBON_KIND_SWITCH(untyped_inst) {
       // Deducing a symbolic binding from an argument with a constant value
       // deduces the binding as having that constant value.
-      // TODO: Deduction should operate on patterns, not on pattern-match insts
-      // like `BindSymbolicName`.
       case SemIR::InstKind::SymbolicBindingPattern:
       case SemIR::InstKind::BindSymbolicName: {
         auto entity_name_id = SemIR::EntityNameId::Invalid;
