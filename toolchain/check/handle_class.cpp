@@ -670,18 +670,15 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   llvm::SmallVector<SemIR::InstId> object_rep_fields;
   auto fields = context.inst_blocks().Get(fields_id);
   if (defining_vtable_ptr) {
-    if (!fields.empty()) {
-      auto field =
-          context.insts().GetAs<SemIR::StructTypeField>(fields.front());
-      object_rep_fields.push_back(
-          context.AddInstInNoBlock<SemIR::StructTypeField>(
-              Parse::NodeId::Invalid,
-              {.name_id = SemIR::NameId::Vptr,
-               .field_type_id = context.GetPointerType(field.field_type_id)}));
-    }
-  }
+    object_rep_fields.push_back(
+        context.AddInstInNoBlock<SemIR::StructTypeField>(
+            Parse::NodeId::Invalid,
+            {.name_id = SemIR::NameId::Vptr,
+             .field_type_id = context.GetPointerType(
+                 context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))}));
 
-  object_rep_fields.append(fields.begin(), fields.end());
+    object_rep_fields.append(fields.begin(), fields.end());
+  }
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
