@@ -18,10 +18,9 @@ runs:
         xcrun simctl delete all
         sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
 
-    # Install and cache LLVM 16 from Homebrew.
-    # TODO: We can potentially remove this and simplify things when the
-    # Homebrew version of LLVM updates to 16 here:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+    # Install and cache LLVM 16 from Homebrew. Some runners may have LLVM 16,
+    # but this is reliable (including with libc++), and gives us testing at the
+    # minimum supported LLVM version.
     - name: Cache Homebrew
       id: cache-homebrew-macos
       uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
