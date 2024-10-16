@@ -11,6 +11,7 @@ export import library "prelude/types/bool";
 // noise in the toolchain tests.
 // import library "prelude/types/i32";
 
+fn BigInt() -> type = "big_int.make_type";
 fn Int32() -> type = "int.make_type_32";
 fn Int(size: i32) -> type = "int.make_type_signed";
 fn UInt(size: i32) -> type = "int.make_type_unsigned";
