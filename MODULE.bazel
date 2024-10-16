@@ -53,13 +53,17 @@ bazel_dep(name = "libpfm", version = "4.11.0")
 
 libpfm_version = "4.13.0"
 
+# The official site is https://perfmon2.sourceforge.net/, but SourceForge makes
+# it difficult to download from bazel. On GitHub action runners,
+# https://git.code.sf.net/p/perfmon2/libpfm4 seems to be blocked. As a
+# consequence, use a mirror.
 archive_override(
     module_name = "libpfm",
-    integrity = "sha256-0YuXdkx1VSjBBR03bjNUXQ62DG6/hWgENoE/pbBMw9E=",
+    integrity = "sha256-sGBx1+UoQCplBCc+pwA1Tr/PS2L/4jnLZHH82wSuPz0=",
     patch_strip = 1,
     patches = ["@//bazel/libpfm:0001-Introduce-a-simple-native-Bazel-build.patch"],
-    strip_prefix = "libpfm-{0}".format(libpfm_version),
-    urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-{0}.tar.gz".format(libpfm_version)],
+    strip_prefix = "libpfm4-{0}".format(libpfm_version),
+    urls = ["https://github.com/wcohen/libpfm4/archive/v{0}.tar.gz".format(libpfm_version)],
 )
 
 # The registry has a snapshot, but upstream is active and not regularly marking
