@@ -63,7 +63,7 @@ class ArrayStack {
   // Appends a value to the top array on the stack.
   auto AppendToTop(ValueT value) -> void {
     CARBON_CHECK(!array_offsets_.empty(),
-                 "Must call PushArray before PushValue.");
+                 "Must call PushArray before AppendToTop.");
     values_.push_back(value);
   }
 
