@@ -14,6 +14,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -381,8 +382,13 @@ static auto ConvertStructToStructOrClass(Context& context,
                                          SemIR::StructType src_type,
                                          SemIR::StructType dest_type,
                                          SemIR::InstId value_id,
-                                         ConversionTarget target, bool is_class)
+                                         ConversionTarget target)
     -> SemIR::InstId {
+  static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
+                std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
+  constexpr bool ToClass =
+      std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT>;
+
   auto& sem_ir = context.sem_ir();
   auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
   auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
@@ -406,14 +412,14 @@ static auto ConvertStructToStructOrClass(Context& context,
   // TODO: If not, include the name of the first source field that doesn't
   // exist in the destination or vice versa in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields.size()) {
-    CARBON_DIAGNOSTIC(StructInitElementCountMismatch, Error,
-                      "cannot initialize {0} with {1} field(s) from struct "
-                      "with {2} field(s).",
-                      llvm::StringLiteral, size_t, size_t);
-    context.emitter().Emit(
-        value_loc_id, StructInitElementCountMismatch,
-        is_class ? llvm::StringLiteral("class") : llvm::StringLiteral("struct"),
-        dest_elem_fields.size(), src_elem_fields.size());
+    CARBON_DIAGNOSTIC(
+        StructInitElementCountMismatch, Error,
+        "cannot initialize {0:class|struct} with {1} field(s) from struct "
+        "with {2} field(s).",
+        BoolAsSelect, size_t, size_t);
+    context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
+                           ToClass, dest_elem_fields.size(),
+                           src_elem_fields.size());
     return SemIR::InstId::BuiltinError;
   }
 
@@ -493,7 +499,7 @@ static auto ConvertStructToStructOrClass(Context& context,
     new_block.Set(i, init_id);
   }
 
-  if (is_class) {
+  if (ToClass) {
     target.init_block->InsertHere();
     CARBON_CHECK(is_init,
                  "Converting directly to a class value is not supported");
@@ -522,7 +528,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::InstId value_id,
                                   ConversionTarget target) -> SemIR::InstId {
   return ConvertStructToStructOrClass<SemIR::StructAccess>(
-      context, src_type, dest_type, value_id, target, /*is_class=*/false);
+      context, src_type, dest_type, value_id, target);
 }
 
 // Performs a conversion from a struct to a class type. This function only
@@ -554,7 +560,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target, /*is_class=*/true);
+      context, src_type, dest_struct_type, value_id, target);
 
   if (need_temporary) {
     target_block.InsertHere();
@@ -1154,13 +1160,11 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
   bool addr_pattern = context.insts().Is<SemIR::AddrPattern>(self_param_id);
   DiagnosticAnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(
-            InCallToFunctionSelf, Note,
-            "initializing `{0}` parameter of method declared here",
-            llvm::StringLiteral);
-        builder.Note(self_param_id, InCallToFunctionSelf,
-                     addr_pattern ? llvm::StringLiteral("addr self")
-                                  : llvm::StringLiteral("self"));
+        CARBON_DIAGNOSTIC(InCallToFunctionSelf, Note,
+                          "initializing `{0:addr self|self}` parameter of "
+                          "method declared here",
+                          BoolAsSelect);
+        builder.Note(self_param_id, InCallToFunctionSelf, addr_pattern);
       });
 
   return CallerPatternMatch(context, callee_specific_id, self_param_id,

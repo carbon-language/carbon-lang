@@ -25,6 +25,7 @@ cc_library(
     ],
     deps = [
         ":diagnostic_kind",
+        ":format_providers",
         "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
@@ -53,6 +54,31 @@ cc_library(
     ],
     deps = [
         "//common:enum_base",
+    ],
+)
+
+cc_library(
+    name = "format_providers",
+    srcs = ["format_providers.cpp"],
+    hdrs = ["format_providers.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "format_providers_test",
+    size = "small",
+    srcs = ["format_providers_test.cpp"],
+    deps = [
+        ":diagnostic_emitter",
+        ":format_providers",
+        ":mocks",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

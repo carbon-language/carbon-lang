@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -22,20 +23,26 @@ auto HandleBraceExpr(Context& context) -> void {
 static auto HandleBraceExprParamError(Context& context,
                                       Context::StateStackEntry state,
                                       State param_finish_state) -> void {
-  bool is_type = param_finish_state == State::BraceExprParamFinishAsType;
-  bool is_value = param_finish_state == State::BraceExprParamFinishAsValue;
-  bool is_unknown = param_finish_state == State::BraceExprParamFinishAsUnknown;
-  CARBON_CHECK(is_type || is_value || is_unknown);
-  CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "expected {0}{1}{2}",
-                    llvm::StringLiteral, llvm::StringLiteral,
-                    llvm::StringLiteral);
-  context.emitter().Emit(
-      *context.position(), ExpectedStructLiteralField,
-      (is_type || is_unknown) ? llvm::StringLiteral("`.field: field_type`")
-                              : llvm::StringLiteral(""),
-      is_unknown ? llvm::StringLiteral(" or ") : llvm::StringLiteral(""),
-      (is_value || is_unknown) ? llvm::StringLiteral("`.field = value`")
-                               : llvm::StringLiteral(""));
+  IntAsSelect mode(0);
+  switch (param_finish_state) {
+    case State::BraceExprParamFinishAsType:
+      mode.value = 0;
+      break;
+    case State::BraceExprParamFinishAsValue:
+      mode.value = 1;
+      break;
+    case State::BraceExprParamFinishAsUnknown:
+      mode.value = 2;
+      break;
+    default:
+      CARBON_FATAL("Unexpected state: {0}", param_finish_state);
+  }
+  CARBON_DIAGNOSTIC(
+      ExpectedStructLiteralField, Error,
+      "expected {0:=0:`.field: field_type`|"
+      "=1:`.field = value`|=2:`.field: field_type` or `.field = value`}",
+      IntAsSelect);
+  context.emitter().Emit(*context.position(), ExpectedStructLiteralField, mode);
 
   state.has_error = true;
   context.PushState(state, param_finish_state);
