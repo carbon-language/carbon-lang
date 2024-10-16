@@ -545,8 +545,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (base_info.type_id != SemIR::TypeId::Error) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
-    CARBON_CHECK(!class_info.is_dynamic);
-    class_info.is_dynamic = base_class_info.is_dynamic;
+    class_info.is_dynamic |= base_class_info.is_dynamic;
   }
 
   // Add a corresponding field to the object representation of the class.

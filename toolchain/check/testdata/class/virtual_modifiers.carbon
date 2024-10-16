@@ -8,6 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/virtual_modifiers.carbon
 
+// --- modifiers.carbon
+
+package Modifiers;
 
 base class Base {
   virtual fn H();
@@ -23,7 +26,18 @@ abstract class Abstract {
   impl fn L();
 }
 
-// CHECK:STDOUT: --- virtual_modifiers.carbon
+// --- todo_fail_later_base.carbon
+
+package FailLaterBase;
+
+import Modifiers;
+
+base class Derived {
+  virtual fn F();
+  extend base: Modifiers.Base;
+}
+
+// CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
@@ -71,7 +85,7 @@ abstract class Abstract {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [template = constants.%I] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -83,7 +97,7 @@ abstract class Abstract {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {} {}
 // CHECK:STDOUT:   %L.decl: %L.type = fn_decl @L [template = constants.%L] {} {}
-// CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -101,4 +115,76 @@ abstract class Abstract {
 // CHECK:STDOUT: virtual fn @K();
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @L();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_later_base.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.<vptr>: %.2, .base: %Base} [template]
+// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Modifiers: <namespace> = namespace file.%Modifiers.import, [template] {
+// CHECK:STDOUT:     .Base = %import_ref.1
+// CHECK:STDOUT:     import Modifiers//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+9, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Modifiers = imports.%Modifiers
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Modifiers.import = import Modifiers
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [template = imports.%Modifiers]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
+// CHECK:STDOUT:   %.loc8: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .base = %.loc8
+// CHECK:STDOUT:   extend name_scope4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .H = imports.%import_ref.3
+// CHECK:STDOUT:   .I = imports.%import_ref.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F();
 // CHECK:STDOUT:
