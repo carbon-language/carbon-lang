@@ -116,7 +116,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.vptr: %.4} [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.<vptr>: %.4} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

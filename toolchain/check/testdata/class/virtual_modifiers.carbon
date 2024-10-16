@@ -33,7 +33,7 @@ abstract class Abstract {
 // CHECK:STDOUT:   %I.type: type = fn_type @I [template]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.vptr: %.2} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
 // CHECK:STDOUT:   %J.type: type = fn_type @J [template]
