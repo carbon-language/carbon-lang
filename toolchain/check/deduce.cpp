@@ -4,6 +4,7 @@
 
 #include "toolchain/check/deduce.h"
 
+#include "llvm/ADT/SmallBitVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
@@ -183,6 +184,8 @@ class DeductionContext {
   llvm::SmallVector<SemIR::InstId> result_arg_ids_;
   llvm::SmallVector<Substitution> substitutions_;
   SemIR::CompileTimeBindIndex first_deduced_index_;
+  // Non-deduced indexes, indexed by parameter index - first_deduced_index_.
+  llvm::SmallBitVector non_deduced_indexes_;
 };
 
 }  // namespace
@@ -231,11 +234,32 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
     }
     first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
   }
+
+  non_deduced_indexes_.resize(result_arg_ids_.size() -
+                              first_deduced_index_.index);
 }
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
     auto [param_id, arg_id, needs_substitution] = worklist_.PopNext();
+
+    auto note_initializing_param = [&](auto& builder) {
+      if (auto param =
+              context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
+                  param_id)) {
+        CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
+                          "initializing generic parameter `{0}` declared here",
+                          SemIR::NameId);
+        builder.Note(
+            param_id, InitializingGenericParam,
+            context().entity_names().Get(param->entity_name_id).name_id);
+      } else {
+        NoteGenericHere(context(), generic_id_, builder);
+      }
+    };
+
+    // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
+    // and the parameter doesn't have a symbolic constant value.
 
     // If the parameter has a symbolic type, deduce against that.
     auto param_type_id = context().insts().Get(param_id).type_id();
@@ -246,54 +270,68 @@ auto DeductionContext::Deduce() -> bool {
     } else {
       // The argument needs to have the same type as the parameter.
       // TODO: Suppress diagnostics here if diagnose_ is false.
-      DiagnosticAnnotationScope annotate_diagnostics(
-          &context().emitter(), [&](auto& builder) {
-            if (auto param =
-                    context().insts().TryGetAs<SemIR::BindSymbolicName>(
-                        param_id)) {
-              CARBON_DIAGNOSTIC(
-                  InitializingGenericParam, Note,
-                  "initializing generic parameter `{0}` declared here",
-                  SemIR::NameId);
-              builder.Note(
-                  param_id, InitializingGenericParam,
-                  context().entity_names().Get(param->entity_name_id).name_id);
-            }
-          });
+      // TODO: Only do this when deducing against a symbolic pattern.
+      DiagnosticAnnotationScope annotate_diagnostics(&context().emitter(),
+                                                     note_initializing_param);
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
       if (arg_id == SemIR::InstId::BuiltinError) {
         return false;
       }
     }
 
-    // If the parameter is a symbolic constant, deduce against it. Otherwise, we
-    // assume there is nothing to deduce.
-    // TODO: This won't do the right thing in a template deduction.
-    auto param_const_id = context().constant_values().Get(param_id);
-    if (!param_const_id.is_valid() || !param_const_id.is_symbolic()) {
-      continue;
-    }
-
     // Attempt to match `param_inst` against `arg_id`. If the match succeeds,
     // this should `continue` the outer loop. On `break`, we will try to desugar
     // the parameter to continue looking for a match.
-    auto param_inst = context().insts().Get(
-        context().constant_values().GetInstId(param_const_id));
+    auto param_inst = context().insts().Get(param_id);
     CARBON_KIND_SWITCH(param_inst) {
-      // Deducing a symbolic binding from an argument with a constant value
-      // deduces the binding as having that constant value.
-      case SemIR::InstKind::SymbolicBindingPattern:
-      case SemIR::InstKind::BindSymbolicName: {
-        auto entity_name_id = SemIR::EntityNameId::Invalid;
-        if (auto bind = param_inst.TryAs<SemIR::SymbolicBindingPattern>()) {
-          entity_name_id = bind->entity_name_id;
-        } else {
-          entity_name_id =
-              param_inst.As<SemIR::BindSymbolicName>().entity_name_id;
-        }
-        auto& entity_name = context().entity_names().Get(entity_name_id);
+      // Deducing a symbolic binding pattern from an argument deduces the
+      // binding as having that constant value. For example, deducing
+      // `(T:! type)` against `(i32)` deduces `T` to be `i32`. The argument is
+      // required to be a compile-time constant.
+      case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
+        auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
-        if (!index.is_valid() || index < first_deduced_index_) {
+        if (!index.is_valid()) {
+          break;
+        }
+        CARBON_CHECK(
+            index >= first_deduced_index_ &&
+                static_cast<size_t>(index.index) < result_arg_ids_.size(),
+            "Unexpected index {0} for symbolic binding pattern; "
+            "expected to be in range [{1}, {2})",
+            first_deduced_index_.index, result_arg_ids_.size());
+        CARBON_CHECK(!result_arg_ids_[index.index].is_valid(),
+                     "Deduced a value for parameter prior to its declaration");
+
+        auto arg_const_inst_id =
+            context().constant_values().GetConstantInstId(arg_id);
+        if (!arg_const_inst_id.is_valid()) {
+          if (diagnose_) {
+            CARBON_DIAGNOSTIC(CompTimeArgumentNotConstant, Error,
+                              "argument for generic parameter is not a "
+                              "compile-time constant");
+            auto diag =
+                context().emitter().Build(loc_id_, CompTimeArgumentNotConstant);
+            note_initializing_param(diag);
+            diag.Emit();
+          }
+          return false;
+        }
+
+        result_arg_ids_[index.index] = arg_const_inst_id;
+        // This parameter index should not be deduced if it appears later.
+        non_deduced_indexes_[index.index - first_deduced_index_.index] = true;
+        continue;
+      }
+
+      // Deducing a symbolic binding appearing within an expression against a
+      // constant value deduces the binding as having that value. For example,
+      // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
+      case CARBON_KIND(SemIR::BindSymbolicName bind): {
+        auto& entity_name = context().entity_names().Get(bind.entity_name_id);
+        auto index = entity_name.bind_index;
+        if (!index.is_valid() || index < first_deduced_index_ ||
+            non_deduced_indexes_[index.index - first_deduced_index_.index]) {
           break;
         }
 
@@ -321,6 +359,11 @@ auto DeductionContext::Deduce() -> bool {
           }
           result_arg_ids_[index.index] = arg_const_inst_id;
         }
+        continue;
+      }
+
+      case CARBON_KIND(SemIR::ParamPattern pattern): {
+        Add(pattern.subpattern_id, arg_id, needs_substitution);
         continue;
       }
 
@@ -356,6 +399,20 @@ auto DeductionContext::Deduce() -> bool {
 
       default:
         break;
+    }
+
+    // We didn't manage to deduce against the syntactic form of the parameter.
+    // Convert it to a canonical constant value and try deducing against that.
+    auto param_const_id = context().constant_values().Get(param_id);
+    if (!param_const_id.is_valid() || !param_const_id.is_symbolic()) {
+      // It's not a symbolic constant. There's nothing here to deduce.
+      continue;
+    }
+    auto param_const_inst_id =
+        context().constant_values().GetInstId(param_const_id);
+    if (param_const_inst_id != param_id) {
+      Add(param_const_inst_id, arg_id, needs_substitution);
+      continue;
     }
 
     // If we've not yet substituted into the parameter, do so now and try again.
