@@ -37,6 +37,20 @@ base class Derived {
   extend base: Modifiers.Base;
 }
 
+// --- fail_todo_init.carbon
+
+package Init;
+
+import Modifiers;
+
+fn F() {
+  // TODO: The vptr shouldn't be counted for programmer-facing behavior.
+  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:27: error: cannot initialize class with 1 field(s) from struct with 0 field(s).
+  // CHECK:STDERR:   var v: Modifiers.Base = {};
+  // CHECK:STDERR:                           ^~
+  var v: Modifiers.Base = {};
+}
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -187,4 +201,68 @@ base class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_init.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Modifiers: <namespace> = namespace file.%Modifiers.import, [template] {
+// CHECK:STDOUT:     .Base = %import_ref.1
+// CHECK:STDOUT:     import Modifiers//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+9, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Modifiers = imports.%Modifiers
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Modifiers.import = import Modifiers
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .H = imports.%import_ref.3
+// CHECK:STDOUT:   .I = imports.%import_ref.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [template = imports.%Modifiers]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
+// CHECK:STDOUT:   %v.var: ref %Base = var v
+// CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc7: %.6 = struct_literal ()
+// CHECK:STDOUT:   assign %v.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
