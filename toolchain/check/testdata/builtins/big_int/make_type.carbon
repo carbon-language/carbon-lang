@@ -4,15 +4,15 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/bigint/make_type.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/big_int/make_type.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/bigint/make_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/big_int/make_type.carbon
 
 // --- types.carbon
 
 library "[[@TEST_NAME]]";
 
-fn BigInt() -> type = "bigint.make_type";
+fn BigInt() -> type = "big_int.make_type";
 
 // --- use_types.carbon
 
@@ -54,7 +54,7 @@ var i: BigInt();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BigInt() -> type = "bigint.make_type";
+// CHECK:STDOUT: fn @BigInt() -> type = "big_int.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -87,12 +87,12 @@ var i: BigInt();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %BigInt.ref: %BigInt.type = name_ref BigInt, imports.%import_ref [template = constants.%BigInt]
-// CHECK:STDOUT:   %bigint.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
-// CHECK:STDOUT:   %.loc6_15.1: type = value_of_initializer %bigint.make_type [template = Core.BigInt]
-// CHECK:STDOUT:   %.loc6_15.2: type = converted %bigint.make_type, %.loc6_15.1 [template = Core.BigInt]
+// CHECK:STDOUT:   %big_int.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
+// CHECK:STDOUT:   %.loc6_15.1: type = value_of_initializer %big_int.make_type [template = Core.BigInt]
+// CHECK:STDOUT:   %.loc6_15.2: type = converted %big_int.make_type, %.loc6_15.1 [template = Core.BigInt]
 // CHECK:STDOUT:   %i.var: ref Core.BigInt = var i
 // CHECK:STDOUT:   %i: ref Core.BigInt = bind_name i, %i.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BigInt() -> type = "bigint.make_type";
+// CHECK:STDOUT: fn @BigInt() -> type = "big_int.make_type";
 // CHECK:STDOUT:
