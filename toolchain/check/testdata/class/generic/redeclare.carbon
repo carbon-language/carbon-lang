@@ -124,7 +124,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc6, runtime_param<invalid> [symbolic = constants.%T.patt.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.loc4: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %param.loc4 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %param.loc4 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc6: %Generic.type = class_decl @Generic [template = constants.%Generic.1] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt.2]
@@ -135,9 +135,9 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Generic(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT: generic class @Generic(%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -150,8 +150,8 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_list.carbon
@@ -189,19 +189,19 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%T.loc12: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT: generic class @.1(%T.loc12_9.1: type) {
+// CHECK:STDOUT:   %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc12_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -214,8 +214,8 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
@@ -262,41 +262,41 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [template = constants.%B.1] {
-// CHECK:STDOUT:     %N.patt.loc4: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt.1)]
-// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc4, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt.1)]
+// CHECK:STDOUT:     %N.patt.loc4_9.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.1)]
+// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc4_9.1, runtime_param<invalid> [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_13.2: type = converted %int.make_type_32, %.loc4_13.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4: i32 = bind_symbolic_name N, 0, %param [symbolic = %N.1 (constants.%N.1)]
+// CHECK:STDOUT:     %N.loc4_9.1: i32 = bind_symbolic_name N, 0, %param [symbolic = %N.loc4_9.2 (constants.%N.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc12: @.1.%T.1 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.1 (constants.%N.patt.2)]
-// CHECK:STDOUT:     %N.param_patt: @.1.%T.1 (%T) = param_pattern %N.patt.loc12, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc12_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc12_19.1: @.1.%T.loc12_9.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.2)]
+// CHECK:STDOUT:     %N.param_patt: @.1.%T.loc12_9.2 (%T) = param_pattern %N.patt.loc12_19.1, runtime_param<invalid> [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.1 [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_19: @.1.%T.1 (%T) = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc12: @.1.%T.1 (%T) = bind_symbolic_name N, 1, %param.loc12_19 [symbolic = %N.1 (constants.%N.2)]
+// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc12_19: @.1.%T.loc12_9.2 (%T) = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc12_19.1: @.1.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1, %param.loc12_19 [symbolic = %N.loc12_19.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @B(%N.loc4: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N.1)]
-// CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt.1)]
+// CHECK:STDOUT: generic class @B(%N.loc4_9.1: i32) {
+// CHECK:STDOUT:   %N.loc4_9.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.1)]
+// CHECK:STDOUT:   %N.patt.loc4_9.2: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%T.loc12: type, %N.loc12: @.1.%T.1 (%T)) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:   %N.1: %T = bind_symbolic_name N, 1 [symbolic = %N.1 (constants.%N.2)]
-// CHECK:STDOUT:   %N.patt.1: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.1 (constants.%N.patt.2)]
+// CHECK:STDOUT: generic class @.1(%T.loc12_9.1: type, %N.loc12_19.1: @.1.%T.loc12_9.2 (%T)) {
+// CHECK:STDOUT:   %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc12_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %N.loc12_19.2: %T = bind_symbolic_name N, 1 [symbolic = %N.loc12_19.2 (constants.%N.2)]
+// CHECK:STDOUT:   %N.patt.loc12_19.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -311,15 +311,15 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%N.1) {
-// CHECK:STDOUT:   %N.1 => constants.%N.1
-// CHECK:STDOUT:   %N.patt.1 => constants.%N.1
+// CHECK:STDOUT:   %N.loc4_9.2 => constants.%N.1
+// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%N.2) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
-// CHECK:STDOUT:   %N.1 => constants.%N.2
-// CHECK:STDOUT:   %N.patt.1 => constants.%N.2
+// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %N.loc12_19.2 => constants.%N.2
+// CHECK:STDOUT:   %N.patt.loc12_19.2 => constants.%N.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
@@ -365,40 +365,40 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc12: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %U.patt.loc12: i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: i32 = param_pattern %U.patt.loc12, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt.loc12_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %U.patt.loc12_19.1: i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: i32 = param_pattern %U.patt.loc12_19.1, runtime_param<invalid> [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
 // CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %param.loc12_19: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc12: i32 = bind_symbolic_name U, 1, %param.loc12_19 [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_19.1: i32 = bind_symbolic_name U, 1, %param.loc12_19 [symbolic = %U.loc12_19.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT: generic class @C(%T.loc4_9.1: type) {
+// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%T.loc12: type, %U.loc12: i32) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:   %U.1: i32 = bind_symbolic_name U, 1 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.1: i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT: generic class @.1(%T.loc12_9.1: type, %U.loc12_19.1: i32) {
+// CHECK:STDOUT:   %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc12_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:   %U.loc12_19.2: i32 = bind_symbolic_name U, 1 [symbolic = %U.loc12_19.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc12_19.2: i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -413,15 +413,15 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
-// CHECK:STDOUT:   %U.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.1 => constants.%U
+// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %U.loc12_19.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_19.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
@@ -466,34 +466,34 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.1] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T.1)]
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_9.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %T.patt.loc12: i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: i32 = param_pattern %T.patt.loc12, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc12_9.1: i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: i32 = param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
 // CHECK:STDOUT:     %param: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12: i32 = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T.2)]
+// CHECK:STDOUT:     %T.loc12_9.1: i32 = bind_symbolic_name T, 0, %param [symbolic = %T.loc12_9.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.1)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.1)]
+// CHECK:STDOUT: generic class @D(%T.loc4_9.1: type) {
+// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T.1)]
+// CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%T.loc12: i32) {
-// CHECK:STDOUT:   %T.1: i32 = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T.2)]
-// CHECK:STDOUT:   %T.patt.1: i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt.2)]
+// CHECK:STDOUT: generic class @.1(%T.loc12_9.1: i32) {
+// CHECK:STDOUT:   %T.loc12_9.2: i32 = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T.2)]
+// CHECK:STDOUT:   %T.patt.loc12_9.2: i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -508,13 +508,13 @@ class E(U:! type) {}
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T.1) {
-// CHECK:STDOUT:   %T.1 => constants.%T.1
-// CHECK:STDOUT:   %T.patt.1 => constants.%T.1
+// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T.1
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.2) {
-// CHECK:STDOUT:   %T.1 => constants.%T.2
-// CHECK:STDOUT:   %T.patt.1 => constants.%T.2
+// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T.2
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
@@ -555,31 +555,31 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %E.decl: %E.type = class_decl @E [template = constants.%E.1] {
-// CHECK:STDOUT:     %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %U.patt.loc11: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.1 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc11, runtime_param<invalid> [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc11_9.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc11_9.1, runtime_param<invalid> [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11: type = bind_symbolic_name U, 0, %param [symbolic = %U.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_9.1: type = bind_symbolic_name U, 0, %param [symbolic = %U.loc11_9.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @E(%T.loc4: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT: generic class @E(%T.loc4_9.1: type) {
+// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%U.loc11: type) {
-// CHECK:STDOUT:   %U.1: type = bind_symbolic_name U, 0 [symbolic = %U.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.1 (constants.%U.patt)]
+// CHECK:STDOUT: generic class @.1(%U.loc11_9.1: type) {
+// CHECK:STDOUT:   %U.loc11_9.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc11_9.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc11_9.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_9.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -592,12 +592,12 @@ class E(U:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%U) {
-// CHECK:STDOUT:   %U.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.1 => constants.%U
+// CHECK:STDOUT:   %U.loc11_9.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_9.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -931,6 +931,27 @@ struct SpecificConstant {
   SpecificId specific_id;
 };
 
+// A specific instance of a generic function. This represents the callee in a
+// call instruction that is calling a generic function, where the specific
+// arguments of the function have been deduced.
+//
+// TODO: This value corresponds to the `(FunctionType as Call(...)).Op` function
+// in the overloaded calls design. Eventually we should represent it more
+// directly as a member of the `Call` interface.
+struct SpecificFunction {
+  static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
+      {.ir_name = "specific_function",
+       .constant_kind = InstConstantKind::Always});
+
+  // Always the builtin SpecificFunctionType.
+  TypeId type_id;
+  // The expression denoting the callee.
+  InstId callee_id;
+  // The specific instance of the generic callee that will be called, including
+  // all the compile-time arguments.
+  SpecificId specific_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required

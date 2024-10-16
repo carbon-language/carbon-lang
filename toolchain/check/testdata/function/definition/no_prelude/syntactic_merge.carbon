@@ -644,20 +644,20 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt.1)]
-// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt.loc7, runtime_param<invalid> [symbolic = %a.patt.1 (constants.%a.patt.1)]
+// CHECK:STDOUT:     %a.patt.loc7_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt.1)]
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt.loc7_8.1, runtime_param<invalid> [symbolic = %a.patt.loc7_8.2 (constants.%a.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc7: %C = bind_symbolic_name a, 0, %param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0, %param [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
-// CHECK:STDOUT:     %a.patt.loc15: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt.2)]
-// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt.loc15, runtime_param<invalid> [symbolic = %a.patt.1 (constants.%a.patt.2)]
+// CHECK:STDOUT:     %a.patt.loc15_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt.2)]
+// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt.loc15_8.1, runtime_param<invalid> [symbolic = %a.patt.loc15_8.2 (constants.%a.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %param: %C = param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc15: %C = bind_symbolic_name a, 0, %param [symbolic = %a.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0, %param [symbolic = %a.loc15_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -668,16 +668,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo(%a.loc7: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt.1)]
+// CHECK:STDOUT: generic fn @Foo(%a.loc7_8.1: %C) {
+// CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc7_8.2: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%a.param_patt: %C]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%a.loc15: %C) {
-// CHECK:STDOUT:   %a.1: %C = bind_symbolic_name a, 0 [symbolic = %a.1 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt.2)]
+// CHECK:STDOUT: generic fn @.1(%a.loc15_8.1: %C) {
+// CHECK:STDOUT:   %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc15_8.2: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -688,13 +688,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%a) {
-// CHECK:STDOUT:   %a.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc15_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

@@ -81,11 +81,18 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
       return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                      return_info.type_id);
     };
+    auto diagnose_abstract_return_type = [&] {
+      CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
+                        "function returns abstract type {0}", SemIR::TypeId);
+      return context.emitter().Build(loc, AbstractTypeInFunctionReturnType,
+                                     return_info.type_id);
+    };
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
     if (context.TryToCompleteType(return_info.type_id,
-                                  diagnose_incomplete_return_type)) {
+                                  diagnose_incomplete_return_type,
+                                  diagnose_abstract_return_type)) {
       return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
                                                        function, specific_id);
     }

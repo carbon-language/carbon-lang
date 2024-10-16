@@ -5,15 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
 #define CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
 
-#include <compare>
 #include <cstdint>
-#include <iterator>
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,50 +42,21 @@ struct LineIndex : public IndexBase {
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::Invalid(LineIndex::InvalidIndex);
+constexpr LineIndex LineIndex::Invalid(InvalidIndex);
+
+// Indices for comments within the buffer.
+struct CommentIndex : public IndexBase {
+  static const CommentIndex Invalid;
+  using IndexBase::IndexBase;
+};
+
+constexpr CommentIndex CommentIndex::Invalid(InvalidIndex);
+
+// Random-access iterator over comments within the buffer.
+using CommentIterator = IndexIterator<CommentIndex>;
 
 // Random-access iterator over tokens within the buffer.
-class TokenIterator
-    : public llvm::iterator_facade_base<TokenIterator,
-                                        std::random_access_iterator_tag,
-                                        const TokenIndex, int>,
-      public Printable<TokenIterator> {
- public:
-  TokenIterator() = delete;
-
-  explicit TokenIterator(TokenIndex token) : token_(token) {}
-
-  auto operator==(const TokenIterator& rhs) const -> bool {
-    return token_ == rhs.token_;
-  }
-  auto operator<=>(const TokenIterator& rhs) const -> std::strong_ordering {
-    return token_ <=> rhs.token_;
-  }
-
-  auto operator*() const -> const TokenIndex& { return token_; }
-
-  using iterator_facade_base::operator-;
-  auto operator-(const TokenIterator& rhs) const -> int {
-    return token_.index - rhs.token_.index;
-  }
-
-  auto operator+=(int n) -> TokenIterator& {
-    token_.index += n;
-    return *this;
-  }
-  auto operator-=(int n) -> TokenIterator& {
-    token_.index -= n;
-    return *this;
-  }
-
-  // Prints the raw token index.
-  auto Print(llvm::raw_ostream& output) const -> void;
-
- private:
-  friend class TokenizedBuffer;
-
-  TokenIndex token_;
-};
+using TokenIterator = IndexIterator<TokenIndex>;
 
 // A diagnostic location converter that maps token locations into source
 // buffer locations.
@@ -115,6 +83,21 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
+  // A comment, which can be a block of lines.
+  //
+  // This is the API version of `CommentData`.
+  struct CommentInfo {
+    // The comment's full text, including `//` symbols. This may have several
+    // lines for block comments.
+    llvm::StringRef text;
+
+    // The comment's indent.
+    int32_t indent;
+
+    // The first line of the comment.
+    LineIndex start_line;
+  };
+
   auto GetKind(TokenIndex token) const -> TokenKind;
   auto GetLine(TokenIndex token) const -> LineIndex;
 
@@ -179,6 +162,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the previous line handle.
   auto GetPrevLine(LineIndex line) const -> LineIndex;
 
+  // Returns true if the token comes after the comment.
+  auto IsAfterComment(TokenIndex token, CommentIndex comment_index) const
+      -> bool;
+
+  // Returns the comment's full text range.
+  auto GetCommentText(CommentIndex comment_index) const -> llvm::StringRef;
+
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
   // It prints one line of information for each token in the buffer, including
@@ -218,6 +208,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   }
 
   auto size() const -> int { return token_infos_.size(); }
+
+  auto comments() const -> llvm::iterator_range<CommentIterator> {
+    return llvm::make_range(CommentIterator(CommentIndex(0)),
+                            CommentIterator(CommentIndex(comments_.size())));
+  }
+
+  auto comments_size() const -> size_t { return comments_.size(); }
 
   // This is an upper bound on the number of output parse nodes in the absence
   // of errors.
@@ -418,6 +415,20 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   static_assert(sizeof(TokenInfo) == 8,
                 "Expected `TokenInfo` to pack to an 8-byte structure.");
 
+  // A comment, which can be a block of lines. These are tracked separately from
+  // tokens because they don't affect parse; if they were part of tokens, we'd
+  // need more general special-casing within token logic.
+  //
+  // Note that `CommentInfo` is used for an API to expose the comment.
+  struct CommentData {
+    // Zero-based byte offset of the start of the comment within the source
+    // buffer provided.
+    int32_t start;
+
+    // The comment's length.
+    int32_t length;
+  };
+
   struct LineInfo {
     explicit LineInfo(int32_t start) : start(start), indent(0) {}
 
@@ -448,6 +459,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
                   PrintWidths widths) const -> void;
 
+  // Adds a comment. This uses the indent to potentially stitch together two
+  // adjacent comments.
+  auto AddComment(int32_t indent, int32_t start, int32_t end) -> void;
+
   // Used to allocate computed string literals.
   llvm::BumpPtrAllocator allocator_;
 
@@ -457,6 +472,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   llvm::SmallVector<TokenInfo> token_infos_;
 
   llvm::SmallVector<LineInfo> line_infos_;
+
+  // Comments in the file.
+  llvm::SmallVector<CommentData> comments_;
 
   // An upper bound on the number of parse tree nodes that we expect to be
   // created for the tokens in this buffer.

@@ -32,7 +32,7 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
       name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
-      constants_(*this) {
+      constants_(this) {
   // `type` and the error type are both complete types.
   types_.SetValueRepr(TypeId::TypeType,
                       {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
@@ -270,6 +270,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Param::Kind:
       case ParamPattern::Kind:
       case PointerType::Kind:
+      case SpecificFunction::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:

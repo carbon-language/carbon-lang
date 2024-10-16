@@ -47,8 +47,8 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt.loc14_6.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14_6.1, runtime_param<invalid> [symbolic = %N.patt.loc14_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: <error> = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -56,13 +56,13 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_10.1: type = value_of_initializer %int.make_type_32.loc14_10 [template = i32]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %int.make_type_32.loc14_10, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc14 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc14_6.1 [symbolic = %N.loc14_6.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc14_25: type = array_type %N.ref, i32 [template = <error>]
 // CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %param.loc14_6: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N, 0, %param.loc14_6 [symbolic = %N.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc14_6.1: i32 = bind_symbolic_name N, 0, %param.loc14_6 [symbolic = %N.loc14_6.2 (constants.%N)]
 // CHECK:STDOUT:     %param.loc14_15: <error> = param runtime_param0
 // CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_15
 // CHECK:STDOUT:   }
@@ -70,15 +70,15 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc14: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
+// CHECK:STDOUT: generic fn @F(%N.loc14_6.1: i32) {
+// CHECK:STDOUT:   %N.loc14_6.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc14_6.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc14_6.2: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: i32, %a.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.1 => constants.%N
-// CHECK:STDOUT:   %N.patt.1 => constants.%N
+// CHECK:STDOUT:   %N.loc14_6.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc14_6.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

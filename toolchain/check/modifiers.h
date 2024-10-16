@@ -46,6 +46,12 @@ inline auto LimitModifiersOnDecl(Context& context,
   ForbidModifiersOnDecl(context, introducer, ~allowed, "");
 }
 
+inline auto LimitModifiersOnNotDefinition(Context& context,
+                                          DeclIntroducerState& introducer,
+                                          KeywordModifierSet allowed) -> void {
+  ForbidModifiersOnDecl(context, introducer, ~allowed, ", only definition");
+}
+
 // Restricts the `extern` modifier to only be used on namespace-scoped
 // declarations. Diagnoses and cleans up:
 // - `extern library` on a definition.

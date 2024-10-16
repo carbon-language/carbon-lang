@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -59,6 +60,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
     functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
+
+  // Specific functions are lowered when we emit a reference to them.
+  specific_functions_.resize(sem_ir_->specifics().size());
 
   // Lower global variable declarations.
   for (auto inst_id :
@@ -161,16 +165,33 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
                sem_ir().insts().Get(inst_id));
 }
 
-auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
+auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
+                                      SemIR::SpecificId specific_id)
+    -> llvm::Function* {
+  // Non-generic functions are declared eagerly.
+  if (!specific_id.is_valid()) {
+    return GetFunction(function_id);
+  }
+
+  if (auto* result = specific_functions_[specific_id.index]) {
+    return result;
+  }
+
+  auto* result = BuildFunctionDecl(function_id, specific_id);
+  // TODO: Add this function to a list of specific functions whose definitions
+  // we need to emit.
+  specific_functions_[specific_id.index] = result;
+  return result;
+}
+
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
+                                    SemIR::SpecificId specific_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
 
-  // Don't lower generic functions or associated functions.
-  // TODO: Associated functions have `Self` in scope so should be treated as
-  // generic functions.
-  if (function.generic_id.is_valid() ||
-      sem_ir().insts().Is<SemIR::InterfaceDecl>(
-          sem_ir().name_scopes().Get(function.parent_scope_id).inst_id)) {
+  // Don't lower generic functions. Note that associated functions in interfaces
+  // have `Self` in scope, so are implicitly generic functions.
+  if (function.generic_id.is_valid() && !specific_id.is_valid()) {
     return nullptr;
   }
 
@@ -181,9 +202,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
-
-  // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::SpecificId::Invalid;
 
   const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
@@ -220,8 +238,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     if (!param_pattern.runtime_index.is_valid()) {
       continue;
     }
-    switch (auto value_rep =
-                SemIR::ValueRepr::ForType(sem_ir(), param_pattern.type_id);
+    auto param_type_id =
+        SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
+    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL("Incomplete parameter type lowering function declaration");
@@ -246,7 +265,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
           : llvm::Type::getVoidTy(llvm_context());
 
   Mangler m(*this);
-  std::string mangled_name = m.Mangle(function_id);
+  std::string mangled_name = m.Mangle(function_id, specific_id);
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(
       function_return_type, param_types, /*isVarArg=*/false);
@@ -412,6 +431,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
       // storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(context.llvm_context());
+    case SemIR::BuiltinInstKind::SpecificFunctionType:
     case SemIR::BuiltinInstKind::StringType:
       // TODO: Decide how we want to represent `StringType`.
       return llvm::PointerType::get(context.llvm_context(), 0);

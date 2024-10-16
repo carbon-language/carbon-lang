@@ -8,6 +8,21 @@ load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+    name = "compile_helper",
+    testonly = 1,
+    srcs = ["compile_helper.cpp"],
+    hdrs = ["compile_helper.h"],
+    deps = [
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 file_test(
     name = "file_test",
     size = "small",
@@ -20,6 +35,7 @@ file_test(
         "//toolchain/codegen:testdata",
         "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
+        "//toolchain/format:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",
         "//toolchain/parse:testdata",

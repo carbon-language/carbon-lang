@@ -129,8 +129,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b_ref.var: ref %.7 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.7 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %S.patt.loc8: %.11 = symbolic_binding_pattern S, 0 [symbolic = %S.patt.1 (constants.%S.patt)]
-// CHECK:STDOUT:     %S.param_patt: %.11 = param_pattern %S.patt.loc8, runtime_param<invalid> [symbolic = %S.patt.1 (constants.%S.patt)]
+// CHECK:STDOUT:     %S.patt.loc8_9.1: %.11 = symbolic_binding_pattern S, 0 [symbolic = %S.patt.loc8_9.2 (constants.%S.patt)]
+// CHECK:STDOUT:     %S.param_patt: %.11 = param_pattern %S.patt.loc8_9.1, runtime_param<invalid> [symbolic = %S.patt.loc8_9.2 (constants.%S.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc8_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_18.1: type = value_of_initializer %int.make_type_32.loc8_18 [template = i32]
@@ -140,7 +140,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_30: type = struct_type {.a: i32, .b: i32} [template = constants.%.11]
 // CHECK:STDOUT:     %param: %.11 = param runtime_param<invalid>
-// CHECK:STDOUT:     %S.loc8: %.11 = bind_symbolic_name S, 0, %param [symbolic = %S.1 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_9.1: %.11 = bind_symbolic_name S, 0, %param [symbolic = %S.loc8_9.2 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
@@ -154,9 +154,9 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%S.loc8: %.11) {
-// CHECK:STDOUT:   %S.1: %.11 = bind_symbolic_name S, 0 [symbolic = %S.1 (constants.%S)]
-// CHECK:STDOUT:   %S.patt.1: %.11 = symbolic_binding_pattern S, 0 [symbolic = %S.patt.1 (constants.%S.patt)]
+// CHECK:STDOUT: generic class @C(%S.loc8_9.1: %.11) {
+// CHECK:STDOUT:   %S.loc8_9.2: %.11 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT:   %S.patt.loc8_9.2: %.11 = symbolic_binding_pattern S, 0 [symbolic = %S.patt.loc8_9.2 (constants.%S.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -203,13 +203,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
-// CHECK:STDOUT:   %S.1 => constants.%S
-// CHECK:STDOUT:   %S.patt.1 => constants.%S
+// CHECK:STDOUT:   %S.loc8_9.2 => constants.%S
+// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.4) {
-// CHECK:STDOUT:   %S.1 => constants.%struct.4
-// CHECK:STDOUT:   %S.patt.1 => constants.%struct.4
+// CHECK:STDOUT:   %S.loc8_9.2 => constants.%struct.4
+// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%struct.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon

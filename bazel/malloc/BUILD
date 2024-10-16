@@ -23,17 +23,12 @@ selects.config_setting_group(
     ],
 )
 
-# A placeholder empty library that can be used as a `malloc` attribute or with
-# the `--custom_malloc` bazel flag to have no custom malloc and use the system
-# malloc instead.
-cc_library(name = "system_malloc")
-
 # A library that enables TCMalloc for optimized builds on Linux. On other
 # platforms and configurations, this falls back on the system malloc.
 cc_library(
     name = "tcmalloc_if_linux_opt",
     deps = select({
         ":linux_opt": ["@tcmalloc//tcmalloc"],
-        "//conditions:default": [":system_malloc"],
+        "//conditions:default": ["@bazel_tools//tools/cpp:malloc"],
     }),
 )

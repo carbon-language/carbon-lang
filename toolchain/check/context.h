@@ -235,6 +235,10 @@ class Context {
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
+  // Adds a note to a diagnostic explaining that a class is abstract.
+  auto NoteAbstractClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
+      -> void;
+
   // Adds a note to a diagnostic explaining that an interface is not defined.
   auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                               DiagnosticBuilder& builder) -> void;
@@ -319,7 +323,9 @@ class Context {
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
   auto TryToCompleteType(SemIR::TypeId type_id,
-                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
+                         BuildDiagnosticFn diagnoser = nullptr,
+                         BuildDiagnosticFn abstract_diagnoser = nullptr)
+      -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -333,11 +339,12 @@ class Context {
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType. `diagnoser` must not be null.
-  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
+  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser,
+                      BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> SemIR::TypeId {
-    CARBON_CHECK(diagnoser);
-    return TryToCompleteType(type_id, diagnoser) ? type_id
-                                                 : SemIR::TypeId::Error;
+    return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
+               ? type_id
+               : SemIR::TypeId::Error;
   }
 
   // Returns whether `type_id` represents a facet type.

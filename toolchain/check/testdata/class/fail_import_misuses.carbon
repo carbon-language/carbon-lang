@@ -34,7 +34,7 @@ import library "a";
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: Variable has incomplete type `Incomplete`
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: variable has incomplete type `Incomplete`
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import

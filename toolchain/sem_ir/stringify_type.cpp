@@ -306,6 +306,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
+      case SpecificFunction::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:

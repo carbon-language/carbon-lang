@@ -56,8 +56,8 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc7: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: <error> = param_pattern %T.patt.loc7, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc7_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: <error> = param_pattern %T.patt.loc7_6.1, runtime_param<invalid> [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -69,7 +69,7 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: <error> = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc7: <error> = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_6.1: <error> = bind_symbolic_name T, 0, %param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,15 +77,15 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc7: <error>) {
-// CHECK:STDOUT:   %T.1: <error> = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT: generic fn @F(%T.loc7_6.1: <error>) {
+// CHECK:STDOUT:   %T.loc7_6.2: <error> = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc7_6.2: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

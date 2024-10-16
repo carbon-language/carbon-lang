@@ -195,6 +195,17 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
+auto Context::NoteAbstractClass(SemIR::ClassId class_id,
+                                DiagnosticBuilder& builder) -> void {
+  const auto& class_info = classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                    "class was declared abstract here");
+  builder.Note(class_info.definition_id, ClassAbstractHere);
+}
+
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
@@ -919,6 +930,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
       case SemIR::BuiltinInstKind::WitnessType:
+      case SemIR::BuiltinInstKind::SpecificFunctionType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinInstKind::StringType:
@@ -1099,7 +1111,7 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     // Use overload resolution to select the implementation, producing compile
-    // errors when BuildTypeForInst isn't defined for a given instruction.
+    // errors when BuildValueReprForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                  \
   case CARBON_KIND(SemIR::Name typed_inst): {          \
@@ -1128,8 +1140,33 @@ class TypeCompleter {
 }  // namespace
 
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
-                                BuildDiagnosticFn diagnoser) -> bool {
-  return TypeCompleter(*this, diagnoser).Complete(type_id);
+                                BuildDiagnosticFn diagnoser,
+                                BuildDiagnosticFn abstract_diagnoser) -> bool {
+  if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
+    return false;
+  }
+
+  if (!abstract_diagnoser) {
+    return true;
+  }
+
+  if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
+    auto& class_info = classes().Get(class_type->class_id);
+    if (class_info.inheritance_kind !=
+        SemIR::Class::InheritanceKind::Abstract) {
+      return true;
+    }
+
+    auto builder = abstract_diagnoser();
+    if (!builder) {
+      return false;
+    }
+    NoteAbstractClass(class_type->class_id, builder);
+    builder.Emit();
+    return false;
+  }
+
+  return true;
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,

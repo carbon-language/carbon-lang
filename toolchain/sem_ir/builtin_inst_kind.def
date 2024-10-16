@@ -70,6 +70,9 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(StringType, "String")
 // The type of bound method values.
 CARBON_SEM_IR_BUILTIN_INST_KIND(BoundMethodType, "<bound method>")
 
+// The type of specific functions.
+CARBON_SEM_IR_BUILTIN_INST_KIND(SpecificFunctionType, "<specific function>")
+
 // The type of namespace and imported package names.
 CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType, "<namespace>")
 

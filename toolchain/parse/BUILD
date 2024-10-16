@@ -45,6 +45,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "@googletest//:gtest",
     ],
 )
@@ -139,6 +140,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

@@ -28,9 +28,9 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,13 +54,13 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%Simple.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc15: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc15, runtime_param<invalid> [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc15_14.1, runtime_param<invalid> [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15 [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_14.1 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15: type = bind_symbolic_name T, 0, %param [symbolic = %T.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_14.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,17 +75,22 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc15: type) {
-// CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
+// CHECK:STDOUT: generic impl @impl(%T.loc15_14.1: type) {
+// CHECK:STDOUT:   %T.loc15_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc15_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc15_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc15_36.2: <witness> = interface_witness (%F) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
-// CHECK:STDOUT:     %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:     %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.4]
+// CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc15_36.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = %.loc15
+// CHECK:STDOUT:     witness = %.loc15_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +99,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc15: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc15_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -106,11 +111,21 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.1 => constants.%T
+// CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc15_36.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc15_14.2) {
+// CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

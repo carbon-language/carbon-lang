@@ -257,6 +257,7 @@ cc_test(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "//toolchain/testing:compile_helper",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

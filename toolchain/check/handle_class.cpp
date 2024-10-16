@@ -79,19 +79,6 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  // The introducer kind must match the previous declaration.
-  // TODO: The rule here is not yet decided. See #3384.
-  if (prev_class.inheritance_kind != new_class.inheritance_kind) {
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                      "class redeclared with different inheritance kind");
-    CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                      "previously declared here");
-    context.emitter()
-        .Build(new_loc, ClassRedeclarationDifferentIntroducer)
-        .Note(prev_loc, ClassRedeclarationDifferentIntroducerPrevious)
-        .Emit();
-  }
-
   if (new_is_definition) {
     prev_class.MergeDefinition(new_class);
     prev_class.scope_id = new_class.scope_id;
@@ -194,9 +181,14 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Class>();
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  auto always_acceptable_modifiers =
+      KeywordModifierSet::Access | KeywordModifierSet::Extern;
   LimitModifiersOnDecl(context, introducer,
-                       KeywordModifierSet::Class | KeywordModifierSet::Access |
-                           KeywordModifierSet::Extern);
+                       always_acceptable_modifiers | KeywordModifierSet::Class);
+  if (!is_definition) {
+    LimitModifiersOnNotDefinition(context, introducer,
+                                  always_acceptable_modifiers);
+  }
   RestrictExternModifierOnDecl(context, introducer, parent_scope_inst,
                                is_definition);
 
@@ -391,14 +383,24 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto [adapted_type_inst_id, adapted_type_id] =
-      ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
-                      "adapted type {0} is an incomplete type", InstIdAsType);
-    return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                   adapted_type_inst_id);
-  });
+  auto adapted_type_id =
+      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
+  adapted_type_id = context.AsCompleteType(
+      adapted_type_id,
+      [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
+                          "adapted type {0} is an incomplete type",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
+                                       adapted_type_id);
+      },
+      [&] {
+        CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
+                          "adapted type {0} is an abstract type",
+                          SemIR::TypeId);
+        return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
+                                       adapted_type_id);
+      });
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(

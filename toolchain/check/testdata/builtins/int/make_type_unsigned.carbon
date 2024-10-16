@@ -203,29 +203,29 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %n: %.5 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
-// CHECK:STDOUT:     %N.patt.loc14: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14, runtime_param<invalid> [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %x.patt: @Symbolic.%.1 (%.6) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @Symbolic.%.1 (%.6) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %N.patt.loc14_13.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14_13.1, runtime_param<invalid> [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %x.patt: @Symbolic.%.loc14_29 (%.6) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @Symbolic.%.loc14_29 (%.6) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %int.make_type_32, %.loc14_17.1 [template = i32]
 // CHECK:STDOUT:     %UInt.ref.loc14_25: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, %N.loc14 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, %N.loc14_13.1 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = %.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = %.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = %.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:     %UInt.ref.loc14_37: %UInt.type = name_ref UInt, imports.%import_ref.1 [template = constants.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, %N.loc14 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %.1 (constants.%.6)]
-// CHECK:STDOUT:     %return: ref @Symbolic.%.1 (%.6) = var <return slot>
+// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, %N.loc14_13.1 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = %.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = %.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %.loc14_29 (constants.%.6)]
+// CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_29 (%.6) = var <return slot>
 // CHECK:STDOUT:     %param.loc14_13: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14: i32 = bind_symbolic_name N, 0, %param.loc14_13 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:     %param.loc14_22: @Symbolic.%.1 (%.6) = param runtime_param0
-// CHECK:STDOUT:     %x: @Symbolic.%.1 (%.6) = bind_name x, %param.loc14_22
+// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_13 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc14_22: @Symbolic.%.loc14_29 (%.6) = param runtime_param0
+// CHECK:STDOUT:     %x: @Symbolic.%.loc14_29 (%.6) = bind_name x, %param.loc14_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -245,24 +245,24 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Symbolic(%N.loc14: i32) {
-// CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N, 0 [symbolic = %N.1 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.1 (constants.%N.patt)]
-// CHECK:STDOUT:   %.1: type = int_type unsigned, %N.1 [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT: generic fn @Symbolic(%N.loc14_13.1: i32) {
+// CHECK:STDOUT:   %N.loc14_13.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc14_13.2: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %.loc14_29: type = int_type unsigned, %N.loc14_13.2 [symbolic = %.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.param_patt: i32, %x.param_patt: @Symbolic.%.1 (%.6)) -> @Symbolic.%.1 (%.6) {
+// CHECK:STDOUT:   fn(%N.param_patt: i32, %x.param_patt: @Symbolic.%.loc14_29 (%.6)) -> @Symbolic.%.loc14_29 (%.6) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @Symbolic.%.1 (%.6) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref: @Symbolic.%.loc14_29 (%.6) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Symbolic(constants.%N) {
-// CHECK:STDOUT:   %N.1 => constants.%N
-// CHECK:STDOUT:   %N.patt.1 => constants.%N
-// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %N.loc14_13.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc14_13.2 => constants.%N
+// CHECK:STDOUT:   %.loc14_29 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon

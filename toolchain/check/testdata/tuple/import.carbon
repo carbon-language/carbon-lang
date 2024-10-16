@@ -142,8 +142,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref.var: ref %.10 = var b_ref
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %X.patt.loc7: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: %.9 = param_pattern %X.patt.loc7, runtime_param<invalid> [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc7_9.1: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: %.9 = param_pattern %X.patt.loc7_9.1, runtime_param<invalid> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
@@ -154,7 +154,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc7_22.5: type = converted %int.make_type_32.loc7_19, %.loc7_22.4 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.6: type = converted %.loc7_22.1, constants.%.9 [template = constants.%.9]
 // CHECK:STDOUT:     %param: %.9 = param runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc7: %.9 = bind_symbolic_name X, 0, %param [symbolic = %X.1 (constants.%X)]
+// CHECK:STDOUT:     %X.loc7_9.1: %.9 = bind_symbolic_name X, 0, %param [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
@@ -168,9 +168,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%X.loc7: %.9) {
-// CHECK:STDOUT:   %X.1: %.9 = bind_symbolic_name X, 0 [symbolic = %X.1 (constants.%X)]
-// CHECK:STDOUT:   %X.patt.1: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.1 (constants.%X.patt)]
+// CHECK:STDOUT: generic class @C(%X.loc7_9.1: %.9) {
+// CHECK:STDOUT:   %X.loc7_9.2: %.9 = bind_symbolic_name X, 0 [symbolic = %X.loc7_9.2 (constants.%X)]
+// CHECK:STDOUT:   %X.patt.loc7_9.2: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -224,13 +224,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
-// CHECK:STDOUT:   %X.1 => constants.%X
-// CHECK:STDOUT:   %X.patt.1 => constants.%X
+// CHECK:STDOUT:   %X.loc7_9.2 => constants.%X
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5) {
-// CHECK:STDOUT:   %X.1 => constants.%tuple.5
-// CHECK:STDOUT:   %X.patt.1 => constants.%tuple.5
+// CHECK:STDOUT:   %X.loc7_9.2 => constants.%tuple.5
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%tuple.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon

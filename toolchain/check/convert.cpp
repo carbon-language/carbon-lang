@@ -534,15 +534,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
-  if (dest_class_info.inheritance_kind == SemIR::Class::Abstract) {
-    CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
-                      "cannot construct instance of abstract class; "
-                      "consider using `partial {0}` instead",
-                      TypeIdAsRawType);
-    context.emitter().Emit(value_id, ConstructionOfAbstractClass,
-                           target.type_id);
-    return SemIR::InstId::BuiltinError;
-  }
+  CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::TypeId::Error) {
@@ -938,23 +930,38 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // We can only perform initialization for complete types.
-  if (!context.TryToCompleteType(target.type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
-                          "initialization of incomplete type {0}",
-                          SemIR::TypeId);
-        CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
-                          "forming value of incomplete type {0}",
-                          SemIR::TypeId);
-        CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                          "invalid use of incomplete type {0}", SemIR::TypeId);
-        return context.emitter().Build(loc_id,
-                                       target.is_initializer()
-                                           ? IncompleteTypeInInit
-                                       : target.kind == ConversionTarget::Value
-                                           ? IncompleteTypeInValueConversion
-                                           : IncompleteTypeInConversion,
-                                       target.type_id);
-      })) {
+  if (!context.TryToCompleteType(
+          target.type_id,
+          [&] {
+            CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
+                              "initialization of incomplete type {0}",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
+                              "forming value of incomplete type {0}",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
+                              "invalid use of incomplete type {0}",
+                              SemIR::TypeId);
+            assert(!target.is_initializer());
+            assert(target.kind == ConversionTarget::Value);
+            return context.emitter().Build(
+                loc_id,
+                target.is_initializer() ? IncompleteTypeInInit
+                : target.kind == ConversionTarget::Value
+                    ? IncompleteTypeInValueConversion
+                    : IncompleteTypeInConversion,
+                target.type_id);
+          },
+          [&] {
+            CARBON_DIAGNOSTIC(AbstractTypeInInit, Error,
+                              "initialization of abstract type {0}",
+                              SemIR::TypeId);
+            if (!target.is_initializer()) {
+              return context.emitter().BuildSuppressed();
+            }
+            return context.emitter().Build(loc_id, AbstractTypeInInit,
+                                           target.type_id);
+          })) {
     return SemIR::InstId::BuiltinError;
   }
 

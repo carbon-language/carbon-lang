@@ -30,7 +30,7 @@ fn CallClassFunction() {
   Class.Function();
 }
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: Variable has incomplete type `Class`
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: variable has incomplete type `Class`
 // CHECK:STDERR: var global_var: Class;
 // CHECK:STDERR:                 ^~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-25]]:1: note: class was forward declared here

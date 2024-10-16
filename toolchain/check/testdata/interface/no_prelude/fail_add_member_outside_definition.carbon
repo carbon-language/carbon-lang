@@ -86,11 +86,11 @@ interface Outer {
 // CHECK:STDOUT:   %Inner.type: type = interface_type @Inner, @Inner(%Self.2) [symbolic = %Inner.type (constants.%Inner.type.2)]
 // CHECK:STDOUT:   %Self.3: %Inner.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.3 (constants.%Self.3)]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic = %.type (constants.%.type)]
-// CHECK:STDOUT:   %.1: @Inner.%.type (%.type) = struct_value () [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.loc26: @Inner.%.type (%.type) = struct_value () [symbolic = %.loc26 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Inner.%Inner.type (%Inner.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.3 (constants.%Self.3)]
-// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = @Inner.%.1 (constants.%.2)] {} {}
+// CHECK:STDOUT:     %.decl: @Inner.%.type (%.type) = fn_decl @.1 [symbolic = @Inner.%.loc26 (constants.%.2)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -126,7 +126,7 @@ interface Outer {
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.2
 // CHECK:STDOUT:   %Self.3 => constants.%Self.3
 // CHECK:STDOUT:   %.type => constants.%.type
-// CHECK:STDOUT:   %.1 => constants.%.2
+// CHECK:STDOUT:   %.loc26 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}

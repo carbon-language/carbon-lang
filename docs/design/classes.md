@@ -45,11 +45,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Alias](#alias)
     -   [Inheritance](#inheritance)
         -   [Virtual methods](#virtual-methods)
-            -   [Virtual override keywords](#virtual-override-keywords)
+            -   [Virtual modifier keywords](#virtual-modifier-keywords)
         -   [Subtyping](#subtyping)
         -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
-            -   [Partial facet](#partial-facet)
+            -   [Partial class type](#partial-class-type)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
     -   [Destructors](#destructors)
@@ -1182,9 +1182,9 @@ direct call to the method does.
 
 [Class functions](#class-functions) may not be declared virtual.
 
-##### Virtual override keywords
+##### Virtual modifier keywords
 
-A method is declared as virtual by using a _virtual override keyword_ in its
+A method is declared as virtual by using a _virtual modifier keyword_ in its
 declaration before `fn`.
 
 ```
@@ -1204,7 +1204,7 @@ _non-virtual_. This means:
 -   they have an implementation in the current class, and that implementation
     must work for all derived classes.
 
-There are three virtual override keywords:
+There are three virtual modifier keywords:
 
 -   `virtual` - This marks a method as not present in bases of this class and
     having an implementation in this class. That implementation may be
@@ -1230,6 +1230,12 @@ There are three virtual override keywords:
 | `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
 | `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
 
+Since validating a method with a virtual modifier keyword involves looking for
+methods with the same name in the base class, virtual methods must be declared
+after the `extend base` declaration when present in a class definition. This
+simplifies the compiler, and follows the
+[information accumulation principle](/docs/project/principles/information_accumulation.md).
+
 #### Subtyping
 
 A pointer to a base class, like `MyBaseClass*` is actually considered to be a
@@ -1246,11 +1252,16 @@ or _vtable_. Any calls to virtual methods will perform
 the method using the function pointer in the vtable, to get the overridden
 implementation from the most derived class that implements the method.
 
+This data layout is reflected in the order of declarations in a class
+definition. An `extend base` declaration, when present in a class definition,
+must appear before any other declarations adding data to the class instances,
+such as instance variables.
+
 Since a final class may not be extended, the compiler can bypass the vtable and
 use [static dispatch](https://en.wikipedia.org/wiki/Static_dispatch). In
 general, you can use a combination of an abstract base class and a final class
-instead of an extensible class if you need to distinguish between exactly a type
-and possibly a subtype.
+instead of an extensible class if you need to distinguish between "exactly a
+type" and "possibly a subtype."
 
 ```
 base class Extensible { ... }
@@ -1350,17 +1361,17 @@ There are two cases that aren't well supported with this pattern:
 
 While expected to be relatively rarely needed, we will address both of these
 concerns with a specialized type just used during construction of base classes,
-called the partial facet type for the class.
+called the partial class type for the class.
 
-##### Partial facet
+##### Partial class type
 
-The partial facet for a base class type like `MyBaseType` is written
+The partial class type for a base class type like `MyBaseType` is written
 `partial MyBaseType`.
 
--   Only methods that take the partial facet type may be called on the partial
-    facet type, so methods have to opt in to being called on an object that
+-   Only methods that take the partial class type may be called on the partial
+    class type, so methods have to opt in to being called on an object that
     isn't fully constructed.
--   No virtual methods may take the partial facet type, so there is no way to
+-   No virtual methods may take the partial class type, so there is no way to
     transitively call a virtual method on an object that isn't fully
     constructed.
 -   `partial MyBaseClass` and `MyBaseClass` have the same fields in the same
@@ -1392,7 +1403,7 @@ The partial facet for a base class type like `MyBaseType` is written
 ##### Usage
 
 The general pattern is that base classes can define constructors returning the
-partial facet type.
+partial class type.
 
 ```
 base class MyBaseClass {
@@ -1403,7 +1414,7 @@ base class MyBaseClass {
 }
 ```
 
-Extensible classes can be instantiated even from a partial facet value:
+Extensible classes can be instantiated even from a partial class type value:
 
 ```
 var mbc: MyBaseClass = MyBaseClass.Make();
@@ -1413,9 +1424,10 @@ The conversion from `partial MyBaseClass` to `MyBaseClass` only fills in the
 vptr value and can be done in place. After the conversion, all public methods
 may be called, including virtual methods.
 
-The partial facet is required for abstract classes, since otherwise they may not
-be instantiated. Constructor functions for abstract classes should be marked
-[protected](#protected-access) so they may only be accessed in derived classes.
+The partial class type is required for abstract classes, since otherwise they
+may not be instantiated. Constructor functions for abstract classes should be
+marked [protected](#protected-access) so they may only be accessed in derived
+classes.
 
 ```
 abstract class MyAbstractClass {
@@ -1431,7 +1443,8 @@ var abc: MyAbstractClass = ...;
 If a base class wants to store a pointer to itself somewhere in the constructor
 function, there are two choices:
 
--   An extensible class could use the plain type instead of the partial facet.
+-   An extensible class could use the plain type instead of the partial class
+    type.
 
     ```
     base class MyBaseClass {
@@ -1458,8 +1471,8 @@ function, there are two choices:
     }
     ```
 
-The constructor for a derived class may construct values from a partial facet of
-the class' immediate base type or the full type:
+The constructor for a derived class may construct values from a partial class
+type of the class' immediate base type or the full type:
 
 ```
 abstract class MyAbstractClass {
@@ -1489,7 +1502,7 @@ base class ExtensibleDerived {
 }
 ```
 
-And final classes will return a type that does not use the partial facet:
+And final classes will return a type that does not use the partial class type:
 
 ```
 class FinalDerived {
@@ -1502,13 +1515,13 @@ class FinalDerived {
 ```
 
 Observe that the vptr is only assigned twice in release builds if you use
-partial facets:
+partial class types:
 
 -   The first class value created, by the factory function creating the base of
     the class hierarchy, initialized the vptr field to nullptr. Every derived
     type transitively created from that value will leave it alone.
 -   Only when the value has its most-derived class and is converted from the
-    partial facet type to its final type is the vptr field set to its final
+    partial class type to its final type is the vptr field set to its final
     value.
 
 In the case that the base class can be instantiated, tooling could optionally
@@ -1711,7 +1724,7 @@ declaration. Access modifiers are how Carbon supports
 [encapsulation](#encapsulated-types).
 
 The [access modifier](https://en.wikipedia.org/wiki/Access_modifiers) is written
-before any [virtual override keyword](#virtual-override-keywords).
+before any [virtual modifier keyword](#virtual-modifier-keywords).
 
 **Rationale:** Carbon makes members public by default for a few reasons:
 
