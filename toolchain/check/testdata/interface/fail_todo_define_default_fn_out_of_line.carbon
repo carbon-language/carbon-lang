@@ -110,22 +110,24 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %.decl.loc23: %.type.1 = fn_decl @.1 [template = constants.%.6] {} {}
 // CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.7] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc31_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_19.1: type = value_of_initializer %int.make_type_32.loc31_19 [template = i32]
 // CHECK:STDOUT:     %.loc31_19.2: type = converted %int.make_type_32.loc31_19, %.loc31_19.1 [template = i32]
-// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc31_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_27.1: type = value_of_initializer %int.make_type_32.loc31_27 [template = i32]
 // CHECK:STDOUT:     %.loc31_27.2: type = converted %int.make_type_32.loc31_27, %.loc31_27.1 [template = i32]
-// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc31_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc31_35.1: type = value_of_initializer %int.make_type_32.loc31_35 [template = i32]
 // CHECK:STDOUT:     %.loc31_35.2: type = converted %int.make_type_32.loc31_35, %.loc31_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc31_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc31_16
+// CHECK:STDOUT:     %param.loc31_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc31_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,22 +137,24 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %.loc7: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_19.1: type = value_of_initializer %int.make_type_32.loc13_19 [template = i32]
 // CHECK:STDOUT:     %.loc13_19.2: type = converted %int.make_type_32.loc13_19, %.loc13_19.1 [template = i32]
-// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc13_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_27.1: type = value_of_initializer %int.make_type_32.loc13_27 [template = i32]
 // CHECK:STDOUT:     %.loc13_27.2: type = converted %int.make_type_32.loc13_27, %.loc13_27.1 [template = i32]
-// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc13_35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_35.1: type = value_of_initializer %int.make_type_32.loc13_35 [template = i32]
 // CHECK:STDOUT:     %.loc13_35.2: type = converted %int.make_type_32.loc13_35, %.loc13_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc13_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_16
+// CHECK:STDOUT:     %param.loc13_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:
@@ -170,7 +174,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32;
+// CHECK:STDOUT:   fn(%a.param_patt: i32, %b.param_patt: i32) -> i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(@Interface.%Self: %Interface.type) {
@@ -184,7 +188,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.2(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}
@@ -203,11 +207,13 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %C.1: type = class_type @C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %U.patt.2: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,20 +239,23 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %C.2 = binding_pattern self
-// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 1
+// CHECK:STDOUT:     %self.param_patt: %C.2 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt.2]
+// CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:     %u.patt: %U = binding_pattern u
+// CHECK:STDOUT:     %u.param_patt: %U = param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, %.loc20 [symbolic = constants.%C.2]
-// CHECK:STDOUT:     %self.param.loc20: %C.2 = param self, runtime_param0
-// CHECK:STDOUT:     %self.loc20: %C.2 = bind_name self, %self.param.loc20
-// CHECK:STDOUT:     %U.param.loc20: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1, %U.param.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %U.ref.loc20_43: type = name_ref U, %U.loc20 [symbolic = constants.%U]
-// CHECK:STDOUT:     %u.param.loc20: %U = param u, runtime_param1
-// CHECK:STDOUT:     %u.loc20: %U = bind_name u, %u.param.loc20
 // CHECK:STDOUT:     %U.ref.loc20_49: type = name_ref U, %U.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %return: ref %U = var <return slot>
+// CHECK:STDOUT:     %param.loc20_18: %C.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc20: %C.2 = bind_name self, %param.loc20_18
+// CHECK:STDOUT:     %param.loc20_30: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1, %param.loc20_30 [symbolic = constants.%U]
+// CHECK:STDOUT:     %param.loc20_40: %U = param runtime_param1
+// CHECK:STDOUT:     %u.loc20: %U = bind_name u, %param.loc20_40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,20 +278,23 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: %C.2 = binding_pattern self
-// CHECK:STDOUT:       %U.patt: type = symbolic_binding_pattern U, 1
+// CHECK:STDOUT:       %self.param_patt: %C.2 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt.2]
+// CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt.2]
 // CHECK:STDOUT:       %u.patt: %U = binding_pattern u
+// CHECK:STDOUT:       %u.param_patt: %U = param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc14: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, %.loc14 [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:       %self.param.loc14: @F.%C (%C.2) = param self, runtime_param0
-// CHECK:STDOUT:       %self.loc14: @F.%C (%C.2) = bind_name self, %self.param.loc14
-// CHECK:STDOUT:       %U.param.loc14: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1, %U.param.loc14 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %U.ref.loc14_35: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
-// CHECK:STDOUT:       %u.param.loc14: @F.%U.loc14_22.1 (%U) = param u, runtime_param1
-// CHECK:STDOUT:       %u.loc14: @F.%U.loc14_22.1 (%U) = bind_name u, %u.param.loc14
 // CHECK:STDOUT:       %U.ref.loc14_41: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %return.var.loc14: ref @F.%U.loc14_22.1 (%U) = var <return slot>
+// CHECK:STDOUT:       %param.loc14_10: @F.%C (%C.2) = param runtime_param0
+// CHECK:STDOUT:       %self.loc14: @F.%C (%C.2) = bind_name self, %param.loc14_10
+// CHECK:STDOUT:       %param.loc14_22: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1, %param.loc14_22 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:       %param.loc14_32: @F.%U.loc14_22.1 (%U) = param runtime_param1
+// CHECK:STDOUT:       %u.loc14: @F.%U.loc14_22.1 (%U) = bind_name u, %param.loc14_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -296,10 +308,11 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:   %U.loc14_22.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_22.1 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc14: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.loc20: %C.2](%U.loc20: type, %u.loc20: %U) -> %U {
+// CHECK:STDOUT:   fn[%self.param_patt: %C.2](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref
@@ -319,6 +332,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C.2
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc14 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@C.%Self) {}

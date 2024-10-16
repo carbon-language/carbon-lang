@@ -290,6 +290,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %tuple.1: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (%.1) [template]
 // CHECK:STDOUT:   %b: %.2 = bind_symbolic_name b, 0 [symbolic]
+// CHECK:STDOUT:   %b.patt: %.2 = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (%.1, %.1, %.1) [template]
@@ -334,14 +335,15 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc9_18: %.1 = converted %.loc9_17, %tuple.loc9 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc9_18
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %b.patt: %.2 = symbolic_binding_pattern b, 0
+// CHECK:STDOUT:     %b.patt.loc10_8.2: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %.2 = param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_16.1: %.2 = tuple_literal (%.loc10_14)
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %b.param: %.2 = param b, runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc10_8.1: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.2 (constants.%b)]
+// CHECK:STDOUT:     %param: %.2 = param runtime_param<invalid>
+// CHECK:STDOUT:     %b.loc10_8.2: %.2 = bind_symbolic_name b, 0, %param [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_17: %.1 = tuple_literal ()
@@ -373,13 +375,14 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%b.loc10_8.1: %.2) {
-// CHECK:STDOUT:   %b.loc10_8.2: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.2 (constants.%b)]
+// CHECK:STDOUT: generic fn @F(%b.loc10_8.2: %.2) {
+// CHECK:STDOUT:   %b.loc10_8.1: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT:   %b.patt.loc10_8.1: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %c.loc11_9.2: %.7 = bind_symbolic_name c, 1 [symbolic = %c.loc11_9.2 (constants.%c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%b.loc10_8.1: %.2) {
+// CHECK:STDOUT:   fn(%b.param_patt: %.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_19: %.1 = tuple_literal ()
@@ -411,7 +414,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b1.var: ref %.2 = var b1
 // CHECK:STDOUT:     %b1: ref %.2 = bind_name b1, %b1.var
-// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.1 [symbolic = %b.loc10_8.2 (constants.%b)]
+// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.2 [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:     %.loc14_21.1: %.1 = tuple_access %b.ref, element0
 // CHECK:STDOUT:     %.loc14_21.2: ref %.1 = tuple_access %b1.var, element0
 // CHECK:STDOUT:     %.loc14_21.3: init %.1 = tuple_init () to %.loc14_21.2 [template = constants.%tuple.1]
@@ -470,7 +473,8 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
-// CHECK:STDOUT:   %b.loc10_8.2 => constants.%b
+// CHECK:STDOUT:   %b.loc10_8.1 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc10_8.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon
@@ -665,6 +669,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.3: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
@@ -696,12 +701,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.4) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.8)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.4) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.8)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -739,6 +744,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
@@ -763,7 +769,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
@@ -773,14 +779,17 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
@@ -791,6 +800,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(type) {
 // CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:   %Dest.patt => type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3

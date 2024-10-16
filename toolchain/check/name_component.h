@@ -29,10 +29,12 @@ struct NameComponent {
   // The implicit parameter list.
   Parse::NodeId implicit_params_loc_id;
   SemIR::InstBlockId implicit_params_id;
+  SemIR::InstBlockId implicit_param_patterns_id;
 
   // The explicit parameter list.
   Parse::NodeId params_loc_id;
   SemIR::InstBlockId params_id;
+  SemIR::InstBlockId param_patterns_id;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;

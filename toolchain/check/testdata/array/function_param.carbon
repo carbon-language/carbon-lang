@@ -60,24 +60,26 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %arr.patt: %.3 = binding_pattern arr
+// CHECK:STDOUT:     %arr.param_patt: %.3 = param_pattern %arr.patt, runtime_param0
 // CHECK:STDOUT:     %i.patt: i32 = binding_pattern i
+// CHECK:STDOUT:     %i.param_patt: i32 = param_pattern %i.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11_12 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11_12, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %arr.param: %.3 = param arr, runtime_param0
-// CHECK:STDOUT:     %arr: %.3 = bind_name arr, %arr.param
 // CHECK:STDOUT:     %int.make_type_32.loc11_24: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_24.1: type = value_of_initializer %int.make_type_32.loc11_24 [template = i32]
 // CHECK:STDOUT:     %.loc11_24.2: type = converted %int.make_type_32.loc11_24, %.loc11_24.1 [template = i32]
-// CHECK:STDOUT:     %i.param: i32 = param i, runtime_param1
-// CHECK:STDOUT:     %i: i32 = bind_name i, %i.param
 // CHECK:STDOUT:     %int.make_type_32.loc11_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_32.1: type = value_of_initializer %int.make_type_32.loc11_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %int.make_type_32.loc11_32, %.loc11_32.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc11_6: %.3 = param runtime_param0
+// CHECK:STDOUT:     %arr: %.3 = bind_name arr, %param.loc11_6
+// CHECK:STDOUT:     %param.loc11_21: i32 = param runtime_param1
+// CHECK:STDOUT:     %i: i32 = bind_name i, %param.loc11_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -89,7 +91,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%arr: %.3, %i: i32) -> i32 {
+// CHECK:STDOUT: fn @F(%arr.param_patt: %.3, %i.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %.3 = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: i32 = name_ref i, %i
@@ -118,10 +120,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc16_20.10: ref i32 = array_index %.loc16_20.2, %.loc16_20.9
 // CHECK:STDOUT:   %.loc16_20.11: init i32 = initialize_from %.loc16_19 to %.loc16_20.10 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc16_20.12: init %.3 = array_init (%.loc16_20.5, %.loc16_20.8, %.loc16_20.11) to %.loc16_20.2 [template = constants.%array]
-// CHECK:STDOUT:   %.loc16_11.1: init %.3 = converted %.loc16_20.1, %.loc16_20.12 [template = constants.%array]
-// CHECK:STDOUT:   %.loc16_11.2: ref %.3 = temporary %.loc16_20.2, %.loc16_11.1
-// CHECK:STDOUT:   %.loc16_11.3: %.3 = bind_value %.loc16_11.2
-// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc16_11.3, %.loc16_23)
+// CHECK:STDOUT:   %.loc16_20.13: init %.3 = converted %.loc16_20.1, %.loc16_20.12 [template = constants.%array]
+// CHECK:STDOUT:   %.loc16_20.14: ref %.3 = temporary %.loc16_20.2, %.loc16_20.13
+// CHECK:STDOUT:   %.loc16_20.15: %.3 = bind_value %.loc16_20.14
+// CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc16_20.15, %.loc16_23)
 // CHECK:STDOUT:   %.loc16_25.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc16_25.2: i32 = converted %F.call, %.loc16_25.1
 // CHECK:STDOUT:   return %.loc16_25.2

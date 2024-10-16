@@ -46,6 +46,7 @@ fn Test() {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
@@ -73,6 +74,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [template]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [template]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [template]
 // CHECK:STDOUT:   %.14: <specific function> = specific_function %Source, @Source(%T) [symbolic]
@@ -97,12 +99,12 @@ fn Test() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.5) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.16)]
-// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%Convert.type (%Convert.type.1) = import_ref Core//prelude/operators/as, inst+56, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.5) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.16)]
+// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%Convert.type (%Convert.type.1) = import_ref Core//prelude/operators/as, inst+64, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+64, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -136,33 +138,37 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_i32.decl: %Sink_i32.type = fn_decl @Sink_i32 [template = constants.%Sink_i32] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_16.2: type = converted %int.make_type_32, %.loc25_16.1 [template = i32]
-// CHECK:STDOUT:     %n.param: i32 = param n, runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_X.decl: %Sink_X.type = fn_decl @Sink_X [template = constants.%Sink_X] {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %X = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %x.param: %X = param x, runtime_param0
-// CHECK:STDOUT:     %x: %X = bind_name x, %x.param
+// CHECK:STDOUT:     %param: %X = param runtime_param0
+// CHECK:STDOUT:     %x: %X = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [template = constants.%Source] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt.loc27_11.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc27_11.1, runtime_param<invalid> [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc27_11.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc27_11.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc27_24: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @Source.%T.loc27_11.2 (%T) = var <return slot>
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc27_11.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc27_11.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
@@ -183,14 +189,15 @@ fn Test() {
 // CHECK:STDOUT: impl @impl.1: %.loc15_6.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.2 = fn_decl @Convert.2 [template = constants.%Convert.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc16_20.2: type = converted %int.make_type_32, %.loc16_20.1 [template = i32]
-// CHECK:STDOUT:     %self.param: i32 = param self, runtime_param0
-// CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %return: ref %X = var <return slot>
+// CHECK:STDOUT:     %param: i32 = param runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_32: <witness> = interface_witness (%Convert.decl) [template = constants.%.9]
 // CHECK:STDOUT:
@@ -202,14 +209,15 @@ fn Test() {
 // CHECK:STDOUT: impl @impl.2: %X.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %X = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %self.param: %X = param self, runtime_param0
-// CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_28.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc20_28.2: type = converted %int.make_type_32, %.loc20_28.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %X = param runtime_param0
+// CHECK:STDOUT:     %self: %X = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_32: <witness> = interface_witness (%Convert.decl) [template = constants.%.13]
 // CHECK:STDOUT:
@@ -237,10 +245,10 @@ fn Test() {
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.1.%Self (%Self.2)]() -> @Convert.1.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self (%Self.2)]() -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self: i32]() -> %return: %X {
+// CHECK:STDOUT: fn @Convert.2[%self.param_patt: i32]() -> %return: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: i32 = name_ref self, %self
 // CHECK:STDOUT:   %.loc16_51.1: %.3 = struct_literal (%self.ref)
@@ -251,7 +259,7 @@ fn Test() {
 // CHECK:STDOUT:   return %.loc16_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[%self: %X]() -> i32 {
+// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %.2 = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
@@ -260,17 +268,18 @@ fn Test() {
 // CHECK:STDOUT:   return %.loc20_45.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sink_i32(%n: i32);
+// CHECK:STDOUT: fn @Sink_i32(%n.param_patt: i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sink_X(%x: %X);
+// CHECK:STDOUT: fn @Sink_X(%x.param_patt: %X);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc27_11.1: type) {
 // CHECK:STDOUT:   %T.loc27_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_11.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %.loc27_35.2 (constants.%.14)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc27_11.1: type) -> @Source.%T.loc27_11.2 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc27_42: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]
@@ -291,18 +300,18 @@ fn Test() {
 // CHECK:STDOUT:   %.loc30_18.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %.loc30_12() to %.loc30_18.1
 // CHECK:STDOUT:   %ImplicitAs.type.loc30: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc30_11.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref.loc30: %.11 = name_ref Convert, %.loc30_11.1 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc30_18.2: ref %X = temporary %.loc30_18.1, %Source.call.loc30
-// CHECK:STDOUT:   %.loc30_11.2: %Convert.type.5 = interface_witness_access constants.%.13, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %.loc30_11.3: <bound method> = bound_method %.loc30_18.2, %.loc30_11.2
-// CHECK:STDOUT:   %.loc30_18.3: %X = bind_value %.loc30_18.2
-// CHECK:STDOUT:   %Convert.call.loc30: init i32 = call %.loc30_11.3(%.loc30_18.3)
-// CHECK:STDOUT:   %.loc30_11.4: init i32 = converted %Source.call.loc30, %Convert.call.loc30
-// CHECK:STDOUT:   %.loc30_11.5: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc30_11.6: ref i32 = temporary %.loc30_11.5, %.loc30_11.4
-// CHECK:STDOUT:   %.loc30_11.7: %X = bind_value %.loc30_11.6
-// CHECK:STDOUT:   %Sink_i32.call: init %.1 = call %Sink_i32.ref(%.loc30_11.7)
+// CHECK:STDOUT:   %.loc30_18.2: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.12]
+// CHECK:STDOUT:   %Convert.ref.loc30: %.11 = name_ref Convert, %.loc30_18.2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc30_18.3: ref %X = temporary %.loc30_18.1, %Source.call.loc30
+// CHECK:STDOUT:   %.loc30_18.4: %Convert.type.5 = interface_witness_access constants.%.13, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc30_18.5: <bound method> = bound_method %.loc30_18.3, %.loc30_18.4
+// CHECK:STDOUT:   %.loc30_18.6: %X = bind_value %.loc30_18.3
+// CHECK:STDOUT:   %Convert.call.loc30: init i32 = call %.loc30_18.5(%.loc30_18.6)
+// CHECK:STDOUT:   %.loc30_18.7: init i32 = converted %Source.call.loc30, %Convert.call.loc30
+// CHECK:STDOUT:   %.loc30_18.8: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc30_18.9: ref i32 = temporary %.loc30_18.8, %.loc30_18.7
+// CHECK:STDOUT:   %.loc30_18.10: %X = bind_value %.loc30_18.9
+// CHECK:STDOUT:   %Sink_i32.call: init %.1 = call %Sink_i32.ref(%.loc30_18.10)
 // CHECK:STDOUT:   %Sink_X.ref: %Sink_X.type = name_ref Sink_X, file.%Sink_X.decl [template = constants.%Sink_X]
 // CHECK:STDOUT:   %Source.ref.loc31: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -311,32 +320,35 @@ fn Test() {
 // CHECK:STDOUT:   %.loc31_10: <specific function> = specific_function %Source.ref.loc31, @Source(i32) [template = constants.%.17]
 // CHECK:STDOUT:   %Source.call.loc31: init i32 = call %.loc31_10()
 // CHECK:STDOUT:   %ImplicitAs.type.loc31: type = interface_type @ImplicitAs, @ImplicitAs(constants.%X) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc31_9.1: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%X) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref.loc31: %.7 = name_ref Convert, %.loc31_9.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc31_16.3: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc31_16.4: ref i32 = temporary %.loc31_16.3, %Source.call.loc31
-// CHECK:STDOUT:   %.loc31_9.2: %Convert.type.3 = interface_witness_access constants.%.9, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %.loc31_9.3: <bound method> = bound_method %.loc31_16.4, %.loc31_9.2
-// CHECK:STDOUT:   %.loc31_9.4: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc31_16.5: i32 = bind_value %.loc31_16.4
-// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %.loc31_9.3(%.loc31_16.5) to %.loc31_9.4
-// CHECK:STDOUT:   %.loc31_9.5: init %X = converted %Source.call.loc31, %Convert.call.loc31
-// CHECK:STDOUT:   %.loc31_9.6: ref %X = temporary %.loc31_9.4, %.loc31_9.5
-// CHECK:STDOUT:   %.loc31_9.7: i32 = bind_value %.loc31_9.6
-// CHECK:STDOUT:   %Sink_X.call: init %.1 = call %Sink_X.ref(%.loc31_9.7)
+// CHECK:STDOUT:   %.loc31_16.3: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%X) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref.loc31: %.7 = name_ref Convert, %.loc31_16.3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc31_16.4: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc31_16.5: ref i32 = temporary %.loc31_16.4, %Source.call.loc31
+// CHECK:STDOUT:   %.loc31_16.6: %Convert.type.3 = interface_witness_access constants.%.9, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc31_16.7: <bound method> = bound_method %.loc31_16.5, %.loc31_16.6
+// CHECK:STDOUT:   %.loc31_16.8: ref %X = temporary_storage
+// CHECK:STDOUT:   %.loc31_16.9: i32 = bind_value %.loc31_16.5
+// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %.loc31_16.7(%.loc31_16.9) to %.loc31_16.8
+// CHECK:STDOUT:   %.loc31_16.10: init %X = converted %Source.call.loc31, %Convert.call.loc31
+// CHECK:STDOUT:   %.loc31_16.11: ref %X = temporary %.loc31_16.8, %.loc31_16.10
+// CHECK:STDOUT:   %.loc31_16.12: i32 = bind_value %.loc31_16.11
+// CHECK:STDOUT:   %Sink_X.call: init %.1 = call %Sink_X.ref(%.loc31_16.12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.1) {
@@ -347,6 +359,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%X) {
 // CHECK:STDOUT:   %Dest => constants.%X
+// CHECK:STDOUT:   %Dest.patt => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
@@ -365,6 +378,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(i32) {
 // CHECK:STDOUT:   %Dest => i32
+// CHECK:STDOUT:   %Dest.patt => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
@@ -383,6 +397,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc27_35.2 => constants.%.14
@@ -390,10 +405,12 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(@Source.%T.loc27_11.2) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc27_35.2 => constants.%.15
@@ -401,6 +418,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(i32) {
 // CHECK:STDOUT:   %T.loc27_11.2 => i32
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc27_35.2 => constants.%.17

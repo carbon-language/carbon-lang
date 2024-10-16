@@ -17,10 +17,10 @@ class Class(T:! type) {
 // enter the scope anyway if the parameters don't match.
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: redeclaration differs at parameter 1
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
-// CHECK:STDERR:          ^
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here
 // CHECK:STDERR: class Class(T:! type) {
-// CHECK:STDERR:             ^
+// CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE+7]]:27: error: name `Self` not found
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
@@ -35,6 +35,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
@@ -47,6 +48,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.5: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -73,31 +75,35 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: <error> = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: <error> = param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
-// CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc32_10: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %param.loc32_10 [symbolic = %N.loc32_10.2 (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
-// CHECK:STDOUT:     %self.param: <error> = param self, runtime_param0
-// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %n.param: <error> = param n, runtime_param1
-// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     %param.loc32_21: <error> = param runtime_param0
+// CHECK:STDOUT:     %self: <error> = bind_name self, %param.loc32_21
+// CHECK:STDOUT:     %param.loc32_33: <error> = param runtime_param1
+// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc32_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T.loc11_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class.2)]
@@ -112,15 +118,17 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %.loc12_8.1: @Class.%.loc12_8.2 (%.2) = field_decl a, element0 [template]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Class (%Class.2) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%Class (%Class.2) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
+// CHECK:STDOUT:       %n.param_patt: @F.%T (%T) = param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc13 [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %self.param: @F.%Class (%Class.2) = param self, runtime_param0
-// CHECK:STDOUT:       %self: @F.%Class (%Class.2) = bind_name self, %self.param
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %n.param: @F.%T (%T) = param n, runtime_param1
-// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %n.param
+// CHECK:STDOUT:       %param.loc13_8: @F.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %self: @F.%Class (%Class.2) = bind_name self, %param.loc13_8
+// CHECK:STDOUT:       %param.loc13_20: @F.%T (%T) = param runtime_param1
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param.loc13_20
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc14_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc14_1.3 (constants.%.4)]
 // CHECK:STDOUT:
@@ -135,17 +143,18 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @F.%Class (%Class.2)](%n: @F.%T (%T));
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class.2)](%n.param_patt: @F.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: i32) {
 // CHECK:STDOUT:   %N.loc32_10.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: <error>](%n: <error>) {
+// CHECK:STDOUT:   fn[%self.param_patt: <error>](%n.param_patt: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -153,10 +162,12 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@F.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -166,9 +177,11 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%N) {
 // CHECK:STDOUT:   %N.loc32_10.2 => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

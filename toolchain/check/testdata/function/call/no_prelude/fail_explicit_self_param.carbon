@@ -35,24 +35,25 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_13.2: type = converted %.loc14_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %self.param: %.1 = param self, runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%self: %.1);
+// CHECK:STDOUT: fn @F(%self.param_patt: %.1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc17_6: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc17_6.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc17_4: %.1 = converted %.loc17_6, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(%.loc17_4)
+// CHECK:STDOUT:   %.loc17_6.2: %.1 = converted %.loc17_6.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref(%.loc17_6.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

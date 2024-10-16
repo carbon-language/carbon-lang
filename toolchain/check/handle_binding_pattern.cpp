@@ -171,26 +171,40 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id = context.AddInst<SemIR::Param>(
+      auto param_id = context.AddInstInNoBlock<SemIR::Param>(
           name_node, {.type_id = cast_type_id,
-                      .name_id = name_id,
                       .runtime_index = SemIR::RuntimeParamIndex::Invalid});
-      auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
-      push_bind_name(bind_id);
+      auto bind_id =
+          context.AddInstInNoBlock(make_bind_name(cast_type_id, param_id));
+      if (needs_compile_time_binding) {
+        context.scope_stack().PushCompileTimeBinding(bind_id);
+      }
       // TODO: Bindings should come into scope immediately in other contexts
       // too.
       context.AddNameToLookup(name_id, bind_id);
       auto entity_name_id =
           context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+      auto pattern_inst_id = SemIR::InstId::Invalid;
       if (is_generic) {
-        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+        pattern_inst_id = context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+            name_node, {.type_id = cast_type_id,
+                        .entity_name_id = entity_name_id,
+                        .bind_name_id = bind_id});
       } else {
-        context.AddPatternInst<SemIR::BindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+        pattern_inst_id = context.AddPatternInst<SemIR::BindingPattern>(
+            name_node, {.type_id = cast_type_id,
+                        .entity_name_id = entity_name_id,
+                        .bind_name_id = bind_id});
       }
+      auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
+          node_id,
+          {
+              .type_id = context.insts().Get(pattern_inst_id).type_id(),
+              .subpattern_id = pattern_inst_id,
+              .runtime_index = SemIR::RuntimeParamIndex::Invalid,
+          });
+      context.node_stack().Push(node_id, param_pattern_id);
+
       // TODO: use the pattern insts to generate the pattern-match insts
       // at the end of the full pattern, instead of eagerly generating them
       // here.
@@ -253,21 +267,29 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
-  auto self_param_id = context.node_stack().PopPattern();
-  if (auto self_param =
-          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
-      self_param &&
-      context.entity_names().Get(self_param->entity_name_id).name_id ==
-          SemIR::NameId::SelfValue) {
-    // TODO: The type of an `addr_pattern` should probably be the non-pointer
-    // type, because that's the type that the pattern matches.
-    context.AddInstAndPush<SemIR::AddrPattern>(
-        node_id, {.type_id = self_param->type_id, .inner_id = self_param_id});
+  auto param_pattern_id = context.node_stack().PopPattern();
+  if (SemIR::Function::GetParamPatternInfoFromPatternId(context.sem_ir(),
+                                                        param_pattern_id)
+          .GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
+    auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
+        context.insts().Get(param_pattern_id).type_id());
+    if (pointer_type) {
+      auto addr_pattern_id = context.AddPatternInst<SemIR::AddrPattern>(
+          node_id,
+          {.type_id = SemIR::TypeId::AutoType, .inner_id = param_pattern_id});
+      context.node_stack().Push(node_id, addr_pattern_id);
+    } else {
+      CARBON_DIAGNOSTIC(
+          AddrOnNonPointerType, Error,
+          "`addr` can only be applied to a binding with a pointer type");
+      context.emitter().Emit(node_id, AddrOnNonPointerType);
+      context.node_stack().Push(node_id, param_pattern_id);
+    }
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter");
     context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
-    context.node_stack().Push(node_id, self_param_id);
+    context.node_stack().Push(node_id, param_pattern_id);
   }
   return true;
 }

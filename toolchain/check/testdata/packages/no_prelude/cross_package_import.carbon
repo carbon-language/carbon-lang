@@ -257,15 +257,16 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %.1 = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %x.param: %.1 = param x, runtime_param0
-// CHECK:STDOUT:     %x: %.1 = bind_name x, %x.param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %x: %.1 = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x: %.1) {
+// CHECK:STDOUT: fn @F(%x.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -450,7 +451,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_fn_conflict, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_fn_conflict, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

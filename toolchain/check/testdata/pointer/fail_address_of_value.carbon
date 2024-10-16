@@ -191,12 +191,13 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfTupleElementValue.decl: %AddressOfTupleElementValue.type = fn_decl @AddressOfTupleElementValue [template = constants.%AddressOfTupleElementValue] {} {}
 // CHECK:STDOUT:   %AddressOfParam.decl: %AddressOfParam.type = fn_decl @AddressOfParam [template = constants.%AddressOfParam] {
 // CHECK:STDOUT:     %param.patt: i32 = binding_pattern param
+// CHECK:STDOUT:     %param.param_patt: i32 = param_pattern %param.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc95: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_32.loc95 [template = i32]
 // CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_32.loc95, %.loc95_26.1 [template = i32]
-// CHECK:STDOUT:     %param.param: i32 = param param, runtime_param0
-// CHECK:STDOUT:     %param: i32 = bind_name param, %param.param
+// CHECK:STDOUT:     %param.loc95_19.1: i32 = param runtime_param0
+// CHECK:STDOUT:     %param.loc95_19.2: i32 = bind_name param, %param.loc95_19.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,7 +286,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddressOfParam(%param: i32) {
+// CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc99: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_32.loc99 [template = i32]
@@ -293,7 +294,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc99_22.3: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:   %param_addr.var: ref %.4 = var param_addr
 // CHECK:STDOUT:   %param_addr: ref %.4 = bind_name param_addr, %param_addr.var
-// CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param
+// CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param.loc95_19.2
 // CHECK:STDOUT:   %.loc99_26: %.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %.loc99_26
 // CHECK:STDOUT:   return

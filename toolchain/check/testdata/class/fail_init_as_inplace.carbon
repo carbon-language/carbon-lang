@@ -73,11 +73,12 @@ fn F() {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.5 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.5 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.5]
-// CHECK:STDOUT:     %p.param: %.5 = param p, runtime_param0
-// CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
+// CHECK:STDOUT:     %param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %p: %.5 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -101,7 +102,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p: %.5);
+// CHECK:STDOUT: fn @G(%p.param_patt: %.5);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:

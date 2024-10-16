@@ -74,22 +74,24 @@ interface I {
 // CHECK:STDOUT:   %.loc13: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: i32 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14_11 [template = i32]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32.loc14_11, %.loc14_11.1 [template = i32]
-// CHECK:STDOUT:     %a.param: i32 = param a, runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %int.make_type_32.loc14_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_32.loc14_19 [template = i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_32.loc14_19, %.loc14_19.1 [template = i32]
-// CHECK:STDOUT:     %b.param: i32 = param b, runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %int.make_type_32.loc14_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_32.loc14_27 [template = i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_32.loc14_27, %.loc14_27.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc14_8: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc14_8
+// CHECK:STDOUT:     %param.loc14_16: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc14_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_32.loc18_19: init type = call constants.%Int32() [template = i32]
@@ -131,7 +133,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@I.%Self: %I.type) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a: i32, %b: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

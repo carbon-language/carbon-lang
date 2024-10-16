@@ -53,6 +53,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [template = constants.%NotGenericF] {
 // CHECK:STDOUT:     %U.patt: %I.type = binding_pattern U
+// CHECK:STDOUT:     %U.param_patt: %I.type = param_pattern %U.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
@@ -62,8 +63,8 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.param: %I.type = param U, runtime_param0
-// CHECK:STDOUT:     %U: %I.type = bind_name U, %U.param
+// CHECK:STDOUT:     %param: %I.type = param runtime_param0
+// CHECK:STDOUT:     %U: %I.type = bind_name U, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,7 +81,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotGenericF(%U: %I.type) {
+// CHECK:STDOUT: fn @NotGenericF(%U.param_patt: %I.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

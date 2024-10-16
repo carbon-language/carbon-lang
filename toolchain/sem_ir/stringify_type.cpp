@@ -300,6 +300,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case IntLiteral::Kind:
       case Namespace::Kind:
       case Param::Kind:
+      case ParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:

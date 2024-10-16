@@ -298,10 +298,9 @@ class B {
 // CHECK:STDOUT:   %.loc10: %.6 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %Circle = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.param: %Circle = param self, runtime_param0
-// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32.loc12_36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_41: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_44.1: %.7 = tuple_literal (%int.make_type_32.loc12_36, %int.make_type_32.loc12_41)
@@ -311,6 +310,8 @@ class B {
 // CHECK:STDOUT:     %.loc12_44.5: type = converted %int.make_type_32.loc12_41, %.loc12_44.4 [template = i32]
 // CHECK:STDOUT:     %.loc12_44.6: type = converted %.loc12_44.1, constants.%.8 [template = constants.%.8]
 // CHECK:STDOUT:     %return: ref %.8 = var <return slot>
+// CHECK:STDOUT:     %param: %Circle = param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
@@ -323,7 +324,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetPosition[%self: %Circle]() -> %return: %.8 {
+// CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return: %.8 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @Shape.%.loc5_18 [template = @Shape.%.loc5_18]
@@ -438,13 +439,14 @@ class B {
 // CHECK:STDOUT:   %.loc14: %.10 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %.loc15_26.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.11 [template = constants.%.12]
 // CHECK:STDOUT:
@@ -461,7 +463,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self: %C]() -> %.1 {
+// CHECK:STDOUT: fn @G[%self.param_patt: %C]() -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
@@ -656,14 +658,15 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.6 = base_decl %Shape, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Square = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %Square = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
-// CHECK:STDOUT:     %self.param: %Square = param self, runtime_param0
-// CHECK:STDOUT:     %self: %Square = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_35.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_35.2: type = converted %int.make_type_32, %.loc11_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %Square = param runtime_param0
+// CHECK:STDOUT:     %self: %Square = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
@@ -676,7 +679,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetPosition[%self: %Square]() -> i32 {
+// CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Square]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [template = <error>]
@@ -1055,14 +1058,15 @@ class B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SomeFunc.decl: %SomeFunc.type = fn_decl @SomeFunc [template = constants.%SomeFunc] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %B = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.param: %B = param self, runtime_param0
-// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc36_32.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc36_32.2: type = converted %int.make_type_32, %.loc36_32.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param: %B = param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc46: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
@@ -1084,7 +1088,7 @@ class B {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SomeFunc[%self: %B]() -> i32 {
+// CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %.6 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
@@ -1158,10 +1162,11 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %B = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.param: %B = param self, runtime_param0
-// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
+// CHECK:STDOUT:     %param: %B = param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
@@ -1174,7 +1179,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %B]() {
+// CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -1246,10 +1251,11 @@ class B {
 // CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %B = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
-// CHECK:STDOUT:     %self.param: %B = param self, runtime_param0
-// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
+// CHECK:STDOUT:     %param: %B = param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
@@ -1262,7 +1268,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self: %B]() {
+// CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]

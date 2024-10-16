@@ -47,6 +47,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -82,19 +84,19 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %n.param: i32 = param n, runtime_param<invalid>
-// CHECK:STDOUT:   %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:   %n: i32 = bind_name n, %param.loc24
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %x.param: %T = param x, runtime_param<invalid>
-// CHECK:STDOUT:   %x: %T = bind_name x, %x.param
+// CHECK:STDOUT:   %param.loc30_13: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_13 [symbolic = constants.%T]
+// CHECK:STDOUT:   %param.loc30_23: %T = param runtime_param<invalid>
+// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc39_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc39_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc39_6.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc39_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,6 +109,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%T.loc39_6.1: type) {
 // CHECK:STDOUT:   %T.loc39_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc39_6.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -118,5 +121,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc39_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

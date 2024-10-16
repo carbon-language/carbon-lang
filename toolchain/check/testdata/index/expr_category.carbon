@@ -85,25 +85,27 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.3 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %.3 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %b.param: %.3 = param b, runtime_param0
-// CHECK:STDOUT:     %b: %.3 = bind_name b, %b.param
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %b: %.3 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ValueBinding.decl: %ValueBinding.type = fn_decl @ValueBinding [template = constants.%ValueBinding] {
 // CHECK:STDOUT:     %b.patt: %.3 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %.3 = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_26: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:     %.loc21_27: type = array_type %.loc21_26, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %b.param: %.3 = param b, runtime_param0
-// CHECK:STDOUT:     %b: %.3 = bind_name b, %b.param
+// CHECK:STDOUT:     %param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %b: %.3 = bind_name b, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,7 +113,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b: %.3) {
+// CHECK:STDOUT: fn @G(%b.param_patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.2]
@@ -155,7 +157,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ValueBinding(%b: %.3) {
+// CHECK:STDOUT: fn @ValueBinding(%b.param_patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 3 [template = constants.%.2]

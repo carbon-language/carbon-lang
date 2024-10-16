@@ -34,16 +34,17 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %s.patt: %.1 = binding_pattern s
+// CHECK:STDOUT:     %s.param_patt: %.1 = param_pattern %s.patt, runtime_param<invalid>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %.loc14_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %s.param: %.1 = param s, runtime_param<invalid>
-// CHECK:STDOUT:     %s: %.1 = bind_name s, %s.param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
+// CHECK:STDOUT:     %s: %.1 = bind_name s, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%base.param: <error>]();
+// CHECK:STDOUT: fn @F[%s.param_patt: %.1]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:

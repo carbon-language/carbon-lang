@@ -10,6 +10,7 @@
 #include "toolchain/check/impl.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -202,8 +203,16 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
     -> NameComponent {
-  auto [implicit_params_loc_id, implicit_params_id] =
+  auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+
+  ParameterBlocks parameter_blocks{
+      .implicit_params_id = SemIR::InstBlockId::Invalid,
+      .params_id = SemIR::InstBlockId::Invalid};
+  if (implicit_param_patterns_id) {
+    parameter_blocks = CalleePatternMatch(context, *implicit_param_patterns_id,
+                                          SemIR::InstBlockId::Invalid);
+  }
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
@@ -215,10 +224,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id =
-          implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
+      .implicit_params_id = parameter_blocks.implicit_params_id,
+      .implicit_param_patterns_id =
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
       .params_id = SemIR::InstBlockId::Invalid,
+      .param_patterns_id = SemIR::InstBlockId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }

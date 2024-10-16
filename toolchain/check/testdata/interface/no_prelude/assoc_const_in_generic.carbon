@@ -27,16 +27,19 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = interface_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 2 [symbolic]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 2 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F, @I(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type.2, %F.type.1 [symbolic]
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [symbolic]
+// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -56,22 +59,25 @@ fn H() {
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type.1 = interface_decl @I [template = constants.%I] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt.loc15_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_6.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc15_6.1, runtime_param<invalid> [symbolic = %T.patt.loc15_6.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc15_6.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc15_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T.loc11_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = interface_type @I, @I(%T.loc11_13.2) [symbolic = %I.type (constants.%I.type.2)]
@@ -84,12 +90,13 @@ fn H() {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.1) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
-// CHECK:STDOUT:       %U.patt: type = symbolic_binding_pattern U, 2
+// CHECK:STDOUT:       %U.patt.loc12_8.2: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
+// CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc12_8.2, runtime_param<invalid> [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %U.param: type = param U, runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc12_8.1: type = bind_symbolic_name U, 2, %U.param [symbolic = %U.loc12_8.2 (constants.%U)]
-// CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc12_8.1 [symbolic = %U.loc12_8.2 (constants.%U)]
-// CHECK:STDOUT:       %return: ref @F.%U.loc12_8.2 (%U) = var <return slot>
+// CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc12_8.2 [symbolic = %U.loc12_8.1 (constants.%U)]
+// CHECK:STDOUT:       %return: ref @F.%U.loc12_8.1 (%U) = var <return slot>
+// CHECK:STDOUT:       %param: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.loc12_8.2: type = bind_symbolic_name U, 2, %param [symbolic = %U.loc12_8.1 (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc12_22.1: @I.%.loc12_22.2 (%.2) = assoc_entity element0, %F.decl [symbolic = %.loc12_22.3 (constants.%.3)]
 // CHECK:STDOUT:
@@ -100,14 +107,16 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@I.%T.loc11_13.1: type, @I.%Self.1: @I.%I.type (%I.type.2), %U.loc12_8.1: type) {
-// CHECK:STDOUT:   %U.loc12_8.2: type = bind_symbolic_name U, 2 [symbolic = %U.loc12_8.2 (constants.%U)]
+// CHECK:STDOUT: generic fn @F(@I.%T.loc11_13.1: type, @I.%Self.1: @I.%I.type (%I.type.2), %U.loc12_8.2: type) {
+// CHECK:STDOUT:   %U.loc12_8.1: type = bind_symbolic_name U, 2 [symbolic = %U.loc12_8.1 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc12_8.1: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.loc12_8.1: type) -> @F.%U.loc12_8.2 (%U);
+// CHECK:STDOUT:   fn(%U.param_patt: type) -> @F.%U.loc12_8.1 (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc15_6.1: type) {
 // CHECK:STDOUT:   %T.loc15_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc15_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_6.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_4.2: type = interface_type @I, @I(%T.loc15_6.2) [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
@@ -115,7 +124,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc19_7.2: type = assoc_entity_type @G.%I.type.loc19_4.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %.loc19_7.2 (constants.%.2)]
 // CHECK:STDOUT:   %.loc19_7.3: @G.%.loc19_7.2 (%.2) = assoc_entity element0, @I.%F.decl [symbolic = %.loc19_7.3 (constants.%.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc15_6.1: type) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
@@ -138,6 +147,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.2
@@ -149,23 +159,28 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self, constants.%U) {
-// CHECK:STDOUT:   %U.loc12_8.2 => constants.%U
+// CHECK:STDOUT:   %U.loc12_8.1 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_8.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@I.%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@G.%T.loc15_6.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%.4) {
 // CHECK:STDOUT:   %T.loc15_6.2 => constants.%.4
+// CHECK:STDOUT:   %T.patt.loc15_6.2 => constants.%.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_4.2 => constants.%I.type.3
@@ -176,5 +191,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%.4) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%.4
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
