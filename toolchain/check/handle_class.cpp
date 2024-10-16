@@ -661,6 +661,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   bool defining_vtable_ptr = class_info.is_dynamic;
   if (class_info.base_id.is_valid()) {
     auto base_info = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
+    // TODO: If the base class is template dependent, we will need to decide
+    // whether to add a vptr as part of instantiation.
     if (auto* base_class_info = TryGetAsClass(context, base_info.base_type_id);
         base_class_info && base_class_info->is_dynamic) {
       defining_vtable_ptr = false;
