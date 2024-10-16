@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 # Exceptions. See /LICENSE for license information.
@@ -17,7 +17,7 @@ ln -sTf "$PWD/utils/treesitter/queries" ~/.config/nvim/queries/carbon
 ln -sf "$PWD/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
 
 # load carbon.lua on startup
-grep 'require "carbon"' ~/.config/nvim/init.lua || echo 'require "carbon"' >> ~/.config/nvim/init.lua
+grep 'require "carbon"' ~/.config/nvim/init.lua || echo 'require "carbon"' >>~/.config/nvim/init.lua
 
 # build treesitter
 cd utils/treesitter

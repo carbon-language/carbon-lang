@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # VS Code Extension for Carbon
 
-Currently only contains basic syntax highlighting.
+Currently only contains basic syntax highlighting and snippets.
 
 ## Installing
 
