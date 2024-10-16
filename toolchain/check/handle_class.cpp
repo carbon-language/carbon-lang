@@ -649,11 +649,11 @@ static auto CheckCompleteAdapterClassType(Context& context,
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
-                                   SemIR::ClassId class_id,
-                                   SemIR::InstBlockId fields_id)
-    -> SemIR::InstId {
+                                   SemIR::ClassId class_id) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
   if (class_info.adapt_id.is_valid()) {
+    auto fields_id = context.args_type_info_stack().Pop();
+
     return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
   }
 
@@ -668,36 +668,31 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     }
   }
 
-  llvm::SmallVector<SemIR::InstId> object_rep_fields;
-  auto fields = context.inst_blocks().Get(fields_id);
   if (defining_vtable_ptr) {
-    object_rep_fields.push_back(
+    context.args_type_info_stack().AddFrontInstId(
         context.AddInstInNoBlock<SemIR::StructTypeField>(
             Parse::NodeId::Invalid,
             {.name_id = SemIR::NameId::Vptr,
              .field_type_id = context.GetPointerType(
                  context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))}));
-
-    object_rep_fields.append(fields.begin(), fields.end());
   }
+
+  auto fields_id = context.args_type_info_stack().Pop();
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
-       .object_repr_id = context.GetStructType(
-           defining_vtable_ptr ? context.inst_blocks().Add(object_rep_fields)
-                               : fields_id)});
+       .object_repr_id = context.GetStructType(fields_id)});
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
-  auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
 
   // The class type is now fully defined. Compute its object representation.
   auto complete_type_witness_id =
-      CheckCompleteClassType(context, node_id, class_id, fields_id);
+      CheckCompleteClassType(context, node_id, class_id);
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = complete_type_witness_id;
 
