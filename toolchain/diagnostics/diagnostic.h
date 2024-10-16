@@ -117,8 +117,10 @@ struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {
-    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
-                  "Use std::string or llvm::StringLiteral for diagnostics to "
+    static_assert((... && !(std::is_same_v<Args, llvm::StringRef> ||
+                            std::is_same_v<Args, llvm::StringLiteral>)),
+                  "For diagnostics, use a format provider (see "
+                  "toolchain/diagnostics/format_providers.h) or std::string to "
                   "avoid lifetime issues.");
   }
 

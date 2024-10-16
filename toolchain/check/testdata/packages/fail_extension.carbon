@@ -7,11 +7,11 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/packages/fail_extension.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_extension.carbon
-// CHECK:STDERR: fail_main.incorrect: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_main.incorrect: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR:
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_main.incorrect`
 // CHECK:STDERR:
-// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: note(IncorrectExtensionImplNote): file extension of `.impl.carbon` only allowed for `impl`
 // CHECK:STDERR:
 
@@ -21,7 +21,7 @@
 
 // --- fail_main_lib.incorrect
 
-// CHECK:STDERR: fail_main_lib.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_main_lib.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR: library "main_lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -37,7 +37,7 @@ impl library "[[@TEST_NAME]]";
 
 // --- fail_package.incorrect
 
-// CHECK:STDERR: fail_package.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_package.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR: package Package;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -53,7 +53,7 @@ impl package Package;
 
 // --- fail_package_lib.incorrect
 
-// CHECK:STDERR: fail_package_lib.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_package_lib.incorrect:[[@LINE+4]]:1: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR: package Package library "package_lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -69,7 +69,7 @@ impl package Package library "[[@TEST_NAME]]";
 
 // --- fail_swapped_ext.impl.carbon
 
-// CHECK:STDERR: fail_swapped_ext.impl.carbon:[[@LINE+5]]:1: error(IncorrectExtension): file extension of `.carbon` required for `api`
+// CHECK:STDERR: fail_swapped_ext.impl.carbon:[[@LINE+5]]:1: error(IncorrectExtension): file extension of `.carbon` required for api
 // CHECK:STDERR: package SwappedExt;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_swapped_ext.impl.carbon: note(IncorrectExtensionImplNote): file extension of `.impl.carbon` only allowed for `impl`

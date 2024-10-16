@@ -17,7 +17,7 @@ namespace {
 using ::Carbon::Testing::IsSingleDiagnostic;
 using ::testing::InSequence;
 
-CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
+CARBON_DIAGNOSTIC(TestDiagnostic, Error, "M{0}", int);
 
 struct FakeDiagnosticConverter : DiagnosticConverter<DiagnosticLoc> {
   auto ConvertLoc(DiagnosticLoc loc, ContextFnT /*context_fn*/) const
@@ -32,12 +32,12 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   SortingDiagnosticConsumer sorting_consumer(consumer);
   DiagnosticEmitter<DiagnosticLoc> emitter(converter, sorting_consumer);
 
-  emitter.Emit({"f", "line", 2, 1}, TestDiagnostic, "M1");
-  emitter.Emit({"f", "line", 1, 1}, TestDiagnostic, "M2");
-  emitter.Emit({"f", "line", 1, 3}, TestDiagnostic, "M3");
-  emitter.Emit({"f", "line", 3, 4}, TestDiagnostic, "M4");
-  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, "M5");
-  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, "M6");
+  emitter.Emit({"f", "line", 2, 1}, TestDiagnostic, 1);
+  emitter.Emit({"f", "line", 1, 1}, TestDiagnostic, 2);
+  emitter.Emit({"f", "line", 1, 3}, TestDiagnostic, 3);
+  emitter.Emit({"f", "line", 3, 4}, TestDiagnostic, 4);
+  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, 5);
+  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, 6);
 
   InSequence s;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
