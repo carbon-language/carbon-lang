@@ -924,6 +924,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::Error:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
+      case SemIR::BuiltinInstKind::BigIntType:
       case SemIR::BuiltinInstKind::IntType:
       case SemIR::BuiltinInstKind::FloatType:
       case SemIR::BuiltinInstKind::NamespaceType:
@@ -1110,7 +1111,7 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     // Use overload resolution to select the implementation, producing compile
-    // errors when BuildValueReprForInst isn't defined for a given instruction.
+    // errors when BuildTypeForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                  \
   case CARBON_KIND(SemIR::Name typed_inst): {          \
