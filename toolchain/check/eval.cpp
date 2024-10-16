@@ -8,6 +8,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -745,18 +746,17 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
     // Bit shift.
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift:
-      op_str = (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift)
-                   ? llvm::StringLiteral("<<")
-                   : llvm::StringLiteral(">>");
       if (rhs_val.uge(lhs_val.getBitWidth()) ||
           (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
-        CARBON_DIAGNOSTIC(CompileTimeShiftOutOfRange, Error,
-                          "shift distance not in range [0, {0}) in {1} {2} {3}",
-                          unsigned, TypedInt, llvm::StringLiteral, TypedInt);
-        context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
-                               lhs_val.getBitWidth(),
-                               {.type = lhs.type_id, .value = lhs_val}, op_str,
-                               {.type = rhs.type_id, .value = rhs_val});
+        CARBON_DIAGNOSTIC(
+            CompileTimeShiftOutOfRange, Error,
+            "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
+            unsigned, TypedInt, FormatBool, TypedInt);
+        context.emitter().Emit(
+            loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
+            {.type = lhs.type_id, .value = lhs_val},
+            {.value = builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift},
+            {.type = rhs.type_id, .value = rhs_val});
         // TODO: Is it useful to recover by returning 0 or -1?
         return SemIR::ConstantId::Error;
       }

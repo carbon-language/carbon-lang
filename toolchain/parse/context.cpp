@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
@@ -16,37 +17,6 @@
 #include "toolchain/parse/state.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
-
-namespace Carbon::Parse {
-
-// A relative location for characters in errors.
-enum class RelativeLoc : int8_t {
-  Around,
-  After,
-  Before,
-};
-
-}  // namespace Carbon::Parse
-
-// Adapts RelativeLoc for use with formatv.
-template <>
-struct llvm::format_provider<Carbon::Parse::RelativeLoc> {
-  using RelativeLoc = Carbon::Parse::RelativeLoc;
-  static void format(const RelativeLoc& loc, raw_ostream& out,
-                     StringRef /*style*/) {
-    switch (loc) {
-      case RelativeLoc::Around:
-        out << "around";
-        break;
-      case RelativeLoc::After:
-        out << "after";
-        break;
-      case RelativeLoc::Before:
-        out << "before";
-        break;
-    }
-  }
-};
 
 namespace Carbon::Parse {
 
@@ -309,13 +279,16 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
       CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                        "whitespace missing {0} binary operator", RelativeLoc);
-      emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace,
-                     tokens().HasLeadingWhitespace(*position_)
-                         ? RelativeLoc::After
-                         : (tokens().HasTrailingWhitespace(*position_)
-                                ? RelativeLoc::Before
-                                : RelativeLoc::Around));
+                        "whitespace missing {0:=-1:before|=0:around|=1:after} "
+                        "binary operator",
+                        FormatInt);
+      FormatInt pos{.value = 0};
+      if (tokens().HasLeadingWhitespace(*position_)) {
+        pos.value = 1;
+      } else if (tokens().HasTrailingWhitespace(*position_)) {
+        pos.value = -1;
+      }
+      emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -324,18 +297,19 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // its operand.
     if ((prefix ? tokens().HasTrailingWhitespace(*position_)
                 : tokens().HasLeadingWhitespace(*position_))) {
-      CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-                        "whitespace is not allowed {0} this unary operator",
-                        RelativeLoc);
-      emitter_->Emit(*position_, UnaryOperatorHasWhitespace,
-                     prefix ? RelativeLoc::After : RelativeLoc::Before);
+      CARBON_DIAGNOSTIC(
+          UnaryOperatorHasWhitespace, Error,
+          "whitespace is not allowed {0:after|before} this unary operator",
+          FormatBool);
+      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, {.value = prefix});
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
-      CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-                        "whitespace is required {0} this unary operator",
-                        RelativeLoc);
+      CARBON_DIAGNOSTIC(
+          UnaryOperatorRequiresWhitespace, Error,
+          "whitespace is required {0:before|after} this unary operator",
+          FormatBool);
       emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace,
-                     prefix ? RelativeLoc::Before : RelativeLoc::After);
+                     {.value = prefix});
     }
   }
 }

@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/return.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -104,23 +105,19 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           cast_type_id,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "{0} has incomplete type {1}",
-                              llvm::StringLiteral, SemIR::TypeId);
+                              "{0:field|variable} has incomplete type {1}",
+                              FormatBool, SemIR::TypeId);
             return context.emitter().Build(
                 type_node, IncompleteTypeInVarDecl,
-                parent_class_decl ? llvm::StringLiteral("field")
-                                  : llvm::StringLiteral("variable"),
-                cast_type_id);
+                {.value = parent_class_decl.has_value()}, cast_type_id);
           },
           [&] {
             CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
-                              "{0} has abstract type {1}", llvm::StringLiteral,
-                              SemIR::TypeId);
+                              "{0:field|variable} has abstract type {1}",
+                              FormatBool, SemIR::TypeId);
             return context.emitter().Build(
                 type_node, AbstractTypeInVarDecl,
-                parent_class_decl ? llvm::StringLiteral("field")
-                                  : llvm::StringLiteral("variable"),
-                cast_type_id);
+                {.value = parent_class_decl.has_value()}, cast_type_id);
           });
       if (parent_class_decl) {
         CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,
