@@ -751,11 +751,11 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
         CARBON_DIAGNOSTIC(
             CompileTimeShiftOutOfRange, Error,
             "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
-            unsigned, TypedInt, FormatBool, TypedInt);
+            unsigned, TypedInt, BoolAsSelect, TypedInt);
         context.emitter().Emit(
             loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
             {.type = lhs.type_id, .value = lhs_val},
-            {.value = builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift},
+            builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
             {.type = rhs.type_id, .value = rhs_val});
         // TODO: Is it useful to recover by returning 0 or -1?
         return SemIR::ConstantId::Error;

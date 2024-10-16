@@ -416,9 +416,9 @@ static auto ConvertStructToStructOrClass(Context& context,
         StructInitElementCountMismatch, Error,
         "cannot initialize {0:class|struct} with {1} field(s) from struct "
         "with {2} field(s).",
-        FormatBool, size_t, size_t);
+        BoolAsSelect, size_t, size_t);
     context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                           {.value = ToClass}, dest_elem_fields.size(),
+                           ToClass, dest_elem_fields.size(),
                            src_elem_fields.size());
     return SemIR::InstId::BuiltinError;
   }
@@ -1163,9 +1163,8 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
         CARBON_DIAGNOSTIC(InCallToFunctionSelf, Note,
                           "initializing `{0:addr self|self}` parameter of "
                           "method declared here",
-                          FormatBool);
-        builder.Note(self_param_id, InCallToFunctionSelf,
-                     {.value = addr_pattern});
+                          BoolAsSelect);
+        builder.Note(self_param_id, InCallToFunctionSelf, addr_pattern);
       });
 
   return CallerPatternMatch(context, callee_specific_id, self_param_id,

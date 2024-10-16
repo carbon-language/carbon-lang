@@ -5,14 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_FORMAT_PROVIDERS_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_FORMAT_PROVIDERS_H_
 
-#include "common/check.h"
 #include "common/ostream.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/FormatVariadicDetails.h"
 
 namespace Carbon {
 
-// Selects a formatv string based on the value.
+// Selects a formatv string based on the value. If the format style is not
+// provided, as in `{0}`, the value uses standard formatting.
 //
 // When used, the true and false outputs are separated by a `|`.
 //
@@ -22,12 +21,15 @@ namespace Carbon {
 // preserve prefix or suffix whitespace (which is stripped by formatv). For
 // example, `{0:' true | false '}` retains whitespace which would be dropped
 // before `true` and after `false`.
-struct FormatBool {
- public:
+struct BoolAsSelect {
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  BoolAsSelect(bool value) : value(value) {}
+
   bool value;
 };
 
-// Selects a formatv string based on the value.
+// Selects a formatv string based on the value. If the format style is not
+// provided, as in `{0}`, the value uses standard formatting.
 //
 // The style is a series of match cases, separated by `|`. Each case is a pair
 // formatted as `<selector>:<output string>`.
@@ -48,88 +50,27 @@ struct FormatBool {
 // preserve prefix or suffix whitespace (which is stripped by formatv). For
 // example, `{0:'=0: zero |=1: one '}` retains whitespace which would be dropped
 // after `one`.
-struct FormatInt {
- public:
+struct IntAsSelect {
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  IntAsSelect(int value) : value(value) {}
+
   int value;
 };
 
 }  // namespace Carbon
 
-// See FormatBool.
+// See BoolAsSelect.
 template <>
-struct llvm::format_provider<Carbon::FormatBool> {
-  static void format(const Carbon::FormatBool& wrapper, raw_ostream& out,
-                     StringRef style) {
-    // Remove wrapping quotes if present.
-    if (style.starts_with('\'') && style.ends_with('\'')) {
-      style = style.drop_front().drop_back();
-    }
-
-    auto sep = style.find('|');
-    CARBON_CHECK(
-        sep != llvm::StringRef::npos,
-        "FormatBool requires a `|` separating true and false results: `{0}`",
-        style);
-    if (wrapper.value) {
-      out << style.take_front(sep);
-    } else {
-      out << style.drop_front(sep + 1);
-    }
-  }
+struct llvm::format_provider<Carbon::BoolAsSelect> {
+  static auto format(const Carbon::BoolAsSelect& wrapper, raw_ostream& out,
+                     StringRef style) -> void;
 };
 
-// See FormatInt.
+// See IntAsSelect.
 template <>
-struct llvm::format_provider<Carbon::FormatInt> {
-  static void format(const Carbon::FormatInt& wrapper, raw_ostream& out,
-                     StringRef style) {
-    // Remove wrapping quotes if present.
-    if (style.starts_with('\'') && style.ends_with('\'')) {
-      style = style.drop_front().drop_back();
-    }
-
-    auto cursor = style;
-    while (!cursor.empty()) {
-      auto case_sep = cursor.find("|");
-      auto token = cursor.substr(0, case_sep);
-      if (case_sep == llvm::StringRef::npos) {
-        cursor = llvm::StringRef();
-      } else {
-        cursor = cursor.drop_front(case_sep + 1);
-      }
-
-      auto pair_sep = token.find(':');
-      CARBON_CHECK(pair_sep != llvm::StringRef::npos,
-                   "FormatInt requires a `:` separating each comparison and "
-                   "output string: `{0}`",
-                   style);
-
-      auto comp = token.take_front(pair_sep);
-      auto output_string = token.drop_front(pair_sep + 1);
-
-      if (comp.empty()) {
-        // Default case.
-        CARBON_CHECK(cursor.empty(),
-                     "FormatInt requires the default case be last: `{0}`",
-                     style);
-        out << output_string;
-        return;
-      } else if (comp.consume_front("=")) {
-        // Equality comparison.
-        int value;
-        CARBON_CHECK(to_integer(comp, value),
-                     "FormatInt has invalid value in comparison: `{0}`", style);
-        if (value == wrapper.value) {
-          out << output_string;
-          return;
-        }
-      } else {
-        CARBON_FATAL("FormatInt has unrecognized comparison: `{0}`", style);
-      }
-    }
-
-    CARBON_FATAL("FormatInt doesn't handle `{0}`: `{1}`", wrapper.value, style);
-  }
+struct llvm::format_provider<Carbon::IntAsSelect> {
+  static auto format(const Carbon::IntAsSelect& wrapper, raw_ostream& out,
+                     StringRef style) -> void;
 };
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_FORMAT_PROVIDERS_H_

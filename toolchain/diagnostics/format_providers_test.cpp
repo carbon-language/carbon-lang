@@ -7,71 +7,79 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "llvm/Support/FormatVariadic.h"
+
 namespace Carbon {
 namespace {
 
 using ::testing::Eq;
 
-TEST(FormatBool, Cases) {
+TEST(BoolAsSelect, Cases) {
   constexpr char Format[] = "{0:a|b}";
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = true}).str(), Eq("a"));
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = false}).str(), Eq("b"));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq("a"));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq("b"));
 }
 
-TEST(FormatBool, Spaces) {
+TEST(BoolAsSelect, CasesWithNormalFormat) {
+  constexpr char Format[] = "{0} {0:a|b}";
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq("true a"));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq("false b"));
+}
+
+TEST(BoolAsSelect, Spaces) {
   constexpr char Format[] = "{0: a | b }";
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = true}).str(), Eq("a "));
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = false}).str(),
-              Eq(" b"));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq("a "));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq(" b"));
 }
 
-TEST(FormatBool, QuotedSpaces) {
+TEST(BoolAsSelect, QuotedSpaces) {
   constexpr char Format[] = "{0:' a | b '}";
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = true}).str(),
-              Eq(" a "));
-  EXPECT_THAT(llvm::formatv(Format, FormatBool{.value = false}).str(),
-              Eq(" b "));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq(" a "));
+  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq(" b "));
 }
 
-TEST(FormatInt, OnlyDefault) {
+TEST(IntAsSelect, OnlyDefault) {
   constexpr char Format[] = "{0::default}";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(),
-              Eq("default"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("default"));
 }
 
-TEST(FormatInt, OneEquals) {
+TEST(IntAsSelect, OneEquals) {
   constexpr char Format[] = "{0:=0:zero}";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(), Eq("zero"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("zero"));
 }
 
-TEST(FormatInt, TwoEquals) {
+TEST(IntAsSelect, TwoEquals) {
   constexpr char Format[] = "{0:=0:zero|=1:one}";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(), Eq("zero"));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 1}).str(), Eq("one"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("zero"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq("one"));
 }
 
-TEST(FormatInt, TwoEqualsAndDefault) {
+TEST(IntAsSelect, TwoEqualsAndDefault) {
   constexpr char Format[] = "{0:=0:zero|=1:one|:default}";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(), Eq("zero"));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 1}).str(), Eq("one"));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 2}).str(),
-              Eq("default"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("zero"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq("one"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq("default"));
 }
 
-TEST(FormatInt, Spaces) {
+TEST(IntAsSelect, Spaces) {
   constexpr char Format[] = "{0:=0: zero |=1: one |: default }";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(), Eq(" zero "));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 1}).str(), Eq(" one "));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 2}).str(),
-              Eq(" default"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq(" zero "));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq(" one "));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq(" default"));
 }
 
-TEST(FormatInt, QuotedSpaces) {
+TEST(IntAsSelect, QuotedSpaces) {
   constexpr char Format[] = "{0:'=0: zero |=1: one |: default '}";
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 0}).str(), Eq(" zero "));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 1}).str(), Eq(" one "));
-  EXPECT_THAT(llvm::formatv(Format, FormatInt{.value = 2}).str(),
-              Eq(" default "));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq(" zero "));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq(" one "));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq(" default "));
+}
+
+TEST(IntAsSelect, PluralExample) {
+  constexpr char Format[] = "{0} argument{0:=1:|:s}";
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("0 arguments"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq("1 argument"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq("2 arguments"));
 }
 
 }  // namespace

@@ -106,18 +106,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                               "{0:field|variable} has incomplete type {1}",
-                              FormatBool, SemIR::TypeId);
-            return context.emitter().Build(
-                type_node, IncompleteTypeInVarDecl,
-                {.value = parent_class_decl.has_value()}, cast_type_id);
+                              BoolAsSelect, SemIR::TypeId);
+            return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
+                                           parent_class_decl.has_value(),
+                                           cast_type_id);
           },
           [&] {
             CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
                               "{0:field|variable} has abstract type {1}",
-                              FormatBool, SemIR::TypeId);
-            return context.emitter().Build(
-                type_node, AbstractTypeInVarDecl,
-                {.value = parent_class_decl.has_value()}, cast_type_id);
+                              BoolAsSelect, SemIR::TypeId);
+            return context.emitter().Build(type_node, AbstractTypeInVarDecl,
+                                           parent_class_decl.has_value(),
+                                           cast_type_id);
           });
       if (parent_class_decl) {
         CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,

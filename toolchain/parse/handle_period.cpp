@@ -37,10 +37,9 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     return;
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
-                      "expected identifier after `{0:->|.}`", FormatBool);
+                      "expected identifier after `{0:->|.}`", BoolAsSelect);
     context.emitter().Emit(*context.position(),
-                           ExpectedIdentifierAfterPeriodOrArrow,
-                           {.value = is_arrow});
+                           ExpectedIdentifierAfterPeriodOrArrow, is_arrow);
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {

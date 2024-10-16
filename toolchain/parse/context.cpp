@@ -281,8 +281,8 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
       CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
                         "whitespace missing {0:=-1:before|=0:around|=1:after} "
                         "binary operator",
-                        FormatInt);
-      FormatInt pos{.value = 0};
+                        IntAsSelect);
+      IntAsSelect pos(0);
       if (tokens().HasLeadingWhitespace(*position_)) {
         pos.value = 1;
       } else if (tokens().HasTrailingWhitespace(*position_)) {
@@ -300,16 +300,15 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
       CARBON_DIAGNOSTIC(
           UnaryOperatorHasWhitespace, Error,
           "whitespace is not allowed {0:after|before} this unary operator",
-          FormatBool);
-      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, {.value = prefix});
+          BoolAsSelect);
+      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, prefix);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(
           UnaryOperatorRequiresWhitespace, Error,
           "whitespace is required {0:before|after} this unary operator",
-          FormatBool);
-      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace,
-                     {.value = prefix});
+          BoolAsSelect);
+      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }

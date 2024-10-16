@@ -59,6 +59,7 @@ cc_library(
 
 cc_library(
     name = "format_providers",
+    srcs = ["format_providers.cpp"],
     hdrs = ["format_providers.h"],
     deps = [
         "//common:check",
