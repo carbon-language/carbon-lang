@@ -18,23 +18,23 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:8: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   s.a.F();
-  // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR:    ^
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~
   // CHECK:STDERR:
   s.a.F();
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error: `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   b.a.F();
-  // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:13: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR:    ^
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:        ^~~~~~~~~~~~~
   b.a.F();
 }
 
@@ -84,27 +84,30 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %s.patt: %.7 = binding_pattern s
+// CHECK:STDOUT:     %s.param_patt: %.7 = param_pattern %s.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %B = param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.7]
-// CHECK:STDOUT:     %s.param: %.7 = param s, runtime_param0
-// CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %b.param: %B = param b, runtime_param1
-// CHECK:STDOUT:     %b: %B = bind_name b, %b.param
+// CHECK:STDOUT:     %param.loc19_6: %.7 = param runtime_param0
+// CHECK:STDOUT:     %s: %.7 = bind_name s, %param.loc19_6
+// CHECK:STDOUT:     %param.loc19_18: %B = param runtime_param1
+// CHECK:STDOUT:     %b: %B = bind_name b, %param.loc19_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %self.param: %.1 = param self, runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
-// CHECK:STDOUT:     %.loc12_8: %.1 = addr_pattern %self
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -123,9 +126,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self: %.1]();
+// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%s: %.7, %b: %B) {
+// CHECK:STDOUT: fn @F.2(%s.param_patt: %.7, %b.param_patt: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %.7 = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0

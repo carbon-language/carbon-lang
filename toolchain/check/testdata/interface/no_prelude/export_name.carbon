@@ -109,10 +109,11 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %i.patt: %I.type = binding_pattern i
+// CHECK:STDOUT:     %i.param_patt: %I.type = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%I.type]
-// CHECK:STDOUT:     %i.param: %I.type = param i, runtime_param0
-// CHECK:STDOUT:     %i: %I.type = bind_name i, %i.param
+// CHECK:STDOUT:     %param: %I.type = param runtime_param0
+// CHECK:STDOUT:     %i: %I.type = bind_name i, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,7 +123,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%i: %I.type) {
+// CHECK:STDOUT: fn @UseEmpty(%i.param_patt: %I.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

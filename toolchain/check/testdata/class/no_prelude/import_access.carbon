@@ -412,11 +412,12 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %.1 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %.1 = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
 // CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
-// CHECK:STDOUT:     %c.param: %.1 = param c, runtime_param0
-// CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %c: %.1 = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
@@ -428,7 +429,7 @@ private class Redecl {}
 // CHECK:STDOUT:   .Self = constants.%Forward
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: %.1) {
+// CHECK:STDOUT: fn @F(%c.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -448,15 +449,16 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: <error> = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.param: <error> = param c, runtime_param0
-// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:     %param: <error> = param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: <error>) {
+// CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -483,16 +485,17 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: <error> = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %c.param: <error> = param c, runtime_param0
-// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:     %param: <error> = param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c: <error>) {
+// CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

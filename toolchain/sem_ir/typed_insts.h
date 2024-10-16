@@ -65,10 +65,10 @@ struct AddrOf {
 };
 
 // An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
-// generally be one of `AnyBindName`.
+// generally be a pattern inst.
 struct AddrPattern {
-  static constexpr auto Kind =
-      InstKind::AddrPattern.Define<Parse::AddrId>({.ir_name = "addr_pattern"});
+  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
+      {.ir_name = "addr_pattern", .is_lowered = false});
 
   TypeId type_id;
   // The `self` binding.
@@ -296,6 +296,7 @@ struct AnyBindingPattern {
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a non-symbolic binding pattern.
@@ -305,16 +306,25 @@ struct BindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a symbolic binding pattern.
+//
+// TODO: Consider dropping this and AnyBindingPattern, using BindingPattern
+// everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
-      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "symbolic_binding_pattern", .is_lowered = false});
+      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
+          .ir_name = "symbolic_binding_pattern",
+          .is_type = InstIsType::Never,
+          .constant_kind = InstConstantKind::SymbolicOnly,
+          .is_lowered = false,
+      });
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -822,7 +832,18 @@ struct Param {
       InstKind::Param.Define<Parse::NodeId>({.ir_name = "param"});
 
   TypeId type_id;
-  NameId name_id;
+  RuntimeParamIndex runtime_index;
+};
+
+// A pattern that represents a parameter. It matches the same values as
+// `subpattern_id`.
+struct ParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ParamPattern.Define<Parse::NodeId>(
+      {.ir_name = "param_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
   RuntimeParamIndex runtime_index;
 };
 

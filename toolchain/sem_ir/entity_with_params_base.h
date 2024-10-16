@@ -46,7 +46,9 @@ struct EntityWithParamsBase {
     last_param_node_id = definition.last_param_node_id;
     pattern_block_id = definition.pattern_block_id;
     implicit_param_refs_id = definition.implicit_param_refs_id;
+    implicit_param_patterns_id = definition.implicit_param_patterns_id;
     param_refs_id = definition.param_refs_id;
+    param_patterns_id = definition.param_patterns_id;
     definition_id = definition.definition_id;
   }
 
@@ -72,7 +74,8 @@ struct EntityWithParamsBase {
 
   // Determines whether this entity has any parameter lists.
   auto has_parameters() const -> bool {
-    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+    return implicit_param_patterns_id.is_valid() ||
+           param_patterns_id.is_valid();
   }
 
   // The following members always have values, and do not change throughout the
@@ -91,10 +94,22 @@ struct EntityWithParamsBase {
   Parse::NodeId last_param_node_id;
   // A block containing the pattern insts for the parameter lists.
   InstBlockId pattern_block_id;
-  // A block containing a single reference instruction per implicit parameter.
+  // A block containing, for each implicit parameter, a reference to the
+  // instruction in the entity's declaration block that depends on all other
+  // pattern-match insts pertaining to that parameter.
   InstBlockId implicit_param_refs_id;
-  // A block containing a single reference instruction per parameter.
+  // A block containing, for each implicit parameter, a reference to the
+  // instruction in the entity's pattern block that depends on all other
+  // pattern insts pertaining to that parameter.
+  InstBlockId implicit_param_patterns_id;
+  // A block containing, for each explicit parameter, a reference to the
+  // instruction in the entity's declaration block that depends on all other
+  // pattern-match insts pertaining to that parameter.
   InstBlockId param_refs_id;
+  // A block containing, for each explicit parameter, a reference to the
+  // instruction in the entity's pattern block that depends on all other
+  // pattern insts pertaining to that parameter.
+  InstBlockId param_patterns_id;
   // True if declarations are `extern`.
   bool is_extern;
   // For an `extern library` declaration, the library name.

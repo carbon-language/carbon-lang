@@ -137,7 +137,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+16, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -168,7 +168,7 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_i64: ref %.7 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%size: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%size.param_patt: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_iN_bad_width.carbon
 // CHECK:STDOUT:
@@ -195,7 +195,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+16, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,7 +236,7 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_i10000000000000000000: ref <error> = bind_name test_i10000000000000000000, %test_i10000000000000000000.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%size: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%size.param_patt: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+25, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+27, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -295,7 +295,7 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_u64: ref %.7 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%size: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%size.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_uN_bad_width.carbon
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+25, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+27, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -363,7 +363,7 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_u10000000000000000000: ref <error> = bind_name test_u10000000000000000000, %test_u10000000000000000000.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%size: i32) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%size.param_patt: i32) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_fN_bad_width.carbon
 // CHECK:STDOUT:

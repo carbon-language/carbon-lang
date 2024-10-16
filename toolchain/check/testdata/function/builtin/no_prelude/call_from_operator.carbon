@@ -59,22 +59,24 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [template = constants.%Op] {
 // CHECK:STDOUT:     %self.patt: @Op.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
+// CHECK:STDOUT:     %other.param_patt: @Op.%Self (%Self) = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.2: type = converted %Self.ref.loc7_15, %.loc7_15.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %self.param: @Op.%Self (%Self) = param self, runtime_param0
-// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %self.param
 // CHECK:STDOUT:     %Self.ref.loc7_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.1: type = facet_type_access %Self.ref.loc7_28 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %Self.ref.loc7_28, %.loc7_28.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %other.param: @Op.%Self (%Self) = param other, runtime_param1
-// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %other.param
 // CHECK:STDOUT:     %Self.ref.loc7_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = var <return slot>
+// CHECK:STDOUT:     %param.loc7_9: @Op.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_9
+// CHECK:STDOUT:     %param.loc7_21: @Op.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -89,7 +91,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: generic fn @Op(@Add.%Self: %Add.type) {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Op.%Self (%Self)](%other: @Op.%Self (%Self)) -> @Op.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self (%Self)](%other.param_patt: @Op.%Self (%Self)) -> @Op.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -134,9 +136,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+6, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//default, inst+31, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+26, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//default, inst+33, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+28, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+28, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -176,16 +178,18 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: impl @impl: %.loc6_6.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
+// CHECK:STDOUT:     %other.param_patt: i32 = param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %self.param: i32 = param self, runtime_param0
-// CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %other.param: i32 = param other, runtime_param1
-// CHECK:STDOUT:     %other: i32 = bind_name other, %other.param
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc7_9: i32 = param runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_9
+// CHECK:STDOUT:     %param.loc7_21: i32 = param runtime_param1
+// CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.2]
 // CHECK:STDOUT:
@@ -196,12 +200,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%self: i32](%other: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT: fn @Op.1[%self.param_patt: i32](%other.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Op.2.%Self (%Self)](%other: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self)](%other.param_patt: @Op.2.%Self (%Self)) -> @Op.2.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -61,8 +61,8 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (entity_generic_id.is_valid()) {
     specific_id = DeduceGenericCallArguments(
         context, loc_id, entity_generic_id, enclosing_specific_id,
-        callee_info.implicit_param_refs_id, callee_info.param_refs_id, self_id,
-        arg_ids);
+        callee_info.implicit_param_patterns_id, callee_info.param_patterns_id,
+        self_id, arg_ids);
     if (!specific_id.is_valid()) {
       return std::nullopt;
     }

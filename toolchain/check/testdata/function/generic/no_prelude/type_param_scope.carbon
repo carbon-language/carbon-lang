@@ -17,6 +17,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -27,25 +28,28 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt.loc11_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_6.1, runtime_param<invalid> [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %n.patt: @F.%T.loc11_6.2 (%T) = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: @F.%T.loc11_6.2 (%T) = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param T, runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %n.param: @F.%T.loc11_6.2 (%T) = param n, runtime_param0
-// CHECK:STDOUT:     %n: @F.%T.loc11_6.2 (%T) = bind_name n, %n.param
 // CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc11_6.2 (%T) = var <return slot>
+// CHECK:STDOUT:     %param.loc11_6: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %param.loc11_6 [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc11_16: @F.%T.loc11_6.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %n: @F.%T.loc11_6.2 (%T) = bind_name n, %param.loc11_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11_6.1: type) {
 // CHECK:STDOUT:   %T.loc11_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.loc11_6.1: type, %n: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %n.param_patt: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %n.ref: @F.%T.loc11_6.2 (%T) = name_ref n, %n
@@ -57,5 +61,6 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

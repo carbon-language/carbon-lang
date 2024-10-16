@@ -207,10 +207,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
 
-  auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto implicit_param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
   // TODO: Include parameters corresponding to positional parameters.
-  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
   auto* return_type =
       return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
@@ -222,22 +223,23 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // demand.
   llvm::SmallVector<SemIR::InstId> param_inst_ids;
   auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
-                         implicit_param_refs.size() + param_refs.size();
+                         implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
     param_inst_ids.push_back(function.return_storage_id);
   }
-  for (auto param_ref_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param_info.inst.runtime_index.is_valid()) {
+  for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
+           implicit_param_patterns, param_patterns)) {
+    auto param_pattern = SemIR::Function::GetParamPatternInfoFromPatternId(
+                             sem_ir(), param_pattern_id)
+                             .inst;
+    if (!param_pattern.runtime_index.is_valid()) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeInSpecific(sem_ir(), specific_id,
-                                                  param_info.inst.type_id);
+    auto param_type_id =
+        SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -248,7 +250,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       case SemIR::ValueRepr::Custom:
       case SemIR::ValueRepr::Pointer:
         param_types.push_back(GetType(value_rep.type_id));
-        param_inst_ids.push_back(param_ref_id);
+        param_inst_ids.push_back(param_pattern_id);
         break;
     }
   }
@@ -283,8 +285,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
-      name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
-                    .GetNameId(sem_ir());
+      name_id =
+          SemIR::Function::GetParamPatternInfoFromPatternId(sem_ir(), inst_id)
+              .GetNameId(sem_ir());
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -355,10 +358,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     //
     // TODO: Support general patterns here.
     auto bind_name_id = param_ref_id;
-    if (auto addr =
-            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
-      bind_name_id = addr->inner_id;
-    }
     auto bind_name = sem_ir().insts().Get(bind_name_id);
     CARBON_CHECK(bind_name.Is<SemIR::BindName>());
     function_lowering.SetLocal(bind_name_id, param_value);
@@ -416,7 +415,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
     -> llvm::Type* {
   switch (inst.builtin_inst_kind) {
     case SemIR::BuiltinInstKind::Invalid:
-      CARBON_FATAL("Unexpected builtin type in lowering.");
+    case SemIR::BuiltinInstKind::AutoType:
+      CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
     case SemIR::BuiltinInstKind::Error:
       // This is a complete type but uses of it should never be lowered.
       return nullptr;

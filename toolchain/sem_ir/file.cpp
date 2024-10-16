@@ -184,6 +184,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     auto untyped_inst = ir->insts().Get(inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
       case AdaptDecl::Kind:
+      case AddrPattern::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
       case BindingPattern::Kind:
@@ -200,7 +201,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
-      case SymbolicBindingPattern::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -241,7 +241,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AddrOf::Kind:
-      case AddrPattern::Kind:
       case ArrayType::Kind:
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
@@ -269,11 +268,13 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntLiteral::Kind:
       case IntType::Kind:
       case Param::Kind:
+      case ParamPattern::Kind:
       case PointerType::Kind:
       case SpecificFunction::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:
+      case SymbolicBindingPattern::Kind:
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:

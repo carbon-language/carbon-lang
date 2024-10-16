@@ -45,20 +45,21 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.1 = param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_14: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %p.param: %.1 = param p, runtime_param0
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %p.param
 // CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_25: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p: %.1) -> %.1 {
+// CHECK:STDOUT: fn @F(%p.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

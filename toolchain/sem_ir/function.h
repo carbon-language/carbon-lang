@@ -64,6 +64,22 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
+  // Given an instruction from `param_patterns_id` or
+  // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
+  // corresponding instruction, its ID, and the entity_name_id of the underlying
+  // binding pattern.
+  struct ParamPatternInfo {
+    InstId inst_id;
+    ParamPattern inst;
+    EntityNameId entity_name_id;
+
+    auto GetNameId(const File& sem_ir) -> NameId;
+  };
+
+  static auto GetParamPatternInfoFromPatternId(const File& sem_ir,
+                                               InstId param_pattern_id)
+      -> ParamPatternInfo;
+
   // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns a `ParamInfo` value with the
   // corresponding instruction, its ID, and the name binding, if present.

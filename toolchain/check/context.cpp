@@ -921,6 +921,7 @@ class TypeCompleter {
       -> SemIR::ValueRepr {
     switch (builtin.builtin_inst_kind) {
       case SemIR::BuiltinInstKind::TypeType:
+      case SemIR::BuiltinInstKind::AutoType:
       case SemIR::BuiltinInstKind::Error:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:

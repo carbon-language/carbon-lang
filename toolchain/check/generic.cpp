@@ -108,6 +108,12 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       return true;
     }
 
+    if (auto pattern =
+            context_.insts().TryGetAs<SemIR::SymbolicBindingPattern>(inst_id)) {
+      inst_id = Rebuild(inst_id, *pattern);
+      return true;
+    }
+
     return false;
   }
 
@@ -426,39 +432,28 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
   return true;
 }
 
-// Replace the parameter with an invalid instruction so that we don't try
-// constructing a generic based on it. Note this is updating the param
-// refs block, not the actual params block, so will not be directly
-// reflected in SemIR output.
-static auto ReplaceInstructionWithError(Context& context,
-                                        SemIR::InstId& inst_id) -> void {
-  inst_id = context.AddInstInNoBlock<SemIR::Param>(
-      context.insts().GetLocId(inst_id),
-      {.type_id = SemIR::TypeId::Error,
-       .name_id = SemIR::NameId::Base,
-       .runtime_index = SemIR::RuntimeParamIndex::Invalid});
-}
-
-auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
-    -> void {
-  if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
+auto RequireGenericParamsOnType(Context& context,
+                                SemIR::InstBlockId pattern_block_id) -> void {
+  if (!pattern_block_id.is_valid() ||
+      pattern_block_id == SemIR::InstBlockId::Empty) {
     return;
   }
-  for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
-    if (param_info.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
+  for (auto& inst_id : context.inst_blocks().Get(pattern_block_id)) {
+    auto name_id = SemIR::Function::GetParamPatternInfoFromPatternId(
+                       context.sem_ir(), inst_id)
+                       .GetNameId(context.sem_ir());
+    if (name_id == SemIR::NameId::SelfValue) {
       CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
                         "`self` parameter only allowed on functions");
       context.emitter().Emit(inst_id, SelfParameterNotAllowed);
 
-      ReplaceInstructionWithError(context, inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     } else if (!context.constant_values().Get(inst_id).is_constant()) {
       CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                         "parameters of generic types must be constant");
       context.emitter().Emit(inst_id, GenericParamMustBeConstant);
 
-      ReplaceInstructionWithError(context, inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     }
   }
 }
@@ -479,7 +474,7 @@ auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
           "implicit parameters of functions must be constant or `self`");
       context.emitter().Emit(inst_id, ImplictParamMustBeConstant);
 
-      ReplaceInstructionWithError(context, inst_id);
+      inst_id = SemIR::InstId::BuiltinError;
     }
   }
 }

@@ -34,6 +34,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ErrorIfNIsZero.type: type = fn_type @ErrorIfNIsZero [template]
 // CHECK:STDOUT:   %ErrorIfNIsZero: %ErrorIfNIsZero.type = struct_value () [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -59,7 +60,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+16, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,13 +71,14 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ErrorIfNIsZero.decl: %ErrorIfNIsZero.type = fn_decl @ErrorIfNIsZero [template = constants.%ErrorIfNIsZero] {
-// CHECK:STDOUT:     %N.patt: i32 = symbolic_binding_pattern N, 0
+// CHECK:STDOUT:     %N.patt.loc4_19.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc4_19.1, runtime_param<invalid> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %int.make_type_32, %.loc4_23.1 [template = i32]
-// CHECK:STDOUT:     %N.param: i32 = param N, runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_19.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:     %param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_19.1: i32 = bind_symbolic_name N, 0, %param [symbolic = %N.loc4_19.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [template = constants.%CallNegative] {} {}
 // CHECK:STDOUT: }
@@ -85,11 +87,12 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_19.1: i32) {
 // CHECK:STDOUT:   %N.loc4_19.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc4_19.2: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc12_18: type = int_type signed, %N.loc4_19.2 [symbolic = %.loc12_18 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.loc4_19.1: i32) {
+// CHECK:STDOUT:   fn(%N.param_patt: i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
@@ -103,7 +106,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%size: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%size.param_patt: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
@@ -116,10 +119,12 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%.3) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%.3
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc12_18 => <error>

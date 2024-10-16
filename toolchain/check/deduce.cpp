@@ -282,8 +282,16 @@ auto DeductionContext::Deduce() -> bool {
     CARBON_KIND_SWITCH(param_inst) {
       // Deducing a symbolic binding from an argument with a constant value
       // deduces the binding as having that constant value.
-      case CARBON_KIND(SemIR::BindSymbolicName bind): {
-        auto& entity_name = context().entity_names().Get(bind.entity_name_id);
+      case SemIR::InstKind::SymbolicBindingPattern:
+      case SemIR::InstKind::BindSymbolicName: {
+        auto entity_name_id = SemIR::EntityNameId::Invalid;
+        if (auto bind = param_inst.TryAs<SemIR::SymbolicBindingPattern>()) {
+          entity_name_id = bind->entity_name_id;
+        } else {
+          entity_name_id =
+              param_inst.As<SemIR::BindSymbolicName>().entity_name_id;
+        }
+        auto& entity_name = context().entity_names().Get(entity_name_id);
         auto index = entity_name.bind_index;
         if (!index.is_valid() || index < first_deduced_index_) {
           break;

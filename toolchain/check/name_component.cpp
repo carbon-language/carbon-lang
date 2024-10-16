@@ -5,6 +5,7 @@
 #include "toolchain/check/name_component.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/pattern_match.h"
 
 namespace Carbon::Check {
 
@@ -13,20 +14,22 @@ auto PopNameComponent(Context& context) -> NameComponent {
   Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
 
   // Explicit params.
-  auto [params_loc_id, params_id] =
+  auto [params_loc_id, param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
-  if (params_id) {
+  if (param_patterns_id) {
     first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
     last_param_node_id = params_loc_id;
+  } else {
+    param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
   // Implicit params.
-  auto [implicit_params_loc_id, implicit_params_id] =
+  auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack()
           .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
-  if (implicit_params_id) {
+  if (implicit_param_patterns_id) {
     // Implicit params always come before explicit params.
     first_param_node_id =
         context.node_stack()
@@ -35,7 +38,12 @@ auto PopNameComponent(Context& context) -> NameComponent {
     if (last_param_node_id.is_valid()) {
       last_param_node_id = params_loc_id;
     }
+  } else {
+    implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
+
+  auto [implicit_params_id, params_id] = CalleePatternMatch(
+      context, *implicit_param_patterns_id, *param_patterns_id);
 
   auto [name_loc_id, name_id] = context.node_stack().PopNameWithNodeId();
   return {
@@ -44,10 +52,11 @@ auto PopNameComponent(Context& context) -> NameComponent {
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id =
-          implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
+      .implicit_params_id = implicit_params_id,
+      .implicit_param_patterns_id = *implicit_param_patterns_id,
       .params_loc_id = params_loc_id,
-      .params_id = params_id.value_or(SemIR::InstBlockId::Invalid),
+      .params_id = params_id,
+      .param_patterns_id = *param_patterns_id,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
