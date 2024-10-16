@@ -542,6 +542,12 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
        .index = SemIR::ElementIndex(
            context.args_type_info_stack().PeekCurrentBlockContents().size())});
 
+  if (base_info.type_id != SemIR::TypeId::Error) {
+    auto base_class_info = context.classes().Get(
+        context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
+    class_info.is_dynamic |= base_class_info.is_dynamic;
+  }
+
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
   // TODO: Should we diagnose if there are already any fields?
@@ -643,13 +649,35 @@ static auto CheckCompleteAdapterClassType(Context& context,
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
-                                   SemIR::ClassId class_id,
-                                   SemIR::InstBlockId fields_id)
-    -> SemIR::InstId {
+                                   SemIR::ClassId class_id) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
   if (class_info.adapt_id.is_valid()) {
+    auto fields_id = context.args_type_info_stack().Pop();
+
     return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
   }
+
+  bool defining_vtable_ptr = class_info.is_dynamic;
+  if (class_info.base_id.is_valid()) {
+    auto base_info = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
+    // TODO: If the base class is template dependent, we will need to decide
+    // whether to add a vptr as part of instantiation.
+    if (auto* base_class_info = TryGetAsClass(context, base_info.base_type_id);
+        base_class_info && base_class_info->is_dynamic) {
+      defining_vtable_ptr = false;
+    }
+  }
+
+  if (defining_vtable_ptr) {
+    context.args_type_info_stack().AddFrontInstId(
+        context.AddInstInNoBlock<SemIR::StructTypeField>(
+            Parse::NodeId::Invalid,
+            {.name_id = SemIR::NameId::Vptr,
+             .field_type_id = context.GetPointerType(
+                 context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))}));
+  }
+
+  auto fields_id = context.args_type_info_stack().Pop();
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
@@ -659,13 +687,12 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
-  auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
 
   // The class type is now fully defined. Compute its object representation.
   auto complete_type_witness_id =
-      CheckCompleteClassType(context, node_id, class_id, fields_id);
+      CheckCompleteClassType(context, node_id, class_id);
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = complete_type_witness_id;
 

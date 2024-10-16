@@ -79,6 +79,9 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType, "<namespace>")
 // The type of witnesses.
 CARBON_SEM_IR_BUILTIN_INST_KIND(WitnessType, "<witness>")
 
+// The type of virtual function tables
+CARBON_SEM_IR_BUILTIN_INST_KIND(VtableType, "<vtable>")
+
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
 CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Invalid)

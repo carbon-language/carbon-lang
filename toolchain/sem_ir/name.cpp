@@ -25,6 +25,8 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return "package";
     case NameId::Base.index:
       return "base";
+    case NameId::Vptr.index:
+      return for_ir ? "vptr" : "<vptr>";
     default:
       CARBON_FATAL("Unknown special name");
   }

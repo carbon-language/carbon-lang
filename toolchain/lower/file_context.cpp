@@ -440,6 +440,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
     case SemIR::BuiltinInstKind::WitnessType:
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(context.llvm_context());
+    case SemIR::BuiltinInstKind::VtableType:
+      return llvm::Type::getVoidTy(context.llvm_context());
   }
 }
 
