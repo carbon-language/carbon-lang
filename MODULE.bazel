@@ -50,16 +50,13 @@ bazel_dep(name = "google_benchmark", version = "1.8.4")
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.
 bazel_dep(name = "libpfm", version = "4.11.0")
-
-libpfm_version = "4.13.0"
-
-archive_override(
+git_override(
     module_name = "libpfm",
-    integrity = "sha256-0YuXdkx1VSjBBR03bjNUXQ62DG6/hWgENoE/pbBMw9E=",
+    # v4.13.0
+    commit = "3d77461cb966259c51f3b3e322564187f4bef7fb",
     patch_strip = 1,
     patches = ["@//bazel/libpfm:0001-Introduce-a-simple-native-Bazel-build.patch"],
-    strip_prefix = "libpfm-{0}".format(libpfm_version),
-    urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-{0}.tar.gz".format(libpfm_version)],
+    remote = "https://git.code.sf.net/p/perfmon2/libpfm4",
 )
 
 # The registry has a snapshot, but upstream is active and not regularly marking
