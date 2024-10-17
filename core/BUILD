@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("manifest.bzl", "manifest")
+load("//bazel/manifest:defs.bzl", "manifest")
 
 # Raw prelude files.
 filegroup(
@@ -13,9 +13,9 @@ filegroup(
 # A list of prelude inputs.
 # This is consumed by //toolchain/install:install_paths.
 manifest(
-    name = "prelude_manifest",
+    name = "prelude_manifest.txt",
     srcs = [":prelude_files"],
-    out = "prelude_manifest.txt",
+    strip_package_dir = True,
 )
 
 # All files for the toolchain install.
