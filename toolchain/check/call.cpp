@@ -20,7 +20,7 @@
 namespace Carbon::Check {
 
 namespace {
-// Entity kinds for the diagnostic. Converted to an int for a select.
+// Entity kinds, for diagnostics. Converted to an int for a select.
 enum class EntityKind : uint8_t {
   Function,
   GenericClass,
