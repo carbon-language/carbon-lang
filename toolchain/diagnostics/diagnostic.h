@@ -117,9 +117,11 @@ struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {
-    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
-                  "Use std::string or llvm::StringLiteral for diagnostics to "
-                  "avoid lifetime issues.");
+    static_assert((... && !(std::is_same_v<Args, llvm::StringRef> ||
+                            std::is_same_v<Args, llvm::StringLiteral>)),
+                  "String type disallowed in diagnostics. See "
+                  "https://github.com/carbon-language/carbon-lang/blob/trunk/"
+                  "toolchain/docs/diagnostics.md#diagnostic-parameter-types");
   }
 
   // The diagnostic's kind.
