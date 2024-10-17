@@ -367,7 +367,7 @@ CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
 
 // Access modifiers.
-CARBON_DIAGNOSTIC_KIND(ClassMemberDefinition)
+CARBON_DIAGNOSTIC_KIND(ClassMemberDeclaration)
 CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 
 // Alias diagnostics.
