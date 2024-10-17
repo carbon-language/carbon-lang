@@ -143,6 +143,15 @@ of a binary object file instead. Ignored for other `--output` values.
 
   b.AddFlag(
       {
+          .name = "include-diagnostic-kind",
+          .help = R"""(
+When printing diagnostics, include the diagnostic kind as part of output. This
+applies to each message that forms a diagnostic, not just the primary message.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
+  b.AddFlag(
+      {
           .name = "stream-errors",
           .help = R"""(
 Stream error messages to stderr as they are generated rather than sorting them
@@ -635,7 +644,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream);
+  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream,
+                                           options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
 

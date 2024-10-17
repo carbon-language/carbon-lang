@@ -11,10 +11,10 @@
 interface I { fn F(); }
 
 class NoF {
-  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:3: error: missing implementation of F in impl of interface I
+  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:3: error(ImplMissingFunction): missing implementation of F in impl of interface I
   // CHECK:STDERR:   impl as I {}
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-6]]:15: note: associated function F declared here
+  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-6]]:15: note(ImplAssociatedFunctionHere): associated function F declared here
   // CHECK:STDERR: interface I { fn F(); }
   // CHECK:STDERR:               ^~~~~~~
   // CHECK:STDERR:
@@ -23,10 +23,10 @@ class NoF {
 
 class FNotFunction {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: associated function F implemented by non-function
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(ImplFunctionWithNonFunction): associated function F implemented by non-function
     // CHECK:STDERR:     class F;
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-18]]:15: note: associated function F declared here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-18]]:15: note(ImplAssociatedFunctionHere): associated function F declared here
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -39,10 +39,10 @@ fn PossiblyF();
 // TODO: Should this be permitted?
 class FAlias {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:11: error: associated function F implemented by non-function
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:11: error(ImplFunctionWithNonFunction): associated function F implemented by non-function
     // CHECK:STDERR:     alias F = PossiblyF;
     // CHECK:STDERR:           ^
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-34]]:15: note: associated function F declared here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-34]]:15: note(ImplAssociatedFunctionHere): associated function F declared here
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -52,10 +52,10 @@ class FAlias {
 
 class FExtraParam {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: redeclaration differs because of parameter count of 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(RedeclParamCountDiffers): redeclaration differs because of parameter count of 1
     // CHECK:STDERR:     fn F(b: bool);
     // CHECK:STDERR:     ^~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-47]]:15: note: previously declared with parameter count of 0
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-47]]:15: note(RedeclParamCountPrevious): previously declared with parameter count of 0
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -65,10 +65,10 @@ class FExtraParam {
 
 class FExtraImplicitParam {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: redeclaration differs because of implicit parameter list
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(RedeclParamListDiffers): redeclaration differs because of implicit parameter list
     // CHECK:STDERR:     fn F[self: Self]();
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-60]]:15: note: previously declared without implicit parameter list
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-60]]:15: note(RedeclParamListPrevious): previously declared without implicit parameter list
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -79,10 +79,10 @@ class FExtraImplicitParam {
 // TODO: Should this be permitted?
 class FExtraReturnType {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: function redeclaration differs because return type is `bool`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(FunctionRedeclReturnTypeDiffers): function redeclaration differs because return type is `bool`
     // CHECK:STDERR:     fn F() -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-74]]:15: note: previously declared with no return type
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-74]]:15: note(FunctionRedeclReturnTypePreviousNoReturn): previously declared with no return type
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -94,10 +94,10 @@ interface J { fn F[self: bool](b: bool) -> bool; }
 
 class FMissingParam {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: redeclaration differs because of parameter count of 0
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(RedeclParamCountDiffers): redeclaration differs because of parameter count of 0
     // CHECK:STDERR:     fn F[self: bool]() -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-7]]:15: note: previously declared with parameter count of 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-7]]:15: note(RedeclParamCountPrevious): previously declared with parameter count of 1
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -107,10 +107,10 @@ class FMissingParam {
 
 class FMissingImplicitParam {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: redeclaration differs because of missing implicit parameter list
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(RedeclParamListDiffers): redeclaration differs because of missing implicit parameter list
     // CHECK:STDERR:     fn F(b: bool) -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-20]]:15: note: previously declared with implicit parameter list
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-20]]:15: note(RedeclParamListPrevious): previously declared with implicit parameter list
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -120,10 +120,10 @@ class FMissingImplicitParam {
 
 class FMissingReturnType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: function redeclaration differs because no return type is provided
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(FunctionRedeclReturnTypeDiffersNoReturn): function redeclaration differs because no return type is provided
     // CHECK:STDERR:     fn F[self: bool](b: bool);
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-33]]:15: note: previously declared with return type `bool`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-33]]:15: note(FunctionRedeclReturnTypePrevious): previously declared with return type `bool`
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -133,10 +133,10 @@ class FMissingReturnType {
 
 class FDifferentParamType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: error: redeclaration differs at parameter 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: error(RedeclParamDiffers): redeclaration differs at parameter 1
     // CHECK:STDERR:     fn F[self: bool](b: Self) -> bool;
     // CHECK:STDERR:                      ^~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-46]]:32: note: previous declaration's corresponding parameter here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-46]]:32: note(RedeclParamPrevious): previous declaration's corresponding parameter here
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:                                ^~~~~~~
     // CHECK:STDERR:
@@ -146,10 +146,10 @@ class FDifferentParamType {
 
 class FDifferentImplicitParamType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: error: redeclaration differs at implicit parameter 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: error(RedeclParamDiffers): redeclaration differs at implicit parameter 1
     // CHECK:STDERR:     fn F[self: Self](b: bool) -> bool;
     // CHECK:STDERR:          ^~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-59]]:20: note: previous declaration's corresponding implicit parameter here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-59]]:20: note(RedeclParamPrevious): previous declaration's corresponding implicit parameter here
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:                    ^~~~~~~~~~
     // CHECK:STDERR:
@@ -159,10 +159,10 @@ class FDifferentImplicitParamType {
 
 class FDifferentReturnType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: function redeclaration differs because return type is `FDifferentReturnType`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error(FunctionRedeclReturnTypeDiffers): function redeclaration differs because return type is `FDifferentReturnType`
     // CHECK:STDERR:     fn F[self: bool](b: bool) -> Self;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-72]]:15: note: previously declared with return type `bool`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-72]]:15: note(FunctionRedeclReturnTypePrevious): previously declared with return type `bool`
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -173,10 +173,10 @@ class FDifferentReturnType {
 // TODO: This should probably be permitted.
 class FDifferentParamName {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: error: redeclaration differs at parameter 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: error(RedeclParamDiffers): redeclaration differs at parameter 1
     // CHECK:STDERR:     fn F[self: bool](not_b: bool) -> bool;
     // CHECK:STDERR:                      ^~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-86]]:32: note: previous declaration's corresponding parameter here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-86]]:32: note(RedeclParamPrevious): previous declaration's corresponding parameter here
     // CHECK:STDERR: interface J { fn F[self: bool](b: bool) -> bool; }
     // CHECK:STDERR:                                ^~~~~~~
     // CHECK:STDERR:
@@ -190,10 +190,10 @@ interface SelfNested {
 
 class SelfNestedBadParam {
   impl as SelfNested {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: error: redeclaration differs at parameter 1
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: error(RedeclParamDiffers): redeclaration differs at parameter 1
     // CHECK:STDERR:     fn F(x: (SelfNestedBadParam*, {.x: i32, .y: i32})) -> [SelfNestedBadParam; 4];
     // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-8]]:8: note: previous declaration's corresponding parameter here
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-8]]:8: note(RedeclParamPrevious): previous declaration's corresponding parameter here
     // CHECK:STDERR:   fn F(x: (Self*, {.x: Self, .y: i32})) -> [Self; 4];
     // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -203,10 +203,10 @@ class SelfNestedBadParam {
 
 class SelfNestedBadReturnType {
   impl as SelfNested {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+6]]:5: error: function redeclaration differs because return type is `[SelfNestedBadParam; 4]`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+6]]:5: error(FunctionRedeclReturnTypeDiffers): function redeclaration differs because return type is `[SelfNestedBadParam; 4]`
     // CHECK:STDERR:     fn F(x: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-21]]:3: note: previously declared with return type `[SelfNestedBadReturnType; 4]`
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-21]]:3: note(FunctionRedeclReturnTypePrevious): previously declared with return type `[SelfNestedBadReturnType; 4]`
     // CHECK:STDERR:   fn F(x: (Self*, {.x: Self, .y: i32})) -> [Self; 4];
     // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     fn F(x: (SelfNestedBadReturnType*, {.x: SelfNestedBadReturnType, .y: i32})) -> [SelfNestedBadParam; 4];

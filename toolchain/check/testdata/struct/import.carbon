@@ -30,7 +30,7 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14: error: missing value for field `a` in struct initialization
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14: error(StructInitMissingFieldInLiteral): missing value for field `a` in struct initialization
 // CHECK:STDERR: var c_bad: C({.c = 1, .d = 2}) = F();
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -39,10 +39,10 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C` to `C`
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error(ImplicitAsConversionFailure): cannot implicitly convert from `C` to `C`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note(MissingImplInMemberAccessNote): type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();

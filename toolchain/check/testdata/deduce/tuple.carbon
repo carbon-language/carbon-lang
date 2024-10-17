@@ -43,10 +43,10 @@ class D {}
 fn F[T:! type](pair: (T, T)) -> T;
 
 fn G(pair: (C, D)) -> D {
-  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE+6]]:10: error: inconsistent deductions for value of generic parameter `T`
+  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE+6]]:10: error(DeductionInconsistent): inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:   return F(pair);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE-6]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
   // CHECK:STDERR: fn F[T:! type](pair: (T, T)) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(pair);

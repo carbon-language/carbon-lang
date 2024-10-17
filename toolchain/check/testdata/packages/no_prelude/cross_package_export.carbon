@@ -153,18 +153,18 @@ import Other library "conflict";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+8]]:1: in import
-// CHECK:STDERR: base.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+8]]:1(InImport): in import
+// CHECK:STDERR: base.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:1: in import
-// CHECK:STDERR: conflict.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:1(InImport): in import
+// CHECK:STDERR: conflict.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "export_import";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:11: note: in name lookup for `C`
+// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+4]]:11: note(InNameLookup): in name lookup for `C`
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
@@ -174,19 +174,19 @@ alias C = Other.C;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: conflict.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: conflict.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: export_name.carbon:4:1: in import
-// CHECK:STDERR: base.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: export_name.carbon:4:1(InImport): in import
+// CHECK:STDERR: base.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "export_name";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: note: in name lookup for `C`
+// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+3]]:11: note(InNameLookup): in name lookup for `C`
 // CHECK:STDERR: alias C = Other.C;
 // CHECK:STDERR:           ^~~~~~~
 alias C = Other.C;

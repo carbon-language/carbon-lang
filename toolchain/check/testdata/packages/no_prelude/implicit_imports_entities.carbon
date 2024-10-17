@@ -131,12 +131,12 @@ import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:6: in import
-// CHECK:STDERR: import_conflict.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+9]]:6(InImport): in import
+// CHECK:STDERR: import_conflict.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:6: in import
-// CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_conflict.impl.carbon:[[@LINE+5]]:6(InImport): in import
+// CHECK:STDERR: local_other.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -154,12 +154,12 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+8]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: import Other library "o1";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: import_conflict_reverse.carbon:4:1: in import
-// CHECK:STDERR: local_other.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE-5]]:6(InImport): in import
+// CHECK:STDERR: import_conflict_reverse.carbon:4:1(InImport): in import
+// CHECK:STDERR: local_other.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: class Other {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 import Other library "o1";
