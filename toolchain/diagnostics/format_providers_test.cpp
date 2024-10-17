@@ -28,12 +28,6 @@ TEST(BoolAsSelect, CasesWithNormalFormat) {
 
 TEST(BoolAsSelect, Spaces) {
   constexpr char Format[] = "{0: a | b }";
-  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq("a "));
-  EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq(" b"));
-}
-
-TEST(BoolAsSelect, QuotedSpaces) {
-  constexpr char Format[] = "{0:' a | b '}";
   EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(true)).str(), Eq(" a "));
   EXPECT_THAT(llvm::formatv(Format, BoolAsSelect(false)).str(), Eq(" b "));
 }
@@ -63,13 +57,6 @@ TEST(IntAsSelect, TwoEqualsAndDefault) {
 
 TEST(IntAsSelect, Spaces) {
   constexpr char Format[] = "{0:=0: zero |=1: one |: default }";
-  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq(" zero "));
-  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq(" one "));
-  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq(" default"));
-}
-
-TEST(IntAsSelect, QuotedSpaces) {
-  constexpr char Format[] = "{0:'=0: zero |=1: one |: default '}";
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq(" zero "));
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq(" one "));
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq(" default "));
