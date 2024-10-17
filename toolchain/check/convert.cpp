@@ -939,21 +939,18 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (!context.TryToCompleteType(
           target.type_id,
           [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
-                              "initialization of incomplete type {0}",
-                              SemIR::TypeId);
+            CARBON_CHECK(!target.is_initializer(),
+                         "Initialization of incomplete types is expected to be "
+                         "caught elsewhere.");
             CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
                               "forming value of incomplete type {0}",
                               SemIR::TypeId);
             CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
                               "invalid use of incomplete type {0}",
                               SemIR::TypeId);
-            assert(!target.is_initializer());
-            assert(target.kind == ConversionTarget::Value);
             return context.emitter().Build(
                 loc_id,
-                target.is_initializer() ? IncompleteTypeInInit
-                : target.kind == ConversionTarget::Value
+                target.kind == ConversionTarget::Value
                     ? IncompleteTypeInValueConversion
                     : IncompleteTypeInConversion,
                 target.type_id);
