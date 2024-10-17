@@ -41,10 +41,10 @@ library "[[@TEST_NAME]]";
 fn Undefined[T:! type](x: T) -> T;
 
 fn CallUndefined() -> i32 {
-  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE+6]]:10: error: use of undefined generic function
+  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE+6]]:10: error(MissingGenericFunctionDefinition): use of undefined generic function
   // CHECK:STDERR:   return Undefined(0);
   // CHECK:STDERR:          ^~~~~~~~~
-  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here
+  // CHECK:STDERR: fail_call_undefined.carbon:[[@LINE-6]]:1: note(MissingGenericFunctionDefinitionHere): generic function declared here
   // CHECK:STDERR: fn Undefined[T:! type](x: T) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return Undefined(0);

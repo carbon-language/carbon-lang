@@ -37,10 +37,10 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:11: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: (C)) {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -80,10 +80,10 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:8: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: fn Foo(b: D) {}
 // CHECK:STDERR:        ^~~~
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:11: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: D) {}
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: C);
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -114,10 +114,10 @@ class C {}
 alias D = C;
 
 fn Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:12: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:12: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: fn Foo[a:! D]() {}
 // CHECK:STDERR:            ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note: comparing with previous declaration here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:12: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: fn Foo[a:! C]();
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -156,14 +156,14 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:11: warning: `const` applied repeatedly to the same type has no additional effect
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:11: warning(RepeatedConst): `const` applied repeatedly to the same type has no additional effect
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:17: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:17: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:                 ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: fn Foo(a: const C);
 // CHECK:STDERR:                 ^
 fn Foo(a: const (const C)) {}

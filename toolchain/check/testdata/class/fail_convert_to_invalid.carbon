@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_convert_to_invalid.carbon
 
 class C {
-  // CHECK:STDERR: fail_convert_to_invalid.carbon:[[@LINE+3]]:10: error: name `NoSuchType` not found
+  // CHECK:STDERR: fail_convert_to_invalid.carbon:[[@LINE+3]]:10: error(NameNotFound): name `NoSuchType` not found
   // CHECK:STDERR:   var a: NoSuchType;
   // CHECK:STDERR:          ^~~~~~~~~~
   var a: NoSuchType;

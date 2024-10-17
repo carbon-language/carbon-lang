@@ -19,7 +19,7 @@ fn F() {
   // TODO: This case should presumably work: `{...} as Class` should be an
   // initializing expression, not a value expression.
   //
-  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:18: error: cannot copy value of type `Class`
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:18: error(CopyOfUncopyableType): cannot copy value of type `Class`
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
   // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~
   var c: Class = {.a = 1, .b = 2} as Class;
