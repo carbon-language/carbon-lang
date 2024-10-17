@@ -137,10 +137,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_13 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_23 [symbolic = %N.loc4_23.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc4_24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_24 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc6: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -252,10 +252,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_13 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_23 [symbolic = %N.loc4_23.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc4_24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_24 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -342,10 +342,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_13 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_23 [symbolic = %N.loc4_23.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc4_24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_24 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
@@ -457,10 +457,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_27.2: type = converted %int.make_type_32, %.loc4_27.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_13 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_23 [symbolic = %N.loc4_23.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc4_24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_23.1: i32 = bind_symbolic_name N, 1, %param.loc4_24 [symbolic = %N.loc4_23.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %.loc12_14: i32 = int_literal 5 [template = constants.%.4]

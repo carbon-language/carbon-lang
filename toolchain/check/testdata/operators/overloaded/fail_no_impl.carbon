@@ -151,10 +151,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
-// CHECK:STDOUT:     %param.loc23_15: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_15
-// CHECK:STDOUT:     %param.loc23_21: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_21
+// CHECK:STDOUT:     %param.loc23_16: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_16
+// CHECK:STDOUT:     %param.loc23_22: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b

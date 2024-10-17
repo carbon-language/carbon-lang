@@ -114,14 +114,14 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %C [template = constants.%.13]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc29_34: type = ptr_type %D [template = constants.%.17]
-// CHECK:STDOUT:     %param.loc29_9: %.1 = param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %param.loc29_9
-// CHECK:STDOUT:     %param.loc29_16: %.7 = param runtime_param1
-// CHECK:STDOUT:     %b: %.7 = bind_name b, %param.loc29_16
-// CHECK:STDOUT:     %param.loc29_23: %.13 = param runtime_param2
-// CHECK:STDOUT:     %c: %.13 = bind_name c, %param.loc29_23
-// CHECK:STDOUT:     %param.loc29_30: %.17 = param runtime_param3
-// CHECK:STDOUT:     %d: %.17 = bind_name d, %param.loc29_30
+// CHECK:STDOUT:     %param.loc29_10: %.1 = param runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %param.loc29_10
+// CHECK:STDOUT:     %param.loc29_17: %.7 = param runtime_param1
+// CHECK:STDOUT:     %b: %.7 = bind_name b, %param.loc29_17
+// CHECK:STDOUT:     %param.loc29_24: %.13 = param runtime_param2
+// CHECK:STDOUT:     %c: %.13 = bind_name c, %param.loc29_24
+// CHECK:STDOUT:     %param.loc29_31: %.17 = param runtime_param3
+// CHECK:STDOUT:     %d: %.17 = bind_name d, %param.loc29_31
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

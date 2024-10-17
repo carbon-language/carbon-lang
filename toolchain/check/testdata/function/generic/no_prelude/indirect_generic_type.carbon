@@ -40,10 +40,10 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_28: type = ptr_type %T [symbolic = %.loc11_20.2 (constants.%.1)]
 // CHECK:STDOUT:     %return: ref @F.%.loc11_20.2 (%.1) = var <return slot>
-// CHECK:STDOUT:     %param.loc11_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %param.loc11_6 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc11_16: @F.%.loc11_21.2 (%.2) = param runtime_param0
-// CHECK:STDOUT:     %p: @F.%.loc11_21.2 (%.2) = bind_name p, %param.loc11_16
+// CHECK:STDOUT:     %param.loc11_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %param.loc11_7 [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc11_17: @F.%.loc11_21.2 (%.2) = param runtime_param0
+// CHECK:STDOUT:     %p: @F.%.loc11_21.2 (%.2) = bind_name p, %param.loc11_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
