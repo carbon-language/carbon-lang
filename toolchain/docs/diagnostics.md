@@ -167,9 +167,11 @@ methods for formatting arguments:
     -   This includes `char` and integer types (`int`, `int32_t`, and so on).
     -   String types can be added as needed, but stringifying values using the
         methods noted below is preferred.
-        -   Use `llvm::StringLiteral` where appropriate; use `std::string` when
-            allocations are required.
+        -   Use `std::string` when allocations are required.
         -   `llvm::StringRef` is disallowed due to lifetime issues.
+        -   `llvm::StringLiteral` is disallowed because format providers such as
+            `BoolAsSelect` should work in cases where a `StringLiteral` could be
+            used.
 -   `llvm::format_provider<...>` specializations.
     -   `BoolAsSelect` and `IntAsSelect` from
         [format_providers.h](/toolchain/diagnostics/format_providers.h) are
