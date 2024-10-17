@@ -33,7 +33,7 @@ var e: C(X).GenericAndParams(X) = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: class A[T: type]() {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ class A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:9: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:9: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: class A(T: type) {}
 // CHECK:STDERR:         ^~~~~~~
 class A(T: type) {}

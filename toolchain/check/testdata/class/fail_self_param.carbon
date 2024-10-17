@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_self_param.carbon
 
-// CHECK:STDERR: fail_self_param.carbon:[[@LINE+3]]:9: error: `self` parameter only allowed on functions
+// CHECK:STDERR: fail_self_param.carbon:[[@LINE+3]]:9: error(SelfParameterNotAllowed): `self` parameter only allowed on functions
 // CHECK:STDERR: class C[self:! type](x:! self) {}
 // CHECK:STDERR:         ^~~~~~~~~~~
 class C[self:! type](x:! self) {}
