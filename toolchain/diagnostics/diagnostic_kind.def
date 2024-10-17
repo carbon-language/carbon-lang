@@ -228,6 +228,7 @@ CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
 CARBON_DIAGNOSTIC_KIND(DeductionInconsistent)
 CARBON_DIAGNOSTIC_KIND(DeductionGenericHere)
 CARBON_DIAGNOSTIC_KIND(InitializingGenericParam)
+CARBON_DIAGNOSTIC_KIND(CompTimeArgumentNotConstant)
 
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)

@@ -31,9 +31,13 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14: error: cannot initialize tuple of 2 elements from tuple with 3 elements
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: cannot initialize tuple of 2 elements from tuple with 3 elements
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6: in import
+// CHECK:STDERR: implicit.carbon:7:1: note: while deducing parameters of generic declared here
+// CHECK:STDERR: class C(X:! (i32, i32)) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c_bad: C((1, 2, 3)) = F();
 
@@ -470,10 +474,10 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc8_15: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_18: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc8_21: i32 = int_literal 3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc8_22: %.8 = tuple_literal (%.loc8_15, %.loc8_18, %.loc8_21)
+// CHECK:STDOUT:   %.loc12_15: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_18: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_22: %.8 = tuple_literal (%.loc12_15, %.loc12_18, %.loc12_21)
 // CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
@@ -495,8 +499,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc8: ref %C.3 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc8
+// CHECK:STDOUT:   %.loc12: ref %C.3 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.3 = call %F.ref() to %.loc12
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
