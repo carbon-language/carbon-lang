@@ -78,10 +78,10 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %return: ref %Class = var <return slot>
-// CHECK:STDOUT:     %param.loc16_9: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc16_9
-// CHECK:STDOUT:     %param.loc16_17: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc16_17
+// CHECK:STDOUT:     %param.loc16_10: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc16_10
+// CHECK:STDOUT:     %param.loc16_21: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc16_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
@@ -96,10 +96,10 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %return: ref %Class = var <return slot>
-// CHECK:STDOUT:     %param.loc20_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc20_16
-// CHECK:STDOUT:     %param.loc20_24: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc20_24
+// CHECK:STDOUT:     %param.loc20_17: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc20_17
+// CHECK:STDOUT:     %param.loc20_28: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc20_28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

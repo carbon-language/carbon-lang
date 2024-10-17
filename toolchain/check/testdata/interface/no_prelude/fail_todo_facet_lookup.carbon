@@ -69,10 +69,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc21_14: %Interface.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %param.loc21_14 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc21_29: @CallFacet.%T.loc21_14.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallFacet.%T.loc21_14.2 (%T) = bind_name x, %param.loc21_29
+// CHECK:STDOUT:     %param.loc21_15: %Interface.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %param.loc21_15 [symbolic = %T.loc21_14.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc21_30: @CallFacet.%T.loc21_14.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallFacet.%T.loc21_14.2 (%T) = bind_name x, %param.loc21_30
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

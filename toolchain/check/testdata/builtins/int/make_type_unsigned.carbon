@@ -222,10 +222,10 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = %.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = %.loc14_29 (constants.%.6)]
 // CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_29 (%.6) = var <return slot>
-// CHECK:STDOUT:     %param.loc14_13: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_13 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc14_22: @Symbolic.%.loc14_29 (%.6) = param runtime_param0
-// CHECK:STDOUT:     %x: @Symbolic.%.loc14_29 (%.6) = bind_name x, %param.loc14_22
+// CHECK:STDOUT:     %param.loc14_14: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_14 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc14_23: @Symbolic.%.loc14_29 (%.6) = param runtime_param0
+// CHECK:STDOUT:     %x: @Symbolic.%.loc14_29 (%.6) = bind_name x, %param.loc14_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

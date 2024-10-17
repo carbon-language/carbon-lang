@@ -63,10 +63,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %bool.make_type.loc17: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
 // CHECK:STDOUT:     %.loc17_27.2: type = converted %bool.make_type.loc17, %.loc17_27.1 [template = bool]
-// CHECK:STDOUT:     %param.loc17_12: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc17: %Class = bind_name self, %param.loc17_12
-// CHECK:STDOUT:     %param.loc17_24: bool = param runtime_param1
-// CHECK:STDOUT:     %b.loc17: bool = bind_name b, %param.loc17_24
+// CHECK:STDOUT:     %param.loc17_16: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc17: %Class = bind_name self, %param.loc17_16
+// CHECK:STDOUT:     %param.loc17_25: bool = param runtime_param1
+// CHECK:STDOUT:     %b.loc17: bool = bind_name b, %param.loc17_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,10 +81,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %bool.make_type.loc14: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_23.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
 // CHECK:STDOUT:     %.loc14_23.2: type = converted %bool.make_type.loc14, %.loc14_23.1 [template = bool]
-// CHECK:STDOUT:     %param.loc14_8: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %param.loc14_8
-// CHECK:STDOUT:     %param.loc14_20: bool = param runtime_param1
-// CHECK:STDOUT:     %b.loc14: bool = bind_name b, %param.loc14_20
+// CHECK:STDOUT:     %param.loc14_12: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %param.loc14_12
+// CHECK:STDOUT:     %param.loc14_21: bool = param runtime_param1
+// CHECK:STDOUT:     %b.loc14: bool = bind_name b, %param.loc14_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

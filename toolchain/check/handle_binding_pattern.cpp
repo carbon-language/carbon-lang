@@ -168,38 +168,77 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id = context.AddInstInNoBlock<SemIR::Param>(
-          name_node, {.type_id = cast_type_id,
-                      .runtime_index = SemIR::RuntimeParamIndex::Invalid});
-      auto bind_id =
-          context.AddInstInNoBlock(make_bind_name(cast_type_id, param_id));
-      if (needs_compile_time_binding) {
-        context.scope_stack().PushCompileTimeBinding(bind_id);
+      auto param_pattern_id = SemIR::InstId::Invalid;
+      bool had_error = false;
+      switch (context.decl_introducer_state_stack().innermost().kind) {
+        case Lex::TokenKind::Fn: {
+          if (context_node_kind == Parse::NodeKind::ImplicitParamListStart &&
+              !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+            CARBON_DIAGNOSTIC(
+                ImplictParamMustBeConstant, Error,
+                "implicit parameters of functions must be constant or `self`");
+            context.emitter().Emit(node_id, ImplictParamMustBeConstant);
+            had_error = true;
+          }
+          break;
+        }
+        case Lex::TokenKind::Class:
+        case Lex::TokenKind::Impl:
+        case Lex::TokenKind::Interface: {
+          if (name_id == SemIR::NameId::SelfValue) {
+            CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
+                              "`self` parameter only allowed on functions");
+            context.emitter().Emit(node_id, SelfParameterNotAllowed);
+            had_error = true;
+          } else if (!is_generic) {
+            CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                              "parameters of generic types must be constant");
+            context.emitter().Emit(node_id, GenericParamMustBeConstant);
+            had_error = true;
+          }
+          break;
+        }
+        default:
+          break;
       }
-      // TODO: Bindings should come into scope immediately in other contexts
-      // too.
-      context.AddNameToLookup(name_id, bind_id);
-      auto entity_name_id =
-          context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
-      auto pattern_inst_id = SemIR::InstId::Invalid;
-      if (is_generic) {
-        pattern_inst_id = context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-            name_node, {.type_id = cast_type_id,
-                        .entity_name_id = entity_name_id,
-                        .bind_name_id = bind_id});
+      if (had_error) {
+        context.AddNameToLookup(name_id, SemIR::InstId::BuiltinError);
+        // Replace the parameter with an invalid instruction so that we don't
+        // try constructing a generic based on it.
+        param_pattern_id = SemIR::InstId::BuiltinError;
       } else {
-        pattern_inst_id = context.AddPatternInst<SemIR::BindingPattern>(
-            name_node, {.type_id = cast_type_id,
-                        .entity_name_id = entity_name_id,
-                        .bind_name_id = bind_id});
+        auto bind_id = context.AddInstInNoBlock(
+            make_bind_name(cast_type_id, SemIR::InstId::Invalid));
+        if (needs_compile_time_binding) {
+          context.scope_stack().PushCompileTimeBinding(bind_id);
+        }
+        // TODO: Bindings should come into scope immediately in other contexts
+        // too.
+        context.AddNameToLookup(name_id, bind_id);
+        auto entity_name_id =
+            context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+        auto pattern_inst_id = SemIR::InstId::Invalid;
+        if (is_generic) {
+          pattern_inst_id =
+              context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+                  name_node, {.type_id = cast_type_id,
+                              .entity_name_id = entity_name_id,
+                              .bind_name_id = bind_id});
+        } else {
+          pattern_inst_id = context.AddPatternInst<SemIR::BindingPattern>(
+              name_node, {.type_id = cast_type_id,
+                          .entity_name_id = entity_name_id,
+                          .bind_name_id = bind_id});
+        }
+        param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
+            node_id,
+            {
+                .type_id = context.insts().Get(pattern_inst_id).type_id(),
+                .subpattern_id = pattern_inst_id,
+                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::Invalid
+                                            : SemIR::RuntimeParamIndex::Unknown,
+            });
       }
-      auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
-          node_id,
-          {
-              .type_id = context.insts().Get(pattern_inst_id).type_id(),
-              .subpattern_id = pattern_inst_id,
-              .runtime_index = SemIR::RuntimeParamIndex::Invalid,
-          });
       context.node_stack().Push(node_id, param_pattern_id);
 
       // TODO: use the pattern insts to generate the pattern-match insts
@@ -265,9 +304,8 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
-  if (SemIR::Function::GetParamPatternInfoFromPatternId(context.sem_ir(),
-                                                        param_pattern_id)
-          .GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
+  if (SemIR::Function::GetNameFromPatternId(
+          context.sem_ir(), param_pattern_id) == SemIR::NameId::SelfValue) {
     auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
         context.insts().Get(param_pattern_id).type_id());
     if (pointer_type) {

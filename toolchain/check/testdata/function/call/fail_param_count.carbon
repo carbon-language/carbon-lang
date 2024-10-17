@@ -129,10 +129,10 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32.loc13_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13_20 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_32.loc13_20, %.loc13_20.1 [template = i32]
-// CHECK:STDOUT:     %param.loc13_9: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_9
-// CHECK:STDOUT:     %param.loc13_17: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_17
+// CHECK:STDOUT:     %param.loc13_10: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_10
+// CHECK:STDOUT:     %param.loc13_18: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

@@ -75,12 +75,12 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_32.loc11_34, %.loc11_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc11_6: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_6
-// CHECK:STDOUT:     %param.loc11_15: i32 = param runtime_param1
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc11_15
-// CHECK:STDOUT:     %param.loc11_23: i32 = param runtime_param2
-// CHECK:STDOUT:     %m: i32 = bind_name m, %param.loc11_23
+// CHECK:STDOUT:     %param.loc11_7: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_7
+// CHECK:STDOUT:     %param.loc11_16: i32 = param runtime_param1
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc11_16
+// CHECK:STDOUT:     %param.loc11_24: i32 = param runtime_param2
+// CHECK:STDOUT:     %m: i32 = bind_name m, %param.loc11_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

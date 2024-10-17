@@ -1194,6 +1194,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_patterns) {
+    if (implicit_param_id == SemIR::InstId::BuiltinError) {
+      return SemIR::InstBlockId::Invalid;
+    }
     auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
         context.sem_ir(), implicit_param_id);
     if (param_pattern_info.GetNameId(context.sem_ir()) ==
