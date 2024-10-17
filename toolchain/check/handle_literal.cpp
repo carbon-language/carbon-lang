@@ -5,6 +5,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -127,10 +128,10 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
   if (!(context.ints().Get(size_id) & 3).isZero()) {
     CARBON_DIAGNOSTIC(IntWidthNotMultipleOf8, Error,
                       "bit width of integer type literal must be a multiple of "
-                      "8; use `Core.{0}({1})` instead",
-                      std::string, llvm::APSInt);
+                      "8; use `Core.{0:Int|UInt}({1})` instead",
+                      BoolAsSelect, llvm::APSInt);
     context.emitter().Emit(
-        node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",
+        node_id, IntWidthNotMultipleOf8, int_kind.is_signed(),
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
   auto width_id = MakeI32Literal(context, node_id, size_id);
