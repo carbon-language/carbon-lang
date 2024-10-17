@@ -179,7 +179,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::Param /*inst*/) -> void {
-  CARBON_FATAL("Parameters should be lowered by `BuildFunctionDefinition`");
+  // Parameters are lowered by `BuildFunctionDefinition`.
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,

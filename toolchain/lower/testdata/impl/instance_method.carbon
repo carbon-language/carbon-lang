@@ -30,14 +30,18 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: source_filename = "instance_method.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @"_CGet.A.Main:GetSelf.Main"(ptr %self) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr %self, !dbg !7
+// CHECK:STDOUT:   %return = alloca ptr, align 8, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret ptr %self, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CCall.Main(ptr %a) !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call ptr @"_CGet.A.Main:GetSelf.Main"(ptr %a), !dbg !9
-// CHECK:STDOUT:   ret ptr %Get.call, !dbg !10
+// CHECK:STDOUT: define ptr @_CCall.Main(ptr %a) !dbg !9 {
+// CHECK:STDOUT:   %return = alloca ptr, align 8, !dbg !10
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %Get.call = call ptr @"_CGet.A.Main:GetSelf.Main"(ptr %a), !dbg !11
+// CHECK:STDOUT:   ret ptr %Get.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -50,7 +54,9 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.A.Main:GetSelf.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 26, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 26, column: 3, scope: !8)
+// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 32, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 25, column: 16, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 26, column: 10, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 26, column: 3, scope: !9)

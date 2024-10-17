@@ -20,15 +20,18 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CEcho.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   %return = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: define void @_CMain.Main() !dbg !9 {
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !10
+// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -41,8 +44,9 @@ fn Main() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Echo", linkageName: "_CEcho.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 7, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 15, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 7, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 15, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 1, scope: !9)
