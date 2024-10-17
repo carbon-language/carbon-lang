@@ -8,19 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected let b: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 protected let b: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed on `let` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed; requires interface scope
 // CHECK:STDERR: default let c: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default let c: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `final` not allowed on `let` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `final` not allowed; requires interface scope
 // CHECK:STDERR: final let d: i32 = 1;
 // CHECK:STDERR: ^~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ final let d: i32 = 1;
 // CHECK:STDERR:
 virtual let e: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed on `let` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -45,7 +45,7 @@ virtual let e: i32 = 1;
 // CHECK:STDERR:
 default final let f: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed on `let` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -58,7 +58,7 @@ default final let f: i32 = 1;
 // CHECK:STDERR:
 default default let g: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -71,7 +71,7 @@ default default let g: i32 = 1;
 // CHECK:STDERR:
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1: error: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

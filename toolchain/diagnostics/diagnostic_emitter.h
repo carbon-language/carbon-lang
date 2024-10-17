@@ -60,8 +60,7 @@ class DiagnosticEmitter {
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
-    auto Note(LocT loc,
-              const Internal::DiagnosticBase<Args...>& diagnostic_base,
+    auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       if (!emitter_) {
         return *this;
@@ -95,10 +94,9 @@ class DiagnosticEmitter {
     friend class DiagnosticEmitter<LocT>;
 
     template <typename... Args>
-    explicit DiagnosticBuilder(
-        DiagnosticEmitter<LocT>* emitter, LocT loc,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args)
+    explicit DiagnosticBuilder(DiagnosticEmitter<LocT>* emitter, LocT loc,
+                               const DiagnosticBase<Args...>& diagnostic_base,
+                               llvm::SmallVector<llvm::Any> args)
         : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
       AddMessage(loc, diagnostic_base, std::move(args));
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
@@ -111,8 +109,7 @@ class DiagnosticEmitter {
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
     template <typename... Args>
-    auto AddMessage(LocT loc,
-                    const Internal::DiagnosticBase<Args...>& diagnostic_base,
+    auto AddMessage(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
                     llvm::SmallVector<llvm::Any> args) -> void {
       if (!emitter_) {
         return;
@@ -121,7 +118,7 @@ class DiagnosticEmitter {
           emitter_->converter_->ConvertLoc(
               loc,
               [&](DiagnosticLoc context_loc,
-                  const Internal::DiagnosticBase<>& context_diagnostic_base) {
+                  const DiagnosticBase<>& context_diagnostic_base) {
                 AddMessageWithDiagnosticLoc(context_loc,
                                             context_diagnostic_base, {});
               }),
@@ -133,8 +130,7 @@ class DiagnosticEmitter {
     // avoid potential recursion.
     template <typename... Args>
     auto AddMessageWithDiagnosticLoc(
-        DiagnosticLoc loc,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        DiagnosticLoc loc, const DiagnosticBase<Args...>& diagnostic_base,
         llvm::SmallVector<llvm::Any> args) -> void {
       if (!emitter_) {
         return;
@@ -185,7 +181,7 @@ class DiagnosticEmitter {
   // When passing arguments, they may be buffered. As a consequence, lifetimes
   // may outlive the `Emit` call.
   template <typename... Args>
-  auto Emit(LocT loc, const Internal::DiagnosticBase<Args...>& diagnostic_base,
+  auto Emit(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void {
     DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
         .Emit();
@@ -198,7 +194,7 @@ class DiagnosticEmitter {
   //     .Note(loc2, MyDiagnosticNote)
   //     .Emit();
   template <typename... Args>
-  auto Build(LocT loc, const Internal::DiagnosticBase<Args...>& diagnostic_base,
+  auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
     return DiagnosticBuilder(this, loc, diagnostic_base,
                              {MakeAny<Args>(args)...});

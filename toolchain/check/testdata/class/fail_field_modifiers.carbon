@@ -22,13 +22,13 @@ class Class {
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `let` declaration outside of an interface
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope
   // CHECK:STDERR:   default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed on `let` declaration outside of an interface
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed; requires interface scope
   // CHECK:STDERR:   final let m: i32 = 1;
   // CHECK:STDERR:   ^~~~~
   final let m: i32 = 1;

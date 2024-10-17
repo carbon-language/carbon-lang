@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected var b: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -23,7 +23,7 @@ protected var b: ();
 // CHECK:STDERR:
 private protected var c: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

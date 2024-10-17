@@ -118,7 +118,7 @@ fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).
 
 // --- fail_derive_from_incomplete.carbon
 
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` declaration, only definition
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition
 // CHECK:STDERR: base class Incomplete;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:

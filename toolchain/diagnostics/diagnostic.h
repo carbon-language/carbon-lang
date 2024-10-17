@@ -42,7 +42,7 @@ enum class DiagnosticLevel : int8_t {
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
 #define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
   static constexpr auto DiagnosticName =                      \
-      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(        \
+      ::Carbon::DiagnosticBase<__VA_ARGS__>(                  \
           ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 
@@ -110,8 +110,6 @@ struct Diagnostic {
   llvm::SmallVector<DiagnosticMessage> messages;
 };
 
-namespace Internal {
-
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
 template <typename... Args>
@@ -131,8 +129,6 @@ struct DiagnosticBase {
   // The diagnostic's format for llvm::formatv.
   llvm::StringLiteral Format;
 };
-
-}  // namespace Internal
 
 }  // namespace Carbon
 

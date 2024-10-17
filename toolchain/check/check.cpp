@@ -861,7 +861,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     auto loc = converter.ConvertLoc(
-        node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+        node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
     loc.FormatLocation(output);
     output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.

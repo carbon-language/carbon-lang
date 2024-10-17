@@ -53,12 +53,12 @@ fn F();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `fn` declaration that is a member
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: error: `extern` not allowed on `fn` declaration that is a member
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: error: `extern` not allowed; requires file or namespace scope
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
   extern fn G[self: Self]();
