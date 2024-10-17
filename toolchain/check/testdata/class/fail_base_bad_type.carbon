@@ -11,11 +11,11 @@
 // --- fail_derive_from_error.carbon
 
 class DeriveFromError {
-  // CHECK:STDERR: fail_derive_from_error.carbon:[[@LINE+6]]:16: error: name `error` not found
+  // CHECK:STDERR: fail_derive_from_error.carbon:[[@LINE+6]]:16: error(NameNotFound): name `error` not found
   // CHECK:STDERR:   extend base: error;
   // CHECK:STDERR:                ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_derive_from_non_type.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+  // CHECK:STDERR: fail_derive_from_non_type.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
   // CHECK:STDERR:
   extend base: error;
 }
@@ -26,14 +26,14 @@ fn AccessMemberWithInvalidBaseError(p: DeriveFromError*) -> i32 { return (*p).n;
 // --- fail_derive_from_non_type.carbon
 
 class DeriveFromNonType {
-  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+9]]:16: error: cannot implicitly convert from `i32` to `type`
+  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+9]]:16: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
   // CHECK:STDERR:   extend base: 32;
   // CHECK:STDERR:                ^~
-  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+6]]:16: note: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+6]]:16: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   extend base: 32;
   // CHECK:STDERR:                ^~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_derive_from_i32.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+  // CHECK:STDERR: fail_derive_from_i32.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
   // CHECK:STDERR:
   extend base: 32;
 }
@@ -43,7 +43,7 @@ fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> i32 { return (*p)
 // --- fail_derive_from_i32.carbon
 
 class DeriveFromi32 {
-  // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:16: error: deriving from final type `i32`; base type must be an `abstract` or `base` class
+  // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:16: error(BaseIsFinal): deriving from final type `i32`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: i32;
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR:
@@ -52,14 +52,14 @@ class DeriveFromi32 {
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+9]]:53: error: cannot implicitly convert from `DeriveFromi32*` to `i32*`
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+9]]:53: error(ImplicitAsConversionFailure): cannot implicitly convert from `DeriveFromi32*` to `i32*`
 // CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 // CHECK:STDERR:                                                     ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+6]]:53: note: type `DeriveFromi32*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+6]]:53: note(MissingImplInMemberAccessNote): type `DeriveFromi32*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 // CHECK:STDERR:                                                     ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_tuple.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+// CHECK:STDERR: fail_derive_from_tuple.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
 // CHECK:STDERR:
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
@@ -70,21 +70,21 @@ fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 base class Base {}
 
 class DeriveFromTuple {
-  // CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+4]]:16: error: deriving from final type `(Base,)`; base type must be an `abstract` or `base` class
+  // CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+4]]:16: error(BaseIsFinal): deriving from final type `(Base,)`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: (Base,);
   // CHECK:STDERR:                ^~~~~~~
   // CHECK:STDERR:
   extend base: (Base,);
 }
 
-// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+9]]:61: error: cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*`
+// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+9]]:61: error(ImplicitAsConversionFailure): cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*`
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:                                                             ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+6]]:61: note: type `DeriveFromTuple*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+6]]:61: note(MissingImplInMemberAccessNote): type `DeriveFromTuple*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:                                                             ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_struct.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+// CHECK:STDERR: fail_derive_from_struct.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
 // CHECK:STDERR:
 fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 
@@ -95,21 +95,21 @@ fn AccessMemberWithInvalidBaseTuple(p: DeriveFromTuple*) -> i32 { return (*p).n;
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
 class DeriveFromStruct {
-  // CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:16: error: deriving from final type `{.a: i32, .b: i32}`; base type must be an `abstract` or `base` class
+  // CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:16: error(BaseIsFinal): deriving from final type `{.a: i32, .b: i32}`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: {.a: i32, .b: i32};
   // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+9]]:74: error: cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*`
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+9]]:74: error(ImplicitAsConversionFailure): cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*`
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+6]]:74: note: type `DeriveFromStruct*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+6]]:74: note(MissingImplInMemberAccessNote): type `DeriveFromStruct*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_incomplete.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+// CHECK:STDERR: fail_derive_from_incomplete.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
 // CHECK:STDERR:
 fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 
@@ -118,31 +118,31 @@ fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).
 
 // --- fail_derive_from_incomplete.carbon
 
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:1: error(ModifierOnlyAllowedOnDefinition): `base` not allowed on `class` forward declaration, only definition
 // CHECK:STDERR: base class Incomplete;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 base class Incomplete;
 
 class DeriveFromIncomplete {
-  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:16: error: base `Incomplete` is an incomplete type
+  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:16: error(IncompleteTypeInBaseDecl): base `Incomplete` is an incomplete type
   // CHECK:STDERR:   extend base: Incomplete;
   // CHECK:STDERR:                ^~~~~~~~~~
-  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE-6]]:1: note: class was forward declared here
+  // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE-6]]:1: note(ClassForwardDeclaredHere): class was forward declared here
   // CHECK:STDERR: base class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend base: Incomplete;
 }
 
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+9]]:74: error: cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+9]]:74: error(ImplicitAsConversionFailure): cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+6]]:74: note: type `DeriveFromIncomplete*` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+6]]:74: note(MissingImplInMemberAccessNote): type `DeriveFromIncomplete*` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_final.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon`
+// CHECK:STDERR: fail_derive_from_final.carbon: error(DuplicateMainApi): `Main//default` previously provided by `fail_derive_from_error.carbon`
 // CHECK:STDERR:
 fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 
@@ -155,7 +155,7 @@ class Final {
 }
 
 class DeriveFromFinal {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:16: error: deriving from final type `Final`; base type must be an `abstract` or `base` class
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:16: error(BaseIsFinal): deriving from final type `Final`; base type must be an `abstract` or `base` class
   // CHECK:STDERR:   extend base: Final;
   // CHECK:STDERR:                ^~~~~
   // CHECK:STDERR:
@@ -172,7 +172,7 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:10: error: name `b` not found
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:10: error(NameNotFound): name `b` not found
   // CHECK:STDERR:   return (*p).b;
   // CHECK:STDERR:          ^~~~~~
   return (*p).b;

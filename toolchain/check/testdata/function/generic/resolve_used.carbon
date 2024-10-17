@@ -17,7 +17,7 @@ fn ErrorIfNIsZero(N:! i32) {
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although
   // that's not how we currently model `Core.Int`.
-  // CHECK:STDERR: fail_call_monomorphization_error.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive
+  // CHECK:STDERR: fail_call_monomorphization_error.carbon:[[@LINE+3]]:10: error(IntWidthNotPositive): integer type width of 0 is not positive
   // CHECK:STDERR:   var v: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~
   var v: Core.Int(N);

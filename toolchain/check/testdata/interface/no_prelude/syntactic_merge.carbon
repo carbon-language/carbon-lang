@@ -37,10 +37,10 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a:! C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:19: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: interface Foo(a:! (C)) {}
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:19: note: comparing with previous declaration here
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:19: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
@@ -69,20 +69,20 @@ interface Bar(a:! D);
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: interface Foo(a:! C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: two_file.carbon:7:1: note: name is previously declared here
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:6(InImport): in import
+// CHECK:STDERR: two_file.carbon:7:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface Foo(a:! C) {}
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: interface Bar(a:! D) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:6: in import
-// CHECK:STDERR: two_file.carbon:8:1: note: name is previously declared here
+// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:6(InImport): in import
+// CHECK:STDERR: two_file.carbon:8:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: interface Bar(a:! D);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -96,10 +96,10 @@ class C {}
 alias D = C;
 
 interface Foo(a:! C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: interface Foo(b:! D) {}
 // CHECK:STDERR:               ^~~~~
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:15: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:15: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:               ^~~~~
 // CHECK:STDERR:
@@ -113,10 +113,10 @@ class C {}
 alias D = C;
 
 interface Foo(a:! C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:19: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:19: note: comparing with previous declaration here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:19: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
@@ -130,10 +130,10 @@ class C {}
 alias D = C;
 
 interface Foo[a:! C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:19: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: interface Foo[a:! D]() {}
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:19: note: comparing with previous declaration here
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:19: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: interface Foo[a:! C]();
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
@@ -156,11 +156,11 @@ alias D = C;
 // TODO: This fails because importing interfaces doesn't work well. It should
 // fail due to `C` versus `D`, but may succeed if importing interfaces is fixed
 // before syntax matching on imports is supported.
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: interface Foo(a:! D) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:6: in import
-// CHECK:STDERR: alias_two_file.carbon:6:1: note: name is previously declared here
+// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:6(InImport): in import
+// CHECK:STDERR: alias_two_file.carbon:6:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: interface Foo(a:! C);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -173,14 +173,14 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a:! const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:19: warning: `const` applied repeatedly to the same type has no additional effect
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:19: warning(RepeatedConst): `const` applied repeatedly to the same type has no additional effect
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:25: error: redeclaration syntax differs here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:25: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                         ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:25: note: comparing with previous declaration here
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:25: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
 // CHECK:STDERR: interface Foo(a:! const C);
 // CHECK:STDERR:                         ^
 interface Foo(a:! const (const C)) {}

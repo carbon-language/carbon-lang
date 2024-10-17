@@ -53,10 +53,10 @@ class C {}
 fn F[T:! type](p: const T*) -> T { return F(p); }
 
 fn G(p: C*) -> const C {
-  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE+6]]:10: error: cannot deduce value for generic parameter `T`
+  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE+6]]:10: error(DeductionIncomplete): cannot deduce value for generic parameter `T`
   // CHECK:STDERR:   return F(p);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE-6]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
   // CHECK:STDERR: fn F[T:! type](p: const T*) -> T { return F(p); }
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(p);

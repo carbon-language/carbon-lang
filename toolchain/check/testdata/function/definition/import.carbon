@@ -47,20 +47,20 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error(RedeclRedundant): redeclaration of `fn A` is redundant
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: fns.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: fns.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error: redeclaration of `fn B` is redundant
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+8]]:1: error(RedeclRedundant): redeclaration of `fn B` is redundant
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-14]]:1: in import
-// CHECK:STDERR: fns.carbon:5:1: note: previously declared here
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-14]]:1(InImport): in import
+// CHECK:STDERR: fns.carbon:5:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: fn B(b: i32) -> i32 { return b; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -72,21 +72,21 @@ library "[[@TEST_NAME]]";
 
 import library "extern";
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error(RedeclExternMismatch): redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: extern.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: extern.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn A();
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+8]]:1: error(RedeclExternMismatch): redeclarations of `fn A` must match use of `extern`
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-15]]:1: in import
-// CHECK:STDERR: extern.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE-15]]:1(InImport): in import
+// CHECK:STDERR: extern.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -98,11 +98,11 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn D` must match use of `extern`
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+7]]:1: error(RedeclExternMismatch): redeclarations of `fn D` must match use of `extern`
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: fns.carbon:7:1: note: previously declared here
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: fns.carbon:7:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
 extern fn D();

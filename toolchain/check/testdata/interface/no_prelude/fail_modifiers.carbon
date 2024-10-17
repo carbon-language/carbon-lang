@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `interface` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierNotAllowedOnDeclaration): `abstract` not allowed on `interface` declaration
 // CHECK:STDERR: abstract interface Abstract {
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract interface Abstract {
 }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed on `interface` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierNotAllowedOnDeclaration): `default` not allowed on `interface` declaration
 // CHECK:STDERR: default interface Default;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default interface Default;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `virtual` not allowed on `interface` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierNotAllowedOnDeclaration): `virtual` not allowed on `interface` declaration
 // CHECK:STDERR: virtual interface Virtual {
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 virtual interface Virtual {
 }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `protected` not allowed; requires class scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error(ModifierProtectedNotAllowed): `protected` not allowed; requires class scope
 // CHECK:STDERR: protected interface Protected;
 // CHECK:STDERR: ^~~~~~~~~
 protected interface Protected;

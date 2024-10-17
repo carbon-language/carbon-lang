@@ -21,13 +21,13 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error(ImplicitAsConversionFailure): cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note(MissingImplInMemberAccessNote): type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:18: note: initializing function parameter
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:18: note(InCallToFunctionParam): initializing function parameter
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
   // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR:
@@ -36,13 +36,13 @@ fn Test(a: C, b: D) -> C {
 
 fn TestAssign(b: D) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error(ImplicitAsConversionFailure): cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note(MissingImplInMemberAccessNote): type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note: initializing function parameter
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note(InCallToFunctionParam): initializing function parameter
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:                        ^~~~~~~~
   a += b;

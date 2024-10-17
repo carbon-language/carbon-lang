@@ -25,7 +25,7 @@ fn G(a: i64) -> i32 {
 library "[[@TEST_NAME]]";
 
 // TODO: This should pass once we accept symbolic widths for Core.Float.
-// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+3]]:18: error: cannot evaluate type expression
+// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+3]]:18: error(TypeExprEvaluationFailure): cannot evaluate type expression
 // CHECK:STDERR: fn F[N:! i32](n: Core.Float(N)) -> i32 {
 // CHECK:STDERR:                  ^~~~~~~~~~~~~
 fn F[N:! i32](n: Core.Float(N)) -> i32 {

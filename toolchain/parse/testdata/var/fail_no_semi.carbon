@@ -10,11 +10,11 @@
 
 var
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: error: expected name in binding pattern
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: error(ExpectedBindingPattern): expected name in binding pattern
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: error: `var` declarations must end with a `;`
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: error(ExpectedDeclSemi): `var` declarations must end with a `;`
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
