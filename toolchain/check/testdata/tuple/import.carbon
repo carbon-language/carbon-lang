@@ -31,7 +31,7 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14: error: cannot initialize tuple of 2 element(s) from tuple with 3 element(s).
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14: error: cannot initialize tuple of 2 elements from tuple with 3 elements
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR:

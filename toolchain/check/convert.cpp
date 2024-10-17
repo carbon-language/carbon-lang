@@ -236,12 +236,12 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   if (tuple_elem_types.size() != array_bound) {
     CARBON_DIAGNOSTIC(
         ArrayInitFromLiteralArgCountMismatch, Error,
-        "cannot initialize array of {0} element(s) from {1} initializer(s)",
-        uint64_t, size_t);
+        "cannot initialize array of {0} element{0:s} from {1} initializer{1:s}",
+        IntAsSelect, IntAsSelect);
     CARBON_DIAGNOSTIC(ArrayInitFromExprArgCountMismatch, Error,
-                      "cannot initialize array of {0} element(s) from tuple "
-                      "with {1} element(s).",
-                      uint64_t, size_t);
+                      "cannot initialize array of {0} element{0:s} from tuple "
+                      "with {1} element{1:s}",
+                      IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id,
                            literal_elems.empty()
                                ? ArrayInitFromExprArgCountMismatch
@@ -320,9 +320,9 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // Check that the tuples are the same size.
   if (src_elem_types.size() != dest_elem_types.size()) {
     CARBON_DIAGNOSTIC(TupleInitElementCountMismatch, Error,
-                      "cannot initialize tuple of {0} element(s) from tuple "
-                      "with {1} element(s).",
-                      size_t, size_t);
+                      "cannot initialize tuple of {0} element{0:s} from tuple "
+                      "with {1} element{1:s}",
+                      IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
                            dest_elem_types.size(), src_elem_types.size());
     return SemIR::InstId::BuiltinError;
@@ -414,9 +414,9 @@ static auto ConvertStructToStructOrClass(Context& context,
   if (src_elem_fields.size() != dest_elem_fields.size()) {
     CARBON_DIAGNOSTIC(
         StructInitElementCountMismatch, Error,
-        "cannot initialize {0:class|struct} with {1} field(s) from struct "
-        "with {2} field(s).",
-        BoolAsSelect, size_t, size_t);
+        "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
+        "with {2} field{2:s}",
+        BoolAsSelect, IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
                            ToClass, dest_elem_fields.size(),
                            src_elem_fields.size());

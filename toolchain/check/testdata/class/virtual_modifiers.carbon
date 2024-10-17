@@ -45,7 +45,7 @@ import Modifiers;
 
 fn F() {
   // TODO: The vptr shouldn't be counted for programmer-facing behavior.
-  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:27: error: cannot initialize class with 1 field(s) from struct with 0 field(s).
+  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:27: error: cannot initialize class with 1 field from struct with 0 fields
   // CHECK:STDERR:   var v: Modifiers.Base = {};
   // CHECK:STDERR:                           ^~
   var v: Modifiers.Base = {};
