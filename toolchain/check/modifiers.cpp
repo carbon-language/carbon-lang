@@ -99,9 +99,10 @@ auto LimitModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
 auto LimitModifiersOnNotDefinition(Context& context,
                                    DeclIntroducerState& introducer,
                                    KeywordModifierSet allowed) -> void {
-  CARBON_DIAGNOSTIC(ModifierOnlyAllowedOnDefinition, Error,
-                    "`{0}` not allowed on `{1}` forward declaration, only definition",
-                    Lex::TokenKind, Lex::TokenKind);
+  CARBON_DIAGNOSTIC(
+      ModifierOnlyAllowedOnDefinition, Error,
+      "`{0}` not allowed on `{1}` forward declaration, only definition",
+      Lex::TokenKind, Lex::TokenKind);
   ForbidModifiersOnDecl(context, ModifierOnlyAllowedOnDefinition, introducer,
                         ~allowed);
 }
