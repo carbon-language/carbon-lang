@@ -129,6 +129,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeOuter() -> %return: %Outer {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc23_25: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %return.param: ref %Outer = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Outer = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeInner.ref.loc24_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [template = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.1: ref %Inner = class_element_access %return, element0
 // CHECK:STDOUT:   %MakeInner.call.loc24_25: init %Inner = call %MakeInner.ref.loc24_16() to %.loc24_45.1

@@ -73,6 +73,11 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ret_a() -> %return: %A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_11.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_11.2: init %A = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_12: init %A = converted %.loc13_11.1, %.loc13_11.2 [template = constants.%struct]

@@ -116,6 +116,11 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc21_23: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_33.1: %.4 = struct_literal ()
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]

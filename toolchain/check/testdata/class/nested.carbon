@@ -104,7 +104,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %a.param_patt: %.4 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %.loc41: type = ptr_type %Outer [template = constants.%.4]
+// CHECK:STDOUT:     %.loc41_14: type = ptr_type %Outer [template = constants.%.4]
 // CHECK:STDOUT:     %a.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -158,6 +158,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
@@ -169,6 +170,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc23: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
@@ -180,6 +182,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc30: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
@@ -191,6 +194,12 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc41_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %.loc41_14: type = ptr_type %Outer [template = constants.%.4]
+// CHECK:STDOUT:     %a.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.ref.loc42: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc42_21: type = ptr_type %Inner [template = constants.%.2]

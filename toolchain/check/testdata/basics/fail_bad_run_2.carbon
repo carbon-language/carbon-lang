@@ -61,6 +61,13 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%n.param_patt: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

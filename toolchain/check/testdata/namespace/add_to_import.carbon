@@ -108,6 +108,13 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4_18: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_14.2: type = converted %int.make_type_32, %.loc4_14.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_27: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc4_27
 // CHECK:STDOUT: }

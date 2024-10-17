@@ -61,7 +61,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I.type] {
+// CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type = value_param runtime_param0
@@ -84,6 +84,18 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotGenericF(%U.param_patt: %I.type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_38: invalid = splice_block invalid {
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%I.type] {
+// CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %U.param: %I.type = value_param runtime_param0
+// CHECK:STDOUT:     %U: %I.type = bind_name U, %U.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

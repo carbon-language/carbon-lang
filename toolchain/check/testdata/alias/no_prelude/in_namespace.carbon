@@ -73,6 +73,12 @@ fn F() -> NS.a {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
+// CHECK:STDOUT:     %a.ref: type = name_ref a, file.%a [template = constants.%C]
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_18.1: %.3 = struct_literal (%.loc19_17.1)
 // CHECK:STDOUT:   %.loc19_18.2: ref %.1 = class_element_access %return, element0

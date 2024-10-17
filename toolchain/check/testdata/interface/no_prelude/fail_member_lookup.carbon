@@ -73,6 +73,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @Interface.%.loc12 [template = constants.%.3]
 // CHECK:STDOUT:   %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]

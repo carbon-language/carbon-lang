@@ -75,6 +75,7 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %X.ref.loc19_11: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %X.ref.loc19_14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc19_15.1: %.4 = tuple_literal (%X.ref.loc19_11, %X.ref.loc19_14)
@@ -102,6 +103,7 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc22: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %X.ref.loc24_11: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %X.ref.loc24_14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc24_15.1: %.4 = tuple_literal (%X.ref.loc24_11, %X.ref.loc24_14)

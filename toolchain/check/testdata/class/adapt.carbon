@@ -205,6 +205,11 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a.param_patt: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {
+// CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
+// CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param runtime_param0
+// CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return

@@ -1180,6 +1180,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1[addr %self.param_patt: %.3]() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_31: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %.loc16_26: type = ptr_type %Base [template = constants.%.3]
+// CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]

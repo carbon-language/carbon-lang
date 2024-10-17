@@ -132,6 +132,24 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param_patt: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_39: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
+// CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_32.loc15_22, %.loc15_16.1 [template = i32]
+// CHECK:STDOUT:     %.loc15_16.3: type = const_type i32 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc15_9: type = const_type %.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc15_26: type = ptr_type %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc15_27: type = ptr_type %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_32.loc15_33: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_32.loc15_33 [template = i32]
+// CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
+// CHECK:STDOUT:     %.loc15_36.3: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc15_37: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.6 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.6 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.6) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc22_11.1: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.6) [template = constants.%.10]

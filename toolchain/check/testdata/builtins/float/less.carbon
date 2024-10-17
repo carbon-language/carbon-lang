@@ -199,6 +199,14 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: invalid = splice_block invalid {
+// CHECK:STDOUT:     %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
+// CHECK:STDOUT:     %False.ref.loc8: type = name_ref False, file.%False.decl [template = constants.%False]
+// CHECK:STDOUT:     %true_.param: %True = value_param runtime_param0
+// CHECK:STDOUT:     %true_: %True = bind_name true_, %true_.param
+// CHECK:STDOUT:     %false_.param: %False = value_param runtime_param1
+// CHECK:STDOUT:     %false_: %False = bind_name false_, %false_.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %true_.ref.loc9: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Less.ref.loc9: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
 // CHECK:STDOUT:   %.loc9_21: f64 = float_literal 1 [template = constants.%.6]
@@ -307,6 +315,25 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: f64, %b.param_patt: f64) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_40: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc16_19.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%Float(%.loc16_19.1) [template = f64]
+// CHECK:STDOUT:     %.loc16_19.2: type = value_of_initializer %float.make_type.loc16_19 [template = f64]
+// CHECK:STDOUT:     %.loc16_19.3: type = converted %float.make_type.loc16_19, %.loc16_19.2 [template = f64]
+// CHECK:STDOUT:     %.loc16_27.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %float.make_type.loc16_27: init type = call constants.%Float(%.loc16_27.1) [template = f64]
+// CHECK:STDOUT:     %.loc16_27.2: type = value_of_initializer %float.make_type.loc16_27 [template = f64]
+// CHECK:STDOUT:     %.loc16_27.3: type = converted %float.make_type.loc16_27, %.loc16_27.2 [template = f64]
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc16_35.2: type = converted %bool.make_type, %.loc16_35.1 [template = bool]
+// CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: f64 = value_param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b

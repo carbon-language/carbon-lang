@@ -227,12 +227,19 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_13: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
@@ -420,6 +427,14 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%T (%T)]() -> @F.2.%T (%T) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc9: invalid = splice_block invalid {
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %self.param: @F.2.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.ref: @F.2.%T (%T) = name_ref self, %self
 // CHECK:STDOUT:     return %self.ref
 // CHECK:STDOUT:   }
@@ -427,6 +442,16 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12_17.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
@@ -624,12 +649,21 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %C.3) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
+// CHECK:STDOUT:     %.loc14_12: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc14_10: type = converted %.loc14_12, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
+// CHECK:STDOUT:     %x.param: %C.3 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %C.3 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %C.3 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
@@ -831,12 +865,19 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_13: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc12_10.1: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:   %.loc13_12: %.4 = struct_literal ()
@@ -1034,12 +1075,19 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc10: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_13: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc13_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc13_10.2: type = converted %.loc13_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
@@ -1224,12 +1272,18 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param_patt: %A) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %x.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %x: %A = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %A = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]

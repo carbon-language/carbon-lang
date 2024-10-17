@@ -108,6 +108,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc16_3: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc16_5: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]

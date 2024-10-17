@@ -76,12 +76,25 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_24: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32.loc11_12 [template = i32]
+// CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32.loc11_12, %.loc11_12.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc11_20: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_32.loc11_20 [template = i32]
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_32.loc11_20, %.loc11_20.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_32, %.loc16_10.1 [template = i32]

@@ -112,6 +112,18 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %.3 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_30: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14_16.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
+// CHECK:STDOUT:     %.loc14_16.2: type = converted %int.make_type_32.loc14, %.loc14_16.1 [template = i32]
+// CHECK:STDOUT:     %.loc14_25.1: Core.BigInt = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %float.make_type.loc14: init type = call constants.%Float(%.loc14_25.1) [template = f64]
+// CHECK:STDOUT:     %.loc14_25.2: type = value_of_initializer %float.make_type.loc14 [template = f64]
+// CHECK:STDOUT:     %.loc14_25.3: type = converted %float.make_type.loc14, %.loc14_25.2 [template = f64]
+// CHECK:STDOUT:     %.loc14_28: type = struct_type {.a: i32, .b: f64} [template = constants.%.3]
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %int.make_type_32.loc15, %.loc15_15.1 [template = i32]

@@ -54,7 +54,8 @@ fn B() {
 // CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type(inst+2)}
-// CHECK:STDOUT:     'inst+5':          {kind: Return}
+// CHECK:STDOUT:     'inst+5':          {kind: SpliceBlock, arg0: empty, arg1: inst<invalid>}
+// CHECK:STDOUT:     'inst+6':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
 // CHECK:STDOUT:     'inst+1':          templateConstant(inst+4)
@@ -70,6 +71,7 @@ fn B() {
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+5
+// CHECK:STDOUT:       1:               inst+6
 // CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
@@ -92,6 +94,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc3: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +109,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+8}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+9}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -121,7 +124,7 @@ fn B() {
 // CHECK:STDOUT:     'type(instNamespaceType)': {kind: copy, type: type(instNamespaceType)}
 // CHECK:STDOUT:     'type(inst+4)':    {kind: none, type: type(inst+5)}
 // CHECK:STDOUT:     'type(inst+5)':    {kind: none, type: type(inst+5)}
-// CHECK:STDOUT:     'type(inst+10)':   {kind: none, type: type(inst+5)}
+// CHECK:STDOUT:     'type(inst+11)':   {kind: none, type: type(inst+5)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
@@ -132,14 +135,15 @@ fn B() {
 // CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: empty, type: type(inst+4)}
-// CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
-// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: typeTypeType}
-// CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: empty, type: type(inst+5)}
-// CHECK:STDOUT:     'inst+14':         {kind: Return}
+// CHECK:STDOUT:     'inst+7':          {kind: SpliceBlock, arg0: empty, arg1: inst<invalid>}
+// CHECK:STDOUT:     'inst+8':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(instNamespaceType)}
+// CHECK:STDOUT:     'inst+9':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+11)}
+// CHECK:STDOUT:     'inst+10':         {kind: FunctionDecl, arg0: function1, arg1: empty, type: type(inst+11)}
+// CHECK:STDOUT:     'inst+11':         {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+12':         {kind: StructValue, arg0: empty, type: type(inst+11)}
+// CHECK:STDOUT:     'inst+13':         {kind: NameRef, arg0: name1, arg1: inst+9, type: type(inst+11)}
+// CHECK:STDOUT:     'inst+14':         {kind: Call, arg0: inst+13, arg1: empty, type: type(inst+5)}
+// CHECK:STDOUT:     'inst+15':         {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
 // CHECK:STDOUT:     'inst+2':          templateConstant(inst+2)
@@ -147,12 +151,12 @@ fn B() {
 // CHECK:STDOUT:     'inst+4':          templateConstant(inst+4)
 // CHECK:STDOUT:     'inst+5':          templateConstant(inst+5)
 // CHECK:STDOUT:     'inst+6':          templateConstant(inst+6)
-// CHECK:STDOUT:     'inst+7':          templateConstant(inst+2)
-// CHECK:STDOUT:     'inst+8':          templateConstant(inst+11)
-// CHECK:STDOUT:     'inst+9':          templateConstant(inst+11)
-// CHECK:STDOUT:     'inst+10':         templateConstant(inst+10)
+// CHECK:STDOUT:     'inst+8':          templateConstant(inst+2)
+// CHECK:STDOUT:     'inst+9':          templateConstant(inst+12)
+// CHECK:STDOUT:     'inst+10':         templateConstant(inst+12)
 // CHECK:STDOUT:     'inst+11':         templateConstant(inst+11)
-// CHECK:STDOUT:     'inst+12':         templateConstant(inst+11)
+// CHECK:STDOUT:     'inst+12':         templateConstant(inst+12)
+// CHECK:STDOUT:     'inst+13':         templateConstant(inst+12)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
@@ -160,13 +164,14 @@ fn B() {
 // CHECK:STDOUT:       0:               inst+3
 // CHECK:STDOUT:     import_refs:
 // CHECK:STDOUT:       0:               inst+2
-// CHECK:STDOUT:       1:               inst+8
+// CHECK:STDOUT:       1:               inst+9
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
-// CHECK:STDOUT:       1:               inst+12
+// CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:       2:               inst+13
 // CHECK:STDOUT:       3:               inst+14
+// CHECK:STDOUT:       4:               inst+15
 // CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
@@ -202,6 +207,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, imports.%A [template = imports.%A]
 // CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc6_4()

@@ -86,6 +86,16 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_21: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32, %.loc12_17.1 [template = i32]
+// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @C.%.loc14_8 [template = @C.%.loc14_8]
 // CHECK:STDOUT:   %.loc12_31.1: ref i32 = class_element_access %c.ref, element0

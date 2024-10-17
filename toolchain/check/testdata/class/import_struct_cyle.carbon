@@ -137,6 +137,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %a.ref.loc7_3: ref %.3 = name_ref a, imports.%import_ref.2
 // CHECK:STDOUT:   %.loc7_4: ref %.2 = struct_access %a.ref.loc7_3, element0
 // CHECK:STDOUT:   %a.ref.loc7_11: ref %.3 = name_ref a, imports.%import_ref.2

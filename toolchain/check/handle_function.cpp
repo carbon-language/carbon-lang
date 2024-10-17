@@ -336,6 +336,13 @@ static auto HandleFunctionDefinitionAfterSignature(
   StartGenericDefinition(context);
   context.AddCurrentCodeBlockToFunction();
 
+  auto function_decl =
+      context.insts().GetAs<SemIR::FunctionDecl>(function.latest_decl_id());
+  context.AddInst<SemIR::SpliceBlock>(node_id,
+                                      {.type_id = SemIR::TypeId::Invalid,
+                                       .block_id = function_decl.decl_block_id,
+                                       .result_id = SemIR::InstId::Invalid});
+
   // Check the return type is complete.
   CheckFunctionReturnType(context, function.return_slot_id, function,
                           SemIR::SpecificId::Invalid);

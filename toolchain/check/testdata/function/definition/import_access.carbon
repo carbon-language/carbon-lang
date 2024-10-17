@@ -168,6 +168,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,6 +206,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -548,6 +550,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -678,6 +681,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Redecl() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

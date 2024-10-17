@@ -136,6 +136,13 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc19_15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%.loc12 [template = constants.%.3]
 // CHECK:STDOUT:   return <error>
@@ -143,6 +150,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc28: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

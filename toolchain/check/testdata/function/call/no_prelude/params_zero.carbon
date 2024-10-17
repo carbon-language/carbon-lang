@@ -35,11 +35,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref()
 // CHECK:STDOUT:   return

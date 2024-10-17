@@ -51,6 +51,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc3: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,6 +88,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc3: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -66,7 +66,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %ptr.param_patt: %.2 = value_param_pattern %ptr.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc16_14: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %ptr.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
@@ -96,6 +96,12 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr.param_patt: %.2) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc16_14: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %ptr.param: %.2 = value_param runtime_param0
+// CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.ref.loc17: %.2 = name_ref ptr, %ptr
 // CHECK:STDOUT:   %.loc17_4.1: ref %C = deref %ptr.ref.loc17
 // CHECK:STDOUT:   %Member.ref.loc17: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]

@@ -177,6 +177,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

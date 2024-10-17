@@ -287,6 +287,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
@@ -346,6 +347,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %Abstract) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract.ref.loc8: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
@@ -470,6 +476,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param_patt: %Abstract) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %p.param: %Abstract = value_param runtime_param0
+// CHECK:STDOUT:     %p: %Abstract = bind_name p, %p.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [template = constants.%Param]
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
 // CHECK:STDOUT:   %Param.call: init %.3 = call %Param.ref(<error>)
@@ -565,6 +576,11 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_22: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %return.param: ref %Derived = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc22_26: %.13 = struct_literal (%.loc22_25)
 // CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7 [template = constants.%.14]
@@ -659,6 +675,14 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Return(%a.param_patt: %Abstract) -> %return: %Abstract {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_36: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
+// CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref %Abstract = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
@@ -761,6 +785,16 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_30: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc14_26.2: type = converted %int.make_type_32, %.loc14_26.1 [template = i32]
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %.6 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
@@ -813,6 +847,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
 // CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
@@ -878,6 +913,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [template = constants.%ReturnAbstract]
 // CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
 // CHECK:STDOUT:   return

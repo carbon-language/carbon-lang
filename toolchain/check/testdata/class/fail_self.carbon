@@ -211,11 +211,21 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(%self.param_patt: %Class) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %self.param.loc25: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc25: %Class = bind_name self, %self.param.loc25
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: %Class {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc28_22: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %return.param.loc28: ref %Class = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param.loc28
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref %Class = var self
 // CHECK:STDOUT:   %self: ref %Class = bind_name self, %self.var
@@ -228,6 +238,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws.param_patt: %WrongSelf) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc45: invalid = splice_block invalid {
+// CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, file.%WrongSelf.decl [template = constants.%WrongSelf]
+// CHECK:STDOUT:     %ws.param: %WrongSelf = value_param runtime_param0
+// CHECK:STDOUT:     %ws: %WrongSelf = bind_name ws, %ws.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.2 = name_ref F, @WrongSelf.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref

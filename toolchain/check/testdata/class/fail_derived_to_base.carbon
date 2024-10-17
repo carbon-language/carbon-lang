@@ -230,6 +230,16 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertUnrelated(%p.param_patt: %.11) -> %.12 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc31_36: invalid = splice_block invalid {
+// CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
+// CHECK:STDOUT:     %.loc31_26: type = ptr_type %B2 [template = constants.%.11]
+// CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [template = constants.%A1]
+// CHECK:STDOUT:     %.loc31_34: type = ptr_type %A1 [template = constants.%.12]
+// CHECK:STDOUT:     %p.param: %.11 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.12 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.12 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.12) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc31_46.1: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.12) [template = constants.%.19]
@@ -248,6 +258,16 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %.21) -> %.22 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc41_45: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
+// CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.21]
+// CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
+// CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.22]
+// CHECK:STDOUT:     %p.param: %.21 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.21 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.22 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.21 = name_ref p, %p
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.22) [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   %.loc41_55.1: %.23 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.22) [template = constants.%.24]

@@ -140,6 +140,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -147,16 +148,36 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run1(%a.param_patt: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_32, %.loc12_12.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run2(%a.param_patt: i32, %b.param_patt: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_25: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %int.make_type_32.loc13_12, %.loc13_12.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc13_20: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13_20 [template = i32]
+// CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_32.loc13_20, %.loc13_20.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
 // CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]

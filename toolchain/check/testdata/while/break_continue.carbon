@@ -189,6 +189,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20: invalid = splice_block invalid {}
 // CHECK:STDOUT:   br !while.cond.loc21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc21:

@@ -200,6 +200,23 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_39: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
+// CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_32.loc7_19, %.loc7_19.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc7_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_32.loc7_27 [template = i32]
+// CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_32.loc7_27, %.loc7_27.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc7_35: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
+// CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
@@ -493,6 +510,18 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc45_37: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc45_25: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc45_25.1: type = value_of_initializer %int.make_type_32.loc45_25 [template = i32]
+// CHECK:STDOUT:     %.loc45_25.2: type = converted %int.make_type_32.loc45_25, %.loc45_25.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc45_33: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc45_33.1: type = value_of_initializer %int.make_type_32.loc45_33 [template = i32]
+// CHECK:STDOUT:     %.loc45_33.2: type = converted %int.make_type_32.loc45_33, %.loc45_33.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %TooFew.call: init i32 = call %TooFew.ref(%a.ref)
@@ -503,6 +532,28 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a.param_patt: i32, %b.param_patt: i32, %c.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc49_54: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc49_26: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc49_26.1: type = value_of_initializer %int.make_type_32.loc49_26 [template = i32]
+// CHECK:STDOUT:     %.loc49_26.2: type = converted %int.make_type_32.loc49_26, %.loc49_26.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc49_34: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc49_34.1: type = value_of_initializer %int.make_type_32.loc49_34 [template = i32]
+// CHECK:STDOUT:     %.loc49_34.2: type = converted %int.make_type_32.loc49_34, %.loc49_34.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc49_42: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc49_42.1: type = value_of_initializer %int.make_type_32.loc49_42 [template = i32]
+// CHECK:STDOUT:     %.loc49_42.2: type = converted %int.make_type_32.loc49_42, %.loc49_42.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc49_50: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc49_50.1: type = value_of_initializer %int.make_type_32.loc49_50 [template = i32]
+// CHECK:STDOUT:     %.loc49_50.2: type = converted %int.make_type_32.loc49_50, %.loc49_50.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %c.param: i32 = value_param runtime_param2
+// CHECK:STDOUT:     %c: i32 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param3
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, file.%TooMany.decl [template = constants.%TooMany]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
@@ -515,6 +566,23 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a.param_patt: i32, %b.param_patt: i32) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc53_53: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc53_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc53_32.1: type = value_of_initializer %int.make_type_32.loc53_32 [template = i32]
+// CHECK:STDOUT:     %.loc53_32.2: type = converted %int.make_type_32.loc53_32, %.loc53_32.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc53_40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc53_40.1: type = value_of_initializer %int.make_type_32.loc53_40 [template = i32]
+// CHECK:STDOUT:     %.loc53_40.2: type = converted %int.make_type_32.loc53_40, %.loc53_40.1 [template = i32]
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc53_48.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc53_48.2: type = converted %bool.make_type, %.loc53_48.1 [template = bool]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [template = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b

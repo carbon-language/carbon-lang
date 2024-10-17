@@ -57,6 +57,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
 // CHECK:STDOUT:   %undeclared.ref.loc24: <error> = name_ref undeclared, <error> [template = <error>]

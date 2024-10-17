@@ -125,6 +125,11 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%i.param_patt: %I.type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%I.type]
+// CHECK:STDOUT:     %i.param: %I.type = value_param runtime_param0
+// CHECK:STDOUT:     %i: %I.type = bind_name i, %i.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

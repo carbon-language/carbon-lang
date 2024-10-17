@@ -134,6 +134,22 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @.1.%Self (%Self)]() -> @.1.%Self (%Self) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc22_40: invalid = splice_block invalid {
+// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %T.loc22_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc22_6.2 (constants.%T)]
+// CHECK:STDOUT:       %.loc22_24.1: @.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref.loc22_24: @.1.%I.type (%I.type.2) = name_ref Self, %.loc22_24.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc22_24.2: type = facet_type_access %Self.ref.loc22_24 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc22_24.3: type = converted %Self.ref.loc22_24, %.loc22_24.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc22_35.1: @.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.ref.loc22_35: @.1.%I.type (%I.type.2) = name_ref Self, %.loc22_35.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc22_35.2: type = facet_type_access %Self.ref.loc22_35 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc22_35.3: type = converted %Self.ref.loc22_35, %.loc22_35.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %self.param: @.1.%Self (%Self) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @.1.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @.1.%Self (%Self) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @.1.%Self (%Self) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.ref: @.1.%Self (%Self) = name_ref self, %self
 // CHECK:STDOUT:     return %self.ref
 // CHECK:STDOUT:   }

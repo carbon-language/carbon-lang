@@ -119,11 +119,13 @@ fn D.C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc27: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc32: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

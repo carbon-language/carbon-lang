@@ -58,6 +58,11 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Empty.type) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc13: invalid = splice_block invalid {
+// CHECK:STDOUT:       %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
+// CHECK:STDOUT:       %T.param: %Empty.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %T.loc13_6.1: %Empty.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.loc13_6.2 (constants.%T)]

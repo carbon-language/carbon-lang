@@ -47,6 +47,7 @@ fn F() { a.b; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

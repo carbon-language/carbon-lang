@@ -415,7 +415,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.param_patt: %.1 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
+// CHECK:STDOUT:     %.loc4_16: type = ptr_type %Forward [template = constants.%.1]
 // CHECK:STDOUT:     %c.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -431,6 +431,12 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
+// CHECK:STDOUT:     %.loc4_16: type = ptr_type %Forward [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -452,7 +458,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %.loc10_16: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -460,6 +466,12 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc10_16: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -489,7 +501,7 @@ private class Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %.loc9_21: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -497,6 +509,13 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_24: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc9_21: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

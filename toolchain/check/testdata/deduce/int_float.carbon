@@ -147,6 +147,30 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.BigInt](%n.param_patt: @F.%.loc4_36 (%.2)) -> Core.BigInt {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc4_58: invalid = splice_block invalid {
+// CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %BigInt.ref.loc4_14: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:       %big_int.make_type.loc4_21: init type = call %BigInt.ref.loc4_14() [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc4_22.1: type = value_of_initializer %big_int.make_type.loc4_21 [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc4_22.2: type = converted %big_int.make_type.loc4_21, %.loc4_22.1 [template = Core.BigInt]
+// CHECK:STDOUT:       %Core.ref.loc4_28: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:       %N.ref.loc4: Core.BigInt = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:       %int.make_type_signed: init type = call %Int.ref(%N.ref.loc4) [symbolic = %.loc4_36 (constants.%.2)]
+// CHECK:STDOUT:       %.loc4_38.1: type = value_of_initializer %int.make_type_signed [symbolic = %.loc4_36 (constants.%.2)]
+// CHECK:STDOUT:       %.loc4_38.2: type = converted %int.make_type_signed, %.loc4_38.1 [symbolic = %.loc4_36 (constants.%.2)]
+// CHECK:STDOUT:       %Core.ref.loc4_44: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %BigInt.ref.loc4_48: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:       %big_int.make_type.loc4_55: init type = call %BigInt.ref.loc4_48() [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc4_56.1: type = value_of_initializer %big_int.make_type.loc4_55 [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc4_56.2: type = converted %big_int.make_type.loc4_55, %.loc4_56.1 [template = Core.BigInt]
+// CHECK:STDOUT:       %N.param: Core.BigInt = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %N.loc4_6.1: Core.BigInt = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:       %n.param: @F.%.loc4_36 (%.2) = value_param runtime_param0
+// CHECK:STDOUT:       %n: @F.%.loc4_36 (%.2) = bind_name n, %n.param
+// CHECK:STDOUT:       %return.param: ref Core.BigInt = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref Core.BigInt = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.ref.loc5: Core.BigInt = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc5
 // CHECK:STDOUT:   }
@@ -154,6 +178,21 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a.param_patt: %.4) -> Core.BigInt {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8_31: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc8_9.1: Core.BigInt = int_literal 64 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_9.1) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc8_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
+// CHECK:STDOUT:     %.loc8_9.3: type = converted %int.make_type_signed, %.loc8_9.2 [template = constants.%.4]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %BigInt.ref: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:     %big_int.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
+// CHECK:STDOUT:     %.loc8_29.1: type = value_of_initializer %big_int.make_type [template = Core.BigInt]
+// CHECK:STDOUT:     %.loc8_29.2: type = converted %big_int.make_type, %.loc8_29.1 [template = Core.BigInt]
+// CHECK:STDOUT:     %a.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref Core.BigInt = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref Core.BigInt = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: %.4 = name_ref a, %a
 // CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.3) [template = constants.%.5]
@@ -284,6 +323,30 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.BigInt](%n.param_patt: <error>) -> Core.BigInt {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc8_60: invalid = splice_block invalid {
+// CHECK:STDOUT:       %Core.ref.loc8_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %BigInt.ref.loc8_14: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:       %big_int.make_type.loc8_21: init type = call %BigInt.ref.loc8_14() [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc8_22.1: type = value_of_initializer %big_int.make_type.loc8_21 [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc8_22.2: type = converted %big_int.make_type.loc8_21, %.loc8_22.1 [template = Core.BigInt]
+// CHECK:STDOUT:       %Core.ref.loc8_28: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%import_ref.2 [template = constants.%Float]
+// CHECK:STDOUT:       %N.ref.loc8: Core.BigInt = name_ref N, %N.loc8_6.1 [symbolic = %N.loc8_6.2 (constants.%N)]
+// CHECK:STDOUT:       %float.make_type: init type = call %Float.ref(%N.ref.loc8)
+// CHECK:STDOUT:       %.loc8_40.1: type = value_of_initializer %float.make_type
+// CHECK:STDOUT:       %.loc8_40.2: type = converted %float.make_type, %.loc8_40.1
+// CHECK:STDOUT:       %Core.ref.loc8_46: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %BigInt.ref.loc8_50: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:       %big_int.make_type.loc8_57: init type = call %BigInt.ref.loc8_50() [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc8_58.1: type = value_of_initializer %big_int.make_type.loc8_57 [template = Core.BigInt]
+// CHECK:STDOUT:       %.loc8_58.2: type = converted %big_int.make_type.loc8_57, %.loc8_58.1 [template = Core.BigInt]
+// CHECK:STDOUT:       %N.param: Core.BigInt = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %N.loc8_6.1: Core.BigInt = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc8_6.2 (constants.%N)]
+// CHECK:STDOUT:       %n.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:       %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:       %return.param: ref Core.BigInt = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref Core.BigInt = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.ref.loc9: Core.BigInt = name_ref N, %N.loc8_6.1 [symbolic = %N.loc8_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc9
 // CHECK:STDOUT:   }
@@ -291,6 +354,21 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a.param_patt: f64) -> Core.BigInt {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_31: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc12_9.1: Core.BigInt = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
+// CHECK:STDOUT:     %.loc12_9.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc12_9.3: type = converted %float.make_type, %.loc12_9.2 [template = f64]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %BigInt.ref: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
+// CHECK:STDOUT:     %big_int.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
+// CHECK:STDOUT:     %.loc12_29.1: type = value_of_initializer %big_int.make_type [template = Core.BigInt]
+// CHECK:STDOUT:     %.loc12_29.2: type = converted %big_int.make_type, %.loc12_29.1 [template = Core.BigInt]
+// CHECK:STDOUT:     %a.param: f64 = value_param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref Core.BigInt = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref Core.BigInt = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   return <error>

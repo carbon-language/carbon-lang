@@ -53,12 +53,23 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_22: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc11_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_20.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
 // CHECK:STDOUT:   %.loc16_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template = constants.%struct]

@@ -295,6 +295,17 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %C](%x.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20_28: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref.loc20_14: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc20_26: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %x.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %x: %C = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_38.1: %.4 = struct_literal ()
 // CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), %return [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc20_39: init %C = converted %.loc20_38.1, %.loc20_38.2 [template = constants.%struct.1]
@@ -303,6 +314,17 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3[%self.param_patt: %D](%x.param_patt: %D) -> %return: %D {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc24_37: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc24_14: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
+// CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
+// CHECK:STDOUT:     %self.param: %D = value_param runtime_param0
+// CHECK:STDOUT:     %self: %D = bind_name self, %self.param
+// CHECK:STDOUT:     %x.param: %D = value_param runtime_param1
+// CHECK:STDOUT:     %x: %D = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %D = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc24_47.1: %.4 = struct_literal ()
 // CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), %return [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc24_48: init %D = converted %.loc24_47.1, %.loc24_47.2 [template = constants.%struct.2]

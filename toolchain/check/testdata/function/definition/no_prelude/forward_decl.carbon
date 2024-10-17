@@ -30,6 +30,7 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

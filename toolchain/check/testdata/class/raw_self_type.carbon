@@ -119,6 +119,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:   %Self.var: ref %.4 = var r#Self
@@ -135,6 +136,14 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%x.param_patt: %MemberNamedSelf, %y.param_patt: %Self) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc24: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [template = constants.%Self]
+// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = value_param runtime_param0
+// CHECK:STDOUT:     %x.loc24: %MemberNamedSelf = bind_name x, %x.param.loc24
+// CHECK:STDOUT:     %y.param.loc24: %Self = value_param runtime_param1
+// CHECK:STDOUT:     %y.loc24: %Self = bind_name y, %y.param.loc24
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

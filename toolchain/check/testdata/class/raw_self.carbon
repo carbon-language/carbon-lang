@@ -174,6 +174,17 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt.loc17_21: %.1](%self.param_patt.loc17_36: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17_43: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %.loc17_27: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc17_38.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
+// CHECK:STDOUT:     %.loc17_38.2: type = converted %int.make_type_32.loc17, %.loc17_38.1 [template = i32]
+// CHECK:STDOUT:     %self.param.loc17_21: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc17_17: %.1 = bind_name self, %self.param.loc17_21
+// CHECK:STDOUT:     %self.param.loc17_36: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %self.loc17_30: i32 = bind_name r#self, %self.param.loc17_36
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref.loc18_5: %.1 = name_ref self, %self.loc17_17
 // CHECK:STDOUT:   %.loc18_4: ref %Class = deref %self.ref.loc18_5
 // CHECK:STDOUT:   %n.ref: %.5 = name_ref n, @Class.%.loc14_8 [template = @Class.%.loc14_8]
@@ -185,6 +196,26 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: i32) -> %return: %.4 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc21_51: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %int.make_type_32.loc21_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc21_32.1: type = value_of_initializer %int.make_type_32.loc21_32 [template = i32]
+// CHECK:STDOUT:     %.loc21_32.2: type = converted %int.make_type_32.loc21_32, %.loc21_32.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc21_41: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc21_46: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc21_49.1: %.3 = tuple_literal (%int.make_type_32.loc21_41, %int.make_type_32.loc21_46)
+// CHECK:STDOUT:     %.loc21_49.2: type = value_of_initializer %int.make_type_32.loc21_41 [template = i32]
+// CHECK:STDOUT:     %.loc21_49.3: type = converted %int.make_type_32.loc21_41, %.loc21_49.2 [template = i32]
+// CHECK:STDOUT:     %.loc21_49.4: type = value_of_initializer %int.make_type_32.loc21_46 [template = i32]
+// CHECK:STDOUT:     %.loc21_49.5: type = converted %int.make_type_32.loc21_46, %.loc21_49.4 [template = i32]
+// CHECK:STDOUT:     %.loc21_49.6: type = converted %.loc21_49.1, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %self.param.loc21_16: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc21_12: %Class = bind_name self, %self.param.loc21_16
+// CHECK:STDOUT:     %self.param.loc21_30: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %self.loc21_24: i32 = bind_name r#self, %self.param.loc21_30
+// CHECK:STDOUT:     %return.param.loc21: ref %.4 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param.loc21
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
 // CHECK:STDOUT:   %n.ref: %.5 = name_ref n, @Class.%.loc14_8 [template = @Class.%.loc14_8]
 // CHECK:STDOUT:   %.loc22_15.1: ref i32 = class_element_access %self.ref.loc22_11, element0

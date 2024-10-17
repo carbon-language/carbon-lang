@@ -36,11 +36,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc15_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b

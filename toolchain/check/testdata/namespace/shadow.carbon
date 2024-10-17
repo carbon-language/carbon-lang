@@ -95,6 +95,13 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc18_15.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
+// CHECK:STDOUT:     %.loc18_15.2: type = converted %int.make_type_32.loc18, %.loc18_15.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc20: %A.type.2 = name_ref A, file.%A.decl.loc14 [template = constants.%A.2]
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc20()
 // CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.2]

@@ -1433,7 +1433,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.src_id);
     }
     case CARBON_KIND(SemIR::SpliceBlock typed_inst): {
-      return eval_context.GetConstantValue(typed_inst.result_id);
+      if (typed_inst.result_id.is_valid()) {
+        return eval_context.GetConstantValue(typed_inst.result_id);
+      }
+      break;
     }
     case CARBON_KIND(SemIR::ValueOfInitializer typed_inst): {
       return eval_context.GetConstantValue(typed_inst.init_id);

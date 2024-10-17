@@ -120,18 +120,39 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type, %.loc11_11.1 [template = bool]
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_25: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc11_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type, %.loc12_11.1 [template = bool]
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_25: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc12_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_18: invalid = splice_block invalid {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %bool.make_type, %.loc14_13.1 [template = bool]
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc15_14.1: bool = value_of_initializer %F.call
@@ -153,6 +174,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc19_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc19_18.1: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc19_13 br !and.rhs.loc19 else br !and.result.loc19(%.loc19_18.1)
@@ -280,6 +302,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %bool.make_type.loc25: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc25_23.1: type = value_of_initializer %bool.make_type.loc25 [template = bool]
+// CHECK:STDOUT:     %.loc25_23.2: type = converted %bool.make_type.loc25, %.loc25_23.1 [template = bool]
+// CHECK:STDOUT:     %x.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc26_13: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   %.loc26_19.1: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc26_13 br !and.rhs else br !and.result(%.loc26_19.1)
