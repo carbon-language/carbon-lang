@@ -2,13 +2,12 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Tests
+name: 'Clang Tidy'
 
 on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -22,18 +21,13 @@ concurrency:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        # Test a recent version of each supported OS.
-        runner: ['ubuntu-22.04', 'macos-14']
-        build_mode: [fastbuild, opt]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: ./.github/actions/test
         with:
-          matrix_runner: ${{ matrix.runner }}
-          matrix_build_mode: ${{ matrix.build_mode }}
+          matrix_runner: 'ubuntu-22.04'
+          matrix_build_mode: 'clang-tidy'
           head_sha: ${{ github.event.pull_request.head.sha }}
           base_sha:
             ${{ github.event_name == 'pull_request' &&
