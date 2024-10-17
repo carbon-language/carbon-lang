@@ -8,8 +8,6 @@ inputs:
     required: true
   matrix_build_mode:
     required: true
-  head_sha:
-    required: true
   base_sha:
     required: true
   remote_cache_upload:
@@ -19,31 +17,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
-      with:
-        egress-policy: block
-        # When adding endpoints, see README.md.
-        # prettier-ignore
-        allowed-endpoints: >
-          *.dl.sourceforge.net:443
-          api.github.com:443
-          bcr.bazel.build:443
-          downloads.sourceforge.net:443
-          github.com:443
-          mirrors.kernel.org:443
-          nodejs.org:443
-          oauth2.googleapis.com:443
-          objects.githubusercontent.com:443
-          pypi.org:443
-          releases.bazel.build:443
-          sourceforge.net:443
-          storage.googleapis.com:443
-
-    - name: Checkout branch
-      if: github.event_name != 'pull_request'
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
     # Tests should only run on applicable paths, but we still need to have an
     # action run for the merge queue. We filter steps based on the paths here,
     # and condition steps on the output.
