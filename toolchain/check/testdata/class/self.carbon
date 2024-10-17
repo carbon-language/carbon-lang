@@ -7,10 +7,10 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/self.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/self.carbon
-// CHECK:STDERR: fail_return_self_value.carbon: error: `Main//default` previously provided by `self.carbon`
-// CHECK:STDERR:
 
 // --- self.carbon
+
+library "[[@TEST_NAME]]";
 
 class Class {
   fn F[self: Self]() -> i32;
@@ -28,6 +28,8 @@ fn Class.G[addr self: Self*]() -> i32 {
 }
 
 // --- fail_return_self_value.carbon
+
+library "[[@TEST_NAME]]";
 
 class Class {
   // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+13]]:25: error: invalid use of incomplete type `Class`
@@ -90,27 +92,27 @@ class Class {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc9_29.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:     %.loc9_29.2: type = converted %int.make_type_32.loc9, %.loc9_29.1 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_29.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:     %.loc12_29.2: type = converted %int.make_type_32.loc12, %.loc12_29.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc9: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc9: %Class = bind_name self, %param.loc9
+// CHECK:STDOUT:     %param.loc12: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc13_12: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc16_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %.loc13_27: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_35.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
-// CHECK:STDOUT:     %.loc13_35.2: type = converted %int.make_type_32.loc13, %.loc13_35.1 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %.loc16_27: type = ptr_type %Class [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
+// CHECK:STDOUT:     %.loc16_35.2: type = converted %int.make_type_32.loc16, %.loc16_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc13: %.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc13: %.2 = bind_name self, %param.loc13
+// CHECK:STDOUT:     %param.loc16: %.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc16: %.2 = bind_name self, %param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,60 +121,60 @@ class Class {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc3: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %int.make_type_32.loc3: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc3_25.1: type = value_of_initializer %int.make_type_32.loc3 [template = i32]
-// CHECK:STDOUT:     %.loc3_25.2: type = converted %int.make_type_32.loc3, %.loc3_25.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc3: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc3: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc3: %Class = bind_name self, %param.loc3
+// CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
+// CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6, %.loc6_25.1 [template = i32]
+// CHECK:STDOUT:     %return.var.loc6: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc6: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc6: %Class = bind_name self, %param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.2 = param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc13_12: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc16_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc4: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %.loc4_23: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc4_31.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
-// CHECK:STDOUT:     %.loc4_31.2: type = converted %int.make_type_32.loc4, %.loc4_31.1 [template = i32]
-// CHECK:STDOUT:     %return.var.loc4: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc4: %.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc4: %.2 = bind_name self, %param.loc4
+// CHECK:STDOUT:     %Self.ref.loc7: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %.loc7_23: type = ptr_type %Class [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc7_31.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
+// CHECK:STDOUT:     %.loc7_31.2: type = converted %int.make_type_32.loc7, %.loc7_31.1 [template = i32]
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     %param.loc7: %.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc7: %.2 = bind_name self, %param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_32, %.loc6_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_8: %.3 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_32, %.loc9_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc9_8: %.3 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   .n = %.loc6_8
+// CHECK:STDOUT:   .n = %.loc9_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc9
-// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc6_8 [template = @Class.%.loc6_8]
-// CHECK:STDOUT:   %.loc10_14.1: ref i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc10_14.2: i32 = bind_value %.loc10_14.1
-// CHECK:STDOUT:   return %.loc10_14.2
+// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc12
+// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc9_8 [template = @Class.%.loc9_8]
+// CHECK:STDOUT:   %.loc13_14.1: ref i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc13_14.2: i32 = bind_value %.loc13_14.1
+// CHECK:STDOUT:   return %.loc13_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %.2]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self.loc13
-// CHECK:STDOUT:   %.loc14_11: ref %Class = deref %self.ref
-// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc6_8 [template = @Class.%.loc6_8]
-// CHECK:STDOUT:   %.loc14_17.1: ref i32 = class_element_access %.loc14_11, element0
-// CHECK:STDOUT:   %.loc14_17.2: i32 = bind_value %.loc14_17.1
-// CHECK:STDOUT:   return %.loc14_17.2
+// CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self.loc16
+// CHECK:STDOUT:   %.loc17_11: ref %Class = deref %self.ref
+// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc9_8 [template = @Class.%.loc9_8]
+// CHECK:STDOUT:   %.loc17_17.1: ref i32 = class_element_access %.loc17_11, element0
+// CHECK:STDOUT:   %.loc17_17.2: i32 = bind_value %.loc17_17.1
+// CHECK:STDOUT:   return %.loc17_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_self_value.carbon
@@ -260,14 +262,14 @@ class Class {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc16_25.1: %.4 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.5]
-// CHECK:STDOUT:     %Convert.ref: %.4 = name_ref Convert, %.loc16_25.1 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc16_25.2: type = converted %self.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc18_25.1: %.4 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.5]
+// CHECK:STDOUT:     %Convert.ref: %.4 = name_ref Convert, %.loc18_25.1 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc18_25.2: type = converted %self.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %return: ref <error> = var <return slot>
 // CHECK:STDOUT:     %param: %Class = param runtime_param0
 // CHECK:STDOUT:     %self: %Class = bind_name self, %param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
