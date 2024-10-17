@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/function.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -42,9 +43,9 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   auto params = context.inst_blocks().GetOrEmpty(callee_info.param_refs_id);
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                      "{0} argument(s) passed to {1} expecting "
-                      "{2} argument(s).",
-                      int, llvm::StringLiteral, int);
+                      "{0} argument{0:s} passed to {1} expecting "
+                      "{2} argument{2:s}",
+                      IntAsSelect, llvm::StringLiteral, IntAsSelect);
     CARBON_DIAGNOSTIC(InCallToEntity, Note, "calling {0} declared here",
                       llvm::StringLiteral);
     context.emitter()

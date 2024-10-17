@@ -38,7 +38,12 @@ auto llvm::format_provider<Carbon::BoolAsSelect>::format(
 auto llvm::format_provider<Carbon::IntAsSelect>::format(
     const Carbon::IntAsSelect& wrapper, raw_ostream& out, StringRef style)
     -> void {
-  if (style.empty()) {
+  if (style == "s") {
+    if (wrapper.value != 1) {
+      out << "s";
+    }
+    return;
+  } else if (style.empty()) {
     llvm::format_provider<int>::format(wrapper.value, out, style);
     return;
   }

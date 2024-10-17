@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument(s) passed to generic class expecting 2 argument(s).
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments
 // CHECK:STDERR: var a: Class(i32*);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note: calling generic class declared here
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 argument(s) passed to generic class expecting 2 argument(s).
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 arguments passed to generic class expecting 2 arguments
 // CHECK:STDERR: var a: Class(i32*, 1, 2);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note: calling generic class declared here

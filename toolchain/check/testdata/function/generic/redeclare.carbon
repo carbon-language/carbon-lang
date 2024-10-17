@@ -32,7 +32,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! type, U:! type) -> U* {
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: note: calling function declared here
@@ -56,7 +56,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> T* {
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
   // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: note: calling function declared here
@@ -80,7 +80,7 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> U* {
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error: 1 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error: 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
   // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: note: calling function declared here

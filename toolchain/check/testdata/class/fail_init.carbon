@@ -14,7 +14,7 @@ class Class {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 field(s) from struct with 1 field(s).
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 1 field
   // CHECK:STDERR:   {.a = 1} as Class;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -24,7 +24,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:3: error: cannot initialize class with 2 field(s) from struct with 3 field(s).
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:3: error: cannot initialize class with 2 fields from struct with 3 fields
   // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   {.a = 1, .b = 2, .c = 3} as Class;

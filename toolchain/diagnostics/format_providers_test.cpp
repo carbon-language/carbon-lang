@@ -75,8 +75,15 @@ TEST(IntAsSelect, QuotedSpaces) {
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq(" default "));
 }
 
-TEST(IntAsSelect, PluralExample) {
+TEST(IntAsSelect, CasesWithNormalFormat) {
   constexpr char Format[] = "{0} argument{0:=1:|:s}";
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("0 arguments"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq("1 argument"));
+  EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq("2 arguments"));
+}
+
+TEST(IntAsSelect, PluralS) {
+  constexpr char Format[] = "{0} argument{0:s}";
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(0)).str(), Eq("0 arguments"));
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(1)).str(), Eq("1 argument"));
   EXPECT_THAT(llvm::formatv(Format, IntAsSelect(2)).str(), Eq("2 arguments"));
