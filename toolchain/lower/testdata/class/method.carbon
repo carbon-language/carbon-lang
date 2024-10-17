@@ -28,7 +28,8 @@ fn F(p: C*) {
 // CHECK:STDOUT: declare void @_CSet.C.Main(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr %p) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !7
 // CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %Get.call), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9

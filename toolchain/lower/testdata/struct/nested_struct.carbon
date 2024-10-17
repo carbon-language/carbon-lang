@@ -17,8 +17,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "nested_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0, !dbg !7
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i32 0, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -31,4 +33,5 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 3, scope: !4)

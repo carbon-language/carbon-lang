@@ -18,15 +18,17 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: source_filename = "and_empty_block.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CAnd.Main(i1 %b, i1 %c) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result, !dbg !7
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs:                                          ; preds = %entry
-// CHECK:STDOUT:   br label %and.result, !dbg !7
+// CHECK:STDOUT:   br label %and.result, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
-// CHECK:STDOUT:   ret i1 %0, !dbg !8
+// CHECK:STDOUT:   %1 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
+// CHECK:STDOUT:   ret i1 %1, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -39,5 +41,6 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "And", linkageName: "_CAnd.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 26, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !4)

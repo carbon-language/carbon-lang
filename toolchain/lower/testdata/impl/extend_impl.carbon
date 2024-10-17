@@ -32,20 +32,26 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0, !dbg !7
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i32 0, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTypeAccess.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !9
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !10
+// CHECK:STDOUT: define i32 @_CTypeAccess.Main() !dbg !9 {
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !10
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !11
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) !dbg !11 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !12
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !13
+// CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) !dbg !13 {
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !15
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -58,10 +64,13 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TypeAccess", linkageName: "_CTypeAccess.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 24, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 24, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "InstanceAccess", linkageName: "_CInstanceAccess.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 28, column: 10, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 28, column: 3, scope: !11)
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 12, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TypeAccess", linkageName: "_CTypeAccess.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 23, column: 17, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 24, column: 10, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !9)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "InstanceAccess", linkageName: "_CInstanceAccess.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = !DILocation(line: 27, column: 25, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 28, column: 10, scope: !13)
+// CHECK:STDOUT: !16 = !DILocation(line: 28, column: 3, scope: !13)

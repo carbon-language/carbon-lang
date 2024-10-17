@@ -17,11 +17,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   store i32 1, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc13 = load i32, ptr %x.var, align 4, !dbg !9
-// CHECK:STDOUT:   ret i32 %.loc13, !dbg !10
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !8
+// CHECK:STDOUT:   store i32 1, ptr %x.var, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc13 = load i32, ptr %x.var, align 4, !dbg !10
+// CHECK:STDOUT:   ret i32 %.loc13, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -34,7 +36,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 10, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 10, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !4)

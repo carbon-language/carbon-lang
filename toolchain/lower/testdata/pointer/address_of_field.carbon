@@ -23,7 +23,8 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %s.var = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc14_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc14_46.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !8

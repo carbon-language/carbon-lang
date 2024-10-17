@@ -19,28 +19,34 @@ fn Or() -> bool {
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true, !dbg !7
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i1 true, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CG.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true, !dbg !9
+// CHECK:STDOUT: define i1 @_CG.Main() !dbg !9 {
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !10
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i1 true, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_COr.Main() !dbg !10 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !11
-// CHECK:STDOUT:   %.loc15_14.3 = xor i1 %F.call, true, !dbg !11
-// CHECK:STDOUT:   br i1 %.loc15_14.3, label %or.rhs, label %or.result, !dbg !11
+// CHECK:STDOUT: define i1 @_COr.Main() !dbg !12 {
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !13
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !14
+// CHECK:STDOUT:   %.loc15_14.3 = xor i1 %F.call, true, !dbg !14
+// CHECK:STDOUT:   br i1 %.loc15_14.3, label %or.rhs, label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %entry
-// CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !12
-// CHECK:STDOUT:   br label %or.result, !dbg !11
+// CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !15
+// CHECK:STDOUT:   br label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %or.rhs, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ true, %entry ], [ %G.call, %or.rhs ]
-// CHECK:STDOUT:   ret i1 %0, !dbg !13
+// CHECK:STDOUT:   %1 = phi i1 [ true, %entry ], [ %G.call, %or.rhs ]
+// CHECK:STDOUT:   ret i1 %1, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -53,10 +59,13 @@ fn Or() -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 18, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 18, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Or", linkageName: "_COr.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 10, scope: !10)
-// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 17, scope: !10)
-// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !10)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 8, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 11, column: 18, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 8, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 18, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Or", linkageName: "_COr.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 9, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 10, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 15, column: 17, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !12)

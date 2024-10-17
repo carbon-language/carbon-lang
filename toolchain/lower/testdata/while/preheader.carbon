@@ -38,10 +38,8 @@ fn While() {
 // CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %while.cond.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond.loc20:                                 ; preds = %entry, %while.body.loc20
+// CHECK:STDOUT: while.cond.loc20:                                 ; preds = %while.body.loc20
 // CHECK:STDOUT:   %Cond.call.loc20 = call i1 @_CCond.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %Cond.call.loc20, label %while.body.loc20, label %while.done.loc20, !dbg !8
 // CHECK:STDOUT:
@@ -66,9 +64,6 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %while.done.loc25, %while.done.loc20
 // CHECK:STDOUT:   ret void, !dbg !18
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %while.cond.loc20, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

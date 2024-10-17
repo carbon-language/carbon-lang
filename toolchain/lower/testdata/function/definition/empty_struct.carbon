@@ -15,7 +15,8 @@ fn Echo(a: {}) {
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CEcho.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
