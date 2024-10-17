@@ -18,8 +18,8 @@ class DiagnosticConverter {
   // Callback type used to report context messages from ConvertLoc.
   // Note that the first parameter type is DiagnosticLoc rather than
   // LocT, because ConvertLoc must not recurse.
-  using ContextFnT = llvm::function_ref<void(
-      DiagnosticLoc, const Internal::DiagnosticBase<>&)>;
+  using ContextFnT =
+      llvm::function_ref<void(DiagnosticLoc, const DiagnosticBase<>&)>;
 
   virtual ~DiagnosticConverter() = default;
 

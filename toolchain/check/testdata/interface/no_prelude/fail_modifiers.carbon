@@ -28,7 +28,7 @@ default interface Default;
 virtual interface Virtual {
 }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `protected` not allowed on `interface` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected interface Protected;
 // CHECK:STDERR: ^~~~~~~~~
 protected interface Protected;

@@ -47,7 +47,7 @@ base class BaseDecl;
 // CHECK:STDERR:
 abstract abstract class TwoAbstract { }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error: `protected` not allowed on `class` declaration at file scope, `protected` is only allowed on class members
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error: `protected` not allowed; requires class scope
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

@@ -93,7 +93,7 @@ class C;
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `class` declaration that is a member
+  // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope
   // CHECK:STDERR:   extern class D;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
