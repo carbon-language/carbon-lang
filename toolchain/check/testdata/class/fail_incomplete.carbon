@@ -103,9 +103,9 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-92]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:1: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:19: note: initializing function parameter
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                   ^~~~~~~~
   // CHECK:STDERR:
   TakeIncomplete(*p);
 
@@ -115,9 +115,9 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-104]]:1: note: class was forward declared here
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:1: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:19: note: initializing function parameter
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                   ^~~~~~~~
   // CHECK:STDERR:
   TakeIncomplete({});
 }
