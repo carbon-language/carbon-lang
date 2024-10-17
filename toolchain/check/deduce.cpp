@@ -286,8 +286,10 @@ auto DeductionContext::Deduce() -> bool {
     CARBON_KIND_SWITCH(param_inst) {
       // Deducing a symbolic binding pattern from an argument deduces the
       // binding as having that constant value. For example, deducing
-      // `(T:! type)` against `(i32)` deduces `T` to be `i32`. The argument is
-      // required to be a compile-time constant.
+      // `(T:! type)` against `(i32)` deduces `T` to be `i32`. This only arises
+      // when initializing a generic parameter from an explicitly specified
+      // argument, and in this case, the argument is required to be a
+      // compile-time constant.
       case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index;
@@ -299,7 +301,7 @@ auto DeductionContext::Deduce() -> bool {
                 static_cast<size_t>(index.index) < result_arg_ids_.size(),
             "Unexpected index {0} for symbolic binding pattern; "
             "expected to be in range [{1}, {2})",
-            first_deduced_index_.index, result_arg_ids_.size());
+            index.index, first_deduced_index_.index, result_arg_ids_.size());
         CARBON_CHECK(!result_arg_ids_[index.index].is_valid(),
                      "Deduced a value for parameter prior to its declaration");
 
