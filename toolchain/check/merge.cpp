@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -193,10 +194,12 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
 
 // Returns false if a param differs for a redeclaration. The caller is expected
 // to provide a diagnostic.
-static auto CheckRedeclParam(
-    Context& context, llvm::StringLiteral param_diag_label, int32_t param_index,
-    SemIR::InstId new_param_pattern_id, SemIR::InstId prev_param_pattern_id,
-    SemIR::SpecificId prev_specific_id, bool diagnose) -> bool {
+static auto CheckRedeclParam(Context& context, bool is_implicit_param,
+                             int32_t param_index,
+                             SemIR::InstId new_param_pattern_id,
+                             SemIR::InstId prev_param_pattern_id,
+                             SemIR::SpecificId prev_specific_id, bool diagnose)
+    -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -205,15 +208,16 @@ static auto CheckRedeclParam(
       return;
     }
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
-                      "redeclaration differs at {0}parameter {1}",
-                      llvm::StringLiteral, int32_t);
-    CARBON_DIAGNOSTIC(RedeclParamPrevious, Note,
-                      "previous declaration's corresponding {0}parameter here",
-                      llvm::StringLiteral);
+                      "redeclaration differs at {0:implicit |}parameter {1}",
+                      BoolAsSelect, int32_t);
+    CARBON_DIAGNOSTIC(
+        RedeclParamPrevious, Note,
+        "previous declaration's corresponding {0:implicit |}parameter here",
+        BoolAsSelect);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffers, param_diag_label,
+        .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
-        .Note(prev_param_pattern_id, RedeclParamPrevious, param_diag_label)
+        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
         .Emit();
   };
 
@@ -265,7 +269,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
                               SemIR::InstBlockId new_param_patterns_id,
                               SemIRLoc prev_decl_loc,
                               SemIR::InstBlockId prev_param_patterns_id,
-                              llvm::StringLiteral param_diag_label,
+                              bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose)
     -> bool {
   // This will often occur for empty params.
@@ -279,18 +283,18 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
       return false;
     }
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
-                      "redeclaration differs because of {1}{0}parameter list",
-                      llvm::StringLiteral, llvm::StringLiteral);
+                      "redeclaration differs because of "
+                      "{1:'|missing '}{0:implicit |}parameter list",
+                      BoolAsSelect, BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
-                      "previously declared with{1} {0}parameter list",
-                      llvm::StringLiteral, llvm::StringLiteral);
+                      "previously declared "
+                      "{1:with|without} {0:implicit |}parameter list",
+                      BoolAsSelect, BoolAsSelect);
     context.emitter()
-        .Build(new_decl_loc, RedeclParamListDiffers, param_diag_label,
-               new_param_patterns_id.is_valid() ? llvm::StringLiteral("")
-                                                : "missing ")
-        .Note(
-            prev_decl_loc, RedeclParamListPrevious, param_diag_label,
-            prev_param_patterns_id.is_valid() ? llvm::StringLiteral("") : "out")
+        .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
+               new_param_patterns_id.is_valid())
+        .Note(prev_decl_loc, RedeclParamListPrevious, is_implicit_param,
+              prev_param_patterns_id.is_valid())
         .Emit();
     return false;
   }
@@ -307,22 +311,23 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     }
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
-        "redeclaration differs because of {0}parameter count of {1}",
-        llvm::StringLiteral, int32_t);
-    CARBON_DIAGNOSTIC(RedeclParamCountPrevious, Note,
-                      "previously declared with {0}parameter count of {1}",
-                      llvm::StringLiteral, int32_t);
+        "redeclaration differs because of {0:implicit |}parameter count of {1}",
+        BoolAsSelect, int32_t);
+    CARBON_DIAGNOSTIC(
+        RedeclParamCountPrevious, Note,
+        "previously declared with {0:implicit |}parameter count of {1}",
+        BoolAsSelect, int32_t);
     context.emitter()
-        .Build(new_decl_loc, RedeclParamCountDiffers, param_diag_label,
+        .Build(new_decl_loc, RedeclParamCountDiffers, is_implicit_param,
                new_param_pattern_ids.size())
-        .Note(prev_decl_loc, RedeclParamCountPrevious, param_diag_label,
+        .Note(prev_decl_loc, RedeclParamCountPrevious, is_implicit_param,
               prev_param_pattern_ids.size())
         .Emit();
     return false;
   }
   for (auto [index, new_param_pattern_id, prev_param_pattern_id] :
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
-    if (!CheckRedeclParam(context, param_diag_label, index,
+    if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
                           prev_specific_id, diagnose)) {
       return false;
@@ -410,15 +415,16 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
       EntityHasParamError(context, prev_entity)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_entity.loc,
-                         new_entity.implicit_param_patterns_id, prev_entity.loc,
-                         prev_entity.implicit_param_patterns_id, "implicit ",
-                         prev_specific_id, diagnose)) {
+  if (!CheckRedeclParams(
+          context, new_entity.loc, new_entity.implicit_param_patterns_id,
+          prev_entity.loc, prev_entity.implicit_param_patterns_id,
+          /*is_implicit_param=*/true, prev_specific_id, diagnose)) {
     return false;
   }
   if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
-                         prev_entity.loc, prev_entity.param_patterns_id, "",
-                         prev_specific_id, diagnose)) {
+                         prev_entity.loc, prev_entity.param_patterns_id,
+                         /*is_implicit_param=*/false, prev_specific_id,
+                         diagnose)) {
     return false;
   }
   if (check_syntax &&

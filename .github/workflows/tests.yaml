@@ -24,12 +24,8 @@ jobs:
   test:
     strategy:
       matrix:
-        # On PRs and in the merge queue test a recent version of each supported
-        # OS. On push (post-submit), also run on `macos-12` to get Intel macOS
-        # coverage.
-        runner:
-          ${{ fromJSON(github.event_name != 'push' && '["ubuntu-22.04",
-          "macos-14"]' || '["ubuntu-22.04", "macos-14", "macos-12"]') }}
+        # Test a recent version of each supported OS.
+        runner: ['ubuntu-22.04', 'macos-14']
         build_mode: [fastbuild, opt]
         include:
           # The clang-tidy config doesn't work on macos (missing `truncate`).

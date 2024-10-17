@@ -28,7 +28,7 @@ fn F(c: Class) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note: calling function declared here

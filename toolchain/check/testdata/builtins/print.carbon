@@ -45,8 +45,8 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Print.type.2 = import_ref Core//prelude, inst+47, loaded [template = constants.%Print.2]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Print.type.2 = import_ref Core//prelude, inst+48, loaded [template = constants.%Print.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

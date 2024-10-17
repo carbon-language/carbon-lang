@@ -56,7 +56,7 @@ var too_many: [i32; TooMany(1, 2, 3)];
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1, 2)];
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:21: error: 3 argument(s) passed to function expecting 2 argument(s).
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:21: error: 3 arguments passed to function expecting 2 arguments
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here
@@ -115,7 +115,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -250,7 +250,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,7 +521,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument(s) passed to generic class expecting 2 argument(s).
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments
 // CHECK:STDERR: var a: Class(i32*);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note: calling generic class declared here
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 argument(s) passed to generic class expecting 2 argument(s).
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 arguments passed to generic class expecting 2 arguments
 // CHECK:STDERR: var a: Class(i32*, 1, 2);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note: calling generic class declared here
@@ -120,7 +120,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,7 +236,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -326,7 +326,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -435,7 +435,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+52, unloaded
 // CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.6) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.10)]

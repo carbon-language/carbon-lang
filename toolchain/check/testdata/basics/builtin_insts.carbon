@@ -33,6 +33,7 @@
 // CHECK:STDOUT:     instError:       {kind: BuiltinInst, arg0: Error, type: typeError}
 // CHECK:STDOUT:     instAutoType:    {kind: BuiltinInst, arg0: AutoType, type: typeTypeType}
 // CHECK:STDOUT:     instBoolType:    {kind: BuiltinInst, arg0: BoolType, type: typeTypeType}
+// CHECK:STDOUT:     instBigIntType:  {kind: BuiltinInst, arg0: BigIntType, type: typeTypeType}
 // CHECK:STDOUT:     instIntType:     {kind: BuiltinInst, arg0: IntType, type: typeTypeType}
 // CHECK:STDOUT:     instFloatType:   {kind: BuiltinInst, arg0: FloatType, type: typeTypeType}
 // CHECK:STDOUT:     instStringType:  {kind: BuiltinInst, arg0: StringType, type: typeTypeType}
@@ -40,12 +41,14 @@
 // CHECK:STDOUT:     instSpecificFunctionType: {kind: BuiltinInst, arg0: SpecificFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: BuiltinInst, arg0: NamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     instWitnessType: {kind: BuiltinInst, arg0: WitnessType, type: typeTypeType}
+// CHECK:STDOUT:     instVtableType:  {kind: BuiltinInst, arg0: VtableType, type: typeTypeType}
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)
 // CHECK:STDOUT:     instError:       templateConstant(instError)
 // CHECK:STDOUT:     instAutoType:    templateConstant(instAutoType)
 // CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
+// CHECK:STDOUT:     instBigIntType:  templateConstant(instBigIntType)
 // CHECK:STDOUT:     instIntType:     templateConstant(instIntType)
 // CHECK:STDOUT:     instFloatType:   templateConstant(instFloatType)
 // CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
@@ -53,6 +56,7 @@
 // CHECK:STDOUT:     instSpecificFunctionType: templateConstant(instSpecificFunctionType)
 // CHECK:STDOUT:     instNamespaceType: templateConstant(instNamespaceType)
 // CHECK:STDOUT:     instWitnessType: templateConstant(instWitnessType)
+// CHECK:STDOUT:     instVtableType:  templateConstant(instVtableType)
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:

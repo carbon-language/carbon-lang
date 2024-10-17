@@ -253,6 +253,15 @@ static auto BuildFunctionDecl(Context& context,
           .Case(KeywordModifierSet::Impl,
                 SemIR::Function::VirtualModifier::Impl)
           .Default(SemIR::Function::VirtualModifier::None);
+  if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
+      parent_scope_inst) {
+    if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
+      auto& class_info = context.classes().Get(class_decl->class_id);
+      CARBON_CHECK(virtual_modifier != SemIR::Function::VirtualModifier::Impl ||
+                   class_info.is_dynamic);
+      class_info.is_dynamic = true;
+    }
+  }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.

@@ -74,6 +74,7 @@ cc_library(
         ":helpers",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:format_providers",
         "@llvm-project//llvm:Support",
     ],
 )
