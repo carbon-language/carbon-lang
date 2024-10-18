@@ -39,10 +39,10 @@ interface I {}
 interface J {}
 
 impl forall [T:! I] T as J {}
-// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as J`
+// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+6]]:1: error(ImplRedefinition): redefinition of `impl T as J`
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE-4]]:1: note: previous definition was here
+// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE-4]]:1: note(ImplPreviousDefinition): previous definition was here
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! I] T as J {}

@@ -31,11 +31,11 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error: cannot initialize tuple of 2 elements from tuple with 3 elements
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+8]]:14: error(TupleInitElementCountMismatch): cannot initialize tuple of 2 elements from tuple with 3 elements
 // CHECK:STDERR: var c_bad: C((1, 2, 3)) = F();
 // CHECK:STDERR:              ^~~~~~~~~
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: implicit.carbon:7:1: note: while deducing parameters of generic declared here
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE-5]]:6(InImport): in import
+// CHECK:STDERR: implicit.carbon:7:1: note(DeductionGenericHere): while deducing parameters of generic declared here
 // CHECK:STDERR: class C(X:! (i32, i32)) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -45,10 +45,10 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C` to `C`
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error(ImplicitAsConversionFailure): cannot implicitly convert from `C` to `C`
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note(MissingImplInMemberAccessNote): type `C` does not implement interface `ImplicitAs`
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C((3, 4)) = F();

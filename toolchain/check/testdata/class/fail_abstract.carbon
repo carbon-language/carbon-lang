@@ -16,10 +16,10 @@ abstract class Abstract {
 }
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: field has abstract type `Abstract`
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error(AbstractTypeInVarDecl): field has abstract type `Abstract`
   // CHECK:STDERR:   var a: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-7]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-7]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -34,10 +34,10 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: variable has abstract type `Abstract`
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error(AbstractTypeInVarDecl): variable has abstract type `Abstract`
   // CHECK:STDERR:   var v: Abstract;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -64,10 +64,10 @@ abstract class Abstract {
 
 class Adapter {
   // TODO(#4387): This should probably be valid
-  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE+7]]:3: error: adapted type `Abstract` is an abstract type
+  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE+7]]:3: error(AbstractTypeInAdaptDecl): adapted type `Abstract` is an abstract type
   // CHECK:STDERR:   adapt Abstract;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE-8]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE-8]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -102,10 +102,10 @@ class Derived {
 
 fn Make() -> Derived {
   // TODO: This should be valid, and should construct an instance of `partial Abstract` as the base.
-  // CHECK:STDERR: fail_todo_return_nonabstract_derived.carbon:[[@LINE+7]]:10: error: initialization of abstract type `Abstract`
+  // CHECK:STDERR: fail_todo_return_nonabstract_derived.carbon:[[@LINE+7]]:10: error(AbstractTypeInInit): initialization of abstract type `Abstract`
   // CHECK:STDERR:   return {.base = {.a = 1}, .d = 7};
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_return_nonabstract_derived.carbon:[[@LINE-14]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_todo_return_nonabstract_derived.carbon:[[@LINE-14]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -127,10 +127,10 @@ class Derived {
 
 fn Return(a: Abstract) -> Abstract {
   // FIXME: Seems like this would be better off failing with "function returns abstract type" here instead of this \/
-  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract`
+  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:3: error(AbstractTypeInInit): initialization of abstract type `Abstract`
   // CHECK:STDERR:   return a;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-14]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-14]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -176,13 +176,13 @@ abstract class Abstract {
 fn ReturnAbstract() -> Abstract;
 
 fn CallReturnAbstract() {
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+9]]:3: error: function returns abstract type `Abstract`
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+9]]:3: error(AbstractTypeInFunctionReturnType): function returns abstract type `Abstract`
   // CHECK:STDERR:   ReturnAbstract();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:1: note: class was declared abstract here
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:1: note(ClassAbstractHere): class was declared abstract here
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:21: note: return type declared here
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:21: note(IncompleteReturnTypeHere): return type declared here
   // CHECK:STDERR: fn ReturnAbstract() -> Abstract;
   // CHECK:STDERR:                     ^~~~~~~~~~~
   ReturnAbstract();

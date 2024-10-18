@@ -28,7 +28,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "float.neq"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "float.neq"
 // CHECK:STDERR: fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";

@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_where_not_facet.carbon:[[@LINE+3]]:10: error: left argument of `where` operator must be a facet type
+// CHECK:STDERR: fail_left_where_not_facet.carbon:[[@LINE+3]]:10: error(WhereOnNonFacetType): left argument of `where` operator must be a facet type
 // CHECK:STDERR: fn F(T:! i32 where .Self == bool);
 // CHECK:STDERR:          ^~~
 fn F(T:! i32 where .Self == bool);
