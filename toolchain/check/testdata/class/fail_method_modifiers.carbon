@@ -10,7 +10,7 @@
 
 class FinalClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `abstract` not allowed; requires `abstract` class scope
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: note: containing definition here
@@ -19,7 +19,7 @@ class FinalClass {
   // CHECK:STDERR:
   abstract fn Abstract[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+7]]:3: error: `virtual` not allowed; requires `abstract` or `base` class scope
   // CHECK:STDERR:   virtual fn Virtual[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-14]]:1: note: containing definition here
@@ -31,13 +31,13 @@ class FinalClass {
 
 abstract class AbstractClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `fn` declaration outside of an interface
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope
   // CHECK:STDERR:   default fn Default[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn Default[self: Self]();
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `fn` declaration outside of an interface
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed; requires interface scope
   // CHECK:STDERR:   final fn Final[self: Self]();
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
@@ -46,7 +46,7 @@ abstract class AbstractClass {
 
 base class BaseClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: error: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: error: `abstract` not allowed; requires `abstract` class scope
   // CHECK:STDERR:   abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: note: containing definition here

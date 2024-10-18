@@ -6,6 +6,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -70,7 +71,7 @@ auto HandleParseNode(Context& context, Parse::StructTypeFieldId node_id)
 
 static auto DiagnoseDuplicateNames(Context& context,
                                    SemIR::InstBlockId type_block_id,
-                                   llvm::StringRef construct) -> bool {
+                                   bool is_struct_type_literal) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
   Map<SemIR::NameId, SemIR::InstId> names;
@@ -80,12 +81,13 @@ static auto DiagnoseDuplicateNames(Context& context,
     auto result = names.Insert(field_inst.name_id, field_inst_id);
     if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "duplicated field name `{1}` in {0}", std::string,
-                        SemIR::NameId);
+                        "duplicated field name `{1}` in "
+                        "{0:struct type literal|struct literal}",
+                        BoolAsSelect, SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "field with the same name here");
       context.emitter()
-          .Build(field_inst_id, StructNameDuplicate, construct.str(),
+          .Build(field_inst_id, StructNameDuplicate, is_struct_type_literal,
                  field_inst.name_id)
           .Note(result.value(), StructNamePrevious)
           .Emit();
@@ -103,7 +105,8 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
-  if (DiagnoseDuplicateNames(context, type_block_id, "struct literal")) {
+  if (DiagnoseDuplicateNames(context, type_block_id,
+                             /*is_struct_type_literal=*/false)) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
@@ -128,7 +131,8 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty,
                "{{}} is handled by StructLiteral.");
 
-  if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
+  if (DiagnoseDuplicateNames(context, refs_id,
+                             /*is_struct_type_literal=*/true)) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }

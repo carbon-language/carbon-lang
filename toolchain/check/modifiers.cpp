@@ -8,16 +8,37 @@
 
 namespace Carbon::Check {
 
-static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
-                               Lex::TokenKind decl_kind,
-                               llvm::StringRef context_string,
-                               SemIR::LocId context_loc_id) -> void {
-  CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
-                    "`{0}` not allowed on `{1}` declaration{2}", Lex::TokenKind,
-                    Lex::TokenKind, std::string);
-  auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
-                                      context.token_kind(modifier_node),
-                                      decl_kind, context_string.str());
+// Builds the diagnostic for DiagnoseNotAllowed.
+template <typename... TokenKinds>
+static auto StartDiagnoseNotAllowed(
+    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Parse::NodeId modifier_node, Lex::TokenKind declaration_kind)
+    -> DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder {
+  if constexpr (sizeof...(TokenKinds) == 0) {
+    return context.emitter().Build(modifier_node, diagnostic_base);
+  } else if constexpr (sizeof...(TokenKinds) == 1) {
+    return context.emitter().Build(modifier_node, diagnostic_base,
+                                   context.token_kind(modifier_node));
+  } else {
+    static_assert(sizeof...(TokenKinds) == 2);
+    return context.emitter().Build(modifier_node, diagnostic_base,
+                                   context.token_kind(modifier_node),
+                                   declaration_kind);
+  }
+}
+
+// Diagnoses that a modifier wasn't allowed. Handles adding context when
+// possible.
+//
+// The diagnostic can take up to two TokenKinds: the modifier kind, and the
+// declaration kind.
+template <typename... TokenKinds>
+static auto DiagnoseNotAllowed(
+    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Parse::NodeId modifier_node, Lex::TokenKind decl_kind,
+    SemIR::LocId context_loc_id) -> void {
+  auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
+                                      decl_kind);
   if (context_loc_id.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
     diag.Note(context_loc_id, ModifierNotInContext);
@@ -37,10 +58,16 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
   }
 }
 
-auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
-                           KeywordModifierSet forbidden,
-                           llvm::StringRef context_string,
-                           SemIR::LocId context_loc_id) -> void {
+// Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
+// `context_string` (and optional `context_loc_id`) specifying the context in
+// which those modifiers are forbidden.
+//
+// See DiagnoseNotAllowed for details regarding diagnostic_base.
+template <typename DiagnosticBaseT>
+static auto ForbidModifiersOnDecl(
+    Context& context, const DiagnosticBaseT& diagnostic_base,
+    DeclIntroducerState& introducer, KeywordModifierSet forbidden,
+    SemIR::LocId context_loc_id = SemIR::LocId::Invalid) -> void {
   auto not_allowed = introducer.modifier_set & forbidden;
   if (not_allowed.empty()) {
     return;
@@ -50,8 +77,9 @@ auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
        order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
     auto order = static_cast<ModifierOrder>(order_index);
     if (not_allowed.HasAnyOf(ModifierOrderAsSet(order))) {
-      DiagnoseNotAllowed(context, introducer.modifier_node_id(order),
-                         introducer.kind, context_string, context_loc_id);
+      DiagnoseNotAllowed(context, diagnostic_base,
+                         introducer.modifier_node_id(order), introducer.kind,
+                         context_loc_id);
       introducer.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }
@@ -59,19 +87,40 @@ auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
   introducer.modifier_set.Remove(forbidden);
 }
 
+auto LimitModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
+                          KeywordModifierSet allowed) -> void {
+  CARBON_DIAGNOSTIC(ModifierNotAllowedOnDeclaration, Error,
+                    "`{0}` not allowed on `{1}` declaration", Lex::TokenKind,
+                    Lex::TokenKind);
+  ForbidModifiersOnDecl(context, ModifierNotAllowedOnDeclaration, introducer,
+                        ~allowed);
+}
+
+auto LimitModifiersOnNotDefinition(Context& context,
+                                   DeclIntroducerState& introducer,
+                                   KeywordModifierSet allowed) -> void {
+  CARBON_DIAGNOSTIC(
+      ModifierOnlyAllowedOnDefinition, Error,
+      "`{0}` not allowed on `{1}` forward declaration, only definition",
+      Lex::TokenKind, Lex::TokenKind);
+  ForbidModifiersOnDecl(context, ModifierOnlyAllowedOnDefinition, introducer,
+                        ~allowed);
+}
+
 auto CheckAccessModifiersOnDecl(Context& context,
                                 DeclIntroducerState& introducer,
                                 std::optional<SemIR::Inst> parent_scope_inst)
     -> void {
+  CARBON_DIAGNOSTIC(ModifierProtectedNotAllowed, Error,
+                    "`protected` not allowed; requires class scope");
   if (parent_scope_inst) {
     if (parent_scope_inst->Is<SemIR::Namespace>()) {
       // TODO: This assumes that namespaces can only be declared at file scope.
       // If we add support for non-file-scope namespaces, we will need to check
       // the parents of the target scope to determine whether we're at file
       // scope.
-      ForbidModifiersOnDecl(
-          context, introducer, KeywordModifierSet::Protected,
-          " at file scope, `protected` is only allowed on class members");
+      ForbidModifiersOnDecl(context, ModifierProtectedNotAllowed, introducer,
+                            KeywordModifierSet::Protected);
       return;
     }
 
@@ -82,11 +131,13 @@ auto CheckAccessModifiersOnDecl(Context& context,
   }
 
   // Otherwise neither `private` nor `protected` allowed.
-  ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Protected,
-                        ", `protected` is only allowed on class members");
-  ForbidModifiersOnDecl(
-      context, introducer, KeywordModifierSet::Private,
-      ", `private` is only allowed on class members and at file scope");
+  ForbidModifiersOnDecl(context, ModifierProtectedNotAllowed, introducer,
+                        KeywordModifierSet::Protected);
+
+  CARBON_DIAGNOSTIC(ModifierPrivateNotAllowed, Error,
+                    "`private` not allowed; requires class or file scope");
+  ForbidModifiersOnDecl(context, ModifierPrivateNotAllowed, introducer,
+                        KeywordModifierSet::Private);
 }
 
 auto CheckMethodModifiersOnFunction(
@@ -98,21 +149,29 @@ auto CheckMethodModifiersOnFunction(
       auto inheritance_kind =
           context.classes().Get(class_decl->class_id).inheritance_kind;
       if (inheritance_kind == SemIR::Class::Final) {
-        ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Virtual,
-                              " in a non-abstract non-base `class` definition",
+        CARBON_DIAGNOSTIC(
+            ModifierVirtualNotAllowed, Error,
+            "`virtual` not allowed; requires `abstract` or `base` class scope");
+        ForbidModifiersOnDecl(context, ModifierVirtualNotAllowed, introducer,
+                              KeywordModifierSet::Virtual,
                               context.insts().GetLocId(parent_scope_inst_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
-        ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Abstract,
-                              " in a non-abstract `class` definition",
+        CARBON_DIAGNOSTIC(
+            ModifierAbstractNotAllowed, Error,
+            "`abstract` not allowed; requires `abstract` class scope");
+        ForbidModifiersOnDecl(context, ModifierAbstractNotAllowed, introducer,
+                              KeywordModifierSet::Abstract,
                               context.insts().GetLocId(parent_scope_inst_id));
       }
       return;
     }
   }
 
-  ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Method,
-                        " outside of a class");
+  CARBON_DIAGNOSTIC(ModifierRequiresClass, Error,
+                    "`{0}` not allowed; requires class scope", Lex::TokenKind);
+  ForbidModifiersOnDecl(context, ModifierRequiresClass, introducer,
+                        KeywordModifierSet::Method);
 }
 
 auto RestrictExternModifierOnDecl(Context& context,
@@ -124,8 +183,11 @@ auto RestrictExternModifierOnDecl(Context& context,
   }
 
   if (parent_scope_inst && !parent_scope_inst->Is<SemIR::Namespace>()) {
-    ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Extern,
-                          " that is a member");
+    CARBON_DIAGNOSTIC(ModifierExternNotAllowed, Error,
+                      "`{0}` not allowed; requires file or namespace scope",
+                      Lex::TokenKind);
+    ForbidModifiersOnDecl(context, ModifierExternNotAllowed, introducer,
+                          KeywordModifierSet::Extern);
     // Treat as unset.
     introducer.extern_library = SemIR::LibraryNameId::Invalid;
     return;
@@ -158,8 +220,11 @@ auto RequireDefaultFinalOnlyInInterfaces(
     // Both `default` and `final` allowed in an interface definition.
     return;
   }
-  ForbidModifiersOnDecl(context, introducer, KeywordModifierSet::Interface,
-                        " outside of an interface");
+  CARBON_DIAGNOSTIC(ModifierRequiresInterface, Error,
+                    "`{0}` not allowed; requires interface scope",
+                    Lex::TokenKind);
+  ForbidModifiersOnDecl(context, ModifierRequiresInterface, introducer,
+                        KeywordModifierSet::Interface);
 }
 
 }  // namespace Carbon::Check

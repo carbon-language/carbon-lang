@@ -228,6 +228,7 @@ CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
 CARBON_DIAGNOSTIC_KIND(DeductionInconsistent)
 CARBON_DIAGNOSTIC_KIND(DeductionGenericHere)
 CARBON_DIAGNOSTIC_KIND(InitializingGenericParam)
+CARBON_DIAGNOSTIC_KIND(CompTimeArgumentNotConstant)
 
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
@@ -313,7 +314,6 @@ CARBON_DIAGNOSTIC_KIND(IncompleteTypeInBaseDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInConversion)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionParam)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInFunctionReturnType)
-CARBON_DIAGNOSTIC_KIND(IncompleteTypeInInit)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInLetDecl)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(IncompleteTypeInValueConversion)
@@ -357,7 +357,15 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
 
 // Modifier checking.
-CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOn)
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnDeclaration)
+CARBON_DIAGNOSTIC_KIND(ModifierOnlyAllowedOnDefinition)
+CARBON_DIAGNOSTIC_KIND(ModifierPrivateNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ModifierProtectedNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ModifierVirtualNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ModifierAbstractNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ModifierRequiresClass)
+CARBON_DIAGNOSTIC_KIND(ModifierRequiresInterface)
+CARBON_DIAGNOSTIC_KIND(ModifierExternNotAllowed)
 CARBON_DIAGNOSTIC_KIND(ModifierNotInContext)
 CARBON_DIAGNOSTIC_KIND(ModifierRepeated)
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
@@ -367,7 +375,7 @@ CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
 
 // Access modifiers.
-CARBON_DIAGNOSTIC_KIND(ClassMemberDefinition)
+CARBON_DIAGNOSTIC_KIND(ClassMemberDeclaration)
 CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 
 // Alias diagnostics.

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed on `fn` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 default protected fn WrongOrder();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `virtual` not allowed on `fn` declaration outside of a class
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `virtual` not allowed; requires class scope
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR:
 private protected fn TwoAccess();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed on `fn` declaration outside of a class
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed; requires class scope
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -62,7 +62,7 @@ abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR:
 base fn InvalidModifier();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: error: `default` not allowed on `fn` declaration outside of an interface
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: error: `default` not allowed; requires interface scope
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:

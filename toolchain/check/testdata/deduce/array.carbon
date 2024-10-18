@@ -72,9 +72,9 @@ fn G() -> C {
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `[C; 3]` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:1: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note: initializing function parameter
   // CHECK:STDERR: fn F[T:! type](a: [T; 2]) -> T { return a[0]; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~~~~~
   // CHECK:STDERR:
   return F(a);
 }
