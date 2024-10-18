@@ -392,6 +392,12 @@ static auto ConvertStructToStructOrClass(Context& context,
   auto& sem_ir = context.sem_ir();
   auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
   auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
+  bool dest_has_vptr = llvm::any_of(dest_elem_fields, [&](auto dest_field_id) {
+    auto dest_field =
+        sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
+    return dest_field.name_id == SemIR::NameId::Vptr;
+  });
+  auto dest_elem_fields_size = dest_elem_fields.size() - dest_has_vptr;
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -411,14 +417,14 @@ static auto ConvertStructToStructOrClass(Context& context,
   // Check that the structs are the same size.
   // TODO: If not, include the name of the first source field that doesn't
   // exist in the destination or vice versa in the diagnostic.
-  if (src_elem_fields.size() != dest_elem_fields.size()) {
+  if (src_elem_fields.size() != dest_elem_fields_size) {
     CARBON_DIAGNOSTIC(
         StructInitElementCountMismatch, Error,
         "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
         "with {2} field{2:s}",
         BoolAsSelect, IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                           ToClass, dest_elem_fields.size(),
+                           ToClass, dest_elem_fields_size,
                            src_elem_fields.size());
     return SemIR::InstId::BuiltinError;
   }
@@ -449,14 +455,18 @@ static auto ConvertStructToStructOrClass(Context& context,
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.is_valid()
+      literal_elems_id.is_valid() && !dest_has_vptr
           ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            src_elem_fields.size()});
+                            dest_elem_fields.size()});
   for (auto [i, dest_field_id] : llvm::enumerate(dest_elem_fields)) {
     auto dest_field =
         sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
+    if (dest_field.name_id == SemIR::NameId::Vptr) {
+      new_block.Set(i, SemIR::InstId::BuiltinError);
+      continue;
+    }
 
     // Find the matching source field.
     auto src_field_index = i;
