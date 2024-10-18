@@ -65,8 +65,7 @@ jobs:
       #
       # The `-k` flag is used to print all clang-tidy errors.
       - name: clang-tidy
-        if:
-          steps.test_setup.outputs.has_code == 'true'
+        if: steps.test_setup.outputs.has_code == 'true'
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
