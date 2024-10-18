@@ -51,15 +51,7 @@ jobs:
             sourceforge.net:443
             storage.googleapis.com:443
 
-      # Checkout the pull request head or the branch.
-      - name: Checkout pull request
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
       - name: Checkout branch
-        if: github.event_name != 'pull_request'
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - uses: ./.github/actions/test_setup
