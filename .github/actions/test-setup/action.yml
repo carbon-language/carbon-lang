@@ -50,7 +50,7 @@ runs:
         'pull_request'
       shell: bash
       env:
-        REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        REMOTE_CACHE_KEY: ${{ inputs.remote_cache_key }}
       run: |
         echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
         echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
