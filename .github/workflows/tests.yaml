@@ -62,13 +62,36 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: ./.github/actions/test
+      - uses: ./.github/actions/test_setup
         with:
           matrix_runner: ${{ matrix.runner }}
-          matrix_build_mode: ${{ matrix.build_mode }}
           base_sha:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
           remote_cache_upload: ${{ env.remote_cache_upload }}
           remote_cache_key: ${{ secrets.CARBON_BUILDS_GITHUB }}
+          targets_file: ${{ runner.temp }}/targets
+
+      # Build and run just the tests impacted by the PR or merge group.
+      - name: Test (${{ inputs.matrix_build_mode }})
+        if: steps.test_setup.outputs.has_code == 'true'
+        shell: bash
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          # Decrease the jobs sharply if we see repeated failures to try to
+          # work around transient network errors even if it makes things
+          # slower.
+          ./scripts/run_bazel.py \
+            --attempts=5 --jobs-on-last-attempt=4 \
+            test -c ${{ matrix.build_mode }} \
+            --target_pattern_file=$TARGETS_FILE
+
+      # See "Disk space before build".
+      - name: Disk space after build
+        if: steps.test_setup.outputs.has_code == 'true'
+        run: df -h

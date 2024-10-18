@@ -2,12 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Test
+name: Test setup
 
 inputs:
   matrix_runner:
-    required: true
-  matrix_build_mode:
     required: true
   base_sha:
     required: true
@@ -15,6 +13,12 @@ inputs:
     required: true
   remote_cache_key:
     required: true
+  targets_file:
+    required: true
+
+outputs:
+  has_code:
+    value: ${{ steps.filter.outputs.has_code}}
 
 runs:
   using: composite
@@ -92,7 +96,7 @@ runs:
       if: steps.filter.outputs.has_code == 'true' && github.event_name == 'push'
       shell: bash
       env:
-        TARGETS_FILE: ${{ runner.temp }}/targets
+        TARGETS_FILE: ${{ inputs.targets_file }}
       run: |
         echo "//..." >$TARGETS_FILE
 
@@ -106,7 +110,7 @@ runs:
       env:
         # Compute the base SHA from the different event structures.
         GIT_BASE_SHA: ${{ inputs.base_sha }}
-        TARGETS_FILE: ${{ runner.temp }}/targets
+        TARGETS_FILE: ${{ inputs.targets_file }}
       run: |
         # First fetch the relevant base into the git repository.
         git fetch --depth=1 origin $GIT_BASE_SHA
@@ -118,46 +122,3 @@ runs:
         # no targets or there may only be non-test targets that we want to
         # build, so simply inject an explicit no-op test target.
         echo "//scripts:no_op_test" >> $TARGETS_FILE
-
-    # Build and run just the tests impacted by the PR or merge group.
-    - name: Test (${{ inputs.matrix_build_mode }})
-      if:
-        steps.filter.outputs.has_code == 'true' && matrix.build_mode !=
-        'clang-tidy'
-      shell: bash
-      env:
-        # 'libtool_check_unique failed to generate' workaround.
-        # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
-        BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        TARGETS_FILE: ${{ runner.temp }}/targets
-      run: |
-        # Decrease the jobs sharply if we see repeated failures to try to
-        # work around transient network errors even if it makes things
-        # slower.
-        ./scripts/run_bazel.py \
-          --attempts=5 --jobs-on-last-attempt=4 \
-          test -c ${{ inputs.matrix_build_mode }} \
-          --target_pattern_file=$TARGETS_FILE
-
-    # Run in the clang-tidy config. This is done as part of tests so that we
-    # aren't duplicating bazel/llvm setup.
-    #
-    # The `-k` flag is used to print all clang-tidy errors.
-    - name: clang-tidy
-      if:
-        steps.filter.outputs.has_code == 'true' && matrix.build_mode ==
-        'clang-tidy'
-      shell: bash
-      env:
-        TARGETS_FILE: ${{ runner.temp }}/targets
-      run: |
-        ./scripts/run_bazel.py \
-          --attempts=5 \
-          build --config=clang-tidy -k \
-          --target_pattern_file=$TARGETS_FILE
-
-    # See "Disk space before build".
-    - name: Disk space after build
-      if: steps.filter.outputs.has_code == 'true'
-      shell: bash
-      run: df -h
