@@ -299,7 +299,8 @@ struct RuntimeParamIndex : public IndexBase,
 constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
     RuntimeParamIndex(InvalidIndex);
 
-constexpr RuntimeParamIndex RuntimeParamIndex::Unknown = RuntimeParamIndex(-2);
+constexpr RuntimeParamIndex RuntimeParamIndex::Unknown =
+    RuntimeParamIndex(InvalidIndex - 1);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {

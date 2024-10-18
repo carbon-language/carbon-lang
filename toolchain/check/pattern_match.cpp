@@ -89,22 +89,22 @@ class MatchContext {
     return std::exchange(result_, SemIR::InstId::Invalid);
   }
 
-  // Records that `bind_name_id` is the ID of an "inner parameter", i.e. an inst
-  // in the decl block that exposes a parameter to the function body. Valid
-  // only during callee pattern matching.
-  auto RecordInnerParam(SemIR::InstId bind_name_id) {
+  // Records that `bind_name_id` is the ID of an inst in the AnyBindName
+  // category, emitted as part of this pattern match. Valid only during callee
+  // pattern matching.
+  auto RecordBindName(SemIR::InstId bind_name_id) {
     CARBON_CHECK(kind_ == MatchKind::Callee);
-    inner_param_insts_.push_back(bind_name_id);
+    bind_name_ids_.push_back(bind_name_id);
   }
 
-  // Allocates an InstBlock containing the inner parameters recorded by
-  // RecordInnerParam since the last call to this function (if any), and returns
-  // its ID. Valid only during callee pattern matching.
-  auto ConsumeInnerParams(Context& context) -> SemIR::InstBlockId {
+  // Allocates an InstBlock containing the IDs recorded by RecordBindName since
+  // the last call to this function (if any), and returns its ID. Valid only
+  // during callee pattern matching.
+  auto ConsumeBindNames(Context& context) -> SemIR::InstBlockId {
     CARBON_CHECK(stack_.empty());
     CARBON_CHECK(kind_ == MatchKind::Callee);
-    auto block_id = context.inst_blocks().Add(inner_param_insts_);
-    inner_param_insts_.clear();
+    auto block_id = context.inst_blocks().Add(bind_name_ids_);
+    bind_name_ids_.clear();
     return block_id;
   }
 
@@ -121,7 +121,7 @@ class MatchContext {
 
   SemIR::InstId result_;
 
-  llvm::SmallVector<SemIR::InstId> inner_param_insts_;
+  llvm::SmallVector<SemIR::InstId> bind_name_ids_;
 
   MatchKind kind_;
 
@@ -141,13 +141,14 @@ class MatchContext {
 auto EmitPatternMatch(Context& context, MatchContext& match,
                       MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::InstId::BuiltinError) {
-    match.RecordInnerParam(SemIR::InstId::BuiltinError);
+    match.RecordBindName(SemIR::InstId::BuiltinError);
     return;
   }
   auto pattern = context.insts().GetWithLocId(entry.pattern_id);
   CARBON_KIND_SWITCH(pattern.inst) {
     case SemIR::BindingPattern::Kind:
     case SemIR::SymbolicBindingPattern::Kind: {
+      CARBON_CHECK(match.kind() == MatchKind::Callee);
       auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(
           binding_pattern.bind_name_id);
@@ -156,7 +157,7 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
       context.ReplaceInstBeforeConstantUse(binding_pattern.bind_name_id,
                                            bind_name);
       context.inst_block_stack().AddInstId(binding_pattern.bind_name_id);
-      match.RecordInnerParam(binding_pattern.bind_name_id);
+      match.RecordBindName(binding_pattern.bind_name_id);
       break;
     }
     case CARBON_KIND(SemIR::AddrPattern addr_pattern): {
@@ -240,7 +241,7 @@ auto CalleePatternMatch(Context& context,
   auto implicit_params_id = SemIR::InstBlockId::Invalid;
 
   MatchContext match(MatchKind::Callee);
-  // TODO reserve space in inner_param_insts_
+  // TODO reserve space in bind_name_ids_
 
   if (implicit_param_patterns_id.is_valid()) {
     // We add work to the stack in reverse so that the results will be produced
@@ -253,7 +254,7 @@ auto CalleePatternMatch(Context& context,
     while (match.HasWork()) {
       EmitPatternMatch(context, match, match.NextWorkItem());
     }
-    implicit_params_id = match.ConsumeInnerParams(context);
+    implicit_params_id = match.ConsumeBindNames(context);
   }
 
   if (param_patterns_id.is_valid()) {
@@ -265,7 +266,7 @@ auto CalleePatternMatch(Context& context,
     while (match.HasWork()) {
       EmitPatternMatch(context, match, match.NextWorkItem());
     }
-    params_id = match.ConsumeInnerParams(context);
+    params_id = match.ConsumeBindNames(context);
   }
 
   return {.implicit_params_id = implicit_params_id, .params_id = params_id};
