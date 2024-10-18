@@ -15,11 +15,6 @@ auto llvm::format_provider<Carbon::BoolAsSelect>::format(
     return;
   }
 
-  // Remove wrapping quotes if present.
-  if (style.starts_with('\'') && style.ends_with('\'')) {
-    style = style.drop_front().drop_back();
-  }
-
   auto sep = style.find('|');
   CARBON_CHECK(
       sep != llvm::StringRef::npos,
@@ -46,11 +41,6 @@ auto llvm::format_provider<Carbon::IntAsSelect>::format(
   } else if (style.empty()) {
     llvm::format_provider<int>::format(wrapper.value, out, style);
     return;
-  }
-
-  // Remove wrapping quotes if present.
-  if (style.starts_with('\'') && style.ends_with('\'')) {
-    style = style.drop_front().drop_back();
   }
 
   auto cursor = style;
