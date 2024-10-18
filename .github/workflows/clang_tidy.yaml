@@ -72,8 +72,3 @@ jobs:
             --attempts=5 \
             build --config=clang-tidy -k \
             --target_pattern_file=$TARGETS_FILE
-
-      # See "Disk space before build" in `test-setup`.
-      - name: Disk space after build
-        if: steps.test-setup.outputs.has_code == 'true'
-        run: df -h
