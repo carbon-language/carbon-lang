@@ -54,7 +54,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: ./.github/actions/test_setup
+      - uses: ./.github/actions/test-setup
         with:
           matrix_runner: ${{ matrix.runner }}
           base_sha:
@@ -67,7 +67,7 @@ jobs:
 
       # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ inputs.matrix_build_mode }})
-        if: steps.test_setup.outputs.has_code == 'true'
+        if: steps.test-setup.outputs.has_code == 'true'
         shell: bash
         env:
           # 'libtool_check_unique failed to generate' workaround.
@@ -85,5 +85,5 @@ jobs:
 
       # See "Disk space before build".
       - name: Disk space after build
-        if: steps.test_setup.outputs.has_code == 'true'
+        if: steps.test-setup.outputs.has_code == 'true'
         run: df -h

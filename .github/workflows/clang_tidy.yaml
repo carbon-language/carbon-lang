@@ -48,8 +48,8 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - id: test_setup
-        uses: ./.github/actions/test_setup
+      - id: test-setup
+        uses: ./.github/actions/test-setup
         with:
           matrix_runner: 'ubuntu-22.04'
           base_sha:
@@ -65,7 +65,7 @@ jobs:
       #
       # The `-k` flag is used to print all clang-tidy errors.
       - name: clang-tidy
-        if: steps.test_setup.outputs.has_code == 'true'
+        if: steps.test-setup.outputs.has_code == 'true'
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
@@ -76,5 +76,5 @@ jobs:
 
       # See "Disk space before build".
       - name: Disk space after build
-        if: steps.test_setup.outputs.has_code == 'true'
+        if: steps.test-setup.outputs.has_code == 'true'
         run: df -h
