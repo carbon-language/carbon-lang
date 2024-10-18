@@ -18,6 +18,9 @@ runs:
         android: true
         dotnet: true
         haskell: true
+        # Without this, we save about 22MB in seconds. It adds minutes and only
+        # saves about 4MB.
+        large-packages: false
 
     # Cache and install a recent version of LLVM. This uses the GitHub action
     # cache to avoid directly downloading on each iteration and improve
