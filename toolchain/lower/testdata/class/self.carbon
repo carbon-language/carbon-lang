@@ -27,17 +27,20 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT: source_filename = "self.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc19_14.2 = load i32, ptr %.loc19_14.1.a, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc19_14.2, !dbg !8
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc19_14.2 = load i32, ptr %.loc19_14.1.a, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc19_14.2, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_10.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 1, ptr %.loc23_10.a, align 4, !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) !dbg !10 {
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %.loc23_10.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   store i32 1, ptr %.loc23_10.a, align 4, !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -50,8 +53,9 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.C.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Set", linkageName: "_CSet.C.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 23, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 1, scope: !9)
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 21, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Set", linkageName: "_CSet.C.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 1, scope: !10)

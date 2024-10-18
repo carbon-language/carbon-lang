@@ -21,7 +21,8 @@ fn Main() {
 // CHECK:STDOUT: @tuple.loc15_5 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 12, ptr %a.var, align 4, !dbg !8
 // CHECK:STDOUT:   store i32 9, ptr %a.var, align 4, !dbg !9

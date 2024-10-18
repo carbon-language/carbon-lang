@@ -29,18 +29,24 @@ fn F64() -> type {
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %type @_CI32.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !7
+// CHECK:STDOUT:   %return = alloca %type, align 8, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CI48.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !9
-// CHECK:STDOUT: }
+// CHECK:STDOUT: define %type @_CI48.Main() !dbg !9 {
+// CHECK:STDOUT:   %return = alloca %type, align 8, !dbg !10
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CF64.Main() !dbg !10 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret %type zeroinitializer, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define %type @_CF64.Main() !dbg !12 {
+// CHECK:STDOUT:   %return = alloca %type, align 8, !dbg !13
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -53,8 +59,11 @@ fn F64() -> type {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "I32", linkageName: "_CI32.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "I48", linkageName: "_CI48.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F64", linkageName: "_CF64.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "I48", linkageName: "_CI48.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 10, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 3, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F64", linkageName: "_CF64.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 10, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !12)

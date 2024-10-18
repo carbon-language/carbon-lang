@@ -22,21 +22,25 @@ fn G() -> i32 {
 // CHECK:STDOUT: @array.loc16_20.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
-// CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc12_15.3, !dbg !8
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !8
+// CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc12_15.3, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.2.temp, ptr align 4 @array.loc16_20.13, i64 12, i1 false), !dbg !10
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc16_20.2.temp, i32 1), !dbg !11
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !12
+// CHECK:STDOUT: define i32 @_CG.Main() !dbg !10 {
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !11
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4, !dbg !12
+// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1, !dbg !12
+// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 2, !dbg !12
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.2.temp, ptr align 4 @array.loc16_20.13, i64 12, i1 false), !dbg !12
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc16_20.2.temp, i32 1), !dbg !13
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -54,9 +58,11 @@ fn G() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 12, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 10, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 3, scope: !9)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 29, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 8, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 12, scope: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 10, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 3, scope: !10)

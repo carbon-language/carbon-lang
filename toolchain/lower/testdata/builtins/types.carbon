@@ -22,7 +22,8 @@ fn F() {
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %i.var, align 4, !dbg !8
 // CHECK:STDOUT:   %f.var = alloca double, align 8, !dbg !9

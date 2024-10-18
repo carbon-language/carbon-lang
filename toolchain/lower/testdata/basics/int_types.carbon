@@ -17,23 +17,31 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: source_filename = "int_types.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i8 @_CF_i8.Main(i8 %a) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i8 %a, !dbg !7
+// CHECK:STDOUT:   %return = alloca i8, align 1, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i8 %a, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CF_u16.Main(i16 %a) !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i16 %a, !dbg !9
+// CHECK:STDOUT: define i16 @_CF_u16.Main(i16 %a) !dbg !9 {
+// CHECK:STDOUT:   %return = alloca i16, align 2, !dbg !10
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i16 %a, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CF_i64.Main(i64 %a) !dbg !10 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i64 %a, !dbg !11
+// CHECK:STDOUT: define i64 @_CF_i64.Main(i64 %a) !dbg !12 {
+// CHECK:STDOUT:   %return = alloca i64, align 8, !dbg !13
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i64 %a, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i65536 @_CF_u65536.Main(i65536 %a) !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i65536 %a, !dbg !13
+// CHECK:STDOUT: define i65536 @_CF_u65536.Main(i65536 %a) !dbg !15 {
+// CHECK:STDOUT:   %return = alloca i65536, align 8, !dbg !16
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i65536 %a, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -46,10 +54,14 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F_i8", linkageName: "_CF_i8.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 24, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F_u16", linkageName: "_CF_u16.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 27, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F_i64", linkageName: "_CF_i64.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 27, scope: !10)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F_u65536", linkageName: "_CF_u65536.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 36, scope: !12)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 11, column: 24, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F_u16", linkageName: "_CF_u16.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 18, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 27, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F_i64", linkageName: "_CF_i64.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 18, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 13, column: 27, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F_u65536", linkageName: "_CF_u65536.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 24, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 36, scope: !15)

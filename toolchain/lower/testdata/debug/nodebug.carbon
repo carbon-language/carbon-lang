@@ -17,6 +17,7 @@ fn F() {
 // CHECK:STDOUT: source_filename = "nodebug.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

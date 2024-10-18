@@ -18,7 +18,8 @@ fn Main() {
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %print.int.printf = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }

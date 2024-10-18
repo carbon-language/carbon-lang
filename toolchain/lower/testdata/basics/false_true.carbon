@@ -20,13 +20,17 @@ fn T() -> bool {
 // CHECK:STDOUT: source_filename = "false_true.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 false, !dbg !7
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i1 false, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CT.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 true, !dbg !9
+// CHECK:STDOUT: define i1 @_CT.Main() !dbg !9 {
+// CHECK:STDOUT:   %return = alloca i1, align 1, !dbg !10
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret i1 true, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -39,6 +43,8 @@ fn T() -> bool {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "T", linkageName: "_CT.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 8, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "T", linkageName: "_CT.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 8, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !9)

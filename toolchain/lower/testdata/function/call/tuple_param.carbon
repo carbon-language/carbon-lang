@@ -20,12 +20,14 @@ fn Main() {
 // CHECK:STDOUT: @tuple.3.loc14_20.2 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main({ i32 } %b, ptr %c) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.3.loc14_20.2), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }

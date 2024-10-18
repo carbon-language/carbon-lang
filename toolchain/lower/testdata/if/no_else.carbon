@@ -22,17 +22,20 @@ fn If(b: bool) {
 // CHECK:STDOUT: source_filename = "no_else.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CIf.Main(i1 %b) !dbg !10 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
