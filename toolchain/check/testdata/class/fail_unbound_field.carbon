@@ -11,7 +11,7 @@
 class Class {
   var field: i32;
   fn F() -> i32 {
-    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+4]]:12: error: expression cannot be used as a value
+    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+4]]:12: error(UseOfNonExprAsValue): expression cannot be used as a value
     // CHECK:STDERR:     return field;
     // CHECK:STDERR:            ^~~~~
     // CHECK:STDERR:
@@ -20,7 +20,7 @@ class Class {
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:10: error: expression cannot be used as a value
+  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:10: error(UseOfNonExprAsValue): expression cannot be used as a value
   // CHECK:STDERR:   return Class.field;
   // CHECK:STDERR:          ^~~~~~~~~~~
   return Class.field;

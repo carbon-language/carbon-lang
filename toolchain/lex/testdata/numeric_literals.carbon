@@ -7,9 +7,12 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lex/testdata/numeric_literals.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/numeric_literals.carbon
-// CHECK:STDOUT: - filename: numeric_literals.carbon
+
+// --- valid.carbon
+// CHECK:STDOUT: - filename: valid.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index:  0, kind:          'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
+
 
 fn F() {
 // CHECK:STDOUT:     { index:  1, kind:                 'Fn', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'fn', has_leading_space: true },
@@ -86,5 +89,33 @@ fn F() {
 }
 // CHECK:STDOUT:     { index: 54, kind:    'CloseCurlyBrace', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '}', opening_token: 5, has_leading_space: true },
 
+
 // CHECK:STDOUT:     { index: 55, kind:            'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true },
+// CHECK:STDOUT:   ]
+// --- fail_binary_real.carbon
+// CHECK:STDOUT: - filename: fail_binary_real.carbon
+// CHECK:STDOUT:   tokens: [
+// CHECK:STDOUT:     { index: 0, kind:   'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
+
+// CHECK:STDERR: fail_binary_real.carbon:[[@LINE+4]]:4: error(BinaryRealLiteral): binary real number literals are not supported
+// CHECK:STDERR: 0b1.0
+// CHECK:STDERR:    ^
+// CHECK:STDERR:
+0b1.0
+// CHECK:STDOUT:     { index: 1, kind: 'RealLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '0b1.0', value: `2*2^-1`, has_leading_space: true },
+
+// CHECK:STDOUT:     { index: 2, kind:     'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true },
+// CHECK:STDOUT:   ]
+// --- fail_wrong_real_exponent
+// CHECK:STDOUT: - filename: fail_wrong_real_exponent
+// CHECK:STDOUT:   tokens: [
+// CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
+
+// CHECK:STDERR: fail_wrong_real_exponent:[[@LINE+3]]:4: error(WrongRealLiteralExponent): expected 'e' to introduce exponent
+// CHECK:STDERR: 1.0r3
+// CHECK:STDERR:    ^
+1.0r3
+// CHECK:STDOUT:     { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '1.0r3', has_leading_space: true },
+
+// CHECK:STDOUT:     { index: 2, kind:   'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true },
 // CHECK:STDOUT:   ]

@@ -16,10 +16,10 @@ alias AC = C;
 
 impl AC as AI {}
 
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+6]]:1: error: redefinition of `impl AC as AI`
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+6]]:1: error(ImplRedefinition): redefinition of `impl AC as AI`
 // CHECK:STDERR: impl AC as AI {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-5]]:1: note: previous definition was here
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-5]]:1: note(ImplPreviousDefinition): previous definition was here
 // CHECK:STDERR: impl AC as AI {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 impl AC as AI {}

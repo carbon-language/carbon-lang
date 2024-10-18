@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/manifest:defs.bzl", "manifest")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -54,6 +55,29 @@ cc_library(
     ],
     deps = [
         "//common:enum_base",
+    ],
+)
+
+manifest(
+    name = "all_testdata.txt",
+    srcs = ["//toolchain/testing:all_testdata"],
+)
+
+cc_test(
+    name = "emitted_diagnostics_test",
+    size = "small",
+    srcs = ["emitted_diagnostics_test.cpp"],
+    data = [
+        "all_testdata.txt",
+        "//toolchain/testing:all_testdata",
+    ],
+    deps = [
+        ":diagnostic_kind",
+        "//common:set",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+        "@re2",
     ],
 )
 

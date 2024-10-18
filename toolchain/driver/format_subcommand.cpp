@@ -64,7 +64,8 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     result.per_file_success.back().second = false;
   };
 
-  StreamDiagnosticConsumer consumer(driver_env.error_stream);
+  StreamDiagnosticConsumer consumer(driver_env.error_stream,
+                                    /*include_diagnostic_kind=*/false);
   for (auto& f : options_.input_filenames) {
     // Push a result, which we'll update on failure.
     result.per_file_success.push_back({f.str(), true});

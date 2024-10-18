@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_addr_not_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error(AddrOnNonSelfParam): `addr` can only be applied to a `self` parameter
   // CHECK:STDERR:   fn F[addr a:! Class*]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
   fn F[addr a:! Class*]();
 
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error(AddrOnNonSelfParam): `addr` can only be applied to a `self` parameter
   // CHECK:STDERR:   fn G(addr b: Class*);
   // CHECK:STDERR:        ^~~~
   fn G(addr b: Class*);

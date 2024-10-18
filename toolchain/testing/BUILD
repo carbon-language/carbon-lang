@@ -8,6 +8,20 @@ load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "all_testdata",
+    data = [
+        "//toolchain/check:testdata",
+        "//toolchain/codegen:testdata",
+        "//toolchain/diagnostics:testdata",
+        "//toolchain/driver:testdata",
+        "//toolchain/format:testdata",
+        "//toolchain/lex:testdata",
+        "//toolchain/lower:testdata",
+        "//toolchain/parse:testdata",
+    ],
+)
+
 cc_library(
     name = "compile_helper",
     testonly = 1,
@@ -29,16 +43,7 @@ file_test(
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
     env = cc_env(),
-    tests = [
-        "//toolchain/check:testdata",
-        "//toolchain/codegen:testdata",
-        "//toolchain/diagnostics:testdata",
-        "//toolchain/driver:testdata",
-        "//toolchain/format:testdata",
-        "//toolchain/lex:testdata",
-        "//toolchain/lower:testdata",
-        "//toolchain/parse:testdata",
-    ],
+    tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",
         "//common:error",

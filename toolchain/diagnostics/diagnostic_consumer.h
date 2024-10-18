@@ -39,8 +39,9 @@ class DiagnosticConsumer {
 // A diagnostic consumer that prints to a stream.
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  explicit StreamDiagnosticConsumer(llvm::raw_ostream& stream)
-      : stream_(&stream) {}
+  explicit StreamDiagnosticConsumer(llvm::raw_ostream& stream,
+                                    bool include_diagnostic_kind)
+      : stream_(&stream), include_diagnostic_kind_(include_diagnostic_kind) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override;
   auto Flush() -> void override { stream_->flush(); }
@@ -51,6 +52,10 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix) -> void;
 
   llvm::raw_ostream* stream_;
+
+  // Whether to include the diagnostic kind when printing.
+  bool include_diagnostic_kind_;
+
   // Whethere we've printed a diagnostic. Used for printing separators.
   bool printed_diagnostic_ = false;
 };
