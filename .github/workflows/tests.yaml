@@ -53,7 +53,8 @@ jobs:
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: ./.github/actions/test-setup
+      - id: test-setup
+        uses: ./.github/actions/test-setup
         with:
           matrix_runner: ${{ matrix.runner }}
           base_sha:
@@ -65,7 +66,7 @@ jobs:
           targets_file: ${{ runner.temp }}/targets
 
       # Build and run just the tests impacted by the PR or merge group.
-      - name: Test (${{ inputs.matrix_build_mode }})
+      - name: Test (${{ matrix.build_mode }})
         if: steps.test-setup.outputs.has_code == 'true'
         shell: bash
         env:
