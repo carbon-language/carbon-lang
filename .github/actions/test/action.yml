@@ -90,6 +90,7 @@ runs:
     # optimize the latency of this step.
     - name: Compute impacted pull request targets (for push)
       if: steps.filter.outputs.has_code == 'true' && github.event_name == 'push'
+      shell: bash
       env:
         TARGETS_FILE: ${{ runner.temp }}/targets
       run: |
@@ -101,6 +102,7 @@ runs:
     # all of the unaffected Bazel targets.
     - name: Compute impacted pull request targets
       if: steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+      shell: bash
       env:
         # Compute the base SHA from the different event structures.
         GIT_BASE_SHA: ${{ inputs.base_sha }}
@@ -122,6 +124,7 @@ runs:
       if:
         steps.filter.outputs.has_code == 'true' && matrix.build_mode !=
         'clang-tidy'
+      shell: bash
       env:
         # 'libtool_check_unique failed to generate' workaround.
         # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
@@ -144,6 +147,7 @@ runs:
       if:
         steps.filter.outputs.has_code == 'true' && matrix.build_mode ==
         'clang-tidy'
+      shell: bash
       env:
         TARGETS_FILE: ${{ runner.temp }}/targets
       run: |
@@ -155,4 +159,5 @@ runs:
     # See "Disk space before build".
     - name: Disk space after build
       if: steps.filter.outputs.has_code == 'true'
+      shell: bash
       run: df -h
