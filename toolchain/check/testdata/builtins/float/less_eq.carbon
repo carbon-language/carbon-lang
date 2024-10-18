@@ -104,10 +104,10 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc2_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc2_30.2: type = converted %bool.make_type, %.loc2_30.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc2_11: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc2_11
-// CHECK:STDOUT:     %param.loc2_19: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc2_19
+// CHECK:STDOUT:     %param.loc2_12: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc2_12
+// CHECK:STDOUT:     %param.loc2_20: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc2_20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
@@ -135,10 +135,10 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
 // CHECK:STDOUT:     %False.ref.loc8: type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:     %param.loc8_6: %True = param runtime_param0
-// CHECK:STDOUT:     %true_: %True = bind_name true_, %param.loc8_6
-// CHECK:STDOUT:     %param.loc8_19: %False = param runtime_param1
-// CHECK:STDOUT:     %false_: %False = bind_name false_, %param.loc8_19
+// CHECK:STDOUT:     %param.loc8_11: %True = param runtime_param0
+// CHECK:STDOUT:     %true_: %True = bind_name true_, %param.loc8_11
+// CHECK:STDOUT:     %param.loc8_25: %False = param runtime_param1
+// CHECK:STDOUT:     %false_: %False = bind_name false_, %param.loc8_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
@@ -158,10 +158,10 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc16_35.2: type = converted %bool.make_type, %.loc16_35.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc16_16: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc16_16
-// CHECK:STDOUT:     %param.loc16_24: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc16_24
+// CHECK:STDOUT:     %param.loc16_17: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc16_17
+// CHECK:STDOUT:     %param.loc16_25: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc16_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

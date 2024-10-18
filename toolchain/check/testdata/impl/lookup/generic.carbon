@@ -962,10 +962,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc9_14.1 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %param.loc9_14: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %param.loc9_14 [symbolic = %T.loc9_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc9_24: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %param.loc9_24 [symbolic = %U.loc9_24.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc9_15: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %param.loc9_15 [symbolic = %T.loc9_14.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc9_25: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %param.loc9_25 [symbolic = %U.loc9_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x

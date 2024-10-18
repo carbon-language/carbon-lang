@@ -278,10 +278,10 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.param_patt: @.1.%T.loc12_9.2 (%T) = param_pattern %N.patt.loc12_19.1, runtime_param<invalid> [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.1 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_19: @.1.%T.loc12_9.2 (%T) = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc12_19.1: @.1.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1, %param.loc12_19 [symbolic = %N.loc12_19.2 (constants.%N.2)]
+// CHECK:STDOUT:     %param.loc12_10: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_10 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc12_20: @.1.%T.loc12_9.2 (%T) = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc12_19.1: @.1.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1, %param.loc12_20 [symbolic = %N.loc12_19.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -380,10 +380,10 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
-// CHECK:STDOUT:     %param.loc12_9: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_9 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_19: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc12_19.1: i32 = bind_symbolic_name U, 1, %param.loc12_19 [symbolic = %U.loc12_19.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc12_10: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %param.loc12_10 [symbolic = %T.loc12_9.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc12_20: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc12_19.1: i32 = bind_symbolic_name U, 1, %param.loc12_20 [symbolic = %U.loc12_19.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

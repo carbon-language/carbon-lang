@@ -108,10 +108,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %T.ref.loc8_39: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_45: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc8_26: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_26.1: type = bind_symbolic_name T, 0, %param.loc8_26 [symbolic = %T.loc8_26.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_36: @InitFromStructGeneric.%T.loc8_26.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_name x, %param.loc8_36
+// CHECK:STDOUT:     %param.loc8_27: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_26.1: type = bind_symbolic_name T, 0, %param.loc8_27 [symbolic = %T.loc8_26.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc8_37: @InitFromStructGeneric.%T.loc8_26.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_name x, %param.loc8_37
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {
 // CHECK:STDOUT:     %x.patt: i32 = binding_pattern x
@@ -303,10 +303,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %T.ref.loc8_40: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_46: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc8_27: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_27.1: type = bind_symbolic_name T, 0, %param.loc8_27 [symbolic = %T.loc8_27.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_37: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = bind_name x, %param.loc8_37
+// CHECK:STDOUT:     %param.loc8_28: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_27.1: type = bind_symbolic_name T, 0, %param.loc8_28 [symbolic = %T.loc8_27.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc8_38: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = bind_name x, %param.loc8_38
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [template = constants.%InitFromAdaptedSpecific] {
 // CHECK:STDOUT:     %x.patt: i32 = binding_pattern x

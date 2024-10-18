@@ -151,10 +151,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %A.loc16_30.1: type = class_type @A, @A(constants.%W) [symbolic = %A.loc16_30.2 (constants.%A.4)]
 // CHECK:STDOUT:     %W.ref.loc16_38: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
 // CHECK:STDOUT:     %return: ref @TestGeneric.%W.loc16_16.2 (%W) = var <return slot>
-// CHECK:STDOUT:     %param.loc16_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc16_16.1: type = bind_symbolic_name W, 0, %param.loc16_16 [symbolic = %W.loc16_16.2 (constants.%W)]
-// CHECK:STDOUT:     %param.loc16_26: @TestGeneric.%A.loc16_30.2 (%A.4) = param runtime_param0
-// CHECK:STDOUT:     %a: @TestGeneric.%A.loc16_30.2 (%A.4) = bind_name a, %param.loc16_26
+// CHECK:STDOUT:     %param.loc16_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc16_16.1: type = bind_symbolic_name W, 0, %param.loc16_17 [symbolic = %W.loc16_16.2 (constants.%W)]
+// CHECK:STDOUT:     %param.loc16_27: @TestGeneric.%A.loc16_30.2 (%A.4) = param runtime_param0
+// CHECK:STDOUT:     %a: @TestGeneric.%A.loc16_30.2 (%A.4) = bind_name a, %param.loc16_27
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestSpecific.decl: %TestSpecific.type = fn_decl @TestSpecific [template = constants.%TestSpecific] {
 // CHECK:STDOUT:     %a.patt: %A.5 = binding_pattern a

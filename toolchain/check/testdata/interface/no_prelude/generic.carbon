@@ -141,10 +141,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %N.param_patt: @WithImplicitArgs.%T.loc22_28.2 (%T.1) = param_pattern %N.patt.loc22_38.1, runtime_param<invalid> [symbolic = %N.patt.loc22_38.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc22_28.1 [symbolic = %T.loc22_28.2 (constants.%T.1)]
-// CHECK:STDOUT:     %param.loc22_28: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc22_28.1: type = bind_symbolic_name T, 0, %param.loc22_28 [symbolic = %T.loc22_28.2 (constants.%T.1)]
-// CHECK:STDOUT:     %param.loc22_38: @WithImplicitArgs.%T.loc22_28.2 (%T.1) = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc22_38.1: @WithImplicitArgs.%T.loc22_28.2 (%T.1) = bind_symbolic_name N, 1, %param.loc22_38 [symbolic = %N.loc22_38.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc22_29: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc22_28.1: type = bind_symbolic_name T, 0, %param.loc22_29 [symbolic = %T.loc22_28.2 (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc22_39: @WithImplicitArgs.%T.loc22_28.2 (%T.1) = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc22_38.1: @WithImplicitArgs.%T.loc22_28.2 (%T.1) = bind_symbolic_name N, 1, %param.loc22_39 [symbolic = %N.loc22_38.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Receive.decl: %Receive.type = fn_decl @Receive [template = constants.%Receive] {
 // CHECK:STDOUT:     %T.patt.loc24_12.1: %Simple.type.3 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_12.2 (constants.%T.patt.4)]

@@ -67,10 +67,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = var <return slot>
-// CHECK:STDOUT:     %param.loc5_9: @Op.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc5_9
-// CHECK:STDOUT:     %param.loc5_21: @Op.%Self (%Self) = param runtime_param1
-// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc5_21
+// CHECK:STDOUT:     %param.loc5_13: @Op.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc5_13
+// CHECK:STDOUT:     %param.loc5_26: @Op.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc5_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -140,10 +140,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %.loc10_24.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
-// CHECK:STDOUT:     %param.loc10_6: %.1 = param runtime_param0
-// CHECK:STDOUT:     %x: %.1 = bind_name x, %param.loc10_6
-// CHECK:STDOUT:     %param.loc10_13: %.1 = param runtime_param1
-// CHECK:STDOUT:     %y: %.1 = bind_name y, %param.loc10_13
+// CHECK:STDOUT:     %param.loc10_7: %.1 = param runtime_param0
+// CHECK:STDOUT:     %x: %.1 = bind_name x, %param.loc10_7
+// CHECK:STDOUT:     %param.loc10_14: %.1 = param runtime_param1
+// CHECK:STDOUT:     %y: %.1 = bind_name y, %param.loc10_14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,10 +165,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
 // CHECK:STDOUT:     %return: ref %.1 = var <return slot>
-// CHECK:STDOUT:     %param.loc7_9: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param.loc7_9
-// CHECK:STDOUT:     %param.loc7_21: %.1 = param runtime_param1
-// CHECK:STDOUT:     %other: %.1 = bind_name other, %param.loc7_21
+// CHECK:STDOUT:     %param.loc7_13: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %param.loc7_13
+// CHECK:STDOUT:     %param.loc7_26: %.1 = param runtime_param1
+// CHECK:STDOUT:     %other: %.1 = bind_name other, %param.loc7_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_16: <witness> = interface_witness (%Op.decl) [template = constants.%.2]
 // CHECK:STDOUT:

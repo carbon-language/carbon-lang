@@ -114,10 +114,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_20.1: type = ptr_type %T [symbolic = %.loc6_20.2 (constants.%.3)]
 // CHECK:STDOUT:     %T.ref.loc6_26: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_20.2 (%.3) = param runtime_param0
-// CHECK:STDOUT:     %p: @F.%.loc6_20.2 (%.3) = bind_name p, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_20.2 (%.3) = param runtime_param0
+// CHECK:STDOUT:     %p: @F.%.loc6_20.2 (%.3) = bind_name p, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.6 = binding_pattern p
@@ -248,10 +248,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_26.1: type = ptr_type %.3 [symbolic = %.loc6_26.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_32: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_26.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %p: @F.%.loc6_26.2 (%.4) = bind_name p, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_26.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %p: @F.%.loc6_26.2 (%.4) = bind_name p, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.8 = binding_pattern p
@@ -385,10 +385,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_20.1: type = ptr_type %T [symbolic = %.loc6_20.2 (constants.%.3)]
 // CHECK:STDOUT:     %T.ref.loc6_26: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_20.2 (%.3) = param runtime_param0
-// CHECK:STDOUT:     %p: @F.%.loc6_20.2 (%.3) = bind_name p, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_20.2 (%.3) = param runtime_param0
+// CHECK:STDOUT:     %p: @F.%.loc6_20.2 (%.3) = bind_name p, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.7 = binding_pattern p
@@ -520,10 +520,10 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %.loc6_26.1: type = ptr_type %.3 [symbolic = %.loc6_26.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_32: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_26.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %p: @F.%.loc6_26.2 (%.4) = bind_name p, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_26.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %p: @F.%.loc6_26.2 (%.4) = bind_name p, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.7 = binding_pattern p

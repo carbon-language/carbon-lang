@@ -76,6 +76,29 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
           .entity_name_id = binding_pattern.entity_name_id};
 }
 
+auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
+    -> SemIR::NameId {
+  auto inst_id = pattern_id;
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+    inst_id = addr_pattern->inner_id;
+    inst = sem_ir.insts().Get(inst_id);
+  }
+
+  if (inst_id == SemIR::InstId::BuiltinError) {
+    return SemIR::NameId::Invalid;
+  }
+
+  auto param_pattern_inst = inst.As<SemIR::ParamPattern>();
+
+  inst_id = param_pattern_inst.subpattern_id;
+  inst = sem_ir.insts().Get(inst_id);
+
+  auto binding_pattern = inst.As<AnyBindingPattern>();
+  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
+}
+
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     -> ParamInfo {
   auto ref = sem_ir.insts().Get(param_ref_id);

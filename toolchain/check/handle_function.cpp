@@ -67,52 +67,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
 }
 
-// Checks that the parameter lists specified in a function declaration are
-// valid for a function declaration, and numbers the parameters.
-static auto CheckFunctionSignature(Context& context,
-                                   const NameComponent& name_and_params)
-    -> void {
-  RequireGenericOrSelfImplicitFunctionParams(
-      context, name_and_params.implicit_params_id);
-  SemIR::RuntimeParamIndex next_index(0);
-
-  for (auto [params_id, param_patterns_id] :
-       {std::pair{name_and_params.implicit_params_id,
-                  name_and_params.implicit_param_patterns_id},
-        std::pair{name_and_params.params_id,
-                  name_and_params.param_patterns_id}}) {
-    for (auto [param_id, param_pattern_id] :
-         llvm::zip_equal(context.inst_blocks().GetOrEmpty(params_id),
-                         context.inst_blocks().GetOrEmpty(param_patterns_id))) {
-      if (param_id == SemIR::InstId::BuiltinError ||
-          param_pattern_id == SemIR::InstId::BuiltinError) {
-        continue;
-      }
-      auto param_info =
-          SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
-      auto param_pattern_info =
-          SemIR::Function::GetParamPatternInfoFromPatternId(context.sem_ir(),
-                                                            param_pattern_id);
-
-      // If this is a runtime parameter, number it.
-      // TODO: move this logic to pattern_match.cpp, and remove this function
-      // (which is otherwise redundant).
-      if (param_info.bind_name &&
-          param_info.bind_name->kind == SemIR::BindName::Kind) {
-        param_info.inst.runtime_index = next_index;
-        context.ReplaceInstBeforeConstantUse(param_info.inst_id,
-                                             param_info.inst);
-        param_pattern_info.inst.runtime_index = next_index;
-        context.ReplaceInstBeforeConstantUse(param_pattern_info.inst_id,
-                                             param_pattern_info.inst);
-        ++next_index.index;
-      }
-    }
-  }
-
-  // TODO: Also assign a parameter index to the return storage, if present.
-}
-
 // Tries to merge new_function into prev_function_id. Since new_function won't
 // have a definition even if one is upcoming, set is_definition to indicate the
 // planned result.
@@ -228,9 +182,6 @@ static auto BuildFunctionDecl(Context& context,
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
   }
-
-  // Check that the function signature is valid and number the parameters.
-  CheckFunctionSignature(context, name);
 
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()

@@ -81,10 +81,10 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc20_6: %Class = param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %param.loc20_6
-// CHECK:STDOUT:     %param.loc20_16: %.1 = param runtime_param1
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %param.loc20_16
+// CHECK:STDOUT:     %param.loc20_7: %Class = param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %param.loc20_7
+// CHECK:STDOUT:     %param.loc20_17: %.1 = param runtime_param1
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %param.loc20_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

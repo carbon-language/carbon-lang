@@ -49,7 +49,6 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  RequireGenericParamsOnType(context, params_id);
   context.node_stack().Push(node_id, params_id);
   return true;
 }

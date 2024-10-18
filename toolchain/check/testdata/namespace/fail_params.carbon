@@ -84,14 +84,14 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param0
 // CHECK:STDOUT:   %n: i32 = bind_name n, %param.loc24
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_13 [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_23: %T = param runtime_param<invalid>
-// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
+// CHECK:STDOUT:   %param.loc30_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_14 [symbolic = constants.%T]
+// CHECK:STDOUT:   %param.loc30_24: %T = param runtime_param0
+// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_24
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
