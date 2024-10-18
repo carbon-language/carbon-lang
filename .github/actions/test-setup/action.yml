@@ -120,10 +120,3 @@ runs:
         # no targets or there may only be non-test targets that we want to
         # build, so simply inject an explicit no-op test target.
         echo "//scripts:no_op_test" >> $TARGETS_FILE
-
-    # See "Disk space before build".
-    - name: Disk space at end
-      uses: gacts/run-and-post-run@4683764dd706df847f57b9bed39d08164bcd2690 # v1.4.1
-      if: steps.test-setup.outputs.has_code == 'true'
-      with:
-        post: df -h
