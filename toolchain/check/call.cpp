@@ -19,6 +19,15 @@
 
 namespace Carbon::Check {
 
+namespace {
+// Entity kinds, for diagnostics. Converted to an int for a select.
+enum class EntityKind : uint8_t {
+  Function = 0,
+  GenericClass = 1,
+  GenericInterface = 2,
+};
+}  // namespace
+
 // Resolves the callee expression in a call to a specific callee, or diagnoses
 // if no specific callee can be identified. This verifies the arity of the
 // callee and determines any compile-time arguments, but doesn't check that the
@@ -31,7 +40,7 @@ namespace Carbon::Check {
 // callee is not generic, or `nullopt` if an error has been diagnosed.
 static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 const SemIR::EntityWithParamsBase& entity,
-                                llvm::StringLiteral entity_kind_for_diagnostic,
+                                EntityKind entity_kind_for_diagnostic,
                                 SemIR::GenericId entity_generic_id,
                                 SemIR::SpecificId enclosing_specific_id,
                                 SemIR::InstId self_id,
@@ -43,16 +52,20 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   auto params = context.inst_blocks().GetOrEmpty(callee_info.param_refs_id);
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                      "{0} argument{0:s} passed to {1} expecting "
-                      "{2} argument{2:s}",
-                      IntAsSelect, llvm::StringLiteral, IntAsSelect);
-    CARBON_DIAGNOSTIC(InCallToEntity, Note, "calling {0} declared here",
-                      llvm::StringLiteral);
+                      "{0} argument{0:s} passed to "
+                      "{1:=0:function|=1:generic class|=2:generic interface}"
+                      " expecting {2} argument{2:s}",
+                      IntAsSelect, IntAsSelect, IntAsSelect);
+    CARBON_DIAGNOSTIC(
+        InCallToEntity, Note,
+        "calling {0:=0:function|=1:generic class|=2:generic interface}"
+        " declared here",
+        IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
-               entity_kind_for_diagnostic, params.size())
+               static_cast<int>(entity_kind_for_diagnostic), params.size())
         .Note(callee_info.callee_loc, InCallToEntity,
-              entity_kind_for_diagnostic)
+              static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
     return std::nullopt;
   }
@@ -80,8 +93,9 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   const auto& generic_class = context.classes().Get(class_id);
   auto callee_specific_id = ResolveCalleeInCall(
-      context, loc_id, generic_class, "generic class", generic_class.generic_id,
-      enclosing_specific_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+      context, loc_id, generic_class, EntityKind::GenericClass,
+      generic_class.generic_id, enclosing_specific_id,
+      /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }
@@ -99,8 +113,9 @@ static auto PerformCallToGenericInterface(
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_id);
   auto callee_specific_id = ResolveCalleeInCall(
-      context, loc_id, interface, "generic interface", interface.generic_id,
-      enclosing_specific_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids);
+      context, loc_id, interface, EntityKind::GenericInterface,
+      interface.generic_id, enclosing_specific_id,
+      /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }
@@ -143,7 +158,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
-      context, loc_id, callable, "function", callable.generic_id,
+      context, loc_id, callable, EntityKind::Function, callable.generic_id,
       callee_function.enclosing_specific_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
