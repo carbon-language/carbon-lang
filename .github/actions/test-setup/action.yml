@@ -50,7 +50,7 @@ runs:
         'pull_request'
       shell: bash
       env:
-        REMOTE_CACHE_KEY: ${{ inputs.remote_cache_key }}
+        REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
       run: |
         echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
         echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
@@ -61,14 +61,6 @@ runs:
       with:
         matrix_runner: ${{ inputs.matrix_runner }}
         remote_cache_upload: ${{ inputs.remote_cache_upload }}
-
-    # After finishing setup, check out the pull request for test-related
-    # actions, if needed.
-    - name: Checkout pull request
-      if: github.event_name == 'pull_request'
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
 
     # Just for visibility, print space before and after the build.
     - name: Disk space before build

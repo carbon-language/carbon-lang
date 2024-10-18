@@ -6,8 +6,8 @@ name: Setup build environment (Ubuntu)
 runs:
   using: composite
   steps:
-    # Ubuntu images start with 23GB available, and this adds 14GB more. For
-    # comparison, MacOS images have >100GB free.
+    # Ubuntu images start with ~23GB available; this takes a few seconds to add
+    # ~22GB more.
     #
     # Although we could delete more, if we run into a limit, not deleting
     # everything provides a little flexibility to get space while trying
@@ -18,8 +18,8 @@ runs:
         android: true
         dotnet: true
         haskell: true
-        # Without this, we save about 22GB in seconds. It adds minutes and only
-        # saves about 4GB.
+        # Enabling large-packages adds ~3 minutes to save ~4GB, so turn it off
+        # to save time.
         large-packages: false
 
     # Cache and install a recent version of LLVM. This uses the GitHub action

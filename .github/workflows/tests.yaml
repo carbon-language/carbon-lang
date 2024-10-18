@@ -51,8 +51,7 @@ jobs:
             sourceforge.net:443
             storage.googleapis.com:443
 
-      - name: Checkout branch
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - uses: ./.github/actions/test-setup
         with:
@@ -83,7 +82,7 @@ jobs:
             test -c ${{ matrix.build_mode }} \
             --target_pattern_file=$TARGETS_FILE
 
-      # See "Disk space before build".
+      # See "Disk space before build" in `test-setup`.
       - name: Disk space after build
         if: steps.test-setup.outputs.has_code == 'true'
         run: df -h
