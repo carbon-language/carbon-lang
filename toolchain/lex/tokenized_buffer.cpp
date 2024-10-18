@@ -18,8 +18,6 @@
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 
-// TODO: REMOVE THIS
-
 namespace Carbon::Lex {
 
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
