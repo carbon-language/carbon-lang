@@ -171,8 +171,8 @@ methods for formatting arguments:
         -   `llvm::StringRef` is disallowed due to lifetime issues.
         -   `llvm::StringLiteral` is disallowed because format providers such as
             `BoolAsSelect` should work in cases where a `StringLiteral` could be
-            used, and because string literal parameters tend to make
-            the resulting diagnostics hard to translate.
+            used, and because string literal parameters tend to make the
+            resulting diagnostics hard to translate.
 -   `llvm::format_provider<...>` specializations.
     -   `BoolAsSelect` and `IntAsSelect` from
         [format_providers.h](/toolchain/diagnostics/format_providers.h) are
