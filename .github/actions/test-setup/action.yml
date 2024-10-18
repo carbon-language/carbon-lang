@@ -9,8 +9,6 @@ inputs:
     required: true
   base_sha:
     required: true
-  remote_cache_upload:
-    required: true
   remote_cache_key:
     required: true
   targets_file:
@@ -60,7 +58,7 @@ runs:
       if: steps.filter.outputs.has_code == 'true'
       with:
         matrix_runner: ${{ inputs.matrix_runner }}
-        remote_cache_upload: ${{ inputs.remote_cache_upload }}
+        remote_cache_upload: ${{ env.remote_cache_upload }}
 
     # Just for visibility, print space before and after the build.
     - name: Disk space before build
