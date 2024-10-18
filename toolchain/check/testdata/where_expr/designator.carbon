@@ -30,7 +30,7 @@ interface J {
   let Member:! type;
 }
 
-// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error: name `Mismatch` not found
+// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:31: error(NameNotFound): name `Mismatch` not found
 // CHECK:STDERR: fn PeriodMismatch(W:! J where .Mismatch = {});
 // CHECK:STDERR:                               ^~~~~~~~~
 // CHECK:STDERR:
@@ -42,10 +42,10 @@ library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var x: ();
-  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error: name `.Self` not found
+  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error(NameNotFound): name `.Self` not found
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_designator_matches_var.carbon: note: designator may only be used when `.Self` is in scope
+  // CHECK:STDERR: fail_designator_matches_var.carbon: note(NoPeriodSelfForDesignator): designator may only be used when `.Self` is in scope
   // CHECK:STDERR:
   return .x;
 }
@@ -55,10 +55,10 @@ fn Foo() -> () {
 library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
-  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+5]]:10: error: name `.Self` not found
+  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+5]]:10: error(NameNotFound): name `.Self` not found
   // CHECK:STDERR:   return .undef;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_unknown_designator.carbon: note: designator may only be used when `.Self` is in scope
+  // CHECK:STDERR: fail_unknown_designator.carbon: note(NoPeriodSelfForDesignator): designator may only be used when `.Self` is in scope
   // CHECK:STDERR:
   return .undef;
 }
@@ -68,7 +68,7 @@ fn Bar() -> () {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:27: error: name `.Self` not found
+  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:27: error(NameNotFound): name `.Self` not found
   // CHECK:STDERR:   fn F() -> Self { return .Self; }
   // CHECK:STDERR:                           ^~~~~
   // CHECK:STDERR:
@@ -80,7 +80,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:13: error: name `.Self` not found
+  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:13: error(NameNotFound): name `.Self` not found
   // CHECK:STDERR:   fn G() -> .Self { return Self; }
   // CHECK:STDERR:             ^~~~~
   fn G() -> .Self { return Self; }

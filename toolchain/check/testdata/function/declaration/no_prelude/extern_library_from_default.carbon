@@ -26,11 +26,11 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+7]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+7]]:1: error(ExternLibraryIncorrect): declaration in library "wrong_library" doesn't match `extern library` declaration
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: extern_library.carbon:4:1: note(ExternLibraryExpected): previously declared with `extern library` here
 // CHECK:STDERR: extern library default fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extern fn F();

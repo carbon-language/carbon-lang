@@ -10,7 +10,7 @@
 
 class Class {
   fn F[addr self: Class*]();
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a binding with a pointer type
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error(AddrOnNonPointerType): `addr` can only be applied to a binding with a pointer type
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -18,10 +18,10 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
   c.F();

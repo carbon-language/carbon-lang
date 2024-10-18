@@ -8,14 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_interface.carbon
 
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+10]]:1: error: semantics TODO: `impl as non-interface`
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+10]]:1: error(SemanticsTodo): semantics TODO: `impl as non-interface`
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+6]]:13: error: cannot implicitly convert from `bool` to `type`
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+6]]:13: error(ImplicitAsConversionFailure): cannot implicitly convert from `bool` to `type`
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: note: type `bool` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: note(MissingImplInMemberAccessNote): type `bool` does not implement interface `ImplicitAs`
 // CHECK:STDERR: impl i32 as false {}
 // CHECK:STDERR:             ^~~~~
 impl i32 as false {}

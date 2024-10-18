@@ -8,77 +8,77 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierProtectedNotAllowed): `protected` not allowed; requires class scope
 // CHECK:STDERR: protected let b: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 protected let b: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed; requires interface scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierRequiresInterface): `default` not allowed; requires interface scope
 // CHECK:STDERR: default let c: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default let c: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `final` not allowed; requires interface scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierRequiresInterface): `final` not allowed; requires interface scope
 // CHECK:STDERR: final let d: i32 = 1;
 // CHECK:STDERR: ^~~~~
 // CHECK:STDERR:
 final let d: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `virtual` not allowed on `let` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierNotAllowedOnDeclaration): `virtual` not allowed on `let` declaration
 // CHECK:STDERR: virtual let e: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 virtual let e: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error(ModifierRequiresInterface): `default` not allowed; requires interface scope
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `final` not allowed on declaration with `default`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error(ModifierNotAllowedWith): `final` not allowed on declaration with `default`
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `default` previously appeared here
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default final let f: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error(ModifierRequiresInterface): `default` not allowed; requires interface scope
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `default` repeated on declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error(ModifierRepeated): `default` repeated on declaration
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `default` previously appeared here
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default default let g: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed; requires class scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error(ModifierProtectedNotAllowed): `protected` not allowed; requires class scope
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `private` not allowed on declaration with `protected`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error(ModifierNotAllowedWith): `private` not allowed on declaration with `protected`
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `protected` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `protected` previously appeared here
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1: error: `protected` not allowed; requires class scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1: error(ModifierProtectedNotAllowed): `protected` not allowed; requires class scope
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: error: `protected` repeated on declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: error(ModifierRepeated): `protected` repeated on declaration
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note: `protected` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: note(ModifierPrevious): `protected` previously appeared here
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 protected protected let i: i32 = 1;

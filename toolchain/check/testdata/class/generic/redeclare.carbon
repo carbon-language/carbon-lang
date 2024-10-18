@@ -22,10 +22,10 @@ class Generic(T:! type) {
 library "[[@TEST_NAME]]";
 
 class A;
-// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter list
+// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE+7]]:1: error(RedeclParamListDiffers): redeclaration differs because of parameter list
 // CHECK:STDERR: class A(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE-4]]:1: note: previously declared without parameter list
+// CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE-4]]:1: note(RedeclParamListPrevious): previously declared without parameter list
 // CHECK:STDERR: class A;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -36,10 +36,10 @@ class A(T:! type) {}
 library "[[@TEST_NAME]]";
 
 class B(N:! i32);
-// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: error: redeclaration differs because of implicit parameter list
+// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: error(RedeclParamListDiffers): redeclaration differs because of implicit parameter list
 // CHECK:STDERR: class B[T:! type](N:! T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-4]]:1: note: previously declared without implicit parameter list
+// CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-4]]:1: note(RedeclParamListPrevious): previously declared without implicit parameter list
 // CHECK:STDERR: class B(N:! i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -50,10 +50,10 @@ class B[T:! type](N:! T) {}
 library "[[@TEST_NAME]]";
 
 class C(T:! type);
-// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 2
+// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: error(RedeclParamCountDiffers): redeclaration differs because of parameter count of 2
 // CHECK:STDERR: class C(T:! type, U:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 1
+// CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-4]]:1: note(RedeclParamCountPrevious): previously declared with parameter count of 1
 // CHECK:STDERR: class C(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -64,10 +64,10 @@ class C(T:! type, U:! i32) {}
 library "[[@TEST_NAME]]";
 
 class D(T:! type);
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: class D(T:! i32) {}
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: class D(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
@@ -78,10 +78,10 @@ class D(T:! i32) {}
 library "[[@TEST_NAME]]";
 
 class E(T:! type);
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: class E(U:! type) {}
 // CHECK:STDERR:         ^~~~~~~~
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: class E(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
 class E(U:! type) {}

@@ -23,43 +23,43 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.uadd"
 // CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew(a: i32) -> i32 = "int.uadd";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.uadd"
 // CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.uadd";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.uadd"
 // CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
 fn JustRight(a: i32, b: i32) -> i32 = "int.uadd";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var too_few: [i32; TooFew(1)];
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew(1)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2, 3)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1, 2)];
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:21: error: 3 arguments passed to function expecting 2 arguments
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:21: error(CallArgCountMismatch): 3 arguments passed to function expecting 2 arguments
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note(InCallToEntity): calling function declared here
 // CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var bad_call: [i32; JustRight(1, 2, 3)];
