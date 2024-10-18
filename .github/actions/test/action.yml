@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 name: Test
+
 inputs:
   matrix_runner:
     required: true
@@ -14,6 +15,7 @@ inputs:
     required: true
   remote_cache_key:
     required: true
+
 runs:
   using: composite
   steps:
@@ -32,6 +34,7 @@ runs:
       if:
         steps.filter.outputs.has_code == 'true' && github.event_name ==
         'pull_request'
+      shell: bash
       run: |
         echo "remote_cache_upload=--remote_upload_local_results=false" \
             >> $GITHUB_ENV
@@ -41,6 +44,7 @@ runs:
       if:
         steps.filter.outputs.has_code == 'true' && github.event_name !=
         'pull_request'
+      shell: bash
       env:
         REMOTE_CACHE_KEY: ${{ inputs.remote_cache_key }}
       run: |
@@ -57,10 +61,12 @@ runs:
     # Just for visibility, print space before and after the build.
     - name: Disk space before build
       if: steps.filter.outputs.has_code == 'true'
+      shell: bash
       run: df -h
 
     - name: Verify MODULE.bazel.lock
       if: steps.filter.outputs.has_code == 'true'
+      shell: bash
       run: |
         exit_code=0
         ./scripts/run_bazel.py \
