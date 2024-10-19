@@ -306,7 +306,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_ident_id(IdentifierId ident_id) -> void {
       CARBON_DCHECK(kind() == TokenKind::Identifier);
-      CARBON_DCHECK(ident_id.index < (2 << PayloadBits));
+      // Overflow is checked in `Lexer::LexFileEnd`.
       token_payload_ = ident_id.index;
     }
 
@@ -334,7 +334,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_closing_token_index(TokenIndex closing_index) -> void {
       CARBON_DCHECK(kind().is_opening_symbol());
-      CARBON_DCHECK(closing_index.index < (2 << PayloadBits));
+      // Overflow is checked in `Lexer::LexFileEnd`.
       token_payload_ = closing_index.index;
     }
 
@@ -344,7 +344,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_opening_token_index(TokenIndex opening_index) -> void {
       CARBON_DCHECK(kind().is_closing_symbol());
-      CARBON_DCHECK(opening_index.index < (2 << PayloadBits));
+      // Overflow is checked in `Lexer::LexFileEnd`.
       token_payload_ = opening_index.index;
     }
 
@@ -396,8 +396,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           has_leading_space_(has_leading_space),
           token_payload_(payload),
           byte_offset_(byte_offset) {
-      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits),
-                    "Payload won't fit into unsigned bit pack: {0}", payload);
+      // Note that we don't check the payload fits in `token_payload_` here.
+      // Payloads are typically ID types for which we create at most one per
+      // token, and in `Lexer::LexFileEnd` we diagnose if the file has too many
+      // tokens to fit in `token_payload_`.
     }
 
     // A bitfield that encodes the token's kind, the leading space flag, and the

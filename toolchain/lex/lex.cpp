@@ -1347,6 +1347,16 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
   }
+
+  // Reject source files with so many tokens that we may have exceeded the
+  // number of bits in `token_payload_`.
+  static constexpr int MaxTokens = 1 << TokenizedBuffer::TokenInfo::PayloadBits;
+  if (buffer_.token_infos_.size() > MaxTokens) {
+    CARBON_DIAGNOSTIC(TooManyTokens, Error,
+                      "too many tokens in source file; try splitting into "
+                      "multiple source files");
+    token_emitter_.Emit(TokenIndex(MaxTokens), TooManyTokens);
+  }
 }
 
 // A list of pending insertions to make into a tokenized buffer for error
