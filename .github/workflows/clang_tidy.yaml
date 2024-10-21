@@ -2,13 +2,12 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Tests
+name: 'Clang Tidy'
 
 on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -22,12 +21,7 @@ concurrency:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        # Test a recent version of each supported OS.
-        runner: ['ubuntu-22.04', 'macos-14']
-        build_mode: [fastbuild, opt]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Harden Runner
@@ -56,7 +50,7 @@ jobs:
       - id: test-setup
         uses: ./.github/actions/test-setup
         with:
-          matrix_runner: ${{ matrix.runner }}
+          matrix_runner: 'ubuntu-22.04'
           base_sha:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
@@ -64,22 +58,18 @@ jobs:
           remote_cache_key: ${{ secrets.CARBON_BUILDS_GITHUB }}
           targets_file: ${{ runner.temp }}/targets
 
-      # Build and run just the tests impacted by the PR or merge group.
-      - name: Test (${{ matrix.build_mode }})
+      # Run in the clang-tidy config. This is done as part of tests so that we
+      # aren't duplicating bazel/llvm setup.
+      #
+      # The `-k` flag is used to print all clang-tidy errors.
+      - name: clang-tidy
         if: steps.test-setup.outputs.has_code == 'true'
-        shell: bash
         env:
-          # 'libtool_check_unique failed to generate' workaround.
-          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
-          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
-          # Decrease the jobs sharply if we see repeated failures to try to
-          # work around transient network errors even if it makes things
-          # slower.
           ./scripts/run_bazel.py \
-            --attempts=5 --jobs-on-last-attempt=4 \
-            test -c ${{ matrix.build_mode }} \
+            --attempts=5 \
+            build --config=clang-tidy -k \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build" in `test-setup`.
