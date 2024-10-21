@@ -1363,7 +1363,7 @@ auto Lexer::Finalize() -> void {
   // Note that we rely on this check also catching the case where there are too
   // many identifiers to fit an `IdentifierId` into a `token_payload_`, and
   // likewise for `IntId` and so on. If we start adding any of those IDs prior
-  // to lexing, we may need to also limit the number of identifiers etc. here.
+  // to lexing, we may need to also limit the number of those IDs here.
   if (buffer_.token_infos_.size() > TokenizedBuffer::MaxTokens) {
     CARBON_DIAGNOSTIC(TooManyTokens, Error,
                       "too many tokens in source file; try splitting into "
