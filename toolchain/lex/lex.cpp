@@ -1371,6 +1371,8 @@ auto Lexer::Finalize() -> void {
     // Subtract one to leave room for the `FileEnd` token.
     token_emitter_.Emit(TokenIndex(TokenizedBuffer::MaxTokens - 1),
                         TooManyTokens);
+    // TODO: Convert tokens after the token limit to error tokens to avoid
+    // misinterpretation by consumers of the tokenized buffer.
   }
 }
 
