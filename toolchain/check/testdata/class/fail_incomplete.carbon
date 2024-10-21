@@ -357,13 +357,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc102: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc103: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc102: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %TakeIncomplete.call.loc102: init %.1 = call %TakeIncomplete.ref.loc102(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc113: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
-// CHECK:STDOUT:   %.loc113: %.3 = struct_literal ()
-// CHECK:STDOUT:   %TakeIncomplete.call.loc113: init %.1 = call %TakeIncomplete.ref.loc113(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc103: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %TakeIncomplete.call.loc103: init %.1 = call %TakeIncomplete.ref.loc103(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc115: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
+// CHECK:STDOUT:   %.loc115: %.3 = struct_literal ()
+// CHECK:STDOUT:   %TakeIncomplete.call.loc115: init %.1 = call %TakeIncomplete.ref.loc115(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

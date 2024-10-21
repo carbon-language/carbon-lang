@@ -41,14 +41,12 @@ static auto IsUntestedDiagnostic(DiagnosticKind diagnostic_kind) -> bool {
     case DiagnosticKind::ExternLibraryOnDefinition:
     case DiagnosticKind::HexadecimalEscapeMissingDigits:
     case DiagnosticKind::ImplOfUndefinedInterface:
-    case DiagnosticKind::IncompleteTypeInConversion:
     case DiagnosticKind::IncompleteTypeInFunctionParam:
-    case DiagnosticKind::IncompleteTypeInInit:
-    case DiagnosticKind::InitializingGenericParam:
     case DiagnosticKind::InvalidDigit:
     case DiagnosticKind::InvalidDigitSeparator:
     case DiagnosticKind::InvalidHorizontalWhitespaceInString:
     case DiagnosticKind::MismatchedIndentInString:
+    case DiagnosticKind::ModifierPrivateNotAllowed:
     case DiagnosticKind::MultiLineStringWithDoubleQuotes:
     case DiagnosticKind::NameAmbiguousDueToExtend:
     case DiagnosticKind::TooManyDigits:
