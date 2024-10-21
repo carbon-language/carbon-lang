@@ -80,6 +80,14 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
+  // Equivalent to
+  // GetParamPatternInfoFromPatternId(sem_ir, param_pattern_id)
+  //   .GetNameId(sem_ir)
+  // but works even if there is no such ParamPattern inst, e.g. because
+  // it's been replaced with BuiltinError.
+  static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
+      -> SemIR::NameId;
+
   // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns a `ParamInfo` value with the
   // corresponding instruction, its ID, and the name binding, if present.

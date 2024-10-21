@@ -357,13 +357,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
@@ -388,13 +382,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {

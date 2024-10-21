@@ -392,10 +392,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc93_44.1: type = value_of_initializer %bool.make_type.loc93_44 [template = bool]
 // CHECK:STDOUT:     %.loc93_44.2: type = converted %bool.make_type.loc93_44, %.loc93_44.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc93_20: bool = param runtime_param0
-// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc93_20
-// CHECK:STDOUT:     %param.loc93_32: bool = param runtime_param1
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc93_32
+// CHECK:STDOUT:     %param.loc93_24: bool = param runtime_param0
+// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc93_24
+// CHECK:STDOUT:     %param.loc93_33: bool = param runtime_param1
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc93_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc93: %.6 = assoc_entity element0, %F.decl [template = constants.%.7]
 // CHECK:STDOUT:
@@ -572,10 +572,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %bool.make_type.loc130_25: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc130_25.1: type = value_of_initializer %bool.make_type.loc130_25 [template = bool]
 // CHECK:STDOUT:     %.loc130_25.2: type = converted %bool.make_type.loc130_25, %.loc130_25.1 [template = bool]
-// CHECK:STDOUT:     %param.loc130_10: bool = param runtime_param0
-// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc130_10
-// CHECK:STDOUT:     %param.loc130_22: bool = param runtime_param1
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc130_22
+// CHECK:STDOUT:     %param.loc130_14: bool = param runtime_param0
+// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc130_14
+// CHECK:STDOUT:     %param.loc130_23: bool = param runtime_param1
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc130_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc122: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -599,10 +599,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc143_34.1: type = value_of_initializer %bool.make_type.loc143_34 [template = bool]
 // CHECK:STDOUT:     %.loc143_34.2: type = converted %bool.make_type.loc143_34, %.loc143_34.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc143_10: bool = param runtime_param0
-// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc143_10
-// CHECK:STDOUT:     %param.loc143_22: %FDifferentParamType = param runtime_param1
-// CHECK:STDOUT:     %b: %FDifferentParamType = bind_name b, %param.loc143_22
+// CHECK:STDOUT:     %param.loc143_14: bool = param runtime_param0
+// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc143_14
+// CHECK:STDOUT:     %param.loc143_23: %FDifferentParamType = param runtime_param1
+// CHECK:STDOUT:     %b: %FDifferentParamType = bind_name b, %param.loc143_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc135: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -626,10 +626,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc156_34.1: type = value_of_initializer %bool.make_type.loc156_34 [template = bool]
 // CHECK:STDOUT:     %.loc156_34.2: type = converted %bool.make_type.loc156_34, %.loc156_34.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc156_10: %FDifferentImplicitParamType = param runtime_param0
-// CHECK:STDOUT:     %self: %FDifferentImplicitParamType = bind_name self, %param.loc156_10
-// CHECK:STDOUT:     %param.loc156_22: bool = param runtime_param1
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc156_22
+// CHECK:STDOUT:     %param.loc156_14: %FDifferentImplicitParamType = param runtime_param0
+// CHECK:STDOUT:     %self: %FDifferentImplicitParamType = bind_name self, %param.loc156_14
+// CHECK:STDOUT:     %param.loc156_23: bool = param runtime_param1
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc156_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc148: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -653,10 +653,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc169_25.2: type = converted %bool.make_type.loc169_25, %.loc169_25.1 [template = bool]
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [template = constants.%FDifferentReturnType]
 // CHECK:STDOUT:     %return: ref %FDifferentReturnType = var <return slot>
-// CHECK:STDOUT:     %param.loc169_10: bool = param runtime_param0
-// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc169_10
-// CHECK:STDOUT:     %param.loc169_22: bool = param runtime_param1
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc169_22
+// CHECK:STDOUT:     %param.loc169_14: bool = param runtime_param0
+// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc169_14
+// CHECK:STDOUT:     %param.loc169_23: bool = param runtime_param1
+// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc169_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc161: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
@@ -682,10 +682,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc183_38.1: type = value_of_initializer %bool.make_type.loc183_38 [template = bool]
 // CHECK:STDOUT:     %.loc183_38.2: type = converted %bool.make_type.loc183_38, %.loc183_38.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc183_10: bool = param runtime_param0
-// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc183_10
-// CHECK:STDOUT:     %param.loc183_22: bool = param runtime_param1
-// CHECK:STDOUT:     %not_b: bool = bind_name not_b, %param.loc183_22
+// CHECK:STDOUT:     %param.loc183_14: bool = param runtime_param0
+// CHECK:STDOUT:     %self: bool = bind_name self, %param.loc183_14
+// CHECK:STDOUT:     %param.loc183_27: bool = param runtime_param1
+// CHECK:STDOUT:     %not_b: bool = bind_name not_b, %param.loc183_27
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc175: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:

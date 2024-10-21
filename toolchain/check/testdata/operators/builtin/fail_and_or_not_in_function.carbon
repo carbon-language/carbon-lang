@@ -90,7 +90,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+13.loc12_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+12.loc12_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

@@ -291,6 +291,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(BindName inst): {
+        // TODO: don't rely on value_id for expression category, since it may
+        // not be valid yet. This workaround only works because we don't support
+        // `var` in function signatures yet.
+        if (!inst.value_id.is_valid()) {
+          return value_category;
+        }
         inst_id = inst.value_id;
         continue;
       }

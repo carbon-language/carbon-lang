@@ -180,10 +180,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %.loc16_42.2: %.4 = tuple_literal (%T.ref.loc16_38, %U.ref.loc16_41)
 // CHECK:STDOUT:       %.loc16_42.3: type = converted %.loc16_42.2, constants.%.5 [symbolic = %.loc16_42.1 (constants.%.5)]
 // CHECK:STDOUT:       %return: ref @GetNoDeduce.%.loc16_42.1 (%.5) = var <return slot>
-// CHECK:STDOUT:       %param.loc16_18: @GetNoDeduce.%T (%T) = param runtime_param0
-// CHECK:STDOUT:       %x: @GetNoDeduce.%T (%T) = bind_name x, %param.loc16_18
-// CHECK:STDOUT:       %param.loc16_24: type = param runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc16_24.2: type = bind_symbolic_name U, 1, %param.loc16_24 [symbolic = %U.loc16_24.1 (constants.%U)]
+// CHECK:STDOUT:       %param.loc16_19: @GetNoDeduce.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %x: @GetNoDeduce.%T (%T) = bind_name x, %param.loc16_19
+// CHECK:STDOUT:       %param.loc16_25: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.loc16_24.2: type = bind_symbolic_name U, 1, %param.loc16_25 [symbolic = %U.loc16_24.1 (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc17: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
