@@ -46,10 +46,10 @@ class NotGeneric {
   fn F();
 }
 
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter list
+// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE+7]]:4: error(RedeclParamListDiffers): redeclaration differs because of parameter list
 // CHECK:STDERR: fn NotGeneric(T:! type).F() {}
 // CHECK:STDERR:    ^~~~~~~~~~
-// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: note: previously declared without parameter list
+// CHECK:STDERR: fail_mismatched_not_generic_vs_generic.carbon:[[@LINE-7]]:1: note(RedeclParamListPrevious): previously declared without parameter list
 // CHECK:STDERR: class NotGeneric {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -63,10 +63,10 @@ class Generic(T:! type) {
   fn TooFew();
 }
 
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter count of 0
+// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE+7]]:4: error(RedeclParamCountDiffers): redeclaration differs because of parameter count of 0
 // CHECK:STDERR: fn Generic().TooFew() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: note: previously declared with parameter count of 1
+// CHECK:STDERR: fail_mismatched_too_few_args.carbon:[[@LINE-7]]:1: note(RedeclParamCountPrevious): previously declared with parameter count of 1
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -80,10 +80,10 @@ class Generic(T:! type) {
   fn TooMany();
 }
 
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter count of 2
+// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE+7]]:4: error(RedeclParamCountDiffers): redeclaration differs because of parameter count of 2
 // CHECK:STDERR: fn Generic(T:! type, U:! type).TooMany() {}
 // CHECK:STDERR:    ^~~~~~~
-// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: note: previously declared with parameter count of 1
+// CHECK:STDERR: fail_mismatched_too_many_args.carbon:[[@LINE-7]]:1: note(RedeclParamCountPrevious): previously declared with parameter count of 1
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ class Generic(T:! type) {
   fn WrongType();
 }
 
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: fn Generic(T:! ()).WrongType() {}
 // CHECK:STDERR:            ^~~~~~
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR:               ^~~~~~~~
 fn Generic(T:! ()).WrongType() {}
@@ -156,26 +156,26 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %n.patt: %T = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %T = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc10_10: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %param.loc10_10 [symbolic = constants.%T]
+// CHECK:STDOUT:     %param.loc10_11: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %param.loc10_11 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return: ref %T = var <return slot>
-// CHECK:STDOUT:     %param.loc10_22: %T = param runtime_param0
-// CHECK:STDOUT:     %n.loc10: %T = bind_name n, %param.loc10_22
+// CHECK:STDOUT:     %param.loc10_23: %T = param runtime_param0
+// CHECK:STDOUT:     %n.loc10: %T = bind_name n, %param.loc10_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %Class.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class.2 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc14_10: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T, 0, %param.loc14_10 [symbolic = constants.%T]
+// CHECK:STDOUT:     %param.loc14_11: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T, 0, %param.loc14_11 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, %.loc14 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:     %return: ref %T = var <return slot>
-// CHECK:STDOUT:     %param.loc14_22: %Class.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc14: %Class.2 = bind_name self, %param.loc14_22
+// CHECK:STDOUT:     %param.loc14_26: %Class.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc14: %Class.2 = bind_name self, %param.loc14_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,18 +345,18 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %a.patt: %T = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %T = param_pattern %a.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc10_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %param.loc10_6 [symbolic = constants.%T]
+// CHECK:STDOUT:     %param.loc10_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0, %param.loc10_7 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %param.loc10_18: %T = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N, 1, %param.loc10_18 [symbolic = constants.%N]
+// CHECK:STDOUT:     %param.loc10_19: %T = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N, 1, %param.loc10_19 [symbolic = constants.%N]
 // CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:     %param.loc10_27: %B.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc10: %B.2 = bind_name self, %param.loc10_27
-// CHECK:STDOUT:     %param.loc10_39: %T = param runtime_param1
-// CHECK:STDOUT:     %a.loc10: %T = bind_name a, %param.loc10_39
+// CHECK:STDOUT:     %param.loc10_31: %B.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc10: %B.2 = bind_name self, %param.loc10_31
+// CHECK:STDOUT:     %param.loc10_40: %T = param runtime_param1
+// CHECK:STDOUT:     %a.loc10: %T = bind_name a, %param.loc10_40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -404,10 +404,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %.loc6: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = %B (constants.%B.2)]
 // CHECK:STDOUT:       %Self.ref.loc6: type = name_ref Self, %.loc6 [symbolic = %B (constants.%B.2)]
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @A.%T.loc4_9.1 [symbolic = %T.loc6 (constants.%T)]
-// CHECK:STDOUT:       %param.loc6_10: @F.%B (%B.2) = param runtime_param0
-// CHECK:STDOUT:       %self.loc6: @F.%B (%B.2) = bind_name self, %param.loc6_10
-// CHECK:STDOUT:       %param.loc6_22: @F.%T.loc6 (%T) = param runtime_param1
-// CHECK:STDOUT:       %a.loc6: @F.%T.loc6 (%T) = bind_name a, %param.loc6_22
+// CHECK:STDOUT:       %param.loc6_14: @F.%B (%B.2) = param runtime_param0
+// CHECK:STDOUT:       %self.loc6: @F.%B (%B.2) = bind_name self, %param.loc6_14
+// CHECK:STDOUT:       %param.loc6_23: @F.%T.loc6 (%T) = param runtime_param1
+// CHECK:STDOUT:       %a.loc6: @F.%T.loc6 (%T) = bind_name a, %param.loc6_23
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -674,10 +674,10 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {} {
-// CHECK:STDOUT:     %param.loc15_12: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15_12.1: type = bind_symbolic_name T, 0, %param.loc15_12 [symbolic = %T.loc15_12.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc15_22: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc15_22.1: type = bind_symbolic_name U, 1, %param.loc15_22 [symbolic = %U.loc15_22.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc15_13: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc15_12.1: type = bind_symbolic_name T, 0, %param.loc15_13 [symbolic = %T.loc15_12.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc15_23: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc15_22.1: type = bind_symbolic_name U, 1, %param.loc15_23 [symbolic = %U.loc15_22.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

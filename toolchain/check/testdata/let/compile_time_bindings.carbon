@@ -18,7 +18,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -30,7 +30,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -43,7 +43,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let a:! () = ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ class C {
     var c1: ((), ()) = c;
     var d1: ((), (), ()) = d;
   }
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let d:! ((), (), ()) = ((), (), ());
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,11 +69,11 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let x:! ();
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+4]]:13: error: expected `=`; `let` declaration must have an initializer
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+4]]:13: error(ExpectedInitializerAfterLet): expected `=`; `let` declaration must have an initializer
   // CHECK:STDERR:   let x:! ();
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -107,10 +107,10 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let T:! type = i32;
-  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert from `<associated type in I>` to `type`
+  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+7]]:13: error(ImplicitAsConversionFailure): cannot implicitly convert from `<associated type in I>` to `type`
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+4]]:13: note: type `<associated type in I>` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+4]]:13: note(MissingImplInMemberAccessNote): type `<associated type in I>` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -122,12 +122,12 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class I {
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let T:! type = i32;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
   let T:! type = i32;
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:13: error(TypeExprEvaluationFailure): cannot evaluate type expression
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:
@@ -138,12 +138,12 @@ class I {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:5: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
 let T:! type = i32;
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error(TypeExprEvaluationFailure): cannot evaluate type expression
 // CHECK:STDERR: fn F() -> T;
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -156,7 +156,7 @@ library "[[@TEST_NAME]]";
 interface Empty {}
 
 impl i32 as Empty {
-  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error: semantics TODO: ``let` compile time binding outside function or interface`
+  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
   let Zero:! i32 = 0;

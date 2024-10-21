@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: fn F(n: i32, a: [i32; n]*);
 // CHECK:STDERR:                       ^
 fn F(n: i32, a: [i32; n]*);
@@ -56,10 +56,10 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc14_6: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc14_6
-// CHECK:STDOUT:     %param.loc14_14: <error> = param runtime_param1
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_14
+// CHECK:STDOUT:     %param.loc14_7: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc14_7
+// CHECK:STDOUT:     %param.loc14_15: <error> = param runtime_param1
+// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

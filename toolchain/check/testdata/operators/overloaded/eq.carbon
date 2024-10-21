@@ -34,7 +34,7 @@ package FailNoImpl;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Eq` in type `D` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error(MissingImplInMemberAccess): cannot access member of interface `Eq` in type `D` that does not implement that interface
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -42,7 +42,7 @@ fn TestEqual(a: D, b: D) -> bool {
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Eq` in type `D` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error(MissingImplInMemberAccess): cannot access member of interface `Eq` in type `D` that does not implement that interface
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -62,21 +62,21 @@ impl C as Core.Eq {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:15: error: cannot implicitly convert from `D` to `C`
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+10]]:15: error(ImplicitAsConversionFailure): cannot implicitly convert from `D` to `C`
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:               ^
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:15: note: type `D` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:15: note(MissingImplInMemberAccessNote): type `D` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:               ^
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:21: note(InCallToFunctionParam): initializing function parameter
   // CHECK:STDERR:   fn Equal[self: C](other: C) -> bool;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                     ^~~~~~~~
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Eq` in type `D` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: error(MissingImplInMemberAccess): cannot access member of interface `Eq` in type `D` that does not implement that interface
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
   return a != b;
@@ -163,10 +163,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc11_29.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_29.2: type = converted %bool.make_type, %.loc11_29.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc11_14: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc11_14
-// CHECK:STDOUT:     %param.loc11_20: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc11_20
+// CHECK:STDOUT:     %param.loc11_15: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc11_15
+// CHECK:STDOUT:     %param.loc11_21: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc11_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -180,10 +180,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %bool.make_type, %.loc15_32.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc15_17: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc15_17
-// CHECK:STDOUT:     %param.loc15_23: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc15_23
+// CHECK:STDOUT:     %param.loc15_18: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc15_18
+// CHECK:STDOUT:     %param.loc15_24: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc15_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,10 +208,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc7_34.2: type = converted %bool.make_type, %.loc7_34.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc7_12: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc7_12
-// CHECK:STDOUT:     %param.loc7_21: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc7_21
+// CHECK:STDOUT:     %param.loc7_16: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc7_16
+// CHECK:STDOUT:     %param.loc7_26: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc7_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
@@ -225,10 +225,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc8_37.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc8_37.2: type = converted %bool.make_type, %.loc8_37.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc8_15: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_15
-// CHECK:STDOUT:     %param.loc8_24: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_24
+// CHECK:STDOUT:     %param.loc8_19: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_19
+// CHECK:STDOUT:     %param.loc8_29: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -376,10 +376,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc6_29.2: type = converted %bool.make_type, %.loc6_29.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc6_14: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc6_14
-// CHECK:STDOUT:     %param.loc6_20: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc6_20
+// CHECK:STDOUT:     %param.loc6_15: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc6_15
+// CHECK:STDOUT:     %param.loc6_21: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc6_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
@@ -393,10 +393,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc14_32.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_32.2: type = converted %bool.make_type, %.loc14_32.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc14_17: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc14_17
-// CHECK:STDOUT:     %param.loc14_23: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc14_23
+// CHECK:STDOUT:     %param.loc14_18: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc14_18
+// CHECK:STDOUT:     %param.loc14_24: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc14_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -561,10 +561,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc12_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc12_30.2: type = converted %bool.make_type, %.loc12_30.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc12_15: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc12_15
-// CHECK:STDOUT:     %param.loc12_21: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc12_21
+// CHECK:STDOUT:     %param.loc12_16: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc12_16
+// CHECK:STDOUT:     %param.loc12_22: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc12_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLhsBad.decl: %TestLhsBad.type = fn_decl @TestLhsBad [template = constants.%TestLhsBad] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
@@ -578,10 +578,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc26_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc26_30.2: type = converted %bool.make_type, %.loc26_30.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc26_15: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc26_15
-// CHECK:STDOUT:     %param.loc26_21: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc26_21
+// CHECK:STDOUT:     %param.loc26_16: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc26_16
+// CHECK:STDOUT:     %param.loc26_22: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc26_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -626,10 +626,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc8_34.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc8_34.2: type = converted %bool.make_type, %.loc8_34.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc8_12: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_12
-// CHECK:STDOUT:     %param.loc8_21: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_21
+// CHECK:STDOUT:     %param.loc8_16: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_16
+// CHECK:STDOUT:     %param.loc8_26: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
@@ -643,10 +643,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %.loc9_37.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc9_37.2: type = converted %bool.make_type, %.loc9_37.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc9_15: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc9_15
-// CHECK:STDOUT:     %param.loc9_24: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc9_24
+// CHECK:STDOUT:     %param.loc9_19: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc9_19
+// CHECK:STDOUT:     %param.loc9_29: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc9_29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:

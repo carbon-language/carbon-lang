@@ -28,11 +28,11 @@ impl forall [T:! type] C as I(T) {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error: redefinition of `impl C as I`
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error(ImplRedefinition): redefinition of `impl C as I`
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: import_generic.carbon:8:1: note: previous definition was here
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6(InImport): in import
+// CHECK:STDERR: import_generic.carbon:8:1: note(ImplPreviousDefinition): previous definition was here
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! type] C as I(T*) {}
@@ -210,10 +210,10 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+28, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+31, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+41, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+46, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+27, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+30, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+40, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+45, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,10 +349,10 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+28, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+31, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+41, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+46, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+27, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+30, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+40, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+45, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

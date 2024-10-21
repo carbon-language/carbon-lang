@@ -32,7 +32,7 @@ impl X as C(X).GenericAndParams(X) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: interface A[T: type]() {}
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ interface A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:13: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: interface A(T: type) {}
 // CHECK:STDERR:             ^~~~~~~
 interface A(T: type) {}
@@ -357,13 +357,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
@@ -388,13 +382,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type.1 = interface_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {

@@ -24,18 +24,18 @@ library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
-// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `U*`
+// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:1: error(FunctionRedeclReturnTypeDiffers): function redeclaration differs because return type is `U*`
 // CHECK:STDERR: fn F(T:! type, U:! type) -> U* {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-5]]:1: note: previously declared with return type `T*`
+// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-5]]:1: note(FunctionRedeclReturnTypePrevious): previously declared with return type `T*`
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! type, U:! type) -> U* {
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-13]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -48,18 +48,18 @@ library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
-// CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:6: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:6: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: fn F(U:! type, T:! type) -> T* {
 // CHECK:STDERR:      ^~~~~~~~
-// CHECK:STDERR: fail_reorder.carbon:[[@LINE-5]]:6: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_reorder.carbon:[[@LINE-5]]:6: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> T* {
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_reorder.carbon:[[@LINE-13]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -72,18 +72,18 @@ library "[[@TEST_NAME]]";
 
 fn F(T:! type, U:! type) -> T*;
 
-// CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:6: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:6: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: fn F(U:! type, T:! type) -> U* {
 // CHECK:STDERR:      ^~~~~~~~
-// CHECK:STDERR: fail_rename.carbon:[[@LINE-5]]:6: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_rename.carbon:[[@LINE-5]]:6: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> U* {
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error: 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error(CallArgCountMismatch): 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F(T);
@@ -224,10 +224,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_30.1: type = ptr_type %T [symbolic = %.loc4_30.2 (constants.%.1)]
 // CHECK:STDOUT:     %return: ref @F.%.loc4_30.2 (%.1) = var <return slot>
-// CHECK:STDOUT:     %param.loc4_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_6 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_16 [symbolic = %U.loc4_16.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc4_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_7 [symbolic = %T.loc4_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc4_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_17 [symbolic = %U.loc4_16.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %T.patt.loc13_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt.2)]
@@ -238,10 +238,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %.loc13_30.1: type = ptr_type %U [symbolic = %.loc13_30.2 (constants.%.3)]
 // CHECK:STDOUT:     %return: ref @.1.%.loc13_30.2 (%.3) = var <return slot>
-// CHECK:STDOUT:     %param.loc13_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_6.1: type = bind_symbolic_name T, 0, %param.loc13_6 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc13_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1, %param.loc13_16 [symbolic = %U.loc13_16.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc13_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_6.1: type = bind_symbolic_name T, 0, %param.loc13_7 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc13_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1, %param.loc13_17 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,10 +336,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.1)]
 // CHECK:STDOUT:     %.loc4_30.1: type = ptr_type %T.1 [symbolic = %.loc4_30.2 (constants.%.1)]
 // CHECK:STDOUT:     %return: ref @F.%.loc4_30.2 (%.1) = var <return slot>
-// CHECK:STDOUT:     %param.loc4_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_6 [symbolic = %T.loc4_6.2 (constants.%T.1)]
-// CHECK:STDOUT:     %param.loc4_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_16 [symbolic = %U.loc4_16.2 (constants.%U.1)]
+// CHECK:STDOUT:     %param.loc4_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_7 [symbolic = %T.loc4_6.2 (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc4_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_17 [symbolic = %U.loc4_16.2 (constants.%U.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.2)]
@@ -350,10 +350,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.2)]
 // CHECK:STDOUT:     %.loc13_30.1: type = ptr_type %T.2 [symbolic = %.loc13_30.2 (constants.%.3)]
 // CHECK:STDOUT:     %return: ref @.1.%.loc13_30.2 (%.3) = var <return slot>
-// CHECK:STDOUT:     %param.loc13_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0, %param.loc13_6 [symbolic = %U.loc13_6.2 (constants.%U.2)]
-// CHECK:STDOUT:     %param.loc13_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1, %param.loc13_16 [symbolic = %T.loc13_16.2 (constants.%T.2)]
+// CHECK:STDOUT:     %param.loc13_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0, %param.loc13_7 [symbolic = %U.loc13_6.2 (constants.%U.2)]
+// CHECK:STDOUT:     %param.loc13_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1, %param.loc13_17 [symbolic = %T.loc13_16.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,10 +448,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.1)]
 // CHECK:STDOUT:     %.loc4_30.1: type = ptr_type %T.1 [symbolic = %.loc4_30.2 (constants.%.1)]
 // CHECK:STDOUT:     %return: ref @F.%.loc4_30.2 (%.1) = var <return slot>
-// CHECK:STDOUT:     %param.loc4_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_6 [symbolic = %T.loc4_6.2 (constants.%T.1)]
-// CHECK:STDOUT:     %param.loc4_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_16 [symbolic = %U.loc4_16.2 (constants.%U.1)]
+// CHECK:STDOUT:     %param.loc4_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0, %param.loc4_7 [symbolic = %T.loc4_6.2 (constants.%T.1)]
+// CHECK:STDOUT:     %param.loc4_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1, %param.loc4_17 [symbolic = %U.loc4_16.2 (constants.%U.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
 // CHECK:STDOUT:     %U.patt.loc13_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.2)]
@@ -462,10 +462,10 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_6.1 [symbolic = %U.loc13_6.2 (constants.%U.2)]
 // CHECK:STDOUT:     %.loc13_30.1: type = ptr_type %U.2 [symbolic = %.loc13_30.2 (constants.%.3)]
 // CHECK:STDOUT:     %return: ref @.1.%.loc13_30.2 (%.3) = var <return slot>
-// CHECK:STDOUT:     %param.loc13_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0, %param.loc13_6 [symbolic = %U.loc13_6.2 (constants.%U.2)]
-// CHECK:STDOUT:     %param.loc13_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1, %param.loc13_16 [symbolic = %T.loc13_16.2 (constants.%T.2)]
+// CHECK:STDOUT:     %param.loc13_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0, %param.loc13_7 [symbolic = %U.loc13_6.2 (constants.%U.2)]
+// CHECK:STDOUT:     %param.loc13_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1, %param.loc13_17 [symbolic = %T.loc13_16.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

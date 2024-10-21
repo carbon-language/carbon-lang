@@ -13,7 +13,7 @@ package User;
 class C {};
 
 fn TestUnary(a: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Negate` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error(MissingImplInMemberAccess): cannot access member of interface `Negate` in type `C` that does not implement that interface
   // CHECK:STDERR:   return -a;
   // CHECK:STDERR:          ^~
   // CHECK:STDERR:
@@ -21,7 +21,7 @@ fn TestUnary(a: C) -> C {
 }
 
 fn TestBinary(a: C, b: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Add` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error(MissingImplInMemberAccess): cannot access member of interface `Add` in type `C` that does not implement that interface
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -30,12 +30,12 @@ fn TestBinary(a: C, b: C) -> C {
 
 fn TestRef(b: C) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `AddAssign` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error(MissingImplInMemberAccess): cannot access member of interface `AddAssign` in type `C` that does not implement that interface
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   a += b;
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Inc` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error(MissingImplInMemberAccess): cannot access member of interface `Inc` in type `C` that does not implement that interface
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~~
   ++a;
@@ -151,10 +151,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return: ref %C = var <return slot>
-// CHECK:STDOUT:     %param.loc23_15: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_15
-// CHECK:STDOUT:     %param.loc23_21: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_21
+// CHECK:STDOUT:     %param.loc23_16: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_16
+// CHECK:STDOUT:     %param.loc23_22: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc23_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [template = constants.%TestRef] {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b

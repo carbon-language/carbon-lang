@@ -22,17 +22,17 @@ let a: f64 = Negate(1.5);
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "float.negate"
 // CHECK:STDERR: fn TooFew() -> f64 = "float.negate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew() -> f64 = "float.negate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "float.negate"
 // CHECK:STDERR: fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "float.negate"
 // CHECK:STDERR: fn BadReturnType(a: f64) -> bool = "float.negate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,10 +40,10 @@ fn BadReturnType(a: f64) -> bool = "float.negate";
 fn JustRight(a: f64) -> f64 = "float.negate";
 
 fn RuntimeCallTooFew(a: f64) -> f64 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-17]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-17]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn TooFew() -> f64 = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -51,10 +51,10 @@ fn RuntimeCallTooFew(a: f64) -> f64 {
 }
 
 fn RuntimeCallTooMany(a: f64, b: f64, c: f64) -> f64 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 arguments passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 3 arguments passed to function expecting 2 arguments
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-23]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-23]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -62,10 +62,10 @@ fn RuntimeCallTooMany(a: f64, b: f64, c: f64) -> f64 {
 }
 
 fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 arguments passed to function expecting 1 argument
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error(CallArgCountMismatch): 2 arguments passed to function expecting 1 argument
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-29]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-29]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn BadReturnType(a: f64) -> bool = "float.negate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return BadReturnType(a, b);
@@ -144,10 +144,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc4_35.2: type = value_of_initializer %float.make_type.loc4_35 [template = f64]
 // CHECK:STDOUT:     %.loc4_35.3: type = converted %float.make_type.loc4_35, %.loc4_35.2 [template = f64]
 // CHECK:STDOUT:     %return: ref f64 = var <return slot>
-// CHECK:STDOUT:     %param.loc4_16: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc4_16
-// CHECK:STDOUT:     %param.loc4_24: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc4_24
+// CHECK:STDOUT:     %param.loc4_17: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc4_17
+// CHECK:STDOUT:     %param.loc4_25: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc4_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc8_8.1) [template = f64]
@@ -260,10 +260,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc13_31.2: type = value_of_initializer %float.make_type.loc13_31 [template = f64]
 // CHECK:STDOUT:     %.loc13_31.3: type = converted %float.make_type.loc13_31, %.loc13_31.2 [template = f64]
 // CHECK:STDOUT:     %return: ref f64 = var <return slot>
-// CHECK:STDOUT:     %param.loc13_12: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc13_12
-// CHECK:STDOUT:     %param.loc13_20: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc13_20
+// CHECK:STDOUT:     %param.loc13_13: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc13_13
+// CHECK:STDOUT:     %param.loc13_21: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc13_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.decl: %BadReturnType.type = fn_decl @BadReturnType [template = constants.%BadReturnType] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
@@ -337,12 +337,12 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc32_50.2: type = value_of_initializer %float.make_type.loc32_50 [template = f64]
 // CHECK:STDOUT:     %.loc32_50.3: type = converted %float.make_type.loc32_50, %.loc32_50.2 [template = f64]
 // CHECK:STDOUT:     %return: ref f64 = var <return slot>
-// CHECK:STDOUT:     %param.loc32_23: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc32_23
-// CHECK:STDOUT:     %param.loc32_31: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc32_31
-// CHECK:STDOUT:     %param.loc32_39: f64 = param runtime_param2
-// CHECK:STDOUT:     %c: f64 = bind_name c, %param.loc32_39
+// CHECK:STDOUT:     %param.loc32_24: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc32_24
+// CHECK:STDOUT:     %param.loc32_32: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc32_32
+// CHECK:STDOUT:     %param.loc32_40: f64 = param runtime_param2
+// CHECK:STDOUT:     %c: f64 = bind_name c, %param.loc32_40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallBadReturnType.decl: %RuntimeCallBadReturnType.type = fn_decl @RuntimeCallBadReturnType [template = constants.%RuntimeCallBadReturnType] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
@@ -362,10 +362,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc43_48.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc43_48.2: type = converted %bool.make_type, %.loc43_48.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc43_29: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc43_29
-// CHECK:STDOUT:     %param.loc43_37: f64 = param runtime_param1
-// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc43_37
+// CHECK:STDOUT:     %param.loc43_30: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc43_30
+// CHECK:STDOUT:     %param.loc43_38: f64 = param runtime_param1
+// CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc43_38
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

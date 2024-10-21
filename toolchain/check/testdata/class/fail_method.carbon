@@ -20,27 +20,27 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error(MissingObjectInMethodCall): missing object argument in method call
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note(InCallToFunction): calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note: calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note(InCallToEntity): calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error: missing object argument in method call
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error(MissingObjectInMethodCall): missing object argument in method call
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note(InCallToFunction): calling function declared here
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   A();

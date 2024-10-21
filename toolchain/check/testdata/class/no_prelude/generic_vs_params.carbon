@@ -33,7 +33,7 @@ var e: C(X).GenericAndParams(X) = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: class A[T: type]() {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ class A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:9: error: parameters of generic types must be constant
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:9: error(GenericParamMustBeConstant): parameters of generic types must be constant
 // CHECK:STDERR: class A(T: type) {}
 // CHECK:STDERR:         ^~~~~~~
 class A(T: type) {}
@@ -323,13 +323,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -359,13 +353,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt, runtime_param<invalid>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T: type = bind_name T, %param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [template = constants.%A.1] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc10_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc10_6.1, runtime_param<invalid> [symbolic = %T.patt.loc10_6.2 (constants.%T.patt)]

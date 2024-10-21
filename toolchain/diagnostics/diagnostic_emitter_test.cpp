@@ -55,7 +55,7 @@ TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
 }
 
 TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
-  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", llvm::StringLiteral);
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", std::string);
   EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
                              DiagnosticKind::TestDiagnostic,
                              DiagnosticLevel::Error, 1, 1, "arg: `str`")));

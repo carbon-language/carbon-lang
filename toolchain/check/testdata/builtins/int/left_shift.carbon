@@ -30,12 +30,12 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = LeftShift(1, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 32
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 << 32
 // CHECK:STDERR: let size_2: i32 = LeftShift(1, 32);
 // CHECK:STDERR:                   ^~~~~~~~~~
 // CHECK:STDERR:
 let size_2: i32 = LeftShift(1, 32);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 33
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 << 33
 // CHECK:STDERR: let size_3: i32 = LeftShift(1, 33);
 // CHECK:STDERR:                   ^~~~~~~~~~
 // CHECK:STDERR:
@@ -43,7 +43,7 @@ let size_3: i32 = LeftShift(1, 33);
 
 // Overflow is allowed if the shift distance is in bounds.
 let overflow_1: i32 = LeftShift(1000, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:23: error: shift distance not in range [0, 32) in 1000 << 32
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:23: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1000 << 32
 // CHECK:STDERR: let overflow_2: i32 = LeftShift(1000, 32);
 // CHECK:STDERR:                       ^~~~~~~~~~
 // CHECK:STDERR:
@@ -51,14 +51,14 @@ let overflow_2: i32 = LeftShift(1000, 32);
 
 // Oversize shifts aren't allowed even if there's no overflow.
 let no_overflow_1: i32 = LeftShift(0, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:26: error: shift distance not in range [0, 32) in 0 << 32
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:26: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 0 << 32
 // CHECK:STDERR: let no_overflow_2: i32 = LeftShift(0, 32);
 // CHECK:STDERR:                          ^~~~~~~~~~
 // CHECK:STDERR:
 let no_overflow_2: i32 = LeftShift(0, 32);
 
 // Negative shifts aren't allowed either.
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error: shift distance not in range [0, 32) in 1 << -1
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 << -1
 // CHECK:STDERR: let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~
 let negative: i32 = LeftShift(1, Negate(1));
@@ -120,10 +120,10 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc2_33.1: type = value_of_initializer %int.make_type_32.loc2_33 [template = i32]
 // CHECK:STDOUT:     %.loc2_33.2: type = converted %int.make_type_32.loc2_33, %.loc2_33.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc2_14: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc2_14
-// CHECK:STDOUT:     %param.loc2_22: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc2_22
+// CHECK:STDOUT:     %param.loc2_15: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc2_15
+// CHECK:STDOUT:     %param.loc2_23: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc2_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
@@ -157,10 +157,10 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc7_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc7_16
-// CHECK:STDOUT:     %param.loc7_24: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc7_24
+// CHECK:STDOUT:     %param.loc7_17: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc7_17
+// CHECK:STDOUT:     %param.loc7_25: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc7_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,10 +253,10 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc4_33.1: type = value_of_initializer %int.make_type_32.loc4_33 [template = i32]
 // CHECK:STDOUT:     %.loc4_33.2: type = converted %int.make_type_32.loc4_33, %.loc4_33.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc4_14: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc4_14
-// CHECK:STDOUT:     %param.loc4_22: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc4_22
+// CHECK:STDOUT:     %param.loc4_15: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc4_15
+// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc4_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a

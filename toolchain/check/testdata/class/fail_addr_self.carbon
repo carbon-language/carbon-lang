@@ -10,7 +10,7 @@
 
 class Class {
   fn F[addr self: Class*]();
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a binding with a pointer type
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error(AddrOnNonPointerType): `addr` can only be applied to a binding with a pointer type
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -18,10 +18,10 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
   c.F();
@@ -81,10 +81,10 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc20_6: %Class = param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %param.loc20_6
-// CHECK:STDOUT:     %param.loc20_16: %.1 = param runtime_param1
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %param.loc20_16
+// CHECK:STDOUT:     %param.loc20_7: %Class = param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %param.loc20_7
+// CHECK:STDOUT:     %param.loc20_17: %.1 = param runtime_param1
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %param.loc20_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

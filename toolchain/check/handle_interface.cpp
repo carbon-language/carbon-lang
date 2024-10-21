@@ -60,9 +60,6 @@ static auto BuildInterfaceDecl(Context& context,
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
       SemIR::LibraryNameId::Invalid)};
-  RequireGenericParamsOnType(context,
-                             interface_info.implicit_param_patterns_id);
-  RequireGenericParamsOnType(context, interface_info.param_patterns_id);
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(

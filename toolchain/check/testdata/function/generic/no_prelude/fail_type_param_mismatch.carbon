@@ -10,7 +10,7 @@
 
 fn F(T:! type, U:! type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: package `Core` implicitly referenced here, but not found
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error(CoreNotFound): package `Core` implicitly referenced here, but not found
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let n: U = *p;
@@ -39,10 +39,10 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %U.patt.loc11_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc11_16.1, runtime_param<invalid> [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc11_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %param.loc11_6 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc11_16: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_16.1: type = bind_symbolic_name U, 1, %param.loc11_16 [symbolic = %U.loc11_16.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc11_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0, %param.loc11_7 [symbolic = %T.loc11_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc11_17: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_16.1: type = bind_symbolic_name U, 1, %param.loc11_17 [symbolic = %U.loc11_16.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

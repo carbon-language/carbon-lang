@@ -33,10 +33,10 @@ interface N {
   let P:! type;
 }
 
-// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error: cannot implicitly convert from `{}` to `<associated type in N>`
+// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error(ImplicitAsConversionFailure): cannot implicitly convert from `{}` to `<associated type in N>`
 // CHECK:STDERR: fn Equal(T:! N where .P = {});
 // CHECK:STDERR:                           ^~
-// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+4]]:27: note: type `{}` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+4]]:27: note(MissingImplInMemberAccessNote): type `{}` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn Equal(T:! N where .P = {});
 // CHECK:STDERR:                           ^~
 // CHECK:STDERR:
@@ -53,10 +53,10 @@ interface K {
   let Associated:! L;
 }
 
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error: cannot implicitly convert from `<associated L in K>` to `type`
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error(ImplicitAsConversionFailure): cannot implicitly convert from `<associated L in K>` to `type`
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note: type `<associated L in K>` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note(MissingImplInMemberAccessNote): type `<associated L in K>` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -71,10 +71,10 @@ import library "state_constraints";
 // `2` can't be converted to the type of `I.Member`
 // TODO: The diagnostics are wrong since member access into facets isn't
 // working properly yet.
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `<associated type in I>`
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR:
@@ -84,10 +84,10 @@ fn RewriteTypeMismatch(X:! I where .Member = 2);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ fn NonTypeImpls(U:! type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ fn ImplsNonType(U:! type where .Self impls 7);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:51: error: right argument of `impls` requirement must be a facet type
+// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:51: error(ImplsOnNonFacetType): right argument of `impls` requirement must be a facet type
 // CHECK:STDERR: fn ImplsOfNonFacetType(U:! type where .Self impls i32);
 // CHECK:STDERR:                                                   ^~~
 // CHECK:STDERR:
@@ -128,12 +128,16 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `type` to `J`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note(MissingImplInMemberAccessNote): type `type` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1(InImport): in import
+  // CHECK:STDERR: state_constraints.carbon:13:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Impls(C);
 }
@@ -142,12 +146,15 @@ fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `type` to `J`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `type` to `J`
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+3]]:3: note: type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note(MissingImplInMemberAccessNote): type `type` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   EmptyStruct(C);
 }
 
@@ -1305,18 +1312,18 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %Y.patt.loc22_16.1: %J.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc22_16.2 (constants.%Y.patt)]
-// CHECK:STDOUT:     %Y.param_patt: %J.type = param_pattern %Y.patt.loc22_16.1, runtime_param<invalid> [symbolic = %Y.patt.loc22_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.patt.loc26_16.1: %J.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.param_patt: %J.type = param_pattern %Y.patt.loc26_16.1, runtime_param<invalid> [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc22_38: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc22_22: type = where_expr %.Self [template = constants.%J.type] {
-// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc22_38
+// CHECK:STDOUT:     %.loc26_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = constants.%J.type] {
+// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %Y.loc22_16.1: %J.type = bind_symbolic_name Y, 0, %param [symbolic = %Y.loc22_16.2 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc26_16.1: %J.type = bind_symbolic_name Y, 0, %param [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -1366,9 +1373,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.4 [template = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%J.type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc19_8.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc19_8.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc19_8.2: %J.type = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_8.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_8.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc23_8.2: %J.type = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1387,9 +1394,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc22_16.1: %J.type) {
-// CHECK:STDOUT:   %Y.loc22_16.2: %J.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc22_16.2 (constants.%Y)]
-// CHECK:STDOUT:   %Y.patt.loc22_16.2: %J.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc22_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26_16.1: %J.type) {
+// CHECK:STDOUT:   %Y.loc26_16.2: %J.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
+// CHECK:STDOUT:   %Y.patt.loc26_16.2: %J.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%Y.param_patt: %J.type);
 // CHECK:STDOUT: }
@@ -1399,9 +1406,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [template = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%J.type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc32_14.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc32_14.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc32_14.2: %J.type = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc39_14.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc39_14.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc39_14.2: %J.type = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1445,7 +1452,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %Y.loc22_16.2 => constants.%Y
-// CHECK:STDOUT:   %Y.patt.loc22_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.loc26_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.patt.loc26_16.2 => constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

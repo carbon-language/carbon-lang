@@ -20,10 +20,10 @@ impl C as Core.AddAssign {
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:     ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,10 +31,10 @@ fn TestIncNonRef(a: C) {
 }
 
 fn TestAddAssignNonRef(a: C, b: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   a += b;
@@ -135,10 +135,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc33_24: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc33_24
-// CHECK:STDOUT:     %param.loc33_30: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc33_30
+// CHECK:STDOUT:     %param.loc33_25: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc33_25
+// CHECK:STDOUT:     %param.loc33_31: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc33_31
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -185,10 +185,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc19_14: %.3 = param runtime_param0
-// CHECK:STDOUT:     %self: %.3 = bind_name self, %param.loc19_14
-// CHECK:STDOUT:     %param.loc19_24: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_24
+// CHECK:STDOUT:     %param.loc19_18: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %param.loc19_18
+// CHECK:STDOUT:     %param.loc19_29: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:

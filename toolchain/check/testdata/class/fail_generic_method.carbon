@@ -15,18 +15,18 @@ class Class(T:! type) {
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: redeclaration differs at parameter 1
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error(RedeclParamDiffers): redeclaration differs at parameter 1
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^~~~~~~
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note(RedeclParamPrevious): previous declaration's corresponding parameter here
 // CHECK:STDERR: class Class(T:! type) {
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+7]]:27: error: name `Self` not found
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+7]]:27: error(NameNotFound): name `Self` not found
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:                           ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+3]]:36: error: name `T` not found
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+3]]:36: error(NameNotFound): name `T` not found
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:                                    ^
 fn Class(N:! i32).F[self: Self](n: T) {}
@@ -90,14 +90,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
-// CHECK:STDOUT:     %param.loc32_10: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %param.loc32_10 [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc32_11: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %param.loc32_11 [symbolic = %N.loc32_10.2 (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc32_21: <error> = param runtime_param0
-// CHECK:STDOUT:     %self: <error> = bind_name self, %param.loc32_21
-// CHECK:STDOUT:     %param.loc32_33: <error> = param runtime_param1
-// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc32_33
+// CHECK:STDOUT:     %param.loc32_25: <error> = param runtime_param0
+// CHECK:STDOUT:     %self: <error> = bind_name self, %param.loc32_25
+// CHECK:STDOUT:     %param.loc32_34: <error> = param runtime_param1
+// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc32_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,10 +125,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %.loc13: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc13 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %param.loc13_8: @F.%Class (%Class.2) = param runtime_param0
-// CHECK:STDOUT:       %self: @F.%Class (%Class.2) = bind_name self, %param.loc13_8
-// CHECK:STDOUT:       %param.loc13_20: @F.%T (%T) = param runtime_param1
-// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param.loc13_20
+// CHECK:STDOUT:       %param.loc13_12: @F.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %self: @F.%Class (%Class.2) = bind_name self, %param.loc13_12
+// CHECK:STDOUT:       %param.loc13_21: @F.%T (%T) = param runtime_param1
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param.loc13_21
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc14_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc14_1.3 (constants.%.4)]
 // CHECK:STDOUT:

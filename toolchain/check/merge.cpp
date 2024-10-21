@@ -284,7 +284,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     }
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of "
-                      "{1:'|missing '}{0:implicit |}parameter list",
+                      "{1:|missing }{0:implicit |}parameter list",
                       BoolAsSelect, BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
                       "previously declared "

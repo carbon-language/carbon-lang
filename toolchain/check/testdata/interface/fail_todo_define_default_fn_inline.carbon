@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_todo_define_default_fn_inline.carbon
 
 interface Interface {
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier`
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: error(SemanticsTodo): semantics TODO: `interface modifier`
   // CHECK:STDERR:   default fn F() {}
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn F() {}
 
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier`
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: error(SemanticsTodo): semantics TODO: `interface modifier`
   // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
   // CHECK:STDERR:   ^~~~~~~
   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
@@ -83,10 +83,10 @@ interface Interface {
 // CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
 // CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc21_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc21_16
-// CHECK:STDOUT:     %param.loc21_24: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc21_24
+// CHECK:STDOUT:     %param.loc21_17: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc21_17
+// CHECK:STDOUT:     %param.loc21_25: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc21_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:

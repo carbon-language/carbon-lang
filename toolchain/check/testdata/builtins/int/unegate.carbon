@@ -25,53 +25,53 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew() -> i32 = "int.unegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error(InvalidBuiltinSignature): invalid signature for builtin function "int.unegate"
 // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn BadReturnType(a: i32) -> bool = "int.unegate";
 fn JustRight(a: i32) -> i32 = "int.unegate";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var too_few: [i32; TooFew()];
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew()];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2)];
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error(InvalidArrayExpr): array bound is not a constant
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1)];
 // CHECK:STDERR:                            ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1)];
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 2 arguments passed to function expecting 1 argument
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error(CallArgCountMismatch): 2 arguments passed to function expecting 1 argument
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note(InCallToEntity): calling function declared here
 // CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2)];
 
 fn RuntimeCallTooFew(a: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -79,10 +79,10 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
 }
 
 fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 arguments passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error(CallArgCountMismatch): 3 arguments passed to function expecting 2 arguments
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -90,10 +90,10 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
 }
 
 fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 arguments passed to function expecting 1 argument
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error(CallArgCountMismatch): 2 arguments passed to function expecting 1 argument
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note: calling function declared here
+  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note(InCallToEntity): calling function declared here
   // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return BadReturnType(a, b);
@@ -207,10 +207,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     %.loc9_35.1: type = value_of_initializer %int.make_type_32.loc9_35 [template = i32]
 // CHECK:STDOUT:     %.loc9_35.2: type = converted %int.make_type_32.loc9_35, %.loc9_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc9_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc9_16
-// CHECK:STDOUT:     %param.loc9_24: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc9_24
+// CHECK:STDOUT:     %param.loc9_17: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc9_17
+// CHECK:STDOUT:     %param.loc9_25: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc9_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,10 +323,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     %.loc13_31.1: type = value_of_initializer %int.make_type_32.loc13_31 [template = i32]
 // CHECK:STDOUT:     %.loc13_31.2: type = converted %int.make_type_32.loc13_31, %.loc13_31.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc13_12: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_12
-// CHECK:STDOUT:     %param.loc13_20: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_20
+// CHECK:STDOUT:     %param.loc13_13: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_13
+// CHECK:STDOUT:     %param.loc13_21: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.decl: %BadReturnType.type = fn_decl @BadReturnType [template = constants.%BadReturnType] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
@@ -418,12 +418,12 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     %.loc57_50.1: type = value_of_initializer %int.make_type_32.loc57_50 [template = i32]
 // CHECK:STDOUT:     %.loc57_50.2: type = converted %int.make_type_32.loc57_50, %.loc57_50.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc57_23: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc57_23
-// CHECK:STDOUT:     %param.loc57_31: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc57_31
-// CHECK:STDOUT:     %param.loc57_39: i32 = param runtime_param2
-// CHECK:STDOUT:     %c: i32 = bind_name c, %param.loc57_39
+// CHECK:STDOUT:     %param.loc57_24: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc57_24
+// CHECK:STDOUT:     %param.loc57_32: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc57_32
+// CHECK:STDOUT:     %param.loc57_40: i32 = param runtime_param2
+// CHECK:STDOUT:     %c: i32 = bind_name c, %param.loc57_40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallBadReturnType.decl: %RuntimeCallBadReturnType.type = fn_decl @RuntimeCallBadReturnType [template = constants.%RuntimeCallBadReturnType] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
@@ -441,10 +441,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     %.loc68_48.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc68_48.2: type = converted %bool.make_type, %.loc68_48.1 [template = bool]
 // CHECK:STDOUT:     %return: ref bool = var <return slot>
-// CHECK:STDOUT:     %param.loc68_29: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc68_29
-// CHECK:STDOUT:     %param.loc68_37: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc68_37
+// CHECK:STDOUT:     %param.loc68_30: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc68_30
+// CHECK:STDOUT:     %param.loc68_38: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc68_38
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -554,10 +554,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     %.loc5_27.1: type = value_of_initializer %int.make_type_32.loc5_27 [template = i32]
 // CHECK:STDOUT:     %.loc5_27.2: type = converted %int.make_type_32.loc5_27, %.loc5_27.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc5_8: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc5_8
-// CHECK:STDOUT:     %param.loc5_16: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc5_16
+// CHECK:STDOUT:     %param.loc5_9: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc5_9
+// CHECK:STDOUT:     %param.loc5_17: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc5_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_8.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]

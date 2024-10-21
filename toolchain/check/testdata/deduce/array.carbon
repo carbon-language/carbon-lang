@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_todo_bound_only.carbon:[[@LINE+4]]:22: error: semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_todo_bound_only.carbon:[[@LINE+4]]:22: error(SemanticsTodo): semantics TODO: `symbolic array bound`
 // CHECK:STDERR: fn F[N:! i32](a: [C; N]) -> i32 { return N; }
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_todo_type_and_bound.carbon:[[@LINE+4]]:32: error: semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_todo_type_and_bound.carbon:[[@LINE+4]]:32: error(SemanticsTodo): semantics TODO: `symbolic array bound`
 // CHECK:STDERR: fn F[T:! type, N:! i32](a: [T; N]) -> T;
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -66,15 +66,15 @@ fn F[T:! type](a: [T; 2]) -> T { return a[0]; }
 fn G() -> C {
   // TODO: We succeed at deducing T here but fail to convert. Is this the right behavior?
   var a: [C; 3] = ({}, {}, {});
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert from `[C; 3]` to `[C; 2]`
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error(ImplicitAsConversionFailure): cannot implicitly convert from `[C; 3]` to `[C; 2]`
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `[C; 3]` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note(MissingImplInMemberAccessNote): type `[C; 3]` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:1: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note(InCallToFunctionParam): initializing function parameter
   // CHECK:STDERR: fn F[T:! type](a: [T; 2]) -> T { return a[0]; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~~~~~
   // CHECK:STDERR:
   return F(a);
 }
@@ -86,7 +86,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:22: error: semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:22: error(SemanticsTodo): semantics TODO: `symbolic array bound`
 // CHECK:STDERR: fn F[N:! i32](a: [C; N]) -> i32 { return N; }
 // CHECK:STDERR:                      ^
 fn F[N:! i32](a: [C; N]) -> i32 { return N; }
@@ -158,10 +158,10 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_24.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_24.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -310,10 +310,10 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_32.loc10_29 [template = i32]
 // CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_32.loc10_29, %.loc10_29.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc10_6: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_6 [symbolic = %N.loc10_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_15: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_15
+// CHECK:STDOUT:     %param.loc10_7: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_7 [symbolic = %N.loc10_6.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc10_16: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -448,12 +448,12 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_33: type = array_type %N.ref, %T [template = <error>]
 // CHECK:STDOUT:     %T.ref.loc10_39: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc10_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc10_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %param.loc10_6 [symbolic = %T.loc10_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc10_16: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_16.1: i32 = bind_symbolic_name N, 1, %param.loc10_16 [symbolic = %N.loc10_16.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_25: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_25
+// CHECK:STDOUT:     %param.loc10_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %param.loc10_7 [symbolic = %T.loc10_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc10_17: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_16.1: i32 = bind_symbolic_name N, 1, %param.loc10_17 [symbolic = %N.loc10_16.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc10_26: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -604,10 +604,10 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = var <return slot>
-// CHECK:STDOUT:     %param.loc6_6: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_6 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_16: @F.%.loc6_24.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_24.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -824,10 +824,10 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_32.loc10_29 [template = i32]
 // CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_32.loc10_29, %.loc10_29.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc10_6: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_6 [symbolic = %N.loc10_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_15: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_15
+// CHECK:STDOUT:     %param.loc10_7: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_7 [symbolic = %N.loc10_6.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc10_16: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]

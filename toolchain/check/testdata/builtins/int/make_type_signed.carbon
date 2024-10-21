@@ -38,7 +38,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_zero_size.carbon:[[@LINE+4]]:8: error: integer type width of 0 is not positive
+// CHECK:STDERR: fail_zero_size.carbon:[[@LINE+4]]:8: error(IntWidthNotPositive): integer type width of 0 is not positive
 // CHECK:STDERR: var n: Int(0);
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ import library "types";
 
 fn Negate(n: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive
+// CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error(IntWidthNotPositive): integer type width of -1 is not positive
 // CHECK:STDERR: var n: Int(Negate(1));
 // CHECK:STDERR:        ^~~~
 // CHECK:STDERR:
@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608
+// CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: error(IntWidthTooLarge): integer type width of 1000000000 is greater than the maximum supported width of 8388608
 // CHECK:STDERR: var m: Int(1000000000);
 // CHECK:STDERR:        ^~~~
 var m: Int(1000000000);
@@ -222,10 +222,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_28 (%.6) = var <return slot>
-// CHECK:STDOUT:     %param.loc14_13: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_13 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc14_22: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
-// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %param.loc14_22
+// CHECK:STDOUT:     %param.loc14_14: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_14 [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc14_23: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
+// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %param.loc14_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

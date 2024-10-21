@@ -47,19 +47,19 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = RightShift(1, 31);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 >> 32
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 >> 32
 // CHECK:STDERR: let size_2: i32 = RightShift(1, 32);
 // CHECK:STDERR:                   ^~~~~~~~~~~
 // CHECK:STDERR:
 let size_2: i32 = RightShift(1, 32);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 >> 33
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 >> 33
 // CHECK:STDERR: let size_3: i32 = RightShift(1, 33);
 // CHECK:STDERR:                   ^~~~~~~~~~~
 // CHECK:STDERR:
 let size_3: i32 = RightShift(1, 33);
 
 // Negative shifts aren't allowed either.
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error: shift distance not in range [0, 32) in 1 >> -1
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error(CompileTimeShiftOutOfRange): shift distance not in range [0, 32) in 1 >> -1
 // CHECK:STDERR: let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~~
 let negative: i32 = RightShift(1, Negate(1));
@@ -121,10 +121,10 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc2_34.1: type = value_of_initializer %int.make_type_32.loc2_34 [template = i32]
 // CHECK:STDOUT:     %.loc2_34.2: type = converted %int.make_type_32.loc2_34, %.loc2_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc2_15: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc2_15
-// CHECK:STDOUT:     %param.loc2_23: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc2_23
+// CHECK:STDOUT:     %param.loc2_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc2_16
+// CHECK:STDOUT:     %param.loc2_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc2_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, %RightShift.decl [template = constants.%RightShift]
@@ -158,10 +158,10 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_32.loc7_35 [template = i32]
 // CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_32.loc7_35, %.loc7_35.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc7_16: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc7_16
-// CHECK:STDOUT:     %param.loc7_24: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc7_24
+// CHECK:STDOUT:     %param.loc7_17: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc7_17
+// CHECK:STDOUT:     %param.loc7_25: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc7_25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,10 +253,10 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int.make_type_32.loc6_34 [template = i32]
 // CHECK:STDOUT:     %.loc6_34.2: type = converted %int.make_type_32.loc6_34, %.loc6_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc6_15: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc6_15
-// CHECK:STDOUT:     %param.loc6_23: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc6_23
+// CHECK:STDOUT:     %param.loc6_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc6_16
+// CHECK:STDOUT:     %param.loc6_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc6_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
@@ -399,10 +399,10 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:     %.loc4_34.1: type = value_of_initializer %int.make_type_32.loc4_34 [template = i32]
 // CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_34, %.loc4_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc4_15: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc4_15
-// CHECK:STDOUT:     %param.loc4_23: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc4_23
+// CHECK:STDOUT:     %param.loc4_16: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc4_16
+// CHECK:STDOUT:     %param.loc4_24: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc4_24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a

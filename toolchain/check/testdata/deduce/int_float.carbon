@@ -25,7 +25,7 @@ fn G(a: i64) -> i32 {
 library "[[@TEST_NAME]]";
 
 // TODO: This should pass once we accept symbolic widths for Core.Float.
-// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+3]]:18: error: cannot evaluate type expression
+// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+3]]:18: error(TypeExprEvaluationFailure): cannot evaluate type expression
 // CHECK:STDERR: fn F[N:! i32](n: Core.Float(N)) -> i32 {
 // CHECK:STDERR:                  ^~~~~~~~~~~~~
 fn F[N:! i32](n: Core.Float(N)) -> i32 {
@@ -99,10 +99,10 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %.loc4_34.1: type = value_of_initializer %int.make_type_32.loc4_34 [template = i32]
 // CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_34, %.loc4_34.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc4_6: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_6.1: i32 = bind_symbolic_name N, 0, %param.loc4_6 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc4_15: @F.%.loc4_26 (%.2) = param runtime_param0
-// CHECK:STDOUT:     %n: @F.%.loc4_26 (%.2) = bind_name n, %param.loc4_15
+// CHECK:STDOUT:     %param.loc4_7: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_6.1: i32 = bind_symbolic_name N, 0, %param.loc4_7 [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc4_16: @F.%.loc4_26 (%.2) = param runtime_param0
+// CHECK:STDOUT:     %n: @F.%.loc4_26 (%.2) = bind_name n, %param.loc4_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %.4 = binding_pattern a
@@ -224,10 +224,10 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %.loc8_36.1: type = value_of_initializer %int.make_type_32.loc8_36 [template = i32]
 // CHECK:STDOUT:     %.loc8_36.2: type = converted %int.make_type_32.loc8_36, %.loc8_36.1 [template = i32]
 // CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param.loc8_6: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc8_6.1: i32 = bind_symbolic_name N, 0, %param.loc8_6 [symbolic = %N.loc8_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc8_15: <error> = param runtime_param0
-// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc8_15
+// CHECK:STDOUT:     %param.loc8_7: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc8_6.1: i32 = bind_symbolic_name N, 0, %param.loc8_7 [symbolic = %N.loc8_6.2 (constants.%N)]
+// CHECK:STDOUT:     %param.loc8_16: <error> = param runtime_param0
+// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc8_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a

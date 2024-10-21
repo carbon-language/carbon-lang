@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_out_of_bound.carbon
 
-// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:19: error: cannot initialize array of 1 element from 3 initializers
+// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:19: error(ArrayInitFromLiteralArgCountMismatch): cannot initialize array of 1 element from 3 initializers
 // CHECK:STDERR: var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDERR:                   ^~~~~~~~~
 var a: [i32; 1] = (1, 2, 3);

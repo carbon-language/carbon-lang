@@ -11,15 +11,15 @@
 fn G(a: i32) {}
 
 fn F() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+9]]:5: error: cannot implicitly convert from `f64` to `i32`
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+9]]:5: error(ImplicitAsConversionFailure): cannot implicitly convert from `f64` to `i32`
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:5: note: type `f64` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:5: note(MissingImplInMemberAccessNote): type `f64` does not implement interface `ImplicitAs`
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:1: note: initializing parameter 1 of function declared here
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:6: note(InCallToFunctionParam): initializing function parameter
   // CHECK:STDERR: fn G(a: i32) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^~~~~~
   G(1.0);
 }
 

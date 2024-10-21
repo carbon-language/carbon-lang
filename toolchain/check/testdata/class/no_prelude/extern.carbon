@@ -45,10 +45,10 @@ class C {}
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: error: cannot declare a member of incomplete class `C`
+// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: error(QualifiedDeclInIncompleteClassScope): cannot declare a member of incomplete class `C`
 // CHECK:STDERR: fn C.F();
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: note: class was forward declared here
+// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: note(ClassForwardDeclaredHere): class was forward declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -65,10 +65,10 @@ extern class C {}
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant
+// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error(RedeclRedundant): redeclaration of `class C` is redundant
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -79,10 +79,10 @@ extern class C;
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant
+// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error(RedeclRedundant): redeclaration of `class C` is redundant
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -93,7 +93,7 @@ class C;
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `class` declaration that is a member
+  // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: error(ModifierExternNotAllowed): `extern` not allowed; requires file or namespace scope
   // CHECK:STDERR:   extern class D;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -105,10 +105,10 @@ class C {
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE+7]]:1: error(RedeclExternMismatch): redeclarations of `class C` must match use of `extern`
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE-4]]:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -119,10 +119,10 @@ class C {}
 library "[[@TEST_NAME]]";
 
 class C;
-// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant
+// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: error(RedeclRedundant): redeclaration of `class C` is redundant
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE-4]]:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -132,12 +132,12 @@ extern class C;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: decl.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -148,12 +148,12 @@ import library "decl";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -164,12 +164,12 @@ import library "extern_decl";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: def.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -180,21 +180,21 @@ import library "def";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+18]]:1: in import
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+18]]:1(InImport): in import
+// CHECK:STDERR: decl.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+14]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+14]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: def.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -206,12 +206,12 @@ import library "def";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+9]]:1: in import
-// CHECK:STDERR: extern_decl_copy.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+9]]:1(InImport): in import
+// CHECK:STDERR: extern_decl_copy.carbon:4:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+5]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+5]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(NameDeclPrevious): name is previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -224,11 +224,11 @@ library "[[@TEST_NAME]]";
 
 import library "extern_decl";
 
-// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant
+// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error(RedeclRedundant): redeclaration of `class C` is redundant
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: extern_decl.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: extern_decl.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -240,11 +240,11 @@ library "[[@TEST_NAME]]";
 
 import library "decl";
 
-// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error(RedeclExternMismatch): redeclarations of `class C` must match use of `extern`
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: decl.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: decl.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -256,11 +256,11 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE+8]]:1: error(RedeclExternMismatch): redeclarations of `class C` must match use of `extern`
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: def.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: def.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -272,11 +272,11 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+7]]:1: error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+7]]:1: error(RedeclExternMismatch): redeclarations of `class C` must match use of `extern`
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: def.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE-5]]:1(InImport): in import
+// CHECK:STDERR: def.carbon:4:1: note(RedeclPrevDecl): previously declared here
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 extern class C;

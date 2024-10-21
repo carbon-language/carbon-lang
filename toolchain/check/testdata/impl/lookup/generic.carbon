@@ -90,7 +90,7 @@ impl forall [T:! type, U:! type] T as HasF {
 fn G(x: {}) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we couldn't deduce a value for 'U'.
-  // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF` in type `{}` that does not implement that interface
+  // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:3: error(MissingImplInMemberAccess): cannot access member of interface `HasF` in type `{}` that does not implement that interface
   // CHECK:STDERR:   x.(HasF.F)();
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -115,7 +115,7 @@ class B {}
 fn G(x: A) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we deduced two different values for `T`.
-  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error: cannot access member of interface `HasF` in type `A` that does not implement that interface
+  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error(MissingImplInMemberAccess): cannot access member of interface `HasF` in type `A` that does not implement that interface
   // CHECK:STDERR:   x.(HasF(B).F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   x.(HasF(B).F)();
@@ -962,10 +962,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc9_14.1 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %param.loc9_14: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %param.loc9_14 [symbolic = %T.loc9_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc9_24: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %param.loc9_24 [symbolic = %U.loc9_24.2 (constants.%U)]
+// CHECK:STDOUT:     %param.loc9_15: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %param.loc9_15 [symbolic = %T.loc9_14.2 (constants.%T)]
+// CHECK:STDOUT:     %param.loc9_25: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %param.loc9_25 [symbolic = %U.loc9_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x

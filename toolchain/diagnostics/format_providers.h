@@ -17,11 +17,6 @@ namespace Carbon {
 // - Selector, as in `{0:true|false}`. The output string used is separated by a
 //   `|`, with the true case first. the example would yield standard bool
 //   formatting.
-//
-// If needed, the _full_ style string can be wrapped with `'` in order to
-// preserve prefix or suffix whitespace (which is stripped by formatv). For
-// example, `{0:' true | false '}` retains whitespace which would be dropped
-// before `true` and after `false`.
 struct BoolAsSelect {
   // NOLINTNEXTLINE(google-explicit-constructor)
   BoolAsSelect(bool value) : value(value) {}
@@ -51,11 +46,6 @@ struct BoolAsSelect {
 // - default -> `other`
 //
 // As another example, `{0:=1:is|:are}` is a way to handle plural-based output.
-//
-// If needed, the _full_ style string can be wrapped with `'` in order to
-// preserve prefix or suffix whitespace (which is stripped by formatv). For
-// example, `{0:'=0: zero |=1: one '}` retains whitespace which would be dropped
-// after `one`.
 struct IntAsSelect {
   // NOLINTNEXTLINE(google-explicit-constructor)
   IntAsSelect(int value) : value(value) {}

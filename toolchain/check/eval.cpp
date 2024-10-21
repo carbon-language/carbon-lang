@@ -682,65 +682,65 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   bool overflow = false;
   llvm::APInt result_val;
-  llvm::StringLiteral op_str = "<error>";
+  Lex::TokenKind op_token = Lex::TokenKind::Not;
   switch (builtin_kind) {
     // Arithmetic.
     case SemIR::BuiltinFunctionKind::IntSAdd:
       result_val = lhs_val.sadd_ov(rhs_val, overflow);
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntSSub:
       result_val = lhs_val.ssub_ov(rhs_val, overflow);
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntSMul:
       result_val = lhs_val.smul_ov(rhs_val, overflow);
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntSDiv:
       result_val = lhs_val.sdiv_ov(rhs_val, overflow);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntSMod:
       result_val = lhs_val.srem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
       overflow = lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
     case SemIR::BuiltinFunctionKind::IntUAdd:
       result_val = lhs_val + rhs_val;
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntUSub:
       result_val = lhs_val - rhs_val;
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntUMul:
       result_val = lhs_val * rhs_val;
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntUDiv:
       result_val = lhs_val.udiv(rhs_val);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntUMod:
       result_val = lhs_val.urem(rhs_val);
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
 
     // Bitwise.
     case SemIR::BuiltinFunctionKind::IntAnd:
       result_val = lhs_val & rhs_val;
-      op_str = "&";
+      op_token = Lex::TokenKind::And;
       break;
     case SemIR::BuiltinFunctionKind::IntOr:
       result_val = lhs_val | rhs_val;
-      op_str = "|";
+      op_token = Lex::TokenKind::Pipe;
       break;
     case SemIR::BuiltinFunctionKind::IntXor:
       result_val = lhs_val ^ rhs_val;
-      op_str = "^";
+      op_token = Lex::TokenKind::Caret;
       break;
 
     // Bit shift.
@@ -777,9 +777,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
                       "integer overflow in calculation {0} {1} {2}", TypedInt,
-                      llvm::StringLiteral, TypedInt);
+                      Lex::TokenKind, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                           {.type = lhs.type_id, .value = lhs_val}, op_str,
+                           {.type = lhs.type_id, .value = lhs_val}, op_token,
                            {.type = rhs.type_id, .value = rhs_val});
   }
 

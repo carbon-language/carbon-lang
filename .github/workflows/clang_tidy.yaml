@@ -1,0 +1,78 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Clang Tidy'
+
+on:
+  push:
+    branches: [trunk, action-test]
+  pull_request:
+
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.dl.sourceforge.net:443
+            api.github.com:443
+            bcr.bazel.build:443
+            downloads.sourceforge.net:443
+            github.com:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            releases.bazel.build:443
+            sourceforge.net:443
+            storage.googleapis.com:443
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - id: test-setup
+        uses: ./.github/actions/test-setup
+        with:
+          matrix_runner: 'ubuntu-22.04'
+          base_sha:
+            ${{ github.event_name == 'pull_request' &&
+            github.event.pull_request.base.sha ||
+            github.event.merge_group.base_sha }}
+          remote_cache_key: ${{ secrets.CARBON_BUILDS_GITHUB }}
+          targets_file: ${{ runner.temp }}/targets
+
+      # Run in the clang-tidy config. This is done as part of tests so that we
+      # aren't duplicating bazel/llvm setup.
+      #
+      # The `-k` flag is used to print all clang-tidy errors.
+      - name: clang-tidy
+        if: steps.test-setup.outputs.has_code == 'true'
+        env:
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          ./scripts/run_bazel.py \
+            --attempts=5 \
+            build --config=clang-tidy -k \
+            --target_pattern_file=$TARGETS_FILE
+
+      # See "Disk space before build" in `test-setup`.
+      - name: Disk space after build
+        if: steps.test-setup.outputs.has_code == 'true'
+        run: df -h

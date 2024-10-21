@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_params.carbon
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error(UnexpectedDeclNameParams): `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace A();
 // CHECK:STDERR:            ^~
 // CHECK:STDERR:
@@ -17,23 +17,23 @@ namespace A();
 // Parameters are ignored for error recovery.
 fn A.F() {}
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error(UnexpectedDeclNameParams): `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace B(n: i32);
 // CHECK:STDERR:            ^~~~~~~~
 // CHECK:STDERR:
 namespace B(n: i32);
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error: `namespace` declaration cannot have parameters
+// CHECK:STDERR: fail_params.carbon:[[@LINE+4]]:12: error(UnexpectedDeclNameParams): `namespace` declaration cannot have parameters
 // CHECK:STDERR: namespace C[T:! type](x: T);
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
 namespace C[T:! type](x: T);
 
 namespace D;
-// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: error: redeclaration differs because of parameter list
+// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: error(RedeclParamListDiffers): redeclaration differs because of parameter list
 // CHECK:STDERR: fn D(T:! type).F() {}
 // CHECK:STDERR:    ^
-// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: note: previously declared without parameter list
+// CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: note(RedeclParamListPrevious): previously declared without parameter list
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
 fn D(T:! type).F() {}
@@ -84,14 +84,14 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param0
 // CHECK:STDOUT:   %n: i32 = bind_name n, %param.loc24
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_13: type = param runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_13 [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_23: %T = param runtime_param<invalid>
-// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_23
+// CHECK:STDOUT:   %param.loc30_14: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_14 [symbolic = constants.%T]
+// CHECK:STDOUT:   %param.loc30_24: %T = param runtime_param0
+// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_24
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
