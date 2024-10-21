@@ -53,8 +53,8 @@ var i: Int() = 0;
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param0
-// CHECK:STDOUT:     %return: ref type = return_slot %param
+// CHECK:STDOUT:     %return.param: type = param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -833,6 +833,10 @@ struct Param {
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
+
+  // A name to associate with this Param in pretty-printed IR. This is not
+  // necessarily unique, or even valid, and has no semantic significance.
+  NameId pretty_name;
 };
 
 // A pattern that represents a parameter. It matches the same values as

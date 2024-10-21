@@ -72,15 +72,15 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Declaration.decl: %Declaration.type = class_decl @Declaration [template = constants.%Declaration.1] {
 // CHECK:STDOUT:     %T.patt.loc24_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc24_19.1, runtime_param<invalid> [symbolic = %T.patt.loc24_19.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc24_19.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc24_19.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc24_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc24_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,10 +111,10 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %.loc12_29.2: type = ptr_type %Class.2 [symbolic = %.loc12_29.1 (constants.%.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %.loc12_38.2: type = ptr_type %T [symbolic = %.loc12_38.1 (constants.%.3)]
-// CHECK:STDOUT:       %param.loc12_23: @GetAddr.%.loc12_29.1 (%.2) = param runtime_param0
-// CHECK:STDOUT:       %self: @GetAddr.%.loc12_29.1 (%.2) = bind_name self, %param.loc12_23
-// CHECK:STDOUT:       %param.loc12_34: @GetAddr.%.loc12_38.1 (%.3) = param runtime_param1
-// CHECK:STDOUT:       %return: ref @GetAddr.%.loc12_38.1 (%.3) = return_slot %param.loc12_34
+// CHECK:STDOUT:       %self.param: @GetAddr.%.loc12_29.1 (%.2) = param runtime_param0
+// CHECK:STDOUT:       %self: @GetAddr.%.loc12_29.1 (%.2) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: @GetAddr.%.loc12_38.1 (%.3) = param runtime_param1
+// CHECK:STDOUT:       %return: ref @GetAddr.%.loc12_38.1 (%.3) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetValue.decl: @Class.%GetValue.type (%GetValue.type) = fn_decl @GetValue [symbolic = @Class.%GetValue (constants.%GetValue)] {
 // CHECK:STDOUT:       %self.patt: @GetValue.%Class (%Class.2) = binding_pattern self
@@ -125,10 +125,10 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %.loc17: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc17 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %param.loc17_19: @GetValue.%Class (%Class.2) = param runtime_param0
-// CHECK:STDOUT:       %self: @GetValue.%Class (%Class.2) = bind_name self, %param.loc17_19
-// CHECK:STDOUT:       %param.loc17_29: @GetValue.%T (%T) = param runtime_param1
-// CHECK:STDOUT:       %return: ref @GetValue.%T (%T) = return_slot %param.loc17_29
+// CHECK:STDOUT:       %self.param: @GetValue.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %self: @GetValue.%Class (%Class.2) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: @GetValue.%T (%T) = param runtime_param1
+// CHECK:STDOUT:       %return: ref @GetValue.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_8.1: @Class.%.loc21_8.2 (%.4) = field_decl k, element0 [template]

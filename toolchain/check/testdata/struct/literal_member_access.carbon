@@ -69,8 +69,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_32.loc11_34, %.loc11_34.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_37: type = struct_type {.x: i32, .y: i32, .z: i32} [template = constants.%.2]
-// CHECK:STDOUT:     %param: %.2 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
@@ -79,8 +79,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

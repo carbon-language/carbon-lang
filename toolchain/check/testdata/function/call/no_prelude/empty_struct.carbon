@@ -43,10 +43,10 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc11_10: %.1 = param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %param.loc11_10
-// CHECK:STDOUT:     %param.loc11_16: %.1 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param.loc11_16
+// CHECK:STDOUT:     %a.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

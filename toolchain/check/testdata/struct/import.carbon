@@ -143,8 +143,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32.loc8_27 [template = i32]
 // CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32.loc8_27, %.loc8_27.1 [template = i32]
 // CHECK:STDOUT:     %.loc8_30: type = struct_type {.a: i32, .b: i32} [template = constants.%.11]
-// CHECK:STDOUT:     %param: %.11 = param runtime_param<invalid>
-// CHECK:STDOUT:     %S.loc8_9.1: %.11 = bind_symbolic_name S, 0, %param [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT:     %S.param: %.11 = param runtime_param<invalid>
+// CHECK:STDOUT:     %S.loc8_9.1: %.11 = bind_symbolic_name S, 0, %S.param [symbolic = %S.loc8_9.2 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.3 = return_slot_pattern
@@ -157,8 +157,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %struct: %.11 = struct_value (%.loc9_19, %.loc9_27) [template = constants.%struct.4]
 // CHECK:STDOUT:     %.loc9_12: %.11 = converted %.loc9_28, %struct [template = constants.%struct.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct.4) [template = constants.%C.3]
-// CHECK:STDOUT:     %param: %C.3 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C.3 = return_slot %param
+// CHECK:STDOUT:     %return.param: %C.3 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

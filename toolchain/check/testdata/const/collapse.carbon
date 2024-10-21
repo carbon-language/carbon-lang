@@ -69,10 +69,10 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc15_25: type = const_type %.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_42: type = ptr_type %.2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc15_43: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %param.loc15_7: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param.loc15_7
-// CHECK:STDOUT:     %param.loc15_22: %.4 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.4 = return_slot %param.loc15_22
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.4 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

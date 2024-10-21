@@ -96,12 +96,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_24: @Function.%T.loc4_13.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @Function.%T.loc4_13.2 (%T) = bind_name x, %param.loc4_24
-// CHECK:STDOUT:     %param.loc4_29: @Function.%T.loc4_13.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @Function.%T.loc4_13.2 (%T) = return_slot %param.loc4_29
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @Function.%T.loc4_13.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @Function.%T.loc4_13.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @Function.%T.loc4_13.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @Function.%T.loc4_13.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_16.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt.2)]
@@ -113,12 +113,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_17: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_16.1: type = bind_symbolic_name T, 0, %param.loc8_17 [symbolic = %T.loc8_16.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_27: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallGeneric.%T.loc8_16.2 (%T) = bind_name x, %param.loc8_27
-// CHECK:STDOUT:     %param.loc8_32: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @CallGeneric.%T.loc8_16.2 (%T) = return_slot %param.loc8_32
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_16.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallGeneric.%T.loc8_16.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @CallGeneric.%T.loc8_16.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
 // CHECK:STDOUT:     %T.patt.loc12_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_19.2 (constants.%T.patt.3)]
@@ -132,12 +132,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %.loc12_33.1: type = ptr_type %T [symbolic = %.loc12_33.2 (constants.%.3)]
 // CHECK:STDOUT:     %T.ref.loc12_39: type = name_ref T, %T.loc12_19.1 [symbolic = %T.loc12_19.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc12_40: type = ptr_type %T [symbolic = %.loc12_33.2 (constants.%.3)]
-// CHECK:STDOUT:     %param.loc12_20: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_19.1: type = bind_symbolic_name T, 0, %param.loc12_20 [symbolic = %T.loc12_19.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_30: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallGenericPtr.%.loc12_33.2 (%.3) = bind_name x, %param.loc12_30
-// CHECK:STDOUT:     %param.loc12_36: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @CallGenericPtr.%.loc12_33.2 (%.3) = return_slot %param.loc12_36
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_19.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallGenericPtr.%.loc12_33.2 (%.3) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @CallGenericPtr.%.loc12_33.2 (%.3) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %CallSpecific.decl: %CallSpecific.type = fn_decl @CallSpecific [template = constants.%CallSpecific] {
@@ -148,10 +148,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc18_18: %C = param runtime_param0
-// CHECK:STDOUT:     %x: %C = bind_name x, %param.loc18_18
-// CHECK:STDOUT:     %param.loc18_23: %C = param runtime_param1
-// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc18_23
+// CHECK:STDOUT:     %x.param: %C = param runtime_param0
+// CHECK:STDOUT:     %x: %C = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param1
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,12 +314,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_14: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param.loc4_14 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc4_24: @Function.%T.loc4_13.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @Function.%T.loc4_13.2 (%T) = bind_name x, %param.loc4_24
-// CHECK:STDOUT:     %param.loc4_29: @Function.%T.loc4_13.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @Function.%T.loc4_13.2 (%T) = return_slot %param.loc4_29
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @Function.%T.loc4_13.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @Function.%T.loc4_13.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @Function.%T.loc4_13.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @Function.%T.loc4_13.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [template = constants.%CallGeneric] {
 // CHECK:STDOUT:     %T.patt.loc8_16.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt.2)]
@@ -331,12 +331,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8_16.1 [symbolic = %T.loc8_16.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_17: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_16.1: type = bind_symbolic_name T, 0, %param.loc8_17 [symbolic = %T.loc8_16.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc8_27: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallGeneric.%T.loc8_16.2 (%T) = bind_name x, %param.loc8_27
-// CHECK:STDOUT:     %param.loc8_32: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @CallGeneric.%T.loc8_16.2 (%T) = return_slot %param.loc8_32
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_16.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallGeneric.%T.loc8_16.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @CallGeneric.%T.loc8_16.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @CallGeneric.%T.loc8_16.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericPtr.decl: %CallGenericPtr.type = fn_decl @CallGenericPtr [template = constants.%CallGenericPtr] {
 // CHECK:STDOUT:     %T.patt.loc12_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_19.2 (constants.%T.patt.3)]
@@ -350,12 +350,12 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %.loc12_33.1: type = ptr_type %T [symbolic = %.loc12_33.2 (constants.%.3)]
 // CHECK:STDOUT:     %T.ref.loc12_39: type = name_ref T, %T.loc12_19.1 [symbolic = %T.loc12_19.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc12_40: type = ptr_type %T [symbolic = %.loc12_33.2 (constants.%.3)]
-// CHECK:STDOUT:     %param.loc12_20: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_19.1: type = bind_symbolic_name T, 0, %param.loc12_20 [symbolic = %T.loc12_19.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc12_30: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallGenericPtr.%.loc12_33.2 (%.3) = bind_name x, %param.loc12_30
-// CHECK:STDOUT:     %param.loc12_36: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @CallGenericPtr.%.loc12_33.2 (%.3) = return_slot %param.loc12_36
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_19.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallGenericPtr.%.loc12_33.2 (%.3) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @CallGenericPtr.%.loc12_33.2 (%.3) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @CallGenericPtr.%.loc12_33.2 (%.3) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %CallSpecific.decl: %CallSpecific.type = fn_decl @CallSpecific [template = constants.%CallSpecific] {
@@ -366,10 +366,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc18_18: %C = param runtime_param0
-// CHECK:STDOUT:     %x: %C = bind_name x, %param.loc18_18
-// CHECK:STDOUT:     %param.loc18_23: %C = param runtime_param1
-// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc18_23
+// CHECK:STDOUT:     %x.param: %C = param runtime_param0
+// CHECK:STDOUT:     %x: %C = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param1
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

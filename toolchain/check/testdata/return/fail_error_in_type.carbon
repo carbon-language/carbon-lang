@@ -45,8 +45,8 @@ fn Six() -> x;
 // CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %param
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

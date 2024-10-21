@@ -84,10 +84,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %int.make_type_32, %.loc4_16.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_14: i32 = param runtime_param0
-// CHECK:STDOUT:     %size: i32 = bind_name size, %param.loc4_14
-// CHECK:STDOUT:     %param.loc4_21: type = param runtime_param1
-// CHECK:STDOUT:     %return: ref type = return_slot %param.loc4_21
+// CHECK:STDOUT:     %size.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %size: i32 = bind_name size, %size.param
+// CHECK:STDOUT:     %return.param: type = param runtime_param1
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -150,10 +150,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_32, %.loc8_23.1 [template = i32]
-// CHECK:STDOUT:     %param.loc8_21: i32 = param runtime_param0
-// CHECK:STDOUT:     %dyn_size: i32 = bind_name dyn_size, %param.loc8_21
-// CHECK:STDOUT:     %param.loc8_28: type = param runtime_param1
-// CHECK:STDOUT:     %return: ref type = return_slot %param.loc8_28
+// CHECK:STDOUT:     %dyn_size.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %dyn_size: i32 = bind_name dyn_size, %dyn_size.param
+// CHECK:STDOUT:     %return.param: type = param runtime_param1
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

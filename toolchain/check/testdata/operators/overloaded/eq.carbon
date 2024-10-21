@@ -164,12 +164,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_29.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_29.2: type = converted %bool.make_type, %.loc11_29.1 [template = bool]
-// CHECK:STDOUT:     %param.loc11_15: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc11_15
-// CHECK:STDOUT:     %param.loc11_21: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc11_21
-// CHECK:STDOUT:     %param.loc11_26: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc11_26
+// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -184,12 +184,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %bool.make_type, %.loc15_32.1 [template = bool]
-// CHECK:STDOUT:     %param.loc15_18: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc15_18
-// CHECK:STDOUT:     %param.loc15_24: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc15_24
-// CHECK:STDOUT:     %param.loc15_29: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc15_29
+// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,12 +215,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc7_34.2: type = converted %bool.make_type, %.loc7_34.1 [template = bool]
-// CHECK:STDOUT:     %param.loc7_16: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc7_16
-// CHECK:STDOUT:     %param.loc7_26: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc7_26
-// CHECK:STDOUT:     %param.loc7_31: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc7_31
+// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
@@ -235,12 +235,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc8_37.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc8_37.2: type = converted %bool.make_type, %.loc8_37.1 [template = bool]
-// CHECK:STDOUT:     %param.loc8_19: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_19
-// CHECK:STDOUT:     %param.loc8_29: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_29
-// CHECK:STDOUT:     %param.loc8_34: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc8_34
+// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -389,12 +389,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc6_29.2: type = converted %bool.make_type, %.loc6_29.1 [template = bool]
-// CHECK:STDOUT:     %param.loc6_15: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc6_15
-// CHECK:STDOUT:     %param.loc6_21: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc6_21
-// CHECK:STDOUT:     %param.loc6_26: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc6_26
+// CHECK:STDOUT:     %a.param: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestNotEqual.decl: %TestNotEqual.type = fn_decl @TestNotEqual [template = constants.%TestNotEqual] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
@@ -409,12 +409,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc14_32.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc14_32.2: type = converted %bool.make_type, %.loc14_32.1 [template = bool]
-// CHECK:STDOUT:     %param.loc14_18: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc14_18
-// CHECK:STDOUT:     %param.loc14_24: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc14_24
-// CHECK:STDOUT:     %param.loc14_29: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc14_29
+// CHECK:STDOUT:     %a.param: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -580,12 +580,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc12_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc12_30.2: type = converted %bool.make_type, %.loc12_30.1 [template = bool]
-// CHECK:STDOUT:     %param.loc12_16: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc12_16
-// CHECK:STDOUT:     %param.loc12_22: %D = param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %param.loc12_22
-// CHECK:STDOUT:     %param.loc12_27: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc12_27
+// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %D = param runtime_param1
+// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLhsBad.decl: %TestLhsBad.type = fn_decl @TestLhsBad [template = constants.%TestLhsBad] {
 // CHECK:STDOUT:     %a.patt: %D = binding_pattern a
@@ -600,12 +600,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc26_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc26_30.2: type = converted %bool.make_type, %.loc26_30.1 [template = bool]
-// CHECK:STDOUT:     %param.loc26_16: %D = param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %param.loc26_16
-// CHECK:STDOUT:     %param.loc26_22: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc26_22
-// CHECK:STDOUT:     %param.loc26_27: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc26_27
+// CHECK:STDOUT:     %a.param: %D = param runtime_param0
+// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -651,12 +651,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc8_34.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc8_34.2: type = converted %bool.make_type, %.loc8_34.1 [template = bool]
-// CHECK:STDOUT:     %param.loc8_16: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc8_16
-// CHECK:STDOUT:     %param.loc8_26: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc8_26
-// CHECK:STDOUT:     %param.loc8_31: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc8_31
+// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
@@ -671,12 +671,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc9_37.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc9_37.2: type = converted %bool.make_type, %.loc9_37.1 [template = bool]
-// CHECK:STDOUT:     %param.loc9_19: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc9_19
-// CHECK:STDOUT:     %param.loc9_29: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc9_29
-// CHECK:STDOUT:     %param.loc9_34: bool = param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc9_34
+// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.4]
 // CHECK:STDOUT:

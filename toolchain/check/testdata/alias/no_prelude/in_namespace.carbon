@@ -55,8 +55,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:     %a.ref: type = name_ref a, file.%a [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

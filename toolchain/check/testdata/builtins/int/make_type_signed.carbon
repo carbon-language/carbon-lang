@@ -109,10 +109,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_9: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc4_9
-// CHECK:STDOUT:     %param.loc4_16: type = param runtime_param1
-// CHECK:STDOUT:     %return: ref type = return_slot %param.loc4_16
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: type = param runtime_param1
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -185,10 +185,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc6_24: init type = call %Int.ref.loc6_21(%.loc6_25) [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_27.1: type = value_of_initializer %int.make_type_signed.loc6_24 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_27.2: type = converted %int.make_type_signed.loc6_24, %.loc6_27.1 [template = constants.%.3]
-// CHECK:STDOUT:     %param.loc6_7: %.3 = param runtime_param0
-// CHECK:STDOUT:     %n: %.3 = bind_name n, %param.loc6_7
-// CHECK:STDOUT:     %param.loc6_18: %.3 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %param.loc6_18
+// CHECK:STDOUT:     %n.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %n: %.3 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: %.5 = binding_pattern n
@@ -206,10 +206,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc10_24: init type = call %Int.ref.loc10_21(%.loc10_25) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_27.1: type = value_of_initializer %int.make_type_signed.loc10_24 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_27.2: type = converted %int.make_type_signed.loc10_24, %.loc10_27.1 [template = constants.%.5]
-// CHECK:STDOUT:     %param.loc10_7: %.5 = param runtime_param0
-// CHECK:STDOUT:     %n: %.5 = bind_name n, %param.loc10_7
-// CHECK:STDOUT:     %param.loc10_18: %.5 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.5 = return_slot %param.loc10_18
+// CHECK:STDOUT:     %n.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %n: %.5 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
 // CHECK:STDOUT:     %N.patt.loc14_13.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
@@ -232,12 +232,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = %.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %param.loc14_14: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_14 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc14_23: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
-// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %param.loc14_23
-// CHECK:STDOUT:     %param.loc14_33: @Symbolic.%.loc14_28 (%.6) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_28 (%.6) = return_slot %param.loc14_33
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %x.param: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
+// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @Symbolic.%.loc14_28 (%.6) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_28 (%.6) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,10 +370,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_32.loc6_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_22.1: type = value_of_initializer %int.make_type_32.loc6_22 [template = i32]
 // CHECK:STDOUT:     %.loc6_22.2: type = converted %int.make_type_32.loc6_22, %.loc6_22.1 [template = i32]
-// CHECK:STDOUT:     %param.loc6_12: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc6_12
-// CHECK:STDOUT:     %param.loc6_19: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc6_19
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]

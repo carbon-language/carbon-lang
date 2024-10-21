@@ -144,8 +144,8 @@ class D {
 // CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_15.1: %I.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_15.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt.loc10_17.1: %I.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
@@ -159,8 +159,8 @@ class D {
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc10_41
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc10_17.1: %I.type = bind_symbolic_name U, 0, %param [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc10_17.1: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt.loc12_18.1: type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
@@ -172,8 +172,8 @@ class D {
 // CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc12_18.1: type = bind_symbolic_name V, 0, %param [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %V.loc12_18.1: type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -273,8 +273,8 @@ class D {
 // CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%J.type] {
 // CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc12_19.1: %J.type = bind_symbolic_name W, 0, %param [symbolic = %W.loc12_19.2 (constants.%W)]
+// CHECK:STDOUT:     %W.param: %J.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc12_19.1: %J.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,8 +334,8 @@ class D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,8 +382,8 @@ class D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -433,8 +433,8 @@ class D {
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -488,8 +488,8 @@ class D {
 // CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %param
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

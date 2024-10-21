@@ -530,9 +530,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
         continue;
       }
-      case InstKind::Param: {
+      case CARBON_KIND(Param inst): {
         // TODO: Find a way to use the name of the enclosing bind inst here.
-        add_inst_name("param");
+        add_inst_name_id(inst.pretty_name, ".param");
         continue;
       }
       case InstKind::ParamPattern: {

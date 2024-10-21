@@ -45,10 +45,10 @@ interface UseSelf {
 // CHECK:STDOUT:     %Self.ref.loc12_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_25.1: type = facet_type_access %Self.ref.loc12_25 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %Self.ref.loc12_25, %.loc12_25.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc12_12: @F.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %param.loc12_12
-// CHECK:STDOUT:     %param.loc12_22: @F.%Self (%Self) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @F.%Self (%Self) = return_slot %param.loc12_22
+// CHECK:STDOUT:     %self.param: @F.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: @F.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @F.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:

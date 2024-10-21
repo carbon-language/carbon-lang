@@ -70,8 +70,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_17.2: type = converted %int.make_type_32, %.loc11_17.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [template = constants.%MakeF64] {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
@@ -81,8 +81,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc12_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_17.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc12_17.3: type = converted %float.make_type, %.loc12_17.2 [template = f64]
-// CHECK:STDOUT:     %param: f64 = param runtime_param0
-// CHECK:STDOUT:     %return: ref f64 = return_slot %param
+// CHECK:STDOUT:     %return.param: f64 = param runtime_param0
+// CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
@@ -96,8 +96,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %.loc14_25.2: type = value_of_initializer %float.make_type.loc14 [template = f64]
 // CHECK:STDOUT:     %.loc14_25.3: type = converted %float.make_type.loc14, %.loc14_25.2 [template = f64]
 // CHECK:STDOUT:     %.loc14_28: type = struct_type {.a: i32, .b: f64} [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

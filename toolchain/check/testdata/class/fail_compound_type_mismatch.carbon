@@ -105,10 +105,10 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_24.2: type = converted %int.make_type_32, %.loc19_24.1 [template = i32]
-// CHECK:STDOUT:     %param.loc19_16: %A = param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %param.loc19_16
-// CHECK:STDOUT:     %param.loc19_21: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc19_21
+// CHECK:STDOUT:     %a.param: %A = param runtime_param0
+// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

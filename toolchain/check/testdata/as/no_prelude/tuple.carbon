@@ -57,8 +57,8 @@ fn Var() {
 // CHECK:STDOUT:     %return.param_patt: %X = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %param: %X = param runtime_param0
-// CHECK:STDOUT:     %return: ref %X = return_slot %param
+// CHECK:STDOUT:     %return.param: %X = param runtime_param0
+// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {} {}
 // CHECK:STDOUT:   %Var.decl: %Var.type = fn_decl @Var [template = constants.%Var] {} {}

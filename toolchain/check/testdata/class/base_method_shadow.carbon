@@ -114,14 +114,14 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     %.loc29_27: type = ptr_type %C [template = constants.%.13]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc29_34: type = ptr_type %D [template = constants.%.17]
-// CHECK:STDOUT:     %param.loc29_10: %.1 = param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %param.loc29_10
-// CHECK:STDOUT:     %param.loc29_17: %.7 = param runtime_param1
-// CHECK:STDOUT:     %b: %.7 = bind_name b, %param.loc29_17
-// CHECK:STDOUT:     %param.loc29_24: %.13 = param runtime_param2
-// CHECK:STDOUT:     %c: %.13 = bind_name c, %param.loc29_24
-// CHECK:STDOUT:     %param.loc29_31: %.17 = param runtime_param3
-// CHECK:STDOUT:     %d: %.17 = bind_name d, %param.loc29_31
+// CHECK:STDOUT:     %a.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %.7 = param runtime_param1
+// CHECK:STDOUT:     %b: %.7 = bind_name b, %b.param
+// CHECK:STDOUT:     %c.param: %.13 = param runtime_param2
+// CHECK:STDOUT:     %c: %.13 = bind_name c, %c.param
+// CHECK:STDOUT:     %d.param: %.17 = param runtime_param3
+// CHECK:STDOUT:     %d: %.17 = bind_name d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,8 +133,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_23: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -153,8 +153,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %.loc17_23: type = ptr_type %B [template = constants.%.7]
-// CHECK:STDOUT:     %param: %.7 = param runtime_param0
-// CHECK:STDOUT:     %self: %.7 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %self: %.7 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
@@ -175,8 +175,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc22_23: type = ptr_type %C [template = constants.%.13]
-// CHECK:STDOUT:     %param: %.13 = param runtime_param0
-// CHECK:STDOUT:     %self: %.13 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.13 = param runtime_param0
+// CHECK:STDOUT:     %self: %.13 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.14 [template = constants.%.15]
 // CHECK:STDOUT:

@@ -56,8 +56,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class.2 = binding_pattern self
@@ -65,15 +65,15 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.patt: %T = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %T = param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param.loc16_11: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0, %param.loc16_11 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, %.loc16 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = constants.%T]
-// CHECK:STDOUT:     %param.loc16_26: %Class.2 = param runtime_param0
-// CHECK:STDOUT:     %self.loc16: %Class.2 = bind_name self, %param.loc16_26
-// CHECK:STDOUT:     %param.loc16_35: %T = param runtime_param1
-// CHECK:STDOUT:     %n.loc16: %T = bind_name n, %param.loc16_35
+// CHECK:STDOUT:     %self.param.loc16: %Class.2 = param runtime_param0
+// CHECK:STDOUT:     %self.loc16: %Class.2 = bind_name self, %self.param.loc16
+// CHECK:STDOUT:     %n.param.loc16: %T = param runtime_param1
+// CHECK:STDOUT:     %n.loc16: %T = bind_name n, %n.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,10 +101,10 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %.loc13: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref.loc13: type = name_ref Self, %.loc13 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T.loc13 (constants.%T)]
-// CHECK:STDOUT:       %param.loc13_12: @F.%Class (%Class.2) = param runtime_param0
-// CHECK:STDOUT:       %self.loc13: @F.%Class (%Class.2) = bind_name self, %param.loc13_12
-// CHECK:STDOUT:       %param.loc13_21: @F.%T.loc13 (%T) = param runtime_param1
-// CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %param.loc13_21
+// CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %self.loc13: @F.%Class (%Class.2) = bind_name self, %self.param.loc13
+// CHECK:STDOUT:       %n.param.loc13: @F.%T.loc13 (%T) = param runtime_param1
+// CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %n.param.loc13
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc14_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc14_1.3 (constants.%.4)]
 // CHECK:STDOUT:

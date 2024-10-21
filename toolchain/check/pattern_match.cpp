@@ -16,6 +16,22 @@
 namespace Carbon::Check {
 namespace {
 
+// Returns a best-effort name for the given ParamPattern, suitable for use in
+// IR pretty-printing.
+// TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
+auto GetPrettyName(Context& context, SemIR::ParamPattern param_pattern)
+    -> SemIR::NameId {
+  if (context.insts().Is<SemIR::ReturnSlotPattern>(
+          param_pattern.subpattern_id)) {
+    return SemIR::NameId::ReturnSlot;
+  }
+  if (auto binding_pattern = context.insts().TryGetAs<SemIR::AnyBindingPattern>(
+          param_pattern.subpattern_id)) {
+    return context.entity_names().Get(binding_pattern->entity_name_id).name_id;
+  }
+  return SemIR::NameId::Invalid;
+}
+
 // Selects between the different kinds of pattern matching.
 enum class MatchKind {
   // Caller pattern matching occurs on the caller side of a function call, and
@@ -225,11 +241,13 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
             context.ReplaceInstBeforeConstantUse(entry.pattern_id,
                                                  param_pattern);
           }
-          match.AddWork({.pattern_id = param_pattern.subpattern_id,
-                         .scrutinee_id = context.AddInst<SemIR::Param>(
-                             pattern.loc_id,
-                             {.type_id = param_pattern.type_id,
-                              .runtime_index = param_pattern.runtime_index})});
+          match.AddWork(
+              {.pattern_id = param_pattern.subpattern_id,
+               .scrutinee_id = context.AddInst<SemIR::Param>(
+                   pattern.loc_id,
+                   {.type_id = param_pattern.type_id,
+                    .runtime_index = param_pattern.runtime_index,
+                    .pretty_name = GetPrettyName(context, param_pattern)})});
         } break;
       }
       break;

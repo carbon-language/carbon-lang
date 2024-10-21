@@ -49,8 +49,8 @@ fn Run() -> String {}
 // CHECK:STDOUT:     %return.patt: String = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: String = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: String = param runtime_param0
-// CHECK:STDOUT:     %return: ref String = return_slot %param
+// CHECK:STDOUT:     %return.param: String = param runtime_param0
+// CHECK:STDOUT:     %return: ref String = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

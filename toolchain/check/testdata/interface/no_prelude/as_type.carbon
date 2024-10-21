@@ -33,8 +33,8 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:     %e.param_patt: %Empty.type = param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
-// CHECK:STDOUT:     %param: %Empty.type = param runtime_param0
-// CHECK:STDOUT:     %e: %Empty.type = bind_name e, %param
+// CHECK:STDOUT:     %e.param: %Empty.type = param runtime_param0
+// CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

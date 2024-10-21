@@ -61,8 +61,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+13':         {kind: Converted, arg0: inst+10, arg1: inst+9, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: ReturnSlotPattern, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+15':         {kind: ParamPattern, arg0: inst+14, arg1: runtime_param1, type: type(inst+9)}
-// CHECK:STDOUT:     'inst+16':         {kind: Param, arg0: runtime_param0, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+17':         {kind: Param, arg0: runtime_param1, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+16':         {kind: Param, arg0: runtime_param0, arg1: name1, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+17':         {kind: Param, arg0: runtime_param1, arg1: nameReturnSlot, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+18':         {kind: ReturnSlot, arg0: inst+17, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+19':         {kind: FunctionDecl, arg0: function0, arg1: block8, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
@@ -192,10 +192,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %param.loc15_9: %.1 = param runtime_param0
-// CHECK:STDOUT:     %n: %.1 = bind_name n, %param.loc15_9
-// CHECK:STDOUT:     %param.loc15_15: %.2 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %param.loc15_15
+// CHECK:STDOUT:     %n.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.2 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

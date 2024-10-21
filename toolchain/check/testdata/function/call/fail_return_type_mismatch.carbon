@@ -92,8 +92,8 @@ fn Run() {
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
 // CHECK:STDOUT:     %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
-// CHECK:STDOUT:     %param: f64 = param runtime_param0
-// CHECK:STDOUT:     %return: ref f64 = return_slot %param
+// CHECK:STDOUT:     %return.param: f64 = param runtime_param0
+// CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }

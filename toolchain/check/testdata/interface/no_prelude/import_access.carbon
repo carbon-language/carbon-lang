@@ -218,8 +218,8 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %Def.type = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%import_ref.1 [template = constants.%Def.type]
-// CHECK:STDOUT:     %param: %Def.type = param runtime_param0
-// CHECK:STDOUT:     %i: %Def.type = bind_name i, %param
+// CHECK:STDOUT:     %i.param: %Def.type = param runtime_param0
+// CHECK:STDOUT:     %i: %Def.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,8 +252,8 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: <error> = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,8 +288,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,8 +325,8 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %ForwardWithDef.type = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.1 [template = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:     %param: %ForwardWithDef.type = param runtime_param0
-// CHECK:STDOUT:     %i: %ForwardWithDef.type = bind_name i, %param
+// CHECK:STDOUT:     %i.param: %ForwardWithDef.type = param runtime_param0
+// CHECK:STDOUT:     %i: %ForwardWithDef.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -359,8 +359,8 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: <error> = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,8 +395,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,8 +428,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc8: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [template = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
@@ -466,8 +466,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -502,8 +502,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %i: <error> = bind_name i, %param
+// CHECK:STDOUT:     %i.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

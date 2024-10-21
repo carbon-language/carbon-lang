@@ -91,10 +91,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.7]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %param.loc19_7: %.7 = param runtime_param0
-// CHECK:STDOUT:     %s: %.7 = bind_name s, %param.loc19_7
-// CHECK:STDOUT:     %param.loc19_19: %B = param runtime_param1
-// CHECK:STDOUT:     %b: %B = bind_name b, %param.loc19_19
+// CHECK:STDOUT:     %s.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
+// CHECK:STDOUT:     %b.param: %B = param runtime_param1
+// CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,8 +106,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

@@ -100,12 +100,12 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc4_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_34.1: type = value_of_initializer %int.make_type_32.loc4_34 [template = i32]
 // CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_34, %.loc4_34.1 [template = i32]
-// CHECK:STDOUT:     %param.loc4_7: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_6.1: i32 = bind_symbolic_name N, 0, %param.loc4_7 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc4_16: @F.%.loc4_26 (%.2) = param runtime_param0
-// CHECK:STDOUT:     %n: @F.%.loc4_26 (%.2) = bind_name n, %param.loc4_16
-// CHECK:STDOUT:     %param.loc4_31: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc4_31
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:     %n.param: @F.%.loc4_26 (%.2) = param runtime_param0
+// CHECK:STDOUT:     %n: @F.%.loc4_26 (%.2) = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %.4 = binding_pattern a
@@ -120,10 +120,10 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_17.2: type = converted %int.make_type_32, %.loc8_17.1 [template = i32]
-// CHECK:STDOUT:     %param.loc8_7: %.4 = param runtime_param0
-// CHECK:STDOUT:     %a: %.4 = bind_name a, %param.loc8_7
-// CHECK:STDOUT:     %param.loc8_14: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc8_14
+// CHECK:STDOUT:     %a.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,12 +231,12 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc8_36: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_36.1: type = value_of_initializer %int.make_type_32.loc8_36 [template = i32]
 // CHECK:STDOUT:     %.loc8_36.2: type = converted %int.make_type_32.loc8_36, %.loc8_36.1 [template = i32]
-// CHECK:STDOUT:     %param.loc8_7: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc8_6.1: i32 = bind_symbolic_name N, 0, %param.loc8_7 [symbolic = %N.loc8_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc8_16: <error> = param runtime_param0
-// CHECK:STDOUT:     %n: <error> = bind_name n, %param.loc8_16
-// CHECK:STDOUT:     %param.loc8_33: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc8_33
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc8_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc8_6.2 (constants.%N)]
+// CHECK:STDOUT:     %n.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
@@ -251,10 +251,10 @@ fn G(a: f64) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_32, %.loc12_17.1 [template = i32]
-// CHECK:STDOUT:     %param.loc12_7: f64 = param runtime_param0
-// CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc12_7
-// CHECK:STDOUT:     %param.loc12_14: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc12_14
+// CHECK:STDOUT:     %a.param: f64 = param runtime_param0
+// CHECK:STDOUT:     %a: f64 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -88,10 +88,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_44.2: type = ptr_type %.1 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_35: type = const_type %.4 [template = constants.%.5]
-// CHECK:STDOUT:     %param.loc11_19: %.3 = param runtime_param0
-// CHECK:STDOUT:     %p: %.3 = bind_name p, %param.loc11_19
-// CHECK:STDOUT:     %param.loc11_32: %.5 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.5 = return_slot %param.loc11_32
+// CHECK:STDOUT:     %p.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

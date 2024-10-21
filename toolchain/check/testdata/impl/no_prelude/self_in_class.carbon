@@ -63,8 +63,8 @@ class A {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param: @Make.1.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %return: ref @Make.1.%Self (%Self) = return_slot %param
+// CHECK:STDOUT:     %return.param: @Make.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %return: ref @Make.1.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %Make.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -80,8 +80,8 @@ class A {
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.6]
 // CHECK:STDOUT:

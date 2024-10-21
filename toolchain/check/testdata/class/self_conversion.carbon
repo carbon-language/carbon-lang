@@ -95,10 +95,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_38.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
 // CHECK:STDOUT:     %.loc22_38.2: type = converted %int.make_type_32.loc22, %.loc22_38.1 [template = i32]
-// CHECK:STDOUT:     %param.loc22_25: %Base = param runtime_param0
-// CHECK:STDOUT:     %self.loc22: %Base = bind_name self, %param.loc22_25
-// CHECK:STDOUT:     %param.loc22_35: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc22_35
+// CHECK:STDOUT:     %self.param.loc22: %Base = param runtime_param0
+// CHECK:STDOUT:     %self.loc22: %Base = bind_name self, %self.param.loc22
+// CHECK:STDOUT:     %return.param.loc22: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
@@ -107,8 +107,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc26_40: type = ptr_type %Base [template = constants.%.7]
-// CHECK:STDOUT:     %param.loc26: %.7 = param runtime_param0
-// CHECK:STDOUT:     %self.loc26: %.7 = bind_name self, %param.loc26
+// CHECK:STDOUT:     %self.param.loc26: %.7 = param runtime_param0
+// CHECK:STDOUT:     %self.loc26: %.7 = bind_name self, %self.param.loc26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %.11 = binding_pattern p
@@ -121,10 +121,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc30_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc30_25.2: type = converted %int.make_type_32, %.loc30_25.1 [template = i32]
-// CHECK:STDOUT:     %param.loc30_10: %.11 = param runtime_param0
-// CHECK:STDOUT:     %p: %.11 = bind_name p, %param.loc30_10
-// CHECK:STDOUT:     %param.loc30_22: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc30_22
+// CHECK:STDOUT:     %p.param: %.11 = param runtime_param0
+// CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,10 +153,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_32.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]
 // CHECK:STDOUT:     %.loc18_32.2: type = converted %int.make_type_32.loc18, %.loc18_32.1 [template = i32]
-// CHECK:STDOUT:     %param.loc18_19: %Base = param runtime_param0
-// CHECK:STDOUT:     %self.loc18: %Base = bind_name self, %param.loc18_19
-// CHECK:STDOUT:     %param.loc18_29: i32 = param runtime_param1
-// CHECK:STDOUT:     %.loc18_29: ref i32 = return_slot %param.loc18_29
+// CHECK:STDOUT:     %self.param.loc18: %Base = param runtime_param0
+// CHECK:STDOUT:     %self.loc18: %Base = bind_name self, %self.param.loc18
+// CHECK:STDOUT:     %return.param.loc18: i32 = param runtime_param1
+// CHECK:STDOUT:     %.loc18_29: ref i32 = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
@@ -165,8 +165,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc19: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc19: type = ptr_type %Base [template = constants.%.7]
-// CHECK:STDOUT:     %param.loc19: %.7 = param runtime_param0
-// CHECK:STDOUT:     %self.loc19: %.7 = bind_name self, %param.loc19
+// CHECK:STDOUT:     %self.param.loc19: %.7 = param runtime_param0
+// CHECK:STDOUT:     %self.loc19: %.7 = bind_name self, %self.param.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:

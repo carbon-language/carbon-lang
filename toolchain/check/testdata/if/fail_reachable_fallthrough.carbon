@@ -94,10 +94,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_32, %.loc11_20.1 [template = i32]
-// CHECK:STDOUT:     %param.loc11_9: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_9
-// CHECK:STDOUT:     %param.loc11_17: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc11_17
+// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If2.decl: %If2.type = fn_decl @If2 [template = constants.%If2] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
@@ -111,10 +111,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32, %.loc22_20.1 [template = i32]
-// CHECK:STDOUT:     %param.loc22_9: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc22_9
-// CHECK:STDOUT:     %param.loc22_17: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc22_17
+// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If3.decl: %If3.type = fn_decl @If3 [template = constants.%If3] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
@@ -128,10 +128,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc33_20.2: type = converted %int.make_type_32, %.loc33_20.1 [template = i32]
-// CHECK:STDOUT:     %param.loc33_9: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc33_9
-// CHECK:STDOUT:     %param.loc33_17: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc33_17
+// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

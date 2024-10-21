@@ -77,8 +77,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.5]
-// CHECK:STDOUT:     %param: %.5 = param runtime_param0
-// CHECK:STDOUT:     %p: %.5 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }

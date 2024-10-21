@@ -63,8 +63,8 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_32
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param0
-// CHECK:STDOUT:     %U: %I.type = bind_name U, %param
+// CHECK:STDOUT:     %U.param: %I.type = param runtime_param0
+// CHECK:STDOUT:     %U: %I.type = bind_name U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

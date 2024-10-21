@@ -79,12 +79,12 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc16_10: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc16_10
-// CHECK:STDOUT:     %param.loc16_21: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc16_21
-// CHECK:STDOUT:     %param.loc16_31: %Class = param runtime_param2
-// CHECK:STDOUT:     %return: ref %Class = return_slot %param.loc16_31
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %next.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param2
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
@@ -100,12 +100,12 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc20_17: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc20_17
-// CHECK:STDOUT:     %param.loc20_28: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc20_28
-// CHECK:STDOUT:     %param.loc20_38: %Class = param runtime_param2
-// CHECK:STDOUT:     %return: ref %Class = return_slot %param.loc20_38
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %next.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param2
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

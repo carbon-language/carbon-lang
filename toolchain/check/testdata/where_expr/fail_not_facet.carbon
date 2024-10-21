@@ -68,8 +68,8 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:     %.loc7_14: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: <error> = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc7_6.1: <error> = bind_symbolic_name T, 0, %param [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: <error> = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc7_6.1: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

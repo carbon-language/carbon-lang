@@ -780,6 +780,12 @@ class FormatterImpl {
     FormatReturnSlot(inst.dest_id);
   }
 
+  auto FormatInstRHS(Param inst) -> void {
+    FormatArgs(inst.runtime_index);
+    // Omit pretty_name because it's an implementation detail of
+    // pretty-printing.
+  }
+
   auto FormatInstRHS(ReturnExpr ret) -> void {
     FormatArgs(ret.expr_id);
     if (ret.dest_id.is_valid()) {

@@ -112,10 +112,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_24.2: type = converted %int.make_type_32, %.loc25_24.1 [template = i32]
-// CHECK:STDOUT:     %param.loc25_10: %Derived = param runtime_param0
-// CHECK:STDOUT:     %a: %Derived = bind_name a, %param.loc25_10
-// CHECK:STDOUT:     %param.loc25_21: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc25_21
+// CHECK:STDOUT:     %a.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %a: %Derived = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallIndirect.decl: %CallIndirect.type = fn_decl @CallIndirect [template = constants.%CallIndirect] {
 // CHECK:STDOUT:     %p.patt: %.10 = binding_pattern p
@@ -128,10 +128,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc29_33.2: type = converted %int.make_type_32, %.loc29_33.1 [template = i32]
-// CHECK:STDOUT:     %param.loc29_18: %.10 = param runtime_param0
-// CHECK:STDOUT:     %p: %.10 = bind_name p, %param.loc29_18
-// CHECK:STDOUT:     %param.loc29_30: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc29_30
+// CHECK:STDOUT:     %p.param: %.10 = param runtime_param0
+// CHECK:STDOUT:     %p: %.10 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBase.decl: %PassDerivedToBase.type = fn_decl @PassDerivedToBase [template = constants.%PassDerivedToBase] {
 // CHECK:STDOUT:     %a.patt: %Derived = binding_pattern a
@@ -143,10 +143,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_37.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc33_37.2: type = converted %int.make_type_32, %.loc33_37.1 [template = i32]
-// CHECK:STDOUT:     %param.loc33_23: %Derived = param runtime_param0
-// CHECK:STDOUT:     %a: %Derived = bind_name a, %param.loc33_23
-// CHECK:STDOUT:     %param.loc33_34: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc33_34
+// CHECK:STDOUT:     %a.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %a: %Derived = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBaseIndirect.decl: %PassDerivedToBaseIndirect.type = fn_decl @PassDerivedToBaseIndirect [template = constants.%PassDerivedToBaseIndirect] {
 // CHECK:STDOUT:     %p.patt: %.10 = binding_pattern p
@@ -159,10 +159,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc37_46.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc37_46.2: type = converted %int.make_type_32, %.loc37_46.1 [template = i32]
-// CHECK:STDOUT:     %param.loc37_31: %.10 = param runtime_param0
-// CHECK:STDOUT:     %p: %.10 = bind_name p, %param.loc37_31
-// CHECK:STDOUT:     %param.loc37_43: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc37_43
+// CHECK:STDOUT:     %p.param: %.10 = param runtime_param0
+// CHECK:STDOUT:     %p: %.10 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,16 +174,16 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param_patt: %Derived = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %param: %Derived = param runtime_param0
-// CHECK:STDOUT:     %self: %Derived = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [template = constants.%Derived]
-// CHECK:STDOUT:     %param: %Derived = param runtime_param0
-// CHECK:STDOUT:     %self: %Derived = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
@@ -206,10 +206,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_32, %.loc14_25.1 [template = i32]
-// CHECK:STDOUT:     %param.loc14_12: %Base = param runtime_param0
-// CHECK:STDOUT:     %self: %Base = bind_name self, %param.loc14_12
-// CHECK:STDOUT:     %param.loc14_22: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc14_22
+// CHECK:STDOUT:     %self.param: %Base = param runtime_param0
+// CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
@@ -221,10 +221,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_28.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc15_28.2: type = converted %int.make_type_32, %.loc15_28.1 [template = i32]
-// CHECK:STDOUT:     %param.loc15_12: %Derived = param runtime_param0
-// CHECK:STDOUT:     %self: %Derived = bind_name self, %param.loc15_12
-// CHECK:STDOUT:     %param.loc15_25: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc15_25
+// CHECK:STDOUT:     %self.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

@@ -76,8 +76,8 @@ fn Initializing() {
 // CHECK:STDOUT:     %n.param_patt: %X = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %param: %X = param runtime_param0
-// CHECK:STDOUT:     %n: %X = bind_name n, %param
+// CHECK:STDOUT:     %n.param: %X = param runtime_param0
+// CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %p.patt: %.5 = binding_pattern p
@@ -85,16 +85,16 @@ fn Initializing() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.5]
-// CHECK:STDOUT:     %param: %.5 = param runtime_param0
-// CHECK:STDOUT:     %p: %.5 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %X = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %param: %X = param runtime_param0
-// CHECK:STDOUT:     %return: ref %X = return_slot %param
+// CHECK:STDOUT:     %return.param: %X = param runtime_param0
+// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Initializing.decl: %Initializing.type = fn_decl @Initializing [template = constants.%Initializing] {} {}
 // CHECK:STDOUT: }

@@ -46,10 +46,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %param.loc15_9: %.1 = param runtime_param0
-// CHECK:STDOUT:     %n: %.1 = bind_name n, %param.loc15_9
-// CHECK:STDOUT:     %param.loc15_15: %.2 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %param.loc15_15
+// CHECK:STDOUT:     %n.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.2 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

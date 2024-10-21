@@ -112,8 +112,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     %i.param_patt: %I.type = param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.1 [template = constants.%I.type]
-// CHECK:STDOUT:     %param: %I.type = param runtime_param0
-// CHECK:STDOUT:     %i: %I.type = bind_name i, %param
+// CHECK:STDOUT:     %i.param: %I.type = param runtime_param0
+// CHECK:STDOUT:     %i: %I.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

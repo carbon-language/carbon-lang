@@ -134,8 +134,8 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %param: %A = param runtime_param0
-// CHECK:STDOUT:     %return: ref %A = return_slot %param
+// CHECK:STDOUT:     %return.param: %A = param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

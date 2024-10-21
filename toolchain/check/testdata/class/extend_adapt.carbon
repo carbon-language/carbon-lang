@@ -151,16 +151,16 @@ class StructAdapter {
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [template = constants.%TestAdapterMethod] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,8 +189,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %self.param_patt: %SomeClassAdapter = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -293,8 +293,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %param: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,8 +324,8 @@ class StructAdapter {
 // CHECK:STDOUT:     %self.param_patt: %SomeClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
-// CHECK:STDOUT:     %param: %SomeClass = param runtime_param0
-// CHECK:STDOUT:     %self: %SomeClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %SomeClass = param runtime_param0
+// CHECK:STDOUT:     %self: %SomeClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -477,10 +477,10 @@ class StructAdapter {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]
-// CHECK:STDOUT:     %param.loc13_7: %SomeClassAdapter = param runtime_param0
-// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %param.loc13_7
-// CHECK:STDOUT:     %param.loc13_27: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc13_27
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

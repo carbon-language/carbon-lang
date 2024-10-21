@@ -100,10 +100,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_37: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:     %param.loc15_7: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param.loc15_7
-// CHECK:STDOUT:     %param.loc15_30: %.6 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.6 = return_slot %param.loc15_30
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.6 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.6 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -159,20 +159,20 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc6_23: i32 = int_literal 3 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_24.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_17
-// CHECK:STDOUT:     %param.loc6_27: @F.%T.loc6_6.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %param.loc6_27
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %a.param: @F.%.loc6_24.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: @F.%T.loc6_6.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,20 +318,20 @@ fn G() -> C {
 // CHECK:STDOUT:     %int.make_type_32.loc10_29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_32.loc10_29 [template = i32]
 // CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_32.loc10_29, %.loc10_29.1 [template = i32]
-// CHECK:STDOUT:     %param.loc10_7: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_7 [symbolic = %N.loc10_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_16: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_16
-// CHECK:STDOUT:     %param.loc10_26: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc10_26
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc10_6.2 (constants.%N)]
+// CHECK:STDOUT:     %a.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -463,22 +463,22 @@ fn G() -> C {
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc10_16.1 [symbolic = %N.loc10_16.2 (constants.%N)]
 // CHECK:STDOUT:     %.loc10_33: type = array_type %N.ref, %T [template = <error>]
 // CHECK:STDOUT:     %T.ref.loc10_39: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc10_7: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %param.loc10_7 [symbolic = %T.loc10_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc10_17: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_16.1: i32 = bind_symbolic_name N, 1, %param.loc10_17 [symbolic = %N.loc10_16.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_26: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_26
-// CHECK:STDOUT:     %param.loc10_36: @F.%T.loc10_6.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @F.%T.loc10_6.2 (%T) = return_slot %param.loc10_36
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_6.2 (constants.%T)]
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_16.1: i32 = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc10_16.2 (constants.%N)]
+// CHECK:STDOUT:     %a.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: @F.%T.loc10_6.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @F.%T.loc10_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -626,20 +626,20 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc6_23: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_7: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %param.loc6_7 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc6_17: @F.%.loc6_24.2 (%.4) = param runtime_param0
-// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %param.loc6_17
-// CHECK:STDOUT:     %param.loc6_27: @F.%T.loc6_6.2 (%T) = param runtime_param1
-// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %param.loc6_27
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
+// CHECK:STDOUT:     %a.param: @F.%.loc6_24.2 (%.4) = param runtime_param0
+// CHECK:STDOUT:     %a: @F.%.loc6_24.2 (%.4) = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: @F.%T.loc6_6.2 (%T) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -853,20 +853,20 @@ fn G() -> C {
 // CHECK:STDOUT:     %int.make_type_32.loc10_29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_32.loc10_29 [template = i32]
 // CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_32.loc10_29, %.loc10_29.1 [template = i32]
-// CHECK:STDOUT:     %param.loc10_7: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %param.loc10_7 [symbolic = %N.loc10_6.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc10_16: <error> = param runtime_param0
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc10_16
-// CHECK:STDOUT:     %param.loc10_26: i32 = param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc10_26
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc10_6.2 (constants.%N)]
+// CHECK:STDOUT:     %a.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %param
+// CHECK:STDOUT:     %return.param: %C = param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

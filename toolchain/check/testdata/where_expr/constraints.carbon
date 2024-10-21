@@ -222,8 +222,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc11_21: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc11_37
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_15.1: %I.type = bind_symbolic_name U, 0, %param [symbolic = %U.loc11_15.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_15.1: %I.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_15.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [template = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt.loc13_10.1: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_10.2 (constants.%V.patt)]
@@ -238,8 +238,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc13_16: type = where_expr %.Self [template = constants.%J.type] {
 // CHECK:STDOUT:       requirement_impls %.loc13_22.2, %I.ref
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc13_10.1: %J.type = bind_symbolic_name V, 0, %param [symbolic = %V.loc13_10.2 (constants.%V)]
+// CHECK:STDOUT:     %V.param: %J.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %V.loc13_10.1: %J.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc13_10.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %W.patt.loc15_8.1: %I.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc15_8.2 (constants.%W.patt)]
@@ -258,8 +258,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       requirement_impls %.loc15_20.2, %J.ref
 // CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc15_50
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc15_8.1: %I.type = bind_symbolic_name W, 0, %param [symbolic = %W.loc15_8.2 (constants.%W)]
+// CHECK:STDOUT:     %W.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc15_8.1: %I.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_8.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,8 +402,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc15_16: type = where_expr %.Self [template = constants.%N.type] {
 // CHECK:STDOUT:       requirement_rewrite %P.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %N.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15_10.1: %N.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc15_10.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: %N.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc15_10.1: %N.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -576,8 +576,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc18_30: type = where_expr %.Self [template = constants.%K.type] {
 // CHECK:STDOUT:       requirement_impls <error>, %M.ref
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %K.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc18_24.1: %K.type = bind_symbolic_name W, 0, %param [symbolic = %W.loc18_24.2 (constants.%W)]
+// CHECK:STDOUT:     %W.param: %K.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc18_24.1: %K.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc18_24.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -775,8 +775,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = constants.%I.type] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %X.loc16_24.1: %I.type = bind_symbolic_name X, 0, %param [symbolic = %X.loc16_24.2 (constants.%X)]
+// CHECK:STDOUT:     %X.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %X.loc16_24.1: %I.type = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc16_24.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -930,8 +930,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = type] {
 // CHECK:STDOUT:       requirement_impls <error>, type
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1078,8 +1078,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_17.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1203,8 +1203,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc8_33: type = where_expr %.Self [template = type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc8_24.1: type = bind_symbolic_name U, 0, %param [symbolic = %U.loc8_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc8_24.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc8_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1322,8 +1322,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = constants.%J.type] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %Y.loc26_16.1: %J.type = bind_symbolic_name Y, 0, %param [symbolic = %Y.loc26_16.2 (constants.%Y)]
+// CHECK:STDOUT:     %Y.param: %J.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %Y.loc26_16.1: %J.type = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }

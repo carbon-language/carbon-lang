@@ -63,8 +63,8 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_17.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
 // CHECK:STDOUT:     %.loc16_17.2: type = converted %int.make_type_32.loc16, %.loc16_17.1 [template = i32]
-// CHECK:STDOUT:     %param.loc16: i32 = param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc16
+// CHECK:STDOUT:     %return.param.loc16: i32 = param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,8 +76,8 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32.loc12, %.loc12_13.1 [template = i32]
-// CHECK:STDOUT:     %param.loc12: i32 = param runtime_param0
-// CHECK:STDOUT:     %.loc12_10: ref i32 = return_slot %param.loc12
+// CHECK:STDOUT:     %return.param.loc12: i32 = param runtime_param0
+// CHECK:STDOUT:     %.loc12_10: ref i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
@@ -86,8 +86,8 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_13.2: type = converted %int.make_type_32, %.loc13_13.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

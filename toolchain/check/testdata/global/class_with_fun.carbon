@@ -55,8 +55,8 @@ var a: A = {};
 // CHECK:STDOUT:     %return.param_patt: %A = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %param: %A = param runtime_param0
-// CHECK:STDOUT:     %return: ref %A = return_slot %param
+// CHECK:STDOUT:     %return.param: %A = param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a

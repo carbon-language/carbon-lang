@@ -77,8 +77,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc22_20.2: type = converted %int.make_type_32, %.loc22_20.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,8 +91,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref, %.loc12_14.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param: @G.1.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %param
+// CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %G.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -108,8 +108,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param_patt: <error> = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %self: <error> = bind_name self, %param
+// CHECK:STDOUT:     %self.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_20: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:

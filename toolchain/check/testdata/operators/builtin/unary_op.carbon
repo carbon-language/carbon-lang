@@ -71,10 +71,10 @@ fn Constant() {
 // CHECK:STDOUT:     %bool.make_type.loc11_20: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [template = bool]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %bool.make_type.loc11_20, %.loc11_20.1 [template = bool]
-// CHECK:STDOUT:     %param.loc11_9: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param.loc11_9
-// CHECK:STDOUT:     %param.loc11_17: bool = param runtime_param1
-// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc11_17
+// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: bool = param runtime_param1
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]

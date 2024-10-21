@@ -139,8 +139,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_16.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc4_16.2: type = converted %.loc4_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,8 +210,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
@@ -258,8 +258,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_21.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc7_21.2: type = converted %.loc7_21.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_9.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
@@ -313,8 +313,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_18.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc6_18.2: type = converted %.loc6_18.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:

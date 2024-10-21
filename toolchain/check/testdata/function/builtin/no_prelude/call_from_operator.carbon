@@ -53,8 +53,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param0
-// CHECK:STDOUT:     %return: ref type = return_slot %param
+// CHECK:STDOUT:     %return.param: type = param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%Add.type] {} {}
 // CHECK:STDOUT: }
@@ -78,12 +78,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %param.loc7_13: @Op.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_13
-// CHECK:STDOUT:     %param.loc7_26: @Op.%Self (%Self) = param runtime_param1
-// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_26
-// CHECK:STDOUT:     %param.loc7_34: @Op.%Self (%Self) = param runtime_param2
-// CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = return_slot %param.loc7_34
+// CHECK:STDOUT:     %self.param: @Op.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: @Op.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: @Op.%Self (%Self) = param runtime_param2
+// CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -194,12 +194,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %param.loc7_13: i32 = param runtime_param0
-// CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_13
-// CHECK:STDOUT:     %param.loc7_26: i32 = param runtime_param1
-// CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_26
-// CHECK:STDOUT:     %param.loc7_34: i32 = param runtime_param2
-// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc7_34
+// CHECK:STDOUT:     %self.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %other: i32 = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param2
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.2]
 // CHECK:STDOUT:

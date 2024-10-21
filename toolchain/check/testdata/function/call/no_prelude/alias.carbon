@@ -39,8 +39,8 @@ fn Main() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %B: %A.type = bind_alias B, %A.decl [template = constants.%A]

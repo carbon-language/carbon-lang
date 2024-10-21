@@ -162,8 +162,8 @@ class C {
 // CHECK:STDOUT:     %b.param_patt: %Bad = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %param: %Bad = param runtime_param0
-// CHECK:STDOUT:     %b: %Bad = bind_name b, %param
+// CHECK:STDOUT:     %b.param: %Bad = param runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,8 +309,8 @@ class C {
 // CHECK:STDOUT:     %b.param_patt: %Bad = param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %param: %Bad = param runtime_param0
-// CHECK:STDOUT:     %b: %Bad = bind_name b, %param
+// CHECK:STDOUT:     %b.param: %Bad = param runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

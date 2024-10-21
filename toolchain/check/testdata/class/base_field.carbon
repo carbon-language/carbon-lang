@@ -87,10 +87,10 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %.loc24_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.2: type = converted %int.make_type_32, %.loc24_30.1 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.3: type = ptr_type i32 [template = constants.%.11]
-// CHECK:STDOUT:     %param.loc24_12: %.10 = param runtime_param0
-// CHECK:STDOUT:     %p: %.10 = bind_name p, %param.loc24_12
-// CHECK:STDOUT:     %param.loc24_24: %.11 = param runtime_param1
-// CHECK:STDOUT:     %return: ref %.11 = return_slot %param.loc24_24
+// CHECK:STDOUT:     %p.param: %.10 = param runtime_param0
+// CHECK:STDOUT:     %p: %.10 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.11 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.11 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

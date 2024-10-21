@@ -762,7 +762,9 @@ class ImportRefResolver {
 
       auto new_param_id = context_.AddInstInNoBlock<SemIR::Param>(
           AddImportIRInst(param_id),
-          {.type_id = type_id, .runtime_index = param_inst.runtime_index});
+          {.type_id = type_id,
+           .runtime_index = param_inst.runtime_index,
+           .pretty_name = GetLocalNameId(param_inst.pretty_name)});
       switch (bind_inst.kind) {
         case SemIR::BindName::Kind: {
           auto entity_name_id = context_.entity_names().Add(

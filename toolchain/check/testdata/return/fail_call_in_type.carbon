@@ -55,8 +55,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param0
-// CHECK:STDOUT:     %return: ref type = return_slot %param
+// CHECK:STDOUT:     %return.param: type = param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
@@ -66,8 +66,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc17_24.2: type = converted %ReturnType.call, %.loc17_24.1
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %param
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
