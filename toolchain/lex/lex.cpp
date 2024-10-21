@@ -191,6 +191,11 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void;
 
+  // Perform final checking and cleanup that should be done once we have
+  // finished lexing the whole file, and before we consider the tokenized buffer
+  // to be complete.
+  auto Finalize() -> void;
+
   auto DiagnoseAndFixMismatchedBrackets() -> void;
 
   // The main entry point for dispatching through the lexer's table. This method
@@ -728,6 +733,8 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   // Manually enter the dispatch loop. This call will tail-recurse through the
   // dispatch table until everything from source_text is consumed.
   DispatchNext(*this, source_text, position);
+
+  Finalize();
 
   if (consumer_.seen_error()) {
     buffer_.has_errors_ = true;
@@ -1342,7 +1349,9 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   NoteWhitespace();
 
   LexToken(TokenKind::FileEnd, position);
+}
 
+auto Lexer::Finalize() -> void {
   // If we had any mismatched brackets, issue diagnostics and fix them.
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
