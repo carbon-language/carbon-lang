@@ -396,8 +396,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
         : kind_(kind),
           has_leading_space_(has_leading_space),
           token_payload_(payload),
-          byte_offset_(byte_offset) {
-    }
+          byte_offset_(byte_offset) {}
 
     // A bitfield that encodes the token's kind, the leading space flag, and the
     // remaining bits in a payload. These are encoded together as a bitfield for
@@ -405,8 +404,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // after lexing.
     TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
     bool has_leading_space_ : 1;
-    // Payload valuess are typically ID types for which we create at most one
-    // per token, so we ensure that `token_payload_` is large enough to fit any
+    // Payload values are typically ID types for which we create at most one per
+    // token, so we ensure that `token_payload_` is large enough to fit any
     // token index. Stores to this field may overflow, but we produce an error
     // in `Lexer::LexFileEnd` if the file has more than `MaxTokens` tokens, so
     // this value never overflows if lexing succeeds.
