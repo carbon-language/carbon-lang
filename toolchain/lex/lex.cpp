@@ -1350,12 +1350,18 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 
   // Reject source files with so many tokens that we may have exceeded the
   // number of bits in `token_payload_`.
-  static constexpr int MaxTokens = 1 << TokenizedBuffer::TokenInfo::PayloadBits;
-  if (buffer_.token_infos_.size() > MaxTokens) {
+  //
+  // Note that we rely on this check also catching the case where there are too
+  // many identifiers to fit an `IdentifierId` into a `token_payload_`, and
+  // likewise for `IntId` and so on. If we start adding any of those IDs prior
+  // to lexing, we may need to also limit the number of identifiers etc. here.
+  if (buffer_.token_infos_.size() > TokenizedBuffer::MaxTokens) {
     CARBON_DIAGNOSTIC(TooManyTokens, Error,
                       "too many tokens in source file; try splitting into "
                       "multiple source files");
-    token_emitter_.Emit(TokenIndex(MaxTokens), TooManyTokens);
+    // Subtract one to leave room for the `FileEnd` token.
+    token_emitter_.Emit(TokenIndex(TokenizedBuffer::MaxTokens - 1),
+                        TooManyTokens);
   }
 }
 

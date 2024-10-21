@@ -1115,9 +1115,10 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
   for ([[maybe_unused]] int _ : llvm::seq(NumLines)) {
     input += "{}\n";
   }
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::TooManyTokens,
-                            DiagnosticLevel::Error, 0x400000, 2, _)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  DiagnosticKind::TooManyTokens, DiagnosticLevel::Error,
+                  TokenizedBuffer::MaxTokens / 2, 1, _)));
   compile_helper_.GetTokenizedBuffer(input, &consumer);
 }
 
