@@ -145,20 +145,25 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %W.param_patt: type = param_pattern %W.patt.loc16_16.1, runtime_param<invalid> [symbolic = %W.patt.loc16_16.2 (constants.%W.patt)]
 // CHECK:STDOUT:     %a.patt: @TestGeneric.%A.loc16_30.2 (%A.4) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @TestGeneric.%A.loc16_30.2 (%A.4) = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: @TestGeneric.%W.loc16_16.2 (%W) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @TestGeneric.%W.loc16_16.2 (%W) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %W.ref.loc16_31: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
 // CHECK:STDOUT:     %A.loc16_30.1: type = class_type @A, @A(constants.%W) [symbolic = %A.loc16_30.2 (constants.%A.4)]
 // CHECK:STDOUT:     %W.ref.loc16_38: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
-// CHECK:STDOUT:     %return: ref @TestGeneric.%W.loc16_16.2 (%W) = var <return slot>
 // CHECK:STDOUT:     %param.loc16_17: type = param runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc16_16.1: type = bind_symbolic_name W, 0, %param.loc16_17 [symbolic = %W.loc16_16.2 (constants.%W)]
 // CHECK:STDOUT:     %param.loc16_27: @TestGeneric.%A.loc16_30.2 (%A.4) = param runtime_param0
 // CHECK:STDOUT:     %a: @TestGeneric.%A.loc16_30.2 (%A.4) = bind_name a, %param.loc16_27
+// CHECK:STDOUT:     %param.loc16_35: @TestGeneric.%W.loc16_16.2 (%W) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @TestGeneric.%W.loc16_16.2 (%W) = return_slot %param.loc16_35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestSpecific.decl: %TestSpecific.type = fn_decl @TestSpecific [template = constants.%TestSpecific] {
 // CHECK:STDOUT:     %a.patt: %A.5 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %A.5 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.21 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.21 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %.loc20_23: %.21 = struct_literal ()
@@ -166,9 +171,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%.21) [template = constants.%A.5]
 // CHECK:STDOUT:     %.loc20_31.1: %.21 = struct_literal ()
 // CHECK:STDOUT:     %.loc20_31.2: type = converted %.loc20_31.1, constants.%.21 [template = constants.%.21]
-// CHECK:STDOUT:     %return: ref %.21 = var <return slot>
-// CHECK:STDOUT:     %param: %A.5 = param runtime_param0
-// CHECK:STDOUT:     %a: %A.5 = bind_name a, %param
+// CHECK:STDOUT:     %param.loc20_18: %A.5 = param runtime_param0
+// CHECK:STDOUT:     %a: %A.5 = bind_name a, %param.loc20_18
+// CHECK:STDOUT:     %param.loc20_27: %.21 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.21 = return_slot %param.loc20_27
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,15 +195,18 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @I.%F (constants.%F.1)] {
 // CHECK:STDOUT:       %self.patt: @F.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %return.patt: @F.1.%U (%U) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.1.%U (%U) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc7_14.1: @F.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%U) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref: @F.1.%I.type (%I.type.2) = name_ref Self, %.loc7_14.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc7_14.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc7_14.3: type = converted %Self.ref, %.loc7_14.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @I.%U.loc6_13.1 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %return: ref @F.1.%U (%U) = var <return slot>
-// CHECK:STDOUT:       %param: @F.1.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:       %self: @F.1.%Self (%Self) = bind_name self, %param
+// CHECK:STDOUT:       %param.loc7_12: @F.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:       %self: @F.1.%Self (%Self) = bind_name self, %param.loc7_12
+// CHECK:STDOUT:       %param.loc7_22: @F.1.%U (%U) = param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.1.%U (%U) = return_slot %param.loc7_22
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc7_26.1: @I.%.loc7_26.2 (%.5) = assoc_entity element0, %F.decl [symbolic = %.loc7_26.3 (constants.%.6)]
 // CHECK:STDOUT:
@@ -223,12 +232,15 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%A (%A.3) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.2.%A (%A.3) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %return.patt: @F.2.%V (%V) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.2.%V (%V) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%A.loc10_25.1 [symbolic = %A (constants.%A.3)]
 // CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.%V.loc10_14.1 [symbolic = %V (constants.%V)]
-// CHECK:STDOUT:       %return: ref @F.2.%V (%V) = var <return slot>
-// CHECK:STDOUT:       %param: @F.2.%A (%A.3) = param runtime_param0
-// CHECK:STDOUT:       %self: @F.2.%A (%A.3) = bind_name self, %param
+// CHECK:STDOUT:       %param.loc11_12: @F.2.%A (%A.3) = param runtime_param0
+// CHECK:STDOUT:       %self: @F.2.%A (%A.3) = bind_name self, %param.loc11_12
+// CHECK:STDOUT:       %param.loc11_22: @F.2.%V (%V) = param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.2.%V (%V) = return_slot %param.loc11_22
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc10_37.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_37.2 (constants.%.9)]
 // CHECK:STDOUT:

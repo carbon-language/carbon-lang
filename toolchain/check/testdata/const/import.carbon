@@ -50,7 +50,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,12 +61,16 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .a_ptr_ref = %a_ptr_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.2 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.3: type = const_type i32 [template = constants.%.2]
-// CHECK:STDOUT:     %return: ref %.2 = var <return slot>
+// CHECK:STDOUT:     %param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_12.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
@@ -109,9 +113,9 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref Implicit//default, inst+23, loaded
-// CHECK:STDOUT:   %import_ref.3: ref %.3 = import_ref Implicit//default, inst+34, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref Implicit//default, inst+26, loaded
+// CHECK:STDOUT:   %import_ref.3: ref %.3 = import_ref Implicit//default, inst+37, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
@@ -123,7 +127,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

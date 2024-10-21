@@ -44,9 +44,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
-  // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush<SemIR::VarStorage>(
-      node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});
+  auto return_slot_id = context.AddPatternInst<SemIR::ReturnSlotPattern>(
+      node_id, {.type_id = type_id});
+  auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
+      node_id, {.type_id = type_id,
+                .subpattern_id = return_slot_id,
+                .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
 
@@ -170,14 +174,15 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_storage_id = SemIR::InstId::Invalid;
-  if (auto [return_node, maybe_return_storage_id] =
+  // FIXME slot/storage name consistency
+  auto return_slot_pattern_id = SemIR::InstId::Invalid;
+  if (auto [return_node, maybe_return_slot_pattern_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      maybe_return_storage_id) {
-    return_storage_id = *maybe_return_storage_id;
+      maybe_return_slot_pattern_id) {
+    return_slot_pattern_id = *maybe_return_slot_pattern_id;
   }
 
-  auto name = PopNameComponent(context);
+  auto name = PopNameComponent(context, return_slot_pattern_id);
   if (!name.params_id.is_valid()) {
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
@@ -232,7 +237,7 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_storage_id = return_storage_id,
+                      {.return_storage_id = name.return_slot_id,
                        .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;

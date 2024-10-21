@@ -199,9 +199,13 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT:     %F.decl: @WithAssocFn.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @WithAssocFn.%F (constants.%F.1)] {} {
+// CHECK:STDOUT:     %F.decl: @WithAssocFn.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @WithAssocFn.%F (constants.%F.1)] {
+// CHECK:STDOUT:       %return.patt: %X = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: %X = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:       %return: ref %X = var <return slot>
+// CHECK:STDOUT:       %param: %X = param runtime_param0
+// CHECK:STDOUT:       %return: ref %X = return_slot %param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc10_14.1: @WithAssocFn.%.loc10_14.2 (%.4) = assoc_entity element0, %F.decl [symbolic = %.loc10_14.3 (constants.%.5)]
 // CHECK:STDOUT:
@@ -229,9 +233,13 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %WithAssocFn.type {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {
+// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %X = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return: ref %X = var <return slot>
+// CHECK:STDOUT:     %param: %X = param runtime_param0
+// CHECK:STDOUT:     %return: ref %X = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:

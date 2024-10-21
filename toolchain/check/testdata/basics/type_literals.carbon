@@ -137,7 +137,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+20, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+29, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -195,7 +195,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+20, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+29, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -264,7 +264,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+31, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+43, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -322,7 +322,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+31, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+43, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

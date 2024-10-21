@@ -72,8 +72,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+42, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,6 +91,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %a.param_patt: f64 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: f64 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: bool = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc2_10.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_10: init type = call constants.%Float(%.loc2_10.1) [template = f64]
@@ -103,11 +105,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc2_26.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc2_26.2: type = converted %bool.make_type, %.loc2_26.1 [template = bool]
-// CHECK:STDOUT:     %return: ref bool = var <return slot>
 // CHECK:STDOUT:     %param.loc2_8: f64 = param runtime_param0
 // CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc2_8
 // CHECK:STDOUT:     %param.loc2_16: f64 = param runtime_param1
 // CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc2_16
+// CHECK:STDOUT:     %param.loc2_23: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc2_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {} {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {} {}
@@ -129,6 +132,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %a.param_patt: f64 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: f64 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: bool = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc12_19: init type = call constants.%Float(%.loc12_19.1) [template = f64]
@@ -141,11 +146,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc12_35.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc12_35.2: type = converted %bool.make_type, %.loc12_35.1 [template = bool]
-// CHECK:STDOUT:     %return: ref bool = var <return slot>
 // CHECK:STDOUT:     %param.loc12_17: f64 = param runtime_param0
 // CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc12_17
 // CHECK:STDOUT:     %param.loc12_25: f64 = param runtime_param1
 // CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc12_25
+// CHECK:STDOUT:     %param.loc12_32: bool = param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %param.loc12_32
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -246,7 +252,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+42, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -260,6 +266,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %a.param_patt: f64 = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: f64 = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: f64 = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_19: init type = call constants.%Float(%.loc7_19.1) [template = f64]
@@ -273,11 +281,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %float.make_type.loc7_35: init type = call constants.%Float(%.loc7_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc7_35.2: type = value_of_initializer %float.make_type.loc7_35 [template = f64]
 // CHECK:STDOUT:     %.loc7_35.3: type = converted %float.make_type.loc7_35, %.loc7_35.2 [template = f64]
-// CHECK:STDOUT:     %return: ref f64 = var <return slot>
 // CHECK:STDOUT:     %param.loc7_17: f64 = param runtime_param0
 // CHECK:STDOUT:     %a: f64 = bind_name a, %param.loc7_17
 // CHECK:STDOUT:     %param.loc7_25: f64 = param runtime_param1
 // CHECK:STDOUT:     %b: f64 = bind_name b, %param.loc7_25
+// CHECK:STDOUT:     %param.loc7_32: f64 = param runtime_param2
+// CHECK:STDOUT:     %return: ref f64 = return_slot %param.loc7_32
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -333,14 +333,17 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %.5 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.5 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc12_17.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%.5 [template = constants.%.5]
-// CHECK:STDOUT:     %return: ref %.5 = var <return slot>
-// CHECK:STDOUT:     %param: %.5 = param runtime_param0
-// CHECK:STDOUT:     %x: %.5 = bind_name x, %param
+// CHECK:STDOUT:     %param.loc12_7: %.5 = param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %param.loc12_7
+// CHECK:STDOUT:     %param.loc12_13: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %param.loc12_13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,6 +352,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self (%Self) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: @F.1.%Self (%Self) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_14.1: type = facet_type_access %Self.ref.loc5_14 [symbolic = %Self (constants.%Self)]
@@ -356,9 +361,10 @@ fn G(x: A) {
 // CHECK:STDOUT:     %Self.ref.loc5_25: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_25.1: type = facet_type_access %Self.ref.loc5_25 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_25.2: type = converted %Self.ref.loc5_25, %.loc5_25.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %return: ref @F.1.%Self (%Self) = var <return slot>
-// CHECK:STDOUT:     %param: @F.1.%Self (%Self) = param runtime_param0
-// CHECK:STDOUT:     %self: @F.1.%Self (%Self) = bind_name self, %param
+// CHECK:STDOUT:     %param.loc5_12: @F.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self: @F.1.%Self (%Self) = bind_name self, %param.loc5_12
+// CHECK:STDOUT:     %param.loc5_22: @F.1.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @F.1.%Self (%Self) = return_slot %param.loc5_22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -381,12 +387,15 @@ fn G(x: A) {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%T (%T) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.2.%T (%T) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %return.patt: @F.2.%T (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return: ref @F.2.%T (%T) = var <return slot>
-// CHECK:STDOUT:       %param: @F.2.%T (%T) = param runtime_param0
-// CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %param
+// CHECK:STDOUT:       %param.loc9_12: @F.2.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %param.loc9_12
+// CHECK:STDOUT:       %param.loc9_22: @F.2.%T (%T) = param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %param.loc9_22
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:

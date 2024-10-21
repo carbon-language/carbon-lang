@@ -49,8 +49,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .Int32 = %Int32.decl
 // CHECK:STDOUT:     .Add = %Add.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {} {
-// CHECK:STDOUT:     %return: ref type = var <return slot>
+// CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %param: type = param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%Add.type] {} {}
 // CHECK:STDOUT: }
@@ -62,6 +66,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %self.param_patt: @Op.%Self (%Self) = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: @Op.%Self (%Self) = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: @Op.%Self (%Self) = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: @Op.%Self (%Self) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Op.%Self (%Self) = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_15.1: type = facet_type_access %Self.ref.loc7_15 [symbolic = %Self (constants.%Self)]
@@ -72,11 +78,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %Self.ref.loc7_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.1: type = facet_type_access %Self.ref.loc7_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc7_37.2: type = converted %Self.ref.loc7_37, %.loc7_37.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = var <return slot>
 // CHECK:STDOUT:     %param.loc7_13: @Op.%Self (%Self) = param runtime_param0
 // CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %param.loc7_13
 // CHECK:STDOUT:     %param.loc7_26: @Op.%Self (%Self) = param runtime_param1
 // CHECK:STDOUT:     %other: @Op.%Self (%Self) = bind_name other, %param.loc7_26
+// CHECK:STDOUT:     %param.loc7_34: @Op.%Self (%Self) = param runtime_param2
+// CHECK:STDOUT:     %return: ref @Op.%Self (%Self) = return_slot %param.loc7_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
 // CHECK:STDOUT:
@@ -133,12 +140,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .Add = %import_ref.2
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+2, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+6, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//default, inst+33, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+28, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+9, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//default, inst+39, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+34, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -181,15 +188,18 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: i32 = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: i32 = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
 // CHECK:STDOUT:     %param.loc7_13: i32 = param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %param.loc7_13
 // CHECK:STDOUT:     %param.loc7_26: i32 = param runtime_param1
 // CHECK:STDOUT:     %other: i32 = bind_name other, %param.loc7_26
+// CHECK:STDOUT:     %param.loc7_34: i32 = param runtime_param2
+// CHECK:STDOUT:     %return: ref i32 = return_slot %param.loc7_34
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.2]
 // CHECK:STDOUT:

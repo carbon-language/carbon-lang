@@ -541,6 +541,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             ".param_patt");
         break;
       }
+      case InstKind::ReturnSlotPattern: {
+        add_inst_name_id(NameId::ReturnSlot, ".patt");
+        break;
+      }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);
         break;

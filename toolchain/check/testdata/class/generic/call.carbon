@@ -120,7 +120,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,7 +236,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -326,7 +326,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -435,13 +435,13 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.6) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.6) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -677,31 +677,47 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D: @Inner.%D.type (%D.type.1) = struct_value () [symbolic = %D (constants.%D.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.1) = fn_decl @A [symbolic = @Inner.%A (constants.%A.1)] {} {
+// CHECK:STDOUT:     %A.decl: @Inner.%A.type (%A.type.1) = fn_decl @A [symbolic = @Inner.%A (constants.%A.1)] {
+// CHECK:STDOUT:       %return.patt: @A.%Outer.loc4_20.1 (%Outer.2) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @A.%Outer.loc4_20.1 (%Outer.2) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Outer.loc4_20.2: type = class_type @Outer, @Outer(constants.%T) [symbolic = %Outer.loc4_20.1 (constants.%Outer.2)]
-// CHECK:STDOUT:       %return: ref @A.%Outer.loc4_20.1 (%Outer.2) = var <return slot>
+// CHECK:STDOUT:       %param: @A.%Outer.loc4_20.1 (%Outer.2) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @A.%Outer.loc4_20.1 (%Outer.2) = return_slot %param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.1) = fn_decl @B [symbolic = @Inner.%B (constants.%B.1)] {} {
+// CHECK:STDOUT:     %B.decl: @Inner.%B.type (%B.type.1) = fn_decl @B [symbolic = @Inner.%B (constants.%B.1)] {
+// CHECK:STDOUT:       %return.patt: @B.%Outer.loc7_20.1 (%Outer.3) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @B.%Outer.loc7_20.1 (%Outer.3) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Outer.loc7_20.2: type = class_type @Outer, @Outer(constants.%U) [symbolic = %Outer.loc7_20.1 (constants.%Outer.3)]
-// CHECK:STDOUT:       %return: ref @B.%Outer.loc7_20.1 (%Outer.3) = var <return slot>
+// CHECK:STDOUT:       %param: @B.%Outer.loc7_20.1 (%Outer.3) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @B.%Outer.loc7_20.1 (%Outer.3) = return_slot %param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.1) = fn_decl @C [symbolic = @Inner.%C (constants.%C.1)] {} {
+// CHECK:STDOUT:     %C.decl: @Inner.%C.type (%C.type.1) = fn_decl @C [symbolic = @Inner.%C (constants.%C.1)] {
+// CHECK:STDOUT:       %return.patt: @C.%Inner.loc10_20.1 (%Inner.3) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @C.%Inner.loc10_20.1 (%Inner.3) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10: @C.%Inner.type (%Inner.type.1) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.loc10_15 (constants.%Inner.1)]
 // CHECK:STDOUT:       %Inner.ref: @C.%Inner.type (%Inner.type.1) = name_ref Inner, %.loc10 [symbolic = %Inner.loc10_15 (constants.%Inner.1)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Inner.loc10_20.2: type = class_type @Inner, @Inner(constants.%T, constants.%T) [symbolic = %Inner.loc10_20.1 (constants.%Inner.3)]
-// CHECK:STDOUT:       %return: ref @C.%Inner.loc10_20.1 (%Inner.3) = var <return slot>
+// CHECK:STDOUT:       %param: @C.%Inner.loc10_20.1 (%Inner.3) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @C.%Inner.loc10_20.1 (%Inner.3) = return_slot %param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.1) = fn_decl @D [symbolic = @Inner.%D (constants.%D.1)] {} {
+// CHECK:STDOUT:     %D.decl: @Inner.%D.type (%D.type.1) = fn_decl @D [symbolic = @Inner.%D (constants.%D.1)] {
+// CHECK:STDOUT:       %return.patt: @D.%Inner.loc13_20.1 (%Inner.2) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @D.%Inner.loc13_20.1 (%Inner.2) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13: @D.%Inner.type (%Inner.type.1) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.loc13_15 (constants.%Inner.1)]
 // CHECK:STDOUT:       %Inner.ref: @D.%Inner.type (%Inner.type.1) = name_ref Inner, %.loc13 [symbolic = %Inner.loc13_15 (constants.%Inner.1)]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_15.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Inner.loc13_20.2: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_20.1 (constants.%Inner.2)]
-// CHECK:STDOUT:       %return: ref @D.%Inner.loc13_20.1 (%Inner.2) = var <return slot>
+// CHECK:STDOUT:       %param: @D.%Inner.loc13_20.1 (%Inner.2) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @D.%Inner.loc13_20.1 (%Inner.2) = return_slot %param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

@@ -60,7 +60,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,14 +73,22 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {} {}
-// CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [template = constants.%MakeInner] {} {
+// CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [template = constants.%MakeInner] {
+// CHECK:STDOUT:     %return.patt: %Inner = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Inner = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:     %return: ref %Inner = var <return slot>
+// CHECK:STDOUT:     %param: %Inner = param runtime_param0
+// CHECK:STDOUT:     %return: ref %Inner = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
-// CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [template = constants.%MakeOuter] {} {
+// CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [template = constants.%MakeOuter] {
+// CHECK:STDOUT:     %return.patt: %Outer = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Outer = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %return: ref %Outer = var <return slot>
+// CHECK:STDOUT:     %param: %Outer = param runtime_param0
+// CHECK:STDOUT:     %return: ref %Outer = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -49,8 +49,12 @@ var i: BigInt();
 // CHECK:STDOUT:     .BigInt = %BigInt.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %BigInt.decl: %BigInt.type = fn_decl @BigInt [template = constants.%BigInt] {} {
-// CHECK:STDOUT:     %return: ref type = var <return slot>
+// CHECK:STDOUT:   %BigInt.decl: %BigInt.type = fn_decl @BigInt [template = constants.%BigInt] {
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %param: type = param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,7 +69,7 @@ var i: BigInt();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %BigInt.type = import_ref Main//types, inst+4, loaded [template = constants.%BigInt]
+// CHECK:STDOUT:   %import_ref: %BigInt.type = import_ref Main//types, inst+7, loaded [template = constants.%BigInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

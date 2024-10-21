@@ -60,9 +60,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+1, loaded [template = constants.%BitComplement.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/bitwise, inst+22, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+16, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/bitwise, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/bitwise, inst+25, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+19, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/bitwise, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,12 +81,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param
+// CHECK:STDOUT:     %param.loc23_12: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc23_12
+// CHECK:STDOUT:     %param.loc23_17: %C = param runtime_param1
+// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc23_17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,12 +104,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %param
+// CHECK:STDOUT:     %param.loc18_13: %C = param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %param.loc18_13
+// CHECK:STDOUT:     %param.loc18_20: %C = param runtime_param1
+// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc18_20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -142,8 +148,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc24_10.2: <bound method> = bound_method %a.ref, %.loc24_10.1
-// CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23
+// CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23_17.2
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

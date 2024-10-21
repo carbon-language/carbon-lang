@@ -74,7 +74,7 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,9 +105,13 @@ fn G() {
 // CHECK:STDOUT:   %Make: @Wrap.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.1) = fn_decl @Make [symbolic = @Wrap.%Make (constants.%Make.1)] {} {
+// CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.1) = fn_decl @Make [symbolic = @Wrap.%Make (constants.%Make.1)] {
+// CHECK:STDOUT:       %return.patt: @Make.%T (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @Make.%T (%T) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return: ref @Make.%T (%T) = var <return slot>
+// CHECK:STDOUT:       %param: @Make.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

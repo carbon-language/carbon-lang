@@ -881,6 +881,28 @@ struct ReturnExpr {
   InstId dest_id;
 };
 
+// The return slot of a function declaration, as exposed in the function body.
+// This acts as an output parameter, analogous to `BindName` for input
+// parameters.
+struct ReturnSlot {
+  static constexpr auto Kind =
+      InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
+
+  TypeId type_id;
+  InstId value_id;
+};
+
+// The return slot of a function declaration, as exposed to the function's
+// callers. This acts as an output parameter, analogous to `BindingPattern`
+// for input parameters.
+struct ReturnSlotPattern {
+  static constexpr auto Kind =
+      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+          {.ir_name = "return_slot_pattern", .is_lowered = false});
+
+  TypeId type_id;
+};
+
 // An `expr == expr` clause in a `where` expression or `require` declaration.
 struct RequirementEquivalent {
   static constexpr auto Kind =

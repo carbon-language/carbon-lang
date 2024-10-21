@@ -95,6 +95,9 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
   inst_id = param_pattern_inst.subpattern_id;
   inst = sem_ir.insts().Get(inst_id);
 
+  if (inst.Is<ReturnSlotPattern>()) {
+    return SemIR::NameId::ReturnSlot;
+  }
   auto binding_pattern = inst.As<AnyBindingPattern>();
   return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
 }

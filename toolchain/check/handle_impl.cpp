@@ -207,10 +207,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   ParameterBlocks parameter_blocks{
       .implicit_params_id = SemIR::InstBlockId::Invalid,
-      .params_id = SemIR::InstBlockId::Invalid};
+      .params_id = SemIR::InstBlockId::Invalid,
+      .return_slot_id = SemIR::InstId::Invalid};
   if (implicit_param_patterns_id) {
-    parameter_blocks = CalleePatternMatch(context, *implicit_param_patterns_id,
-                                          SemIR::InstBlockId::Invalid);
+    parameter_blocks =
+        CalleePatternMatch(context, *implicit_param_patterns_id,
+                           SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
   }
 
   Parse::NodeId first_param_node_id =
@@ -229,6 +231,8 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .params_loc_id = Parse::NodeId::Invalid,
       .params_id = SemIR::InstBlockId::Invalid,
       .param_patterns_id = SemIR::InstBlockId::Invalid,
+      .return_slot_pattern_id = SemIR::InstId::Invalid,
+      .return_slot_id = SemIR::InstId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }

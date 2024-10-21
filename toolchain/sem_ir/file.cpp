@@ -199,6 +199,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
       case Return::Kind:
+      case ReturnSlotPattern::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
@@ -344,6 +345,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case Deref::Kind:
       case VarStorage::Kind:
+      case ReturnSlot::Kind:
         return ExprCategory::DurableRef;
 
       case Temporary::Kind:

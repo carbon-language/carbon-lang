@@ -143,26 +143,42 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x: <error> = bind_name x, %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [template = constants.%I] {} {}
-// CHECK:STDOUT:   %.decl.loc46: %.type.4 = fn_decl @.4 [template = constants.%.5] {} {
+// CHECK:STDOUT:   %.decl.loc46: %.type.4 = fn_decl @.4 [template = constants.%.5] {
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc46_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc46_12.2: type = converted %.loc46_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {
+// CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc48_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc48_12.2: type = converted %.loc48_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc56: %.type.5 = fn_decl @.5 [template = constants.%.6] {} {}
-// CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {} {
+// CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc58_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc58_12.2: type = converted %.loc58_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc65: %.type.6 = fn_decl @.6 [template = constants.%.8] {} {
+// CHECK:STDOUT:   %.decl.loc65: %.type.6 = fn_decl @.6 [template = constants.%.8] {
+// CHECK:STDOUT:     %return.patt: %.7 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.7 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc65_12.1: %.7 = struct_literal ()
 // CHECK:STDOUT:     %.loc65_12.2: type = converted %.loc65_12.1, constants.%.7 [template = constants.%.7]
-// CHECK:STDOUT:     %return: ref %.7 = var <return slot>
+// CHECK:STDOUT:     %param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.7 = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

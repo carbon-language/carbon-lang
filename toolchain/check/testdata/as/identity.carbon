@@ -88,9 +88,13 @@ fn Initializing() {
 // CHECK:STDOUT:     %param: %.5 = param runtime_param0
 // CHECK:STDOUT:     %p: %.5 = bind_name p, %param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %X = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return: ref %X = var <return slot>
+// CHECK:STDOUT:     %param: %X = param runtime_param0
+// CHECK:STDOUT:     %return: ref %X = return_slot %param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Initializing.decl: %Initializing.type = fn_decl @Initializing [template = constants.%Initializing] {} {}
 // CHECK:STDOUT: }

@@ -36,12 +36,18 @@ struct NameComponent {
   SemIR::InstBlockId params_id;
   SemIR::InstBlockId param_patterns_id;
 
+  // The return slot.
+  SemIR::InstId return_slot_pattern_id;
+  SemIR::InstId return_slot_id;
+
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
 };
 
 // Pop a name component from the node stack and pattern block stack.
-auto PopNameComponent(Context& context) -> NameComponent;
+auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id =
+                                            SemIR::InstId::Invalid)
+    -> NameComponent;
 
 // Pop the name of a declaration from the node stack and pattern block stack,
 // and diagnose if it has parameters.

@@ -92,11 +92,14 @@ fn H() {
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.1) = fn_decl @F [symbolic = @I.%F (constants.%F)] {
 // CHECK:STDOUT:       %U.patt.loc12_8.2: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
 // CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc12_8.2, runtime_param<invalid> [symbolic = %U.patt.loc12_8.1 (constants.%U.patt)]
+// CHECK:STDOUT:       %return.patt: @F.%U.loc12_8.1 (%U) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.%U.loc12_8.1 (%U) = param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %U.loc12_8.2 [symbolic = %U.loc12_8.1 (constants.%U)]
-// CHECK:STDOUT:       %return: ref @F.%U.loc12_8.1 (%U) = var <return slot>
-// CHECK:STDOUT:       %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc12_8.2: type = bind_symbolic_name U, 2, %param [symbolic = %U.loc12_8.1 (constants.%U)]
+// CHECK:STDOUT:       %param.loc12_9: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.loc12_8.2: type = bind_symbolic_name U, 2, %param.loc12_9 [symbolic = %U.loc12_8.1 (constants.%U)]
+// CHECK:STDOUT:       %param.loc12_18: @F.%U.loc12_8.1 (%U) = param runtime_param0
+// CHECK:STDOUT:       %return: ref @F.%U.loc12_8.1 (%U) = return_slot %param.loc12_18
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc12_22.1: @I.%.loc12_22.2 (%.2) = assoc_entity element0, %F.decl [symbolic = %.loc12_22.3 (constants.%.3)]
 // CHECK:STDOUT:

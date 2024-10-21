@@ -79,16 +79,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+140, loaded [template = constants.%BitXor.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+142, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.9 = import_ref Core//prelude/operators/bitwise, inst+167, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+162, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+169, loaded [template = constants.%BitXorAssign.type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+171, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/bitwise, inst+196, loaded [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+190, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+162, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+190, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+149, loaded [template = constants.%BitXor.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/bitwise, inst+151, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.9 = import_ref Core//prelude/operators/bitwise, inst+179, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/bitwise, inst+174, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+181, loaded [template = constants.%BitXorAssign.type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/bitwise, inst+183, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.11 = import_ref Core//prelude/operators/bitwise, inst+208, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/bitwise, inst+202, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/bitwise, inst+174, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/bitwise, inst+202, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -115,15 +115,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:     %param.loc26_12: %C = param runtime_param0
 // CHECK:STDOUT:     %a: %C = bind_name a, %param.loc26_12
 // CHECK:STDOUT:     %param.loc26_18: %C = param runtime_param1
 // CHECK:STDOUT:     %b: %C = bind_name b, %param.loc26_18
+// CHECK:STDOUT:     %param.loc26_23: %C = param runtime_param2
+// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc26_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %a.patt: %.6 = binding_pattern a
@@ -161,15 +164,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
 // CHECK:STDOUT:     %param.loc18_13: %C = param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %param.loc18_13
 // CHECK:STDOUT:     %param.loc18_23: %C = param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %param.loc18_23
+// CHECK:STDOUT:     %param.loc18_28: %C = param runtime_param2
+// CHECK:STDOUT:     %return: ref %C = return_slot %param.loc18_28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
 // CHECK:STDOUT:
@@ -231,7 +237,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Self: %BitXorAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+90: @Op.4.%.2 (%.7)](%other.param_patt: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+93: @Op.4.%.2 (%.7)](%other.param_patt: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C, %b.param_patt: %C) -> %return: %C {
@@ -241,8 +247,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27_12.2: <bound method> = bound_method %a.ref, %.loc27_12.1
-// CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc27_12.2(%a.ref, %b.ref) to %.loc26
+// CHECK:STDOUT:   %.loc26_23.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc27_12.2(%a.ref, %b.ref) to %.loc26_23.2
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
