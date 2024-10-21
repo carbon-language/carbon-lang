@@ -1598,7 +1598,7 @@ class ImportRefResolver {
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
-         {.return_storage_id = SemIR::InstId::Invalid,
+         {.return_slot_id = SemIR::InstId::Invalid,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     function_decl.type_id =
@@ -1643,9 +1643,9 @@ class ImportRefResolver {
     }
 
     auto return_type_const_id = SemIR::ConstantId::Invalid;
-    if (import_function.return_storage_id.is_valid()) {
+    if (import_function.return_slot_id.is_valid()) {
       return_type_const_id = GetLocalConstantId(
-          import_ir_.insts().Get(import_function.return_storage_id).type_id());
+          import_ir_.insts().Get(import_function.return_slot_id).type_id());
     }
     auto parent_scope_id = GetLocalNameScopeId(import_function.parent_scope_id);
     LoadLocalParamConstantIds(import_function.implicit_param_refs_id);
@@ -1672,13 +1672,13 @@ class ImportRefResolver {
     SetGenericData(import_function.generic_id, new_function.generic_id,
                    generic_data);
 
-    if (import_function.return_storage_id.is_valid()) {
+    if (import_function.return_slot_id.is_valid()) {
       // Recreate the return slot from scratch.
       // TODO: Once we import function definitions, we'll need to make sure we
       // use the same return storage variable in the declaration and definition.
-      new_function.return_storage_id =
+      new_function.return_slot_id =
           context_.AddInstInNoBlock<SemIR::VarStorage>(
-              AddImportIRInst(import_function.return_storage_id),
+              AddImportIRInst(import_function.return_slot_id),
               {.type_id =
                    context_.GetTypeIdForTypeConstant(return_type_const_id),
                .name_id = SemIR::NameId::ReturnSlot});

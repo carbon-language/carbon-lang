@@ -117,7 +117,7 @@ struct CalleeParamsInfo {
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id,
+                     SemIR::InstId return_slot_id,
                      const CalleeParamsInfo& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId;

@@ -126,11 +126,11 @@ auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_storage_id.is_valid()) {
+  if (!return_slot_id.is_valid()) {
     return TypeId::Invalid;
   }
   return GetTypeInSpecific(file, specific_id,
-                           file.insts().Get(return_storage_id).type_id());
+                           file.insts().Get(return_slot_id).type_id());
 }
 
 }  // namespace Carbon::SemIR

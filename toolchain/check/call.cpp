@@ -175,13 +175,13 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   // If there is a return slot, build storage for the result.
-  SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
+  SemIR::InstId return_slot_id = SemIR::InstId::Invalid;
   SemIR::ReturnTypeInfo return_info = [&] {
     DiagnosticAnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");
-          builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
+          builder.Note(callable.return_slot_id, IncompleteReturnTypeHere);
         });
     return CheckFunctionReturnType(context, callee_id, callable,
                                    *callee_specific_id);
@@ -190,7 +190,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_storage_id = context.AddInst<SemIR::TemporaryStorage>(
+      return_slot_id = context.AddInst<SemIR::TemporaryStorage>(
           loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:
@@ -211,7 +211,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_storage_id,
+      context, loc_id, callee_function.self_id, arg_ids, return_slot_id,
       CalleeParamsInfo(callable), *callee_specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,

@@ -287,15 +287,15 @@ class FormatterImpl {
     FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
     FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
 
-    if (fn.return_storage_id.is_valid()) {
+    if (fn.return_slot_id.is_valid()) {
       out_ << " -> ";
       auto return_info = ReturnTypeInfo::ForFunction(sem_ir_, fn);
       if (!fn.body_block_ids.empty() && return_info.is_valid() &&
           return_info.has_return_slot()) {
-        FormatName(fn.return_storage_id);
+        FormatName(fn.return_slot_id);
         out_ << ": ";
       }
-      FormatType(sem_ir_.insts().Get(fn.return_storage_id).type_id());
+      FormatType(sem_ir_.insts().Get(fn.return_slot_id).type_id());
     }
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {

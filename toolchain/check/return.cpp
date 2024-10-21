@@ -42,7 +42,7 @@ static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            SemIR::TypeId return_type_id) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
                     SemIR::TypeId);
-  diag.Note(function.return_storage_id, ReturnTypeHereNote, return_type_id);
+  diag.Note(function.return_slot_id, ReturnTypeHereNote, return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -93,7 +93,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   // The variable aliases the return slot if there is one. If not, it has its
   // own storage.
   if (return_info.has_return_slot()) {
-    return function.return_storage_id;
+    return function.return_slot_id;
   }
   return context.AddInst<SemIR::VarStorage>(
       name_node, {.type_id = type_id, .name_id = name_id});
@@ -156,8 +156,8 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     // convert to it.
     expr_id = SemIR::InstId::BuiltinError;
   } else if (return_info.has_return_slot()) {
-    expr_id = Initialize(context, node_id, function.return_storage_id, expr_id);
-    return_slot_id = function.return_storage_id;
+    expr_id = Initialize(context, node_id, function.return_slot_id, expr_id);
+    return_slot_id = function.return_slot_id;
   } else {
     expr_id =
         ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
@@ -179,7 +179,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     returned_var_id = SemIR::InstId::BuiltinError;
   }
 
-  auto return_slot_id = function.return_storage_id;
+  auto return_slot_id = function.return_slot_id;
   if (!SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function)
            .has_return_slot()) {
     // If we don't have a return slot, we're returning by value. Convert to a
