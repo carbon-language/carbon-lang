@@ -407,7 +407,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Payload values are typically ID types for which we create at most one per
     // token, so we ensure that `token_payload_` is large enough to fit any
     // token index. Stores to this field may overflow, but we produce an error
-    // in `Lexer::LexFileEnd` if the file has more than `MaxTokens` tokens, so
+    // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
     // this value never overflows if lexing succeeds.
     unsigned token_payload_ : PayloadBits;
     static_assert(MaxTokens <= 1 << PayloadBits,
