@@ -1112,7 +1112,7 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
   static constexpr size_t NumLines = 10'000'000;
   std::string input;
   input.reserve(NumLines * 3);
-  for (int _ [[maybe_unused]] : llvm::seq(NumLines)) {
+  for ([[maybe_unused]] int _ : llvm::seq(NumLines)) {
     input += "{}\n";
   }
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
