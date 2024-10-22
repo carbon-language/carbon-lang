@@ -46,6 +46,8 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
   auto return_slot_id = context.AddPatternInst<SemIR::ReturnSlotPattern>(
       node_id, {.type_id = type_id});
+  // TODO: Use a separate inst kind here and for the corresponding Param,
+  // to capture the fact that the corresponding Param is not a value expression.
   auto param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
       node_id, {.type_id = type_id,
                 .subpattern_id = return_slot_id,
