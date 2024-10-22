@@ -215,7 +215,8 @@ auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const
   return widths;
 }
 
-auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
+auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
+                            bool omit_file_boundary_tokens) const -> void {
   output_stream << "- filename: " << source_->filename() << "\n"
                 << "  tokens:\n";
 
@@ -226,6 +227,12 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
   }
 
   for (TokenIndex token : tokens()) {
+    if (omit_file_boundary_tokens) {
+      auto kind = GetKind(token);
+      if (kind == TokenKind::FileStart || kind == TokenKind::FileEnd) {
+        continue;
+      }
+    }
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }

@@ -7,9 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lex/testdata/fail_bad_comment_introducers.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/fail_bad_comment_introducers.carbon
-// CHECK:STDOUT: - filename: fail_bad_comment_introducers.carbon
-// CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:   1, indent: 1, spelling: '' }
 //
 
 // Comments have to have whitespace after `//` currently.
@@ -58,4 +55,5 @@
 
 // An extra un-indented comment line to anchor the end of the file checks.
 
-// CHECK:STDOUT:   - { index: 1, kind:   'FileEnd', line: {{ *}}[[@LINE+0]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true }
+// CHECK:STDOUT: - filename: fail_bad_comment_introducers.carbon
+// CHECK:STDOUT:   tokens:

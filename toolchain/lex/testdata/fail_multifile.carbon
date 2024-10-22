@@ -11,23 +11,18 @@
 // --- fail_a.carbon
 // CHECK:STDOUT: - filename: fail_a.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:   1, indent: 1, spelling: '' }
 // CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:3: error(EmptyDigitSequence): empty digit sequence in numeric literal
 // CHECK:STDERR: 1.a
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
 1.a
-// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '1.a', has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: '1.a', has_leading_space: true }
 
-// CHECK:STDOUT:   - { index: 2, kind:   'FileEnd', line: {{ *}}[[@LINE+0]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true }
 // --- fail_b.carbon
 // CHECK:STDOUT: - filename: fail_b.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   - { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:   1, indent: 1, spelling: '' }
 // CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:3: error(EmptyDigitSequence): empty digit sequence in numeric literal
 // CHECK:STDERR: 2.b
 // CHECK:STDERR:   ^
 2.b
 // CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '2.b', has_leading_space: true }
-
-// CHECK:STDOUT:   - { index: 2, kind:   'FileEnd', line: {{ *}}[[@LINE+0]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true }
