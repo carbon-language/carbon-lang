@@ -64,9 +64,9 @@ manifest(
 )
 
 cc_test(
-    name = "emitted_diagnostics_test",
+    name = "coverage_test",
     size = "small",
-    srcs = ["emitted_diagnostics_test.cpp"],
+    srcs = ["coverage_test.cpp"],
     args = ["--testdata_manifest=$(location :all_testdata.txt)"],
     data = [
         ":all_testdata.txt",
@@ -74,12 +74,10 @@ cc_test(
     ],
     deps = [
         ":diagnostic_kind",
-        "//common:set",
         "//testing/base:gtest_main",
+        "//toolchain/testing:coverage_helper",
         "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest",
-        "@llvm-project//llvm:Support",
-        "@re2",
     ],
 )
 

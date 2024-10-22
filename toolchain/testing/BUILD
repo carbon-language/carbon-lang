@@ -37,6 +37,18 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "coverage_helper",
+    testonly = 1,
+    hdrs = ["coverage_helper.h"],
+    deps = [
+        "//common:set",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+        "@re2",
+    ],
+)
+
 file_test(
     name = "file_test",
     size = "small",
