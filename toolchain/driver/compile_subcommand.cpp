@@ -176,16 +176,6 @@ Dump the tokens to stdout when lexed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_tokens); });
-
-  b.AddFlag(
-      {
-          .name = "omit-file-boundary-tokens",
-          .help = R"""(
-For `--dump-tokens`, omit file start and end boundary tokens.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&omit_file_boundary_tokens); });
-
   b.AddFlag(
       {
           .name = "dump-parse-tree",
@@ -366,8 +356,7 @@ class CompilationUnit {
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
-      tokens_->Print(driver_env_->output_stream,
-                     options_.omit_file_boundary_tokens);
+      driver_env_->output_stream << tokens_;
     }
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);

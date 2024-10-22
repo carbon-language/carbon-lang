@@ -169,15 +169,26 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the comment's full text range.
   auto GetCommentText(CommentIndex comment_index) const -> llvm::StringRef;
 
-  // Returns tokens as YAML. This prints the tracked token information on a
-  // single line for each token. We use the single-line format so that output is
-  // compact, and so that tools like `grep` are compatible.
+  // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
-  // An example token looks like:
+  // It prints one line of information for each token in the buffer, including
+  // the kind of token, where it occurs within the source file, indentation for
+  // the associated line, the spelling of the token in source, and any
+  // additional information tracked such as which unique identifier it is or any
+  // matched grouping token.
   //
-  // - { index: 1, kind: 'Semi', line: 1, column: 1, indent: 1, spelling: ';' }
-  auto Print(llvm::raw_ostream& out,
-             bool omit_file_boundary_tokens = false) const -> void;
+  // Each line is formatted as a YAML record:
+  //
+  // clang-format off
+  // ```
+  // token: { index: 0, kind: 'Semi', line: 1, column: 1, indent: 1, spelling: ';' }
+  // ```
+  // clang-format on
+  //
+  // This can be parsed as YAML using tools like `python-yq` combined with `jq`
+  // on the command line. The format is also reasonably amenable to other
+  // line-oriented shell tools from `grep` to `awk`.
+  auto Print(llvm::raw_ostream& output_stream) const -> void;
 
   // Prints a description of a single token.  See `Print` for details on the
   // format.

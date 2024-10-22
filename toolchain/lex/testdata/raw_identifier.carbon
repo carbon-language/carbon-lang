@@ -9,6 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/raw_identifier.carbon
 // CHECK:STDOUT: - filename: raw_identifier.carbon
 // CHECK:STDOUT:   tokens:
+// CHECK:STDOUT:   - { index: 0, kind:           'FileStart', line: {{ *\d+}}, column:   1, indent: 1, spelling: '' }
 
 // A non-keyword identifier.
 r#foo
@@ -33,3 +34,5 @@ r#i32
 // The same type literal, for comparison.
 i32
 // CHECK:STDOUT:   - { index: 6, kind:      'IntTypeLiteral', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: 'i32', has_leading_space: true }
+
+// CHECK:STDOUT:   - { index: 7, kind:             'FileEnd', line: {{ *}}[[@LINE+0]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true }

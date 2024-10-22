@@ -9,6 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lex/testdata/fail_mismatched_brackets.carbon
 // CHECK:STDOUT: - filename: fail_mismatched_brackets.carbon
 // CHECK:STDOUT:   tokens:
+// CHECK:STDOUT:   - { index: 0, kind:  'FileStart', line: {{ *\d+}}, column:   1, indent: 1, spelling: '' }
 
 // CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:1: error(UnmatchedClosing): closing symbol without a corresponding opening symbol
 // CHECK:STDERR: }
@@ -31,3 +32,5 @@
 // CHECK:STDERR: ^
 [
 // CHECK:STDOUT:   - { index: 5, kind:      'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '[', has_leading_space: true }
+
+// CHECK:STDOUT:   - { index: 6, kind:    'FileEnd', line: {{ *}}[[@LINE+0]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true }
