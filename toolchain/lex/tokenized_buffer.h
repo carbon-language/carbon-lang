@@ -170,8 +170,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetCommentText(CommentIndex comment_index) const -> llvm::StringRef;
 
   // Returns tokens as YAML. This prints the tracked token information on a
-  // single line for each token. We use the single-line format so that output is compact, and
-  // so that tools like `grep` are compatible.
+  // single line for each token. We use the single-line format so that output is
+  // compact, and so that tools like `grep` are compatible.
   //
   // An example token looks like:
   //
