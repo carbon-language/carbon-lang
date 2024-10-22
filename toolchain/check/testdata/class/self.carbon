@@ -32,17 +32,17 @@ fn Class.G[addr self: Self*]() -> i32 {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+13]]:25: error(IncompleteTypeInConversion): invalid use of incomplete type `Class`
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+13]]:25: error: invalid use of incomplete type `Class` [IncompleteTypeInConversion]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE-4]]:1: note(ClassIncompleteWithinDefinition): class is incomplete within its definition
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]
   // CHECK:STDERR: class Class {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+6]]:25: error(ImplicitAsConversionFailure): cannot implicitly convert from `Class` to `type`
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+6]]:25: error: cannot implicitly convert from `Class` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note(MissingImplInMemberAccessNote): type `<error>` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note: type `<error>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
   fn F[self: Self]() -> self;

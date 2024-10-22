@@ -25,10 +25,10 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error(CallArgCountMismatch): 1 argument passed to generic class expecting 2 arguments
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var a: Class(i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note(InCallToEntity): calling generic class declared here
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note: calling generic class declared here [InCallToEntity]
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,10 +40,10 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error(CallArgCountMismatch): 3 arguments passed to generic class expecting 2 arguments
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var a: Class(i32*, 1, 2);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note(InCallToEntity): calling generic class declared here
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note: calling generic class declared here [InCallToEntity]
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -55,13 +55,13 @@ library "[[@TEST_NAME]]";
 
 class Class(T:! type, N:! i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+9]]:8: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var a: Class(5, i32*);

@@ -18,10 +18,10 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:    ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -29,10 +29,10 @@ fn F(s: {.a: A}, b: B) {
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:    ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
   b.a.F();

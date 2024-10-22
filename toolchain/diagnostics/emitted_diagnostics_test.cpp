@@ -69,7 +69,7 @@ TEST(EmittedDiagnostics, Verify) {
   std::ifstream manifest_in("toolchain/diagnostics/all_testdata.txt");
   ASSERT_TRUE(manifest_in.good());
 
-  RE2 diagnostic_re(R"(\w\((\w+)\): )");
+  RE2 diagnostic_re(R"(^ *// CHECK:STDERR: .*\.carbon:.* \[(\w+)\]$)");
   ASSERT_TRUE(diagnostic_re.ok()) << diagnostic_re.error();
 
   Set<std::string> emitted_diagnostics;

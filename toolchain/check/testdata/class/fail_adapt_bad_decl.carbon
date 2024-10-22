@@ -13,17 +13,17 @@
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   adapt 100;
 }
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error(NameNotFound): name `F` not found
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error: name `F` not found [NameNotFound]
 // CHECK:STDERR: fn Use(b: Bad) { b.F(); }
 // CHECK:STDERR:                  ^~~
 // CHECK:STDERR:
@@ -34,10 +34,10 @@ fn Use(b: Bad) { b.F(); }
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -53,10 +53,10 @@ library "[[@TEST_NAME]]";
 
 class MultipleAdapts {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error(AdaptDeclRepeated): multiple `adapt` declarations in class
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class [AdaptDeclRepeated]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note(ClassSpecificDeclPrevious): previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -65,10 +65,10 @@ class MultipleAdapts {
 
 class MultipleAdaptsSameType {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error(AdaptDeclRepeated): multiple `adapt` declarations in class
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class [AdaptDeclRepeated]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note(ClassSpecificDeclPrevious): previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -79,14 +79,14 @@ class MultipleAdaptsSameType {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error(ClassSpecificDeclOutsideClass): `adapt` declaration outside class
+// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
 // CHECK:STDERR: adapt {};
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 adapt {};
 
 interface I {
-  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error(ClassSpecificDeclOutsideClass): `adapt` declaration outside class
+  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -95,7 +95,7 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error(ClassSpecificDeclOutsideClass): `adapt` declaration outside class
+    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     adapt {};
     // CHECK:STDERR:     ^~~~~~~~~
     adapt {};

@@ -15,18 +15,18 @@ class Class(T:! type) {
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error(RedeclParamDiffers): redeclaration differs at parameter 1
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^~~~~~~
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note(RedeclParamPrevious): previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class Class(T:! type) {
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+7]]:27: error(NameNotFound): name `Self` not found
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+7]]:27: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:                           ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+3]]:36: error(NameNotFound): name `T` not found
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+3]]:36: error: name `T` not found [NameNotFound]
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:                                    ^
 fn Class(N:! i32).F[self: Self](n: T) {}

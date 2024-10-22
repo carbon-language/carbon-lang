@@ -15,7 +15,7 @@ class Class {
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: error(NameNotFound): name `F` not found
+  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: error: name `F` not found [NameNotFound]
   // CHECK:STDERR:   return F();
   // CHECK:STDERR:          ^
   return F();

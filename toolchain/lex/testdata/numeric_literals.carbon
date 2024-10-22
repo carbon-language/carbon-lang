@@ -97,7 +97,7 @@ fn F() {
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind:   'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
 
-// CHECK:STDERR: fail_binary_real.carbon:[[@LINE+4]]:4: error(BinaryRealLiteral): binary real number literals are not supported
+// CHECK:STDERR: fail_binary_real.carbon:[[@LINE+4]]:4: error: binary real number literals are not supported [BinaryRealLiteral]
 // CHECK:STDERR: 0b1.0
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
@@ -106,12 +106,12 @@ fn F() {
 
 // CHECK:STDOUT:     { index: 2, kind:     'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '', has_leading_space: true },
 // CHECK:STDOUT:   ]
-// --- fail_wrong_real_exponent
-// CHECK:STDOUT: - filename: fail_wrong_real_exponent
+// --- fail_wrong_real_exponent.carbon
+// CHECK:STDOUT: - filename: fail_wrong_real_exponent.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '' },
 
-// CHECK:STDERR: fail_wrong_real_exponent:[[@LINE+3]]:4: error(WrongRealLiteralExponent): expected 'e' to introduce exponent
+// CHECK:STDERR: fail_wrong_real_exponent.carbon:[[@LINE+3]]:4: error: expected 'e' to introduce exponent [WrongRealLiteralExponent]
 // CHECK:STDERR: 1.0r3
 // CHECK:STDERR:    ^
 1.0r3

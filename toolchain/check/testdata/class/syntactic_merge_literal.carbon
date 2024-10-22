@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
-// CHECK:STDERR: fail_int_mismatch.carbon: error(DuplicateMainApi): `Main//default` previously provided by `int_match.carbon`
+// CHECK:STDERR: fail_int_mismatch.carbon: error: `Main//default` previously provided by `int_match.carbon` [DuplicateMainApi]
 // CHECK:STDERR:
 
 // --- int_match.carbon
@@ -20,10 +20,10 @@ class D(b:! C(1_000)) {}
 
 class C(a:! i32) {}
 class D(b:! C(1000));
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+6]]:15: error(RedeclParamSyntaxDiffers): redeclaration syntax differs here
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+6]]:15: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: class D(b:! C(1_000)) {}
 // CHECK:STDERR:               ^~~~~
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: note(RedeclParamSyntaxPrevious): comparing with previous declaration here
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:15: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: class D(b:! C(1000));
 // CHECK:STDERR:               ^~~~
 class D(b:! C(1_000)) {}

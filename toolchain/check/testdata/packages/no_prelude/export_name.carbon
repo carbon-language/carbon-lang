@@ -87,11 +87,11 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+8]]:1: error(ExportNotImportedEntity): only imported entities are valid for `export`
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+8]]:1: error: only imported entities are valid for `export` [ExportNotImportedEntity]
 // CHECK:STDERR: export NS;
 // CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1(InImport): in import
-// CHECK:STDERR: base.carbon:8:1: note(ExportNotImportedEntitySource): name is declared here
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: base.carbon:8:1: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -103,10 +103,10 @@ library "[[@TEST_NAME]]";
 
 class Local {}
 
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error(ExportNotImportedEntity): only imported entities are valid for `export`
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error: only imported entities are valid for `export` [ExportNotImportedEntity]
 // CHECK:STDERR: export Local;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: note(ExportNotImportedEntitySource): name is declared here
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR: class Local {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -118,11 +118,11 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+8]]:8: error(QualifiedNameInNonScope): name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+8]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: export C.x;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1(InImport): in import
-// CHECK:STDERR: base.carbon:4:1: note(QualifiedNameNonScopeEntity): referenced non-scope entity declared here
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: base.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -154,12 +154,12 @@ library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: error(NameNotFound): name `C` not found
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: alias Local = C;
 // CHECK:STDERR:               ^
 // CHECK:STDERR:
 alias Local = C;
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: error(NameNotFound): name `NS` not found
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: error: name `NS` not found [NameNotFound]
 // CHECK:STDERR: alias NSLocal = NS.NSC;
 // CHECK:STDERR:                 ^~
 // CHECK:STDERR:
@@ -172,10 +172,10 @@ library "[[@TEST_NAME]]";
 import library "base";
 
 export C;
-// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning(ExportRedundant): `export` matches previous `export`
+// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning: `export` matches previous `export` [ExportRedundant]
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: note(ExportPrevious): previous `export` here
+// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: note: previous `export` here [ExportPrevious]
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -195,7 +195,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error(ModifierNotAllowedOnDeclaration): `private` not allowed on `export` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private export C;
 // CHECK:STDERR: ^~~~~~~
 private export C;

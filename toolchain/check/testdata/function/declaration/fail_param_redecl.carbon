@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_redecl.carbon
 
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+6]]:14: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:              ^
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:6: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn F(n: i32, n: i32);
 // CHECK:STDERR:      ^
 fn F(n: i32, n: i32);

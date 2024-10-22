@@ -20,10 +20,10 @@ impl C as Core.AddAssign {
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:     ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,10 +31,10 @@ fn TestIncNonRef(a: C) {
 }
 
 fn TestAddAssignNonRef(a: C, b: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   a += b;

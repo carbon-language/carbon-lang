@@ -8,18 +8,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/definition/fail_builtin.carbon
 
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:18: error(ExpectedBuiltinName): expected builtin function name after `=`
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:18: error: expected builtin function name after `=` [ExpectedBuiltinName]
 // CHECK:STDERR: fn NotString() = banana;
 // CHECK:STDERR:                  ^~~~~~
 // CHECK:STDERR:
 fn NotString() = banana;
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:32: error(ExpectedDeclSemi): `fn` declarations must end with a `;`
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:32: error: `fn` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: fn JunkAfterString() = "hello" "world";
 // CHECK:STDERR:                                ^~~~~~~
 // CHECK:STDERR:
 fn JunkAfterString() = "hello" "world";
 
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:23: error(ExpectedBuiltinName): expected builtin function name after `=`
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:23: error: expected builtin function name after `=` [ExpectedBuiltinName]
 // CHECK:STDERR: fn SpuriousEquals() = { }
 // CHECK:STDERR:                       ^
 fn SpuriousEquals() = { }

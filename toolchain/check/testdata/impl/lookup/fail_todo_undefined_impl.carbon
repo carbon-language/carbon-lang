@@ -18,7 +18,7 @@ class C {
 
 fn F() -> i32 {
   // TODO: This should produce a more useful error message.
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: error(MissingImplInMemberAccess): cannot access member of interface `I` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
   return C.F();

@@ -24,11 +24,11 @@ import library "namespace";
 // imported declaration.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1(InImport): in import
-// CHECK:STDERR: namespace.carbon:4:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import [InImport]
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -38,11 +38,11 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1(InImport): in import
-// CHECK:STDERR: namespace.carbon:4:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS();

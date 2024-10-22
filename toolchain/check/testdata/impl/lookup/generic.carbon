@@ -90,7 +90,7 @@ impl forall [T:! type, U:! type] T as HasF {
 fn G(x: {}) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we couldn't deduce a value for 'U'.
-  // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:3: error(MissingImplInMemberAccess): cannot access member of interface `HasF` in type `{}` that does not implement that interface
+  // CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF.F)();
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -115,7 +115,7 @@ class B {}
 fn G(x: A) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we deduced two different values for `T`.
-  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error(MissingImplInMemberAccess): cannot access member of interface `HasF` in type `A` that does not implement that interface
+  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error: cannot access member of interface `HasF` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF(B).F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   x.(HasF(B).F)();
