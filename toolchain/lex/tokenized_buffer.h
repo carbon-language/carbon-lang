@@ -402,13 +402,14 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // remaining bits in a payload. These are encoded together as a bitfield for
     // density and because these are the hottest fields of tokens for consumers
     // after lexing.
-    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
-    bool has_leading_space_ : 1;
+    //
     // Payload values are typically ID types for which we create at most one per
     // token, so we ensure that `token_payload_` is large enough to fit any
     // token index. Stores to this field may overflow, but we produce an error
     // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
     // this value never overflows if lexing succeeds.
+    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
+    bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
     static_assert(MaxTokens <= 1 << PayloadBits,
                   "Not enough payload bits to store a token index");
