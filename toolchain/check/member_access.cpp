@@ -10,9 +10,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/deduce.h"
-#include "toolchain/check/generic.h"
-#include "toolchain/check/import_ref.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -169,56 +167,6 @@ static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
   // Any other kind of scope is assumed to be a type that implements the
   // interface containing the associated entity, and impl lookup is performed.
   return true;
-}
-
-// Given a type and an interface, searches for an impl that describes how that
-// type implements that interface, and returns the corresponding witness.
-// Returns an invalid InstId if no matching impl is found.
-static auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId type_const_id,
-                                   SemIR::ConstantId interface_const_id)
-    -> SemIR::InstId {
-  // TODO: Add a better impl lookup system. At the very least, we should only be
-  // considering impls that are for the same interface we're querying. We can
-  // also skip impls that mention any types that aren't part of our impl query.
-  for (const auto& impl : context.impls().array_ref()) {
-    auto specific_id = SemIR::SpecificId::Invalid;
-    if (impl.generic_id.is_valid()) {
-      specific_id = DeduceImplArguments(context, loc_id, impl, type_const_id,
-                                        interface_const_id);
-      if (!specific_id.is_valid()) {
-        continue;
-      }
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.self_id),
-            type_const_id)) {
-      continue;
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.constraint_id),
-            interface_const_id)) {
-      // TODO: An impl of a constraint type should be treated as implementing
-      // the constraint's interfaces.
-      continue;
-    }
-    if (!impl.witness_id.is_valid()) {
-      // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::Invalid;
-    }
-    LoadImportRef(context, impl.witness_id);
-    if (specific_id.is_valid()) {
-      // We need a definition of the specific `impl` so we can access its
-      // witness.
-      ResolveSpecificDefinition(context, specific_id);
-    }
-    return context.constant_values().GetInstId(
-        SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                          impl.witness_id));
-  }
-  return SemIR::InstId::Invalid;
 }
 
 // Performs impl lookup for a member name expression. This finds the relevant
