@@ -108,4 +108,4 @@ fn F() {
 // CHECK:STDERR: 1.0r3
 // CHECK:STDERR:    ^
 1.0r3
-// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: '1.0r3', has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '1.0r3', has_leading_space: true }
