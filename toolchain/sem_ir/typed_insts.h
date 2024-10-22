@@ -836,7 +836,7 @@ struct Param {
 
   // A name to associate with this Param in pretty-printed IR. This is not
   // necessarily unique, or even valid, and has no semantic significance.
-  NameId pretty_name;
+  NameId pretty_name_id;
 };
 
 // A pattern that represents a parameter. It matches the same values as
@@ -892,8 +892,12 @@ struct ReturnSlot {
   static constexpr auto Kind =
       InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
 
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
   TypeId type_id;
-  InstId value_id;
+
+  // The storage that will be initialized by the function.
+  InstId storage_id;
 };
 
 // The return slot of a function declaration, as exposed to the function's

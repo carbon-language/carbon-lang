@@ -764,7 +764,7 @@ class ImportRefResolver {
           AddImportIRInst(param_id),
           {.type_id = type_id,
            .runtime_index = param_inst.runtime_index,
-           .pretty_name = GetLocalNameId(param_inst.pretty_name)});
+           .pretty_name_id = GetLocalNameId(param_inst.pretty_name_id)});
       switch (bind_inst.kind) {
         case SemIR::BindName::Kind: {
           auto entity_name_id = context_.entity_names().Add(
