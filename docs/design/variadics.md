@@ -406,9 +406,9 @@ expression is the sum of the elements of its shape. See the
 [appendix](#typing-and-shaping-rules) for the full rules for determining the
 shape of an expression.
 
-A pack literal can be _expanded_, which moves its parent AST node inside the
-pack literal, so long as the parent node is not `...`. For example,
-`... Optional(⟬each X, Y⟭)` is equivalent to
+If a pack literal is part of some enclosing expression that doesn't contain
+`...`, it can be _expanded_, which moves the outer expression inside the pack
+literal. For example, `... Optional(⟬each X, Y⟭)` is equivalent to
 `... ⟬Optional(each X), Optional(Y)⟭`. Similarly, an arity coercion can be
 expanded so long as the parent node is not `...`, a pattern, or a pack literal.
 See the [appendix](#reduction-rules) for the full rules governing this
