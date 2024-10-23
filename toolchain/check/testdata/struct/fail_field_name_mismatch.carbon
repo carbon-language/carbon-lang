@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error(StructInitMissingFieldInLiteral): missing value for field `a` in struct initialization
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+4]]:20: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error(StructInitMissingFieldInConversion): cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
 var y: {.b: i32} = x;
@@ -42,7 +42,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

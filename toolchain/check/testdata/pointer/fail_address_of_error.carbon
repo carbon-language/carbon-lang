@@ -9,16 +9,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error(NameNotFound): name `undeclared` not found
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   &undeclared;
   // CHECK:STDERR:    ^~~~~~~~~~
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:3: error(AddrOfNonRef): cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: error(NameNotFound): name `undeclared` not found
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:      ^~~~~~~~~~
   &(&undeclared);

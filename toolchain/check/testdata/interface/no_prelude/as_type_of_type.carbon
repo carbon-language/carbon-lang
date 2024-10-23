@@ -37,8 +37,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %T.param_patt: %Empty.type = param_pattern %T.patt.loc13_6.1, runtime_param<invalid> [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
-// CHECK:STDOUT:     %param: %Empty.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_6.1: %Empty.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: %Empty.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_6.1: %Empty.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

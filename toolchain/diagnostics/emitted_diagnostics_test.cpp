@@ -7,10 +7,14 @@
 #include <fstream>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "common/set.h"
 #include "llvm/ADT/StringExtras.h"
 #include "re2/re2.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
+
+ABSL_FLAG(std::string, testdata_manifest, "",
+          "A path to a file containing repo-relative names of test files.");
 
 namespace Carbon {
 namespace {
@@ -60,16 +64,20 @@ static auto IsUntestedDiagnostic(DiagnosticKind diagnostic_kind) -> bool {
       // loss in merge conflicts due to the amount of tests being changed right
       // now.
       return true;
+    case DiagnosticKind::TooManyTokens:
+      // This isn't feasible to test with a normal testcase, but is tested in
+      // lex/tokenized_buffer_test.cpp.
+      return true;
     default:
       return false;
   }
 }
 
 TEST(EmittedDiagnostics, Verify) {
-  std::ifstream manifest_in("toolchain/diagnostics/all_testdata.txt");
+  std::ifstream manifest_in(absl::GetFlag(FLAGS_testdata_manifest));
   ASSERT_TRUE(manifest_in.good());
 
-  RE2 diagnostic_re(R"(\w\((\w+)\): )");
+  RE2 diagnostic_re(R"(^ *// CHECK:STDERR: .*\.carbon:.* \[(\w+)\]$)");
   ASSERT_TRUE(diagnostic_re.ok()) << diagnostic_re.error();
 
   Set<std::string> emitted_diagnostics;

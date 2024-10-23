@@ -53,7 +53,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,6 +70,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
 // CHECK:STDOUT:     %next.param_patt: %.3 = param_pattern %next.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -77,17 +79,20 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
-// CHECK:STDOUT:     %param.loc16_10: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc16_10
-// CHECK:STDOUT:     %param.loc16_21: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc16_21
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %next.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param2
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [template = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %next.patt: %.3 = binding_pattern next
 // CHECK:STDOUT:     %next.param_patt: %.3 = param_pattern %next.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -95,11 +100,12 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
-// CHECK:STDOUT:     %param.loc20_17: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc20_17
-// CHECK:STDOUT:     %param.loc20_28: %.3 = param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %param.loc20_28
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %next.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param2
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

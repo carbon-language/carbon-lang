@@ -9,27 +9,27 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_errors.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:6: error(ExpectedParenAfter): expected `(` after `if`
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:6: error: expected `(` after `if` [ExpectedParenAfter]
   // CHECK:STDERR:   if a {}
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
   if a {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:7: error(ExpectedExpr): expected expression
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   if () {}
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   if () {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:9: error(ExpectedCloseSymbol): unexpected tokens before `)`
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
   // CHECK:STDERR:   if (b c) {}
   // CHECK:STDERR:         ^
   // CHECK:STDERR:
   if (b c) {}
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+7]]:1: error(ExpectedCodeBlock): expected braced code block
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+7]]:1: error: expected braced code block [ExpectedCodeBlock]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:1: error(ExpectedExpr): expected expression
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

@@ -12,7 +12,7 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
@@ -22,12 +22,12 @@ let T:! type = i32;
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error(TypeExprEvaluationFailure): cannot evaluate type expression
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var a: T*;
 // CHECK:STDERR:        ^~
 // CHECK:STDERR:
 var a: T*;
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error(TypeExprEvaluationFailure): cannot evaluate type expression
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var b: T = *a;
 // CHECK:STDERR:        ^
 var b: T = *a;
@@ -52,7 +52,7 @@ var b: T = *a;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

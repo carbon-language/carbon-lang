@@ -8,30 +8,30 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:                      ^~~~~~
 // CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 
 class C {
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+11]]:10: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+11]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+7]]:10: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+7]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:18: error(SemanticsTodo): semantics TODO: `Control flow expressions are currently only supported inside functions.`
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:                  ^~~~~~~~
   var n: if true then i32 else f64;
@@ -68,8 +68,8 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+42, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

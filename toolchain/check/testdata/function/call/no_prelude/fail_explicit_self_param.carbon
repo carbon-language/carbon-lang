@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/no_prelude/fail_explicit_self_param.carbon
 
-// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+3]]:6: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+3]]:6: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn F(self: ());
 // CHECK:STDERR:      ^~~~~~~~
 fn F(self: ());
@@ -39,8 +39,8 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_13.2: type = converted %.loc14_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }

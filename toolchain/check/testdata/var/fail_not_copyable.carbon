@@ -14,14 +14,14 @@ class X {
 fn F(x: X) {
   // TODO: Strings should eventually be copyable, once we decide how to
   // represent them.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:19: error(CopyOfUncopyableType): cannot copy value of type `String`
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:19: error: cannot copy value of type `String` [CopyOfUncopyableType]
   // CHECK:STDERR:   var s: String = "hello";
   // CHECK:STDERR:                   ^~~~~~~
   // CHECK:STDERR:
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: error(CopyOfUncopyableType): cannot copy value of type `X`
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
   // CHECK:STDERR:   var y: X = x;
   // CHECK:STDERR:              ^
   var y: X = x;
@@ -67,8 +67,8 @@ fn F(x: X) {
 // CHECK:STDOUT:     %x.param_patt: %X = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %param: %X = param runtime_param0
-// CHECK:STDOUT:     %x: %X = bind_name x, %param
+// CHECK:STDOUT:     %x.param: %X = param runtime_param0
+// CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

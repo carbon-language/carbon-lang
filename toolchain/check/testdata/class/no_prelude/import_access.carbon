@@ -48,7 +48,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:8: error(NameNotFound): name `Def` not found
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:8: error: name `Def` not found [NameNotFound]
 // CHECK:STDERR: var c: Def = {};
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error(NameNotFound): name `Def` not found
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: name `Def` not found [NameNotFound]
 // CHECK:STDERR: var c: Test.Def = {};
 // CHECK:STDERR:        ^~~~~~~~
 // CHECK:STDERR:
@@ -78,7 +78,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:8: error(NameNotFound): name `ForwardWithDef` not found
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:8: error: name `ForwardWithDef` not found [NameNotFound]
 // CHECK:STDERR: var c: ForwardWithDef = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error(NameNotFound): name `ForwardWithDef` not found
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: name `ForwardWithDef` not found [NameNotFound]
 // CHECK:STDERR: var c: Test.ForwardWithDef = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error(NameNotFound): name `Forward` not found
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(c: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error(NameNotFound): name `Forward` not found
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(c: Test.Forward*) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~
 fn F(c: Test.Forward*) {}
@@ -416,8 +416,8 @@ private class Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
 // CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %c: %.1 = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
@@ -453,8 +453,8 @@ private class Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %c: <error> = bind_name c, %param
+// CHECK:STDOUT:     %c.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -490,8 +490,8 @@ private class Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param0
-// CHECK:STDOUT:     %c: <error> = bind_name c, %param
+// CHECK:STDOUT:     %c.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

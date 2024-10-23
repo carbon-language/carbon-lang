@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_too_few_element.carbon
 
-// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:21: error(TupleInitElementCountMismatch): cannot initialize tuple of 2 elements from tuple with 1 element
+// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:21: error: cannot initialize tuple of 2 elements from tuple with 1 element [TupleInitElementCountMismatch]
 // CHECK:STDERR: var x: (i32, i32) = (2, );
 // CHECK:STDERR:                     ^~~~~
 var x: (i32, i32) = (2, );
@@ -38,7 +38,7 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

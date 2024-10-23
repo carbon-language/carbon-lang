@@ -228,7 +228,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   param_inst_ids.reserve(max_llvm_params);
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
-    param_inst_ids.push_back(function.return_storage_id);
+    param_inst_ids.push_back(function.return_slot_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
@@ -280,7 +280,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto name_id = SemIR::NameId::Invalid;
-    if (inst_id == function.return_storage_id) {
+    if (inst_id == function.return_slot_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
@@ -326,7 +326,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   int param_index = 0;
   if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
           .has_return_slot()) {
-    function_lowering.SetLocal(function.return_storage_id,
+    function_lowering.SetLocal(function.return_slot_id,
                                llvm_function->getArg(param_index));
     ++param_index;
   }

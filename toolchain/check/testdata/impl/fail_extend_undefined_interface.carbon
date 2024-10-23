@@ -11,10 +11,10 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+6]]:3: error(ExtendUndefinedInterface): `extend impl` requires a definition for interface `I`
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+6]]:3: error: `extend impl` requires a definition for interface `I` [ExtendUndefinedInterface]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note(InterfaceForwardDeclaredHere): interface was forward declared here
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
   extend impl as I;

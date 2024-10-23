@@ -10,13 +10,13 @@
 
 var a: [i32; 1] = (12,);
 
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+4]]:16: error(ArrayIndexOutOfBounds): array index `1` is past the end of type `[i32; 1]`
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+4]]:16: error: array index `1` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a[1];
 // CHECK:STDERR:                ^
 // CHECK:STDERR:
 var b: i32 = a[1];
 
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:16: error(ArrayIndexOutOfBounds): array index `2147483647` is past the end of type `[i32; 1]`
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:16: error: array index `2147483647` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
 // CHECK:STDERR: var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDERR:                ^~~~~~~~~~~
 var c: i32 = a[0x7FFF_FFFF];
@@ -49,7 +49,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

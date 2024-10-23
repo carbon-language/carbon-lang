@@ -10,11 +10,11 @@
 
 let
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: error(ExpectedBindingPattern): expected name in binding pattern
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: error(ExpectedDeclSemi): `let` declarations must end with a `;`
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_semi.carbon

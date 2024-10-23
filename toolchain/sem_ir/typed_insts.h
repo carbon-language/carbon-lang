@@ -833,6 +833,10 @@ struct Param {
 
   TypeId type_id;
   RuntimeParamIndex runtime_index;
+
+  // A name to associate with this Param in pretty-printed IR. This is not
+  // necessarily unique, or even valid, and has no semantic significance.
+  NameId pretty_name_id;
 };
 
 // A pattern that represents a parameter. It matches the same values as
@@ -879,6 +883,42 @@ struct ReturnExpr {
   InstId expr_id;
   // The return slot, if any. Invalid if we're not returning through memory.
   InstId dest_id;
+};
+
+// The return slot of a function declaration, as exposed in the function body.
+// This acts as an output parameter, analogous to `BindName` for input
+// parameters.
+struct ReturnSlot {
+  static constexpr auto Kind =
+      InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
+
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
+  TypeId type_id;
+
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
+
+  // The storage that will be initialized by the function.
+  InstId storage_id;
+};
+
+// The return slot of a function declaration, as exposed to the function's
+// callers. This acts as an output parameter, analogous to `BindingPattern`
+// for input parameters.
+struct ReturnSlotPattern {
+  static constexpr auto Kind =
+      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+          {.ir_name = "return_slot_pattern", .is_lowered = false});
+
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
+  TypeId type_id;
+
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
 };
 
 // An `expr == expr` clause in a `where` expression or `require` declaration.

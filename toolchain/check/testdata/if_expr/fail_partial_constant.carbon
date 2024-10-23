@@ -16,7 +16,7 @@ fn ConditionIsNonConstant(b: bool) {
   // We choose to not accept this even if both arms evaluate to the same
   // constant value, because it notionally involves evaluating a non-constant
   // condition.
-  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_non_constant_condition.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var v: if b then i32 else i32 = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -28,12 +28,12 @@ fn ConditionIsNonConstant(b: bool) {
 package NonConstantResult;
 
 fn ChosenBranchIsNonConstant(t: type) {
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var v: if true then t else i32 = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var v: if true then t else i32 = 1;
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+3]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var w: if false then i32 else t = 1;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
   var w: if false then i32 else t = 1;
@@ -65,8 +65,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -82,8 +82,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %param
+// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,7 +142,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -155,8 +155,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %t.patt: type = binding_pattern t
 // CHECK:STDOUT:     %t.param_patt: type = param_pattern %t.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param0
-// CHECK:STDOUT:     %t: type = bind_name t, %param
+// CHECK:STDOUT:     %t.param: type = param runtime_param0
+// CHECK:STDOUT:     %t: type = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

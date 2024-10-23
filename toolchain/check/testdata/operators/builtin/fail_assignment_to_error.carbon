@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_assignment_to_error.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+4]]:3: error(NameNotFound): name `undeclared` not found
+  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+4]]:3: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   undeclared = 42;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   undeclared = 42;
-  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+3]]:4: error(NameNotFound): name `also_undeclared` not found
+  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+3]]:4: error: name `also_undeclared` not found [NameNotFound]
   // CHECK:STDERR:   *also_undeclared = 42;
   // CHECK:STDERR:    ^~~~~~~~~~~~~~~
   *also_undeclared = 42;

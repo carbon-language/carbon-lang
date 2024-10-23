@@ -11,20 +11,20 @@
 // TODO: Once we preserve the full value of integer literals in SemIR, check
 // that we reject the array bound being too large.
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:14: error(IntLiteralTooLargeForI32): integer literal with value 39999999999999999993 does not fit in i32
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:14: error: integer literal with value 39999999999999999993 does not fit in i32 [IntLiteralTooLargeForI32]
 // CHECK:STDERR: var a: [i32; 39999999999999999993];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+10]]:9: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+10]]:9: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:12: error(IntLiteralTooLargeForI32): integer literal with value 39999999999999999993 does not fit in i32
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:12: error: integer literal with value 39999999999999999993 does not fit in i32 [IntLiteralTooLargeForI32]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~
 var b: [1; 39999999999999999993];
@@ -68,13 +68,13 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.4: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

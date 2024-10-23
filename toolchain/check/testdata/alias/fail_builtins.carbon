@@ -8,13 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_builtins.carbon
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: error(AliasRequiresNameRef): alias initializer must be a name reference
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias a = i32;
 // CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 alias a = i32;
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: error(AliasRequiresNameRef): alias initializer must be a name reference
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias b = bool;
 // CHECK:STDERR:           ^~~~
 alias b = bool;
@@ -42,8 +42,8 @@ alias b = bool;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

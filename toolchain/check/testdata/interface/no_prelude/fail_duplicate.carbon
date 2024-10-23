@@ -14,10 +14,10 @@ library "[[@TEST_NAME]]";
 
 interface Interface { }
 
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: error(RedeclRedef): redefinition of `interface Interface`
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface` [RedeclRedef]
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: note(RedeclPrevDef): previously defined here
+// CHECK:STDERR: fail_redefine_without_dependents.carbon:[[@LINE-5]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -31,10 +31,10 @@ library "[[@TEST_NAME]]";
 
 interface Interface {}
 
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: error(RedeclRedef): redefinition of `interface Interface`
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE+7]]:1: error: redefinition of `interface Interface` [RedeclRedef]
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: note(RedeclPrevDef): previously defined here
+// CHECK:STDERR: fail_redefine_with_dependents.carbon:[[@LINE-5]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: interface Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -48,10 +48,10 @@ library "[[@TEST_NAME]]";
 
 fn Function();
 
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_name_conflict_with_fn.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -61,10 +61,10 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE+6]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface Class { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_name_conflict_with_class.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface Class { }
@@ -156,8 +156,8 @@ interface Class { }
 // CHECK:STDOUT:     %Self.ref: %.type = name_ref Self, @.1.%Self [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %param: @F.%Self (%Self.2) = param runtime_param0
-// CHECK:STDOUT:     %self: @F.%Self (%Self.2) = bind_name self, %param
+// CHECK:STDOUT:     %self.param: @F.%Self (%Self.2) = param runtime_param0
+// CHECK:STDOUT:     %self: @F.%Self (%Self.2) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:

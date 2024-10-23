@@ -1359,6 +1359,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BindValue::Kind:
     case SemIR::Deref::Kind:
     case SemIR::ImportRefLoaded::Kind:
+    case SemIR::ReturnSlot::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
@@ -1492,8 +1493,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::RequirementEquivalent::Kind:
     case SemIR::RequirementImpls::Kind:
     case SemIR::RequirementRewrite::Kind:
-    case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
+    case SemIR::ReturnExpr::Kind:
+    case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:

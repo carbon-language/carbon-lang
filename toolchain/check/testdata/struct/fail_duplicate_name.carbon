@@ -8,46 +8,46 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_duplicate_name.carbon
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: error(StructNameDuplicate): duplicated field name `abc` in struct type literal
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: error: duplicated field name `abc` in struct type literal [StructNameDuplicate]
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note(StructNamePrevious): field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                      ^~~
 // CHECK:STDERR:
 fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:19: error(StructNameDuplicate): duplicated field name `a` in struct type literal
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:19: error: duplicated field name `a` in struct type literal [StructNameDuplicate]
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: note(StructNamePrevious): field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
 let v: {.a: i32, .a: i32} = {.a = 1};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:26: error(StructNameDuplicate): duplicated field name `def` in struct literal
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:26: error: duplicated field name `def` in struct literal [StructNameDuplicate]
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: note(StructNamePrevious): field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
 let w: i32 = {.def = 1, .def = 2}.def;
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:30: error(StructNameDuplicate): duplicated field name `a` in struct literal
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:30: error: duplicated field name `a` in struct literal [StructNameDuplicate]
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                              ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note(StructNamePrevious): field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
 var x: {.a: i32} = {.a = 1, .a = 2};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: error(StructNameDuplicate): duplicated field name `b` in struct literal
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: note(StructNamePrevious): field with the same name here
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                               ^
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
@@ -81,7 +81,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -94,7 +94,10 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc18_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_16.1: type = value_of_initializer %int.make_type_32.loc18_16 [template = i32]
 // CHECK:STDOUT:     %.loc18_16.2: type = converted %int.make_type_32.loc18_16, %.loc18_16.1 [template = i32]
@@ -110,7 +113,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %int.make_type_32.loc18_56: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_56.1: type = value_of_initializer %int.make_type_32.loc18_56 [template = i32]
 // CHECK:STDOUT:     %.loc18_56.2: type = converted %int.make_type_32.loc18_56, %.loc18_56.1 [template = i32]
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc27_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc27_13.1: type = value_of_initializer %int.make_type_32.loc27_13 [template = i32]

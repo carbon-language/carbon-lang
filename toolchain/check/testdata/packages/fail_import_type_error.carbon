@@ -12,22 +12,22 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error(NameNotFound): name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var a_ref: x;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 var a_ref: x;
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error(NameNotFound): name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var b_ref: {.a = x};
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
 var b_ref: {.a = x};
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error(NameNotFound): name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var c_ref: (x,);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error(NameNotFound): name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
 var d_ref: x*;
@@ -108,7 +108,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

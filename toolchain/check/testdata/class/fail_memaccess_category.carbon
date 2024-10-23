@@ -18,10 +18,10 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:4: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:    ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -29,10 +29,10 @@ fn F(s: {.a: A}, b: B) {
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error(AddrSelfIsNonRef): `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:4: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:    ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note(InCallToFunctionSelf): initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~
   b.a.F();
@@ -91,10 +91,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.7]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %param.loc19_7: %.7 = param runtime_param0
-// CHECK:STDOUT:     %s: %.7 = bind_name s, %param.loc19_7
-// CHECK:STDOUT:     %param.loc19_19: %B = param runtime_param1
-// CHECK:STDOUT:     %b: %B = bind_name b, %param.loc19_19
+// CHECK:STDOUT:     %s.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
+// CHECK:STDOUT:     %b.param: %B = param runtime_param1
+// CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,8 +106,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

@@ -12,10 +12,10 @@ interface I {}
 
 impl i32 as I {}
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error(ImplRedefinition): redefinition of `impl i32 as I`
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `impl i32 as I` [ImplRedefinition]
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note(ImplPreviousDefinition): previous definition was here
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 impl i32 as I {}
@@ -43,7 +43,7 @@ impl i32 as I {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

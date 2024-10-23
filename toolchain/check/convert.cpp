@@ -1172,7 +1172,7 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id,
+                     SemIR::InstId return_slot_arg_id,
                      const CalleeParamsInfo& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
@@ -1187,7 +1187,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // Start building a block to hold the converted arguments.
   llvm::SmallVector<SemIR::InstId> args;
   args.reserve(implicit_param_patterns.size() + param_patterns.size() +
-               return_storage_id.is_valid());
+               return_slot_arg_id.is_valid());
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_patterns) {
@@ -1241,8 +1241,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   }
 
   // Track the return storage, if present.
-  if (return_storage_id.is_valid()) {
-    args.push_back(return_storage_id);
+  if (return_slot_arg_id.is_valid()) {
+    args.push_back(return_slot_arg_id);
   }
 
   return context.inst_blocks().AddOrEmpty(args);

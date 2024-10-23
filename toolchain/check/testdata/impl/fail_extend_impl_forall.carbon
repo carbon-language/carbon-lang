@@ -13,7 +13,7 @@ interface GenericInterface(T:! type) {
 }
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:3: error(ExtendImplForall): cannot `extend` a parameterized `impl`
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:3: error: cannot `extend` a parameterized `impl` [ExtendImplForall]
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:   ^~~~~~
   extend impl forall [T:! type] as GenericInterface(T) {
@@ -68,8 +68,8 @@ class C {
 // CHECK:STDOUT:     %T.patt.loc11_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_28.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_28.1, runtime_param<invalid> [symbolic = %T.patt.loc11_28.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_28.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_28.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_28.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_28.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
@@ -93,8 +93,8 @@ class C {
 // CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11_28.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %param: @F.1.%T (%T) = param runtime_param0
-// CHECK:STDOUT:       %x: @F.1.%T (%T) = bind_name x, %param
+// CHECK:STDOUT:       %x.param: @F.1.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %x: @F.1.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc12_13.1: @GenericInterface.%.loc12_13.2 (%.2) = assoc_entity element0, %F.decl [symbolic = %.loc12_13.3 (constants.%.3)]
 // CHECK:STDOUT:
@@ -121,8 +121,8 @@ class C {
 // CHECK:STDOUT:       %x.param_patt: @F.2.%T (%T) = param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc19_23.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %param: @F.2.%T (%T) = param runtime_param0
-// CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %param
+// CHECK:STDOUT:       %x.param: @F.2.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc19_56.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc19_56.2 (constants.%.4)]
 // CHECK:STDOUT:
@@ -141,8 +141,8 @@ class C {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_23.1 [symbolic = %T.loc19_23.2 (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.type.loc19_52.1: type = interface_type @GenericInterface, @GenericInterface(constants.%T) [symbolic = %GenericInterface.type.loc19_52.2 (constants.%GenericInterface.type.2)]
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc19_23.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc19_23.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc19_23.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:

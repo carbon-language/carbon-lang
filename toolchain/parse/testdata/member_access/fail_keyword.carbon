@@ -9,32 +9,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/member_access/fail_keyword.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `.`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.self;
   // CHECK:STDERR:     ^~~~
   // CHECK:STDERR:
   a.self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `.`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.Self;
   // CHECK:STDERR:     ^~~~
   // CHECK:STDERR:
   a.Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `.`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.for;
   // CHECK:STDERR:     ^~~
   // CHECK:STDERR:
   a.for;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `->`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->self;
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
   p->self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `->`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->Self;
   // CHECK:STDERR:      ^~~~
   // CHECK:STDERR:
   p->Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: error(ExpectedIdentifierAfterPeriodOrArrow): expected identifier after `->`
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: error: expected identifier after `->` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   p->while;
   // CHECK:STDERR:      ^~~~~
   p->while;

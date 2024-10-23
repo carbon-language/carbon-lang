@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/no_prelude/fail_assign_to_empty.carbon
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: error(TupleInitElementCountMismatch): cannot initialize tuple of 0 elements from tuple with 1 element
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13: error: cannot initialize tuple of 0 elements from tuple with 1 element [TupleInitElementCountMismatch]
 // CHECK:STDERR: var x: () = ((),);
 // CHECK:STDERR:             ^~~~~
 var x: () = ((),);

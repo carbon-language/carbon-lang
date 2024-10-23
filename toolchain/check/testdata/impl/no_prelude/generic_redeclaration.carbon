@@ -39,10 +39,10 @@ interface I {}
 interface J {}
 
 impl forall [T:! I] T as J {}
-// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+6]]:1: error(ImplRedefinition): redefinition of `impl T as J`
+// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as J` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE-4]]:1: note(ImplPreviousDefinition): previous definition was here
+// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE-4]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! I] T as J {}
@@ -114,8 +114,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc11_21.1: type = facet_type_access %T.ref [symbolic = %T.loc11_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %.loc11_21.2: type = converted %T.ref, %.loc11_21.1 [symbolic = %T.loc11_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_14.1: %I.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc11_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc11_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_14.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {
 // CHECK:STDOUT:     %T.patt.loc12_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
@@ -126,8 +126,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc12_21.1: type = facet_type_access %T.ref [symbolic = %T.loc12_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %.loc12_21.2: type = converted %T.ref, %.loc12_21.1 [symbolic = %T.loc12_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: %J.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc12_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.param: %J.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {
 // CHECK:STDOUT:     %T.patt.loc13_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_14.2 (constants.%T.patt.3)]
@@ -138,8 +138,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc13_21.1: type = facet_type_access %T.ref [symbolic = %T.loc13_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %.loc13_21.2: type = converted %T.ref, %.loc13_21.1 [symbolic = %T.loc13_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %K.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_14.1: %K.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc13_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %T.param: %K.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_14.2 (constants.%T.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {
 // CHECK:STDOUT:     %T.patt.loc14_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt.4)]
@@ -150,8 +150,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc14_21.1: type = facet_type_access %T.ref [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref, %.loc14_21.1 [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %L.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14_14.1: %L.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc14_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %T.param: %L.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc14_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {
 // CHECK:STDOUT:     %T.patt.loc18_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.5)]
@@ -162,8 +162,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc18_21.1: type = facet_type_access %T.ref [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %.loc18_21.2: type = converted %T.ref, %.loc18_21.1 [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc18_14.1: %I.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc18_14.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.param: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc18_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {
 // CHECK:STDOUT:     %T.patt.loc19_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.6)]
@@ -174,8 +174,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc19_21.1: type = facet_type_access %T.ref [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %.loc19_21.2: type = converted %T.ref, %.loc19_21.1 [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %J.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc19_14.1: %J.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc19_14.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.param: %J.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc19_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {
 // CHECK:STDOUT:     %T.patt.loc20_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.7)]
@@ -186,8 +186,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc20_21.1: type = facet_type_access %T.ref [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %.loc20_21.2: type = converted %T.ref, %.loc20_21.1 [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %K.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc20_14.1: %K.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc20_14.2 (constants.%T.3)]
+// CHECK:STDOUT:     %T.param: %K.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc20_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {
 // CHECK:STDOUT:     %T.patt.loc21_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.8)]
@@ -198,8 +198,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc21_21.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %.loc21_21.2: type = converted %T.ref, %.loc21_21.1 [symbolic = %T.loc21_14.2 (constants.%T.4)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %L.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc21_14.1: %L.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc21_14.2 (constants.%T.4)]
+// CHECK:STDOUT:     %T.param: %L.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc21_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T.4)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -397,8 +397,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc7_21.1: type = facet_type_access %T.ref.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc7_21.2: type = converted %T.ref.loc7, %.loc7_21.1 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:     %J.ref.loc7: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:     %param.loc7: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0, %param.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param.loc7: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0, %T.param.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
@@ -409,8 +409,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %.loc14_21.1: type = facet_type_access %T.ref.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref.loc14, %.loc14_21.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %J.ref.loc14: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:     %param.loc14: %I.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14: %I.type = bind_symbolic_name T, 0, %param.loc14 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.param.loc14: %I.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc14: %I.type = bind_symbolic_name T, 0, %T.param.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

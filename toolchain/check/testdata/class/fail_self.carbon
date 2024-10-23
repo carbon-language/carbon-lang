@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   fn F(self: Self);
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
@@ -18,7 +18,7 @@ class Class {
   fn G() -> Self;
 }
 
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn Class.F(self: Self) {
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
@@ -26,12 +26,12 @@ fn Class.F(self: Self) {
 }
 
 fn Class.G() -> Self {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   var self: Self;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
   var self: Self;
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error(CopyOfUncopyableType): cannot copy value of type `Class`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:
@@ -43,13 +43,13 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `WrongSelf` to `Class`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `WrongSelf` to `Class` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note(MissingImplInMemberAccessNote): type `WrongSelf` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note(InCallToFunctionSelf): initializing `self` parameter of method declared here
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing `self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~
   ws.F();
@@ -103,12 +103,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+46, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.5) = import_ref Core//prelude/operators/as, inst+71, loaded [symbolic = @ImplicitAs.%.2 (constants.%.9)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+64, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+64, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.5) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,12 +125,16 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc25: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc25: %Class = bind_name self, %param.loc25
+// CHECK:STDOUT:     %self.param.loc25: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc25: %Class = bind_name self, %self.param.loc25
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %return.param.loc28: %Class = param runtime_param0
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param.loc28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {} {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
@@ -138,8 +142,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %ws.param_patt: %WrongSelf = param_pattern %ws.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, file.%WrongSelf.decl [template = constants.%WrongSelf]
-// CHECK:STDOUT:     %param: %WrongSelf = param runtime_param0
-// CHECK:STDOUT:     %ws: %WrongSelf = bind_name ws, %param
+// CHECK:STDOUT:     %ws.param: %WrongSelf = param runtime_param0
+// CHECK:STDOUT:     %ws: %WrongSelf = bind_name ws, %ws.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,12 +173,16 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %param.loc16: %Class = param runtime_param0
-// CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %param.loc16
+// CHECK:STDOUT:     %self.param.loc16: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %self.param.loc16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %return.var.loc18: ref %Class = var <return slot>
+// CHECK:STDOUT:     %return.param.loc18: %Class = param runtime_param0
+// CHECK:STDOUT:     %.loc18: ref %Class = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -190,8 +198,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param: %Class = param runtime_param0
-// CHECK:STDOUT:     %self: %Class = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc43: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

@@ -10,7 +10,7 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: error(ExtendImplOutsideClass): `extend impl` can only be used in a class
+// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: error: `extend impl` can only be used in a class [ExtendImplOutsideClass]
 // CHECK:STDERR: extend impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 extend impl i32 as I {}
@@ -38,7 +38,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

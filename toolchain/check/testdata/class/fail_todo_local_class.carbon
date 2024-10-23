@@ -11,11 +11,11 @@
 // TODO: Support parsing classes at function scope.
 class A {
   fn F() {
-    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+7]]:5: error(ExpectedExpr): expected expression
+    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+7]]:5: error: expected expression [ExpectedExpr]
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error(SemanticsTodo): semantics TODO: `HandleInvalidParse`
+    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     class B {

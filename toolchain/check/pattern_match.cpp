@@ -16,6 +16,22 @@
 namespace Carbon::Check {
 namespace {
 
+// Returns a best-effort name for the given ParamPattern, suitable for use in
+// IR pretty-printing.
+// TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
+auto GetPrettyName(Context& context, SemIR::ParamPattern param_pattern)
+    -> SemIR::NameId {
+  if (context.insts().Is<SemIR::ReturnSlotPattern>(
+          param_pattern.subpattern_id)) {
+    return SemIR::NameId::ReturnSlot;
+  }
+  if (auto binding_pattern = context.insts().TryGetAs<SemIR::AnyBindingPattern>(
+          param_pattern.subpattern_id)) {
+    return context.entity_names().Get(binding_pattern->entity_name_id).name_id;
+  }
+  return SemIR::NameId::Invalid;
+}
+
 // Selects between the different kinds of pattern matching.
 enum class MatchKind {
   // Caller pattern matching occurs on the caller side of a function call, and
@@ -48,7 +64,8 @@ class MatchContext {
       : next_index_(0),
         result_(SemIR::InstId::Invalid),
         kind_(kind),
-        callee_specific_id_(callee_specific_id) {}
+        callee_specific_id_(callee_specific_id),
+        return_slot_id_(SemIR::InstId::Invalid) {}
 
   // Returns whether there are any work items to process.
   auto HasWork() const -> bool {
@@ -114,6 +131,12 @@ class MatchContext {
     return callee_specific_id_;
   }
 
+  auto return_slot_id() const -> SemIR::InstId { return return_slot_id_; }
+
+  auto set_return_slot_id(SemIR::InstId return_slot_id) {
+    return_slot_id_ = return_slot_id;
+  }
+
  private:
   llvm::SmallVector<WorkItem> stack_;
 
@@ -126,6 +149,8 @@ class MatchContext {
   MatchKind kind_;
 
   SemIR::SpecificId callee_specific_id_;
+
+  SemIR::InstId return_slot_id_;
 };
 
 // Emits the pattern-match insts necessary to match the pattern inst
@@ -216,13 +241,23 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
             context.ReplaceInstBeforeConstantUse(entry.pattern_id,
                                                  param_pattern);
           }
-          match.AddWork({.pattern_id = param_pattern.subpattern_id,
-                         .scrutinee_id = context.AddInst<SemIR::Param>(
-                             pattern.loc_id,
-                             {.type_id = param_pattern.type_id,
-                              .runtime_index = param_pattern.runtime_index})});
+          match.AddWork(
+              {.pattern_id = param_pattern.subpattern_id,
+               .scrutinee_id = context.AddInst<SemIR::Param>(
+                   pattern.loc_id,
+                   {.type_id = param_pattern.type_id,
+                    .runtime_index = param_pattern.runtime_index,
+                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
         } break;
       }
+      break;
+    }
+    case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
+      CARBON_CHECK(match.kind() == MatchKind::Callee);
+      match.set_return_slot_id(context.AddInst<SemIR::ReturnSlot>(
+          pattern.loc_id, {.type_id = return_slot_pattern.type_id,
+                           .type_inst_id = return_slot_pattern.type_inst_id,
+                           .storage_id = entry.scrutinee_id}));
       break;
     }
     default: {
@@ -235,7 +270,8 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
 
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
-                        SemIR::InstBlockId param_patterns_id)
+                        SemIR::InstBlockId param_patterns_id,
+                        SemIR::InstId return_slot_pattern_id)
     -> ParameterBlocks {
   auto params_id = SemIR::InstBlockId::Invalid;
   auto implicit_params_id = SemIR::InstBlockId::Invalid;
@@ -269,7 +305,17 @@ auto CalleePatternMatch(Context& context,
     params_id = match.ConsumeBindNames(context);
   }
 
-  return {.implicit_params_id = implicit_params_id, .params_id = params_id};
+  if (return_slot_pattern_id.is_valid()) {
+    match.AddWork({.pattern_id = return_slot_pattern_id,
+                   .scrutinee_id = SemIR::InstId::Invalid});
+    while (match.HasWork()) {
+      EmitPatternMatch(context, match, match.NextWorkItem());
+    }
+  }
+
+  return {.implicit_params_id = implicit_params_id,
+          .params_id = params_id,
+          .return_slot_id = match.return_slot_id()};
 }
 
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,

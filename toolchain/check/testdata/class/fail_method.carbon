@@ -20,27 +20,27 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error(MissingObjectInMethodCall): missing object argument in method call
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note(InCallToFunction): calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error(MissingObjectInMethodCall): missing object argument in method call
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note(InCallToFunction): calling function declared here
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   A();
@@ -92,8 +92,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %c.param_patt: %Class = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param: %Class = param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,8 +104,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param: %Class = param runtime_param0
-// CHECK:STDOUT:     %self: %Class = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

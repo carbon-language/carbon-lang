@@ -39,7 +39,7 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error(NameNotFound): name `F` not found
+  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error: name `F` not found [NameNotFound]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~
   a.F();
@@ -73,7 +73,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -176,8 +176,8 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
-// CHECK:STDOUT:     %param: %AdaptNotExtend = param runtime_param0
-// CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %AdaptNotExtend = param runtime_param0
+// CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,7 +14,7 @@
 
 
 // Missing the character after `#`.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: r#
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
@@ -23,7 +23,7 @@ r#
 // CHECK:STDOUT:   - { index:  2, kind:         'Error', line: {{ *}}[[@LINE-2]], column: 2, indent: 1, spelling: '#' }
 
 // Not a valid identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: r#3
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
@@ -33,7 +33,7 @@ r#3
 // CHECK:STDOUT:   - { index:  5, kind:    'IntLiteral', line: {{ *}}[[@LINE-3]], column: 3, indent: 1, spelling: '3', value: `3` }
 
 // Non ascii start to identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: r#á
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ r#á
 // CHECK:STDOUT:   - { index:  7, kind:         'Error', line: {{ *}}[[@LINE-2]], column: 2, indent: 1, spelling: '#á' }
 
 // Raw `r` identifier doesn't start a second raw identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: r#r#foo
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ r#r#foo
 // CHECK:STDOUT:   - { index: 10, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column: 5, indent: 1, spelling: 'foo', identifier: 1 }
 
 // Other identifier characters don't start a raw identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: s#foo
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
@@ -62,7 +62,7 @@ s#foo
 // CHECK:STDOUT:   - { index: 13, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column: 3, indent: 1, spelling: 'foo', identifier: 1 }
 
 // Identifier ending in `r` doesn't start a raw identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: arr#foo
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
@@ -72,7 +72,7 @@ arr#foo
 // CHECK:STDOUT:   - { index: 16, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column: 5, indent: 1, spelling: 'foo', identifier: 1 }
 
 // Whitespace between `r` and `#` isn't allowed.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:3: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:3: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: r #foo
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
@@ -91,7 +91,7 @@ r#"hello"#
 // CHECK:STDOUT:   tokens:
 
 // Ensure that we correctly handle a `#` as the first token in the file.
-// CHECK:STDERR: fail_hash_at_start_of_file.carbon:[[@LINE+3]]:1: error(UnrecognizedCharacters): encountered unrecognized characters while parsing
+// CHECK:STDERR: fail_hash_at_start_of_file.carbon:[[@LINE+3]]:1: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: #foo
 // CHECK:STDERR: ^
 #foo

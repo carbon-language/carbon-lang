@@ -9,30 +9,30 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
 
 interface NotGeneric;
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error(RedeclParamListDiffers): redeclaration differs because of parameter list
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: interface NotGeneric(T:! type) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: note(RedeclParamListPrevious): previously declared without parameter list
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: note: previously declared without parameter list [RedeclParamListPrevious]
 // CHECK:STDERR: interface NotGeneric;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface NotGeneric(T:! type) {}
 
 interface Generic(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error(RedeclParamListDiffers): redeclaration differs because of missing parameter list
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:1: error: redeclaration differs because of missing parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: interface Generic {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: note(RedeclParamListPrevious): previously declared with parameter list
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:1: note: previously declared with parameter list [RedeclParamListPrevious]
 // CHECK:STDERR: interface Generic(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 interface Generic {}
 
 interface DifferentParams(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error(RedeclParamDiffers): redeclaration differs at parameter 1
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^~~~~~
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: note(RedeclParamPrevious): previous declaration's corresponding parameter here
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: interface DifferentParams(T:! type);
 // CHECK:STDERR:                           ^~~~~~~~
 interface DifferentParams(T:! ()) {}
@@ -75,23 +75,23 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.patt.loc19_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc19_22.1, runtime_param<invalid> [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc19_22.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_22.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl: %Generic.type = interface_decl @Generic [template = constants.%Generic] {
 // CHECK:STDOUT:     %T.patt.loc21_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_19.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc21_19.1, runtime_param<invalid> [symbolic = %T.patt.loc21_19.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc21_19.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_19.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.type.3] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams] {
 // CHECK:STDOUT:     %T.patt.loc31_27.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc31_27.1, runtime_param<invalid> [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc31_27.2 (constants.%T.1)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc31_27.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc38: %.type.4 = interface_decl @.3 [template = constants.%.3] {
 // CHECK:STDOUT:     %T.patt.loc38_27.1: %.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.4)]
@@ -99,8 +99,8 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc38_32.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc38_32.2: type = converted %.loc38_32.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc38_27.1: %.1 = bind_symbolic_name T, 0, %param [symbolic = %T.loc38_27.2 (constants.%T.2)]
+// CHECK:STDOUT:     %T.param: %.1 = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc38_27.1: %.1 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc38_27.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

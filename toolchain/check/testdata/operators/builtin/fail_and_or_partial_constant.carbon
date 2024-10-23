@@ -13,12 +13,12 @@
 package FailNonConstantResult;
 
 fn PartialConstant(x: bool) {
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var a: if true and x then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var a: if true and x then bool else ();
-  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var b: if false or x then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -32,12 +32,12 @@ package FailDespiteKnownResult;
 fn KnownValueButNonConstantCondition(x: bool) {
   // We choose not to give these cases constant values, even though we could,
   // because they notionally involve evaluating a non-constant condition.
-  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+4]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var c: if x and false then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var c: if x and false then bool else ();
-  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+3]]:10: error(TypeExprEvaluationFailure): cannot evaluate type expression
+  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var d: if x or true then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   var d: if x or true then bool else ();
@@ -67,7 +67,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,8 +83,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type.loc4, %.loc4_23.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param runtime_param0
-// CHECK:STDOUT:     %x: bool = bind_name x, %param
+// CHECK:STDOUT:     %x.param: bool = param runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,7 +174,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,8 +190,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
 // CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type.loc4, %.loc4_41.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param runtime_param0
-// CHECK:STDOUT:     %x: bool = bind_name x, %param
+// CHECK:STDOUT:     %x.param: bool = param runtime_param0
+// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

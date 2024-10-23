@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_missing_value.carbon
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: error(ExpectedExpr): expected expression
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: var x: {.a=} = {};
 // CHECK:STDERR:            ^
 var x: {.a=} = {};

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20: error(StructInitElementCountMismatch): cannot initialize struct with 1 field from struct with 0 fields
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20: error: cannot initialize struct with 1 field from struct with 0 fields [StructInitElementCountMismatch]
 // CHECK:STDERR: var x: {.a: i32} = {};
 // CHECK:STDERR:                    ^~
 var x: {.a: i32} = {};
@@ -35,7 +35,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

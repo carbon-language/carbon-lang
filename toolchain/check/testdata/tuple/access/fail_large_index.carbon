@@ -10,12 +10,12 @@
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+4]]:14: error(TupleIndexOutOfBounds): tuple element index `1` is past the end of type `(i32,)`
+// CHECK:STDERR: fail_large_index.carbon:[[@LINE+4]]:14: error: tuple element index `1` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var c: i32 = b.1;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
 var c: i32 = b.1;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:14: error(TupleIndexOutOfBounds): tuple element index `2147483647` is past the end of type `(i32,)`
+// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:14: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
 var d: i32 = b.(0x7FFF_FFFF);
@@ -46,7 +46,7 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

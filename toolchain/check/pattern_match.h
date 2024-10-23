@@ -10,12 +10,16 @@
 
 namespace Carbon::Check {
 
+// The pattern-match counterparts of the patterns passed to CalleePatternMatch.
 struct ParameterBlocks {
   // The implicit parameter list.
   SemIR::InstBlockId implicit_params_id;
 
   // The explicit parameter list.
   SemIR::InstBlockId params_id;
+
+  // The return slot.
+  SemIR::InstId return_slot_id;
 };
 
 // TODO: Find a better place for this overview, once it has stabilized.
@@ -30,13 +34,15 @@ struct ParameterBlocks {
 // callee at the semantic IR level, and "calling convention parameters" are
 // the corresponding semantic placeholders that they bind to.
 
-// Emits the pattern-match IR for the declaration of a function with the
-// given implicit and explicit parameter patterns. This IR performs the callee
-// side of pattern matching, starting at the `ParamPattern` insts, and matching
-// them against the corresponding calling-convention parameters.
+// Emits the pattern-match IR for the declaration of a parameterized entity with
+// the given implicit and explicit parameter patterns, and the given return slot
+// pattern (any of which may be invalid if not applicable). This IR performs the
+// callee side of pattern matching, starting at the `ParamPattern` insts, and
+// matching them against the corresponding calling-convention parameters.
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
-                        SemIR::InstBlockId param_patterns_id)
+                        SemIR::InstBlockId param_patterns_id,
+                        SemIR::InstId return_slot_pattern_id)
     -> ParameterBlocks;
 
 // Emits the pattern-match IR for matching the given argument with the given

@@ -8,12 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_error.carbon
 
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: error(NameNotFound): name `undeclared` not found
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: error: name `undeclared` not found [NameNotFound]
 // CHECK:STDERR: let n: i32 = *undeclared;
 // CHECK:STDERR:               ^~~~~~~~~~
 // CHECK:STDERR:
 let n: i32 = *undeclared;
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: error(NameNotFound): name `undeclared` not found
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: error: name `undeclared` not found [NameNotFound]
 // CHECK:STDERR: let n2: i32 = undeclared->foo;
 // CHECK:STDERR:               ^~~~~~~~~~
 let n2: i32 = undeclared->foo;
@@ -38,7 +38,7 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

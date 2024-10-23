@@ -10,6 +10,7 @@
 #include "testing/base/source_gen.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/install_paths_test_helpers.h"
+#include "toolchain/testing/compile_helper.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -96,18 +97,30 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
   int num_files = ComputeFileCount(target_lines);
   llvm::OwningArrayRef<std::string> sources(num_files);
 
-  // Create a collection of random source files. Average the actual number of
-  // lines resulting so we can use that to compute the compilation speed as a
-  // line-rate counter.
-  double avg_lines = 0.0;
+  // Create a collection of random source files. Compute average statistics for
+  // counters for compilation speed.
+  CompileHelper compile_helper;
+  double total_bytes = 0.0;
+  double total_tokens = 0.0;
+  double total_lines = 0.0;
   for (std::string& source : sources) {
     source = bench.gen().GenAPIFileDenseDecls(target_lines,
                                               SourceGen::DenseDeclParams{});
-    avg_lines += llvm::count(source, '\n');
-  }
-  avg_lines /= sources.size();
+    total_bytes += source.size();
+    total_tokens += compile_helper.GetTokenizedBuffer(source).size();
+    total_lines += llvm::count(source, '\n');
+  };
+  state.counters["Bytes"] =
+      benchmark::Counter(total_bytes / sources.size(),
+                         benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["Tokens"] =
+      benchmark::Counter(total_tokens / sources.size(),
+                         benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["Lines"] =
+      benchmark::Counter(total_lines / sources.size(),
+                         benchmark::Counter::kIsIterationInvariantRate);
 
-  // Setup the sources as files for compilation.
+  // Set up the sources as files for compilation.
   llvm::OwningArrayRef<std::string> file_names = bench.SetUpFiles(sources);
   CARBON_CHECK(static_cast<int>(file_names.size()) == num_files);
 
@@ -132,10 +145,6 @@ static auto BM_CompileAPIFileDenseDecls(benchmark::State& state) -> void {
       i += static_cast<ssize_t>(success);
     }
   }
-
-  // Compute the line-rate of these compilations.
-  state.counters["Lines"] = benchmark::Counter(
-      avg_lines, benchmark::Counter::kIsIterationInvariantRate);
 }
 
 // Benchmark from 256-line test cases through 256k line test cases, and for each

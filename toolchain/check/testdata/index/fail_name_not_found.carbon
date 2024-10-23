@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_name_not_found.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+3]]:16: error(NameNotFound): name `a` not found
+  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+3]]:16: error: name `a` not found [NameNotFound]
   // CHECK:STDERR:   var b: i32 = a[0];
   // CHECK:STDERR:                ^
   var b: i32 = a[0];
@@ -38,7 +38,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -10,20 +10,20 @@
 
 interface Undefined;
 
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error(QualifiedDeclInUndefinedInterfaceScope): cannot declare a member of undefined interface `Undefined`
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined` [QualifiedDeclInUndefinedInterfaceScope]
 // CHECK:STDERR: fn Undefined.F();
 // CHECK:STDERR:    ^~~~~~~~~
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note(InterfaceForwardDeclaredHere): interface was forward declared here
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface Undefined;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error(QualifiedExprInUndefinedInterfaceScope): member access into undefined interface `Undefined`
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   Undefined.G();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note(InterfaceForwardDeclaredHere): interface was forward declared here
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface Undefined;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,19 +31,19 @@ fn Test() {
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error(QualifiedExprInUndefinedInterfaceScope): member access into undefined interface `BeingDefined`
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note(InterfaceUndefinedWithinDefinition): interface is currently being defined
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
   // CHECK:STDERR: interface BeingDefined {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error(NameNotFound): name `T` not found
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: name `T` not found [NameNotFound]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn H() -> BeingDefined.T;
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+3]]:6: error(NameNotFound): name `BeingDefined` not found
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+3]]:6: error: name `BeingDefined` not found [NameNotFound]
   // CHECK:STDERR:   fn BeingDefined.I();
   // CHECK:STDERR:      ^~~~~~~~~~~~
   fn BeingDefined.I();
@@ -84,10 +84,14 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc45: %.3 = assoc_entity element0, %H.decl [template = constants.%.4]
 // CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.5] {} {}

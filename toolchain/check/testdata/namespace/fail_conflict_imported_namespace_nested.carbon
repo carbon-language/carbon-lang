@@ -16,19 +16,19 @@ namespace Nested;
 // --- fail_conflict.carbon
 
 import Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 namespace Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:10: error(QualifiedDeclOutsidePackage): imported packages cannot be used for declarations
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
 // CHECK:STDERR: fn Other.Nested.F();
 // CHECK:STDERR:          ^~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1(InImport): in import
-// CHECK:STDERR: fn.carbon:3:1: note(QualifiedDeclOutsidePackageSource): package imported here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:3:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: namespace Nested;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 fn Other.Nested.F();

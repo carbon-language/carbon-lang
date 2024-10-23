@@ -102,7 +102,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,58 +125,70 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [template = constants.%ConvertCToB] {
 // CHECK:STDOUT:     %p.patt: %.17 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.17 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.18 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.18 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc25_20: type = ptr_type %C [template = constants.%.17]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc25_27: type = ptr_type %B [template = constants.%.18]
-// CHECK:STDOUT:     %return: ref %.18 = var <return slot>
-// CHECK:STDOUT:     %param: %.17 = param runtime_param0
-// CHECK:STDOUT:     %p: %.17 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.17 = param runtime_param0
+// CHECK:STDOUT:     %p: %.17 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.18 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.18 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [template = constants.%ConvertBToA] {
 // CHECK:STDOUT:     %p.patt: %.18 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.18 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.22 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.22 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc26_20: type = ptr_type %B [template = constants.%.18]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc26_27: type = ptr_type %A [template = constants.%.22]
-// CHECK:STDOUT:     %return: ref %.22 = var <return slot>
-// CHECK:STDOUT:     %param: %.18 = param runtime_param0
-// CHECK:STDOUT:     %p: %.18 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.18 = param runtime_param0
+// CHECK:STDOUT:     %p: %.18 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.22 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [template = constants.%ConvertCToA] {
 // CHECK:STDOUT:     %p.patt: %.17 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.17 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.22 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.22 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc27_20: type = ptr_type %C [template = constants.%.17]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc27_27: type = ptr_type %A [template = constants.%.22]
-// CHECK:STDOUT:     %return: ref %.22 = var <return slot>
-// CHECK:STDOUT:     %param: %.17 = param runtime_param0
-// CHECK:STDOUT:     %p: %.17 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.17 = param runtime_param0
+// CHECK:STDOUT:     %p: %.17 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %.22 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [template = constants.%ConvertValue] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %c: %C = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %C = param runtime_param0
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [template = constants.%ConvertRef] {
 // CHECK:STDOUT:     %c.patt: %.17 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %.17 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.22 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.22 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc33_19: type = ptr_type %C [template = constants.%.17]
 // CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc33_26: type = ptr_type %A [template = constants.%.22]
-// CHECK:STDOUT:     %return: ref %.22 = var <return slot>
-// CHECK:STDOUT:     %param: %.17 = param runtime_param0
-// CHECK:STDOUT:     %c: %.17 = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %.17 = param runtime_param0
+// CHECK:STDOUT:     %c: %.17 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: %.22 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertInit.decl: %ConvertInit.type = fn_decl @ConvertInit [template = constants.%ConvertInit] {} {}
 // CHECK:STDOUT: }

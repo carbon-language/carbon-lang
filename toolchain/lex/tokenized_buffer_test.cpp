@@ -1107,6 +1107,21 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 
+TEST_F(LexerTest, DiagnosticFileTooLarge) {
+  Testing::MockDiagnosticConsumer consumer;
+  static constexpr size_t NumLines = 10'000'000;
+  std::string input;
+  input.reserve(NumLines * 3);
+  for ([[maybe_unused]] int _ : llvm::seq(NumLines)) {
+    input += "{}\n";
+  }
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  DiagnosticKind::TooManyTokens, DiagnosticLevel::Error,
+                  TokenizedBuffer::MaxTokens / 2, 1, _)));
+  compile_helper_.GetTokenizedBuffer(input, &consumer);
+}
+
 // Appends comment lines to the string, to create a comment block.
 static auto AppendCommentLines(std::string& str, int count, llvm::StringRef tag)
     -> void {

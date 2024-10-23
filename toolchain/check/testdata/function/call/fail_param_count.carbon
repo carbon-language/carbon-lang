@@ -13,52 +13,52 @@ fn Run1(a: i32) {}
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
   // CHECK:STDERR:
   Run0(1);
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 2 arguments passed to function expecting 0 arguments
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
   // CHECK:STDERR:
   Run0(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 0 arguments passed to function expecting 1 argument
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run1();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 2 arguments passed to function expecting 1 argument
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run1(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error(CallArgCountMismatch): 0 arguments passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Run2();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error(CallArgCountMismatch): 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2(0);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: note(InCallToEntity): calling function declared here
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   Run2(0);
@@ -94,7 +94,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -114,8 +114,8 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_32, %.loc12_12.1 [template = i32]
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param
+// CHECK:STDOUT:     %a.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
@@ -129,10 +129,10 @@ fn Main() {
 // CHECK:STDOUT:     %int.make_type_32.loc13_20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_32.loc13_20 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_32.loc13_20, %.loc13_20.1 [template = i32]
-// CHECK:STDOUT:     %param.loc13_10: i32 = param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %param.loc13_10
-// CHECK:STDOUT:     %param.loc13_18: i32 = param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param.loc13_18
+// CHECK:STDOUT:     %a.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }

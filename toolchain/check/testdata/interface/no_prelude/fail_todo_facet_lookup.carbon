@@ -11,7 +11,7 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error(CallToNonCallable): value of type `<associated <type of F> in Interface>` is not callable
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<associated <type of F> in Interface>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   T.F();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -19,7 +19,7 @@ fn CallStatic(T:! Interface) {
 }
 
 fn CallFacet(T:! Interface, x: T) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: error(QualifiedExprUnsupported): type `T` does not support qualified expressions
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: error: type `T` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   x.F();
   // CHECK:STDERR:   ^~~
   x.F();
@@ -56,8 +56,8 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %T.param_patt: %Interface.type = param_pattern %T.patt.loc13_15.1, runtime_param<invalid> [symbolic = %T.patt.loc13_15.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %param: %Interface.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_15.1: %Interface.type = bind_symbolic_name T, 0, %param [symbolic = %T.loc13_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: %Interface.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc13_15.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet.decl: %CallFacet.type = fn_decl @CallFacet [template = constants.%CallFacet] {
 // CHECK:STDOUT:     %T.patt.loc21_14.1: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.2)]
@@ -69,10 +69,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc21_15: %Interface.type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %param.loc21_15 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %param.loc21_30: @CallFacet.%T.loc21_14.2 (%T) = param runtime_param0
-// CHECK:STDOUT:     %x: @CallFacet.%T.loc21_14.2 (%T) = bind_name x, %param.loc21_30
+// CHECK:STDOUT:     %T.param: %Interface.type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @CallFacet.%T.loc21_14.2 (%T) = param runtime_param0
+// CHECK:STDOUT:     %x: @CallFacet.%T.loc21_14.2 (%T) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

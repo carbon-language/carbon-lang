@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_self_param.carbon
 
-// CHECK:STDERR: fail_self_param.carbon:[[@LINE+3]]:9: error(SelfParameterNotAllowed): `self` parameter only allowed on functions
+// CHECK:STDERR: fail_self_param.carbon:[[@LINE+3]]:9: error: `self` parameter only allowed on functions [SelfParameterNotAllowed]
 // CHECK:STDERR: class C[self:! type](x:! self) {}
 // CHECK:STDERR:         ^~~~~~~~~~~
 class C[self:! type](x:! self) {}
@@ -53,8 +53,8 @@ var v: C(0);
 // CHECK:STDOUT:     %x.param_patt: <error> = param_pattern %x.patt.loc14_22.1, runtime_param<invalid> [symbolic = %x.patt.loc14_22.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [template = <error>]
-// CHECK:STDOUT:     %param: <error> = param runtime_param<invalid>
-// CHECK:STDOUT:     %x.loc14_22.1: <error> = bind_symbolic_name x, 0, %param [symbolic = %x.loc14_22.2 (constants.%x)]
+// CHECK:STDOUT:     %x.param: <error> = param runtime_param<invalid>
+// CHECK:STDOUT:     %x.loc14_22.1: <error> = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc14_22.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.4]

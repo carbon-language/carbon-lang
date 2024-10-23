@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_negative_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:17: error(MissingImplInMemberAccess): cannot access member of interface `Negate` in type `i32` that does not implement that interface
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:17: error: cannot access member of interface `Negate` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: var b: i32 = a.(-10);
 // CHECK:STDERR:                 ^~~
 var b: i32 = a.(-10);
@@ -48,12 +48,12 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+82, loaded [template = constants.%Negate.type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+84, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/arithmetic, inst+102, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+97, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+97, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Core//prelude/operators/arithmetic, inst+85, loaded [template = constants.%Negate.type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/arithmetic, inst+87, unloaded
+// CHECK:STDOUT:   %import_ref.4: %.8 = import_ref Core//prelude/operators/arithmetic, inst+108, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/arithmetic, inst+103, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+103, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

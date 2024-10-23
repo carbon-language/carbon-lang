@@ -10,25 +10,25 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error(ModifierNotAllowedOnDeclaration): `default` not allowed on `var` declaration
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:   default var j: i32;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error(ModifierNotAllowedOnDeclaration): `final` not allowed on `var` declaration
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:   final var k: i32;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error(ModifierRequiresInterface): `default` not allowed; requires interface scope
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:   default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error(ModifierRequiresInterface): `final` not allowed; requires interface scope
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:   final let m: i32 = 1;
   // CHECK:STDERR:   ^~~~~
   final let m: i32 = 1;
@@ -60,7 +60,7 @@ class Class {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

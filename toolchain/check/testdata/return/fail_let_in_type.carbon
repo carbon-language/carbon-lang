@@ -9,30 +9,30 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
 
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: error(TypeExprEvaluationFailure): cannot evaluate type expression
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let y:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error(TypeExprEvaluationFailure): cannot evaluate type expression
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:5: error(SemanticsTodo): semantics TODO: `HandleTemplate`
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:5: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:14: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:14: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:              ^~~~~~~~
 let template z:! type = i32;

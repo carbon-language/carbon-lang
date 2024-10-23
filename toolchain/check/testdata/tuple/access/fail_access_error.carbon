@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_access_error.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_access_error.carbon:[[@LINE+3]]:17: error(NameNotFound): name `oops` not found
+// CHECK:STDERR: fail_access_error.carbon:[[@LINE+3]]:17: error: name `oops` not found [NameNotFound]
 // CHECK:STDERR: var b: i32 = a.(oops);
 // CHECK:STDERR:                 ^~~~
 var b: i32 = a.(oops);
@@ -40,7 +40,7 @@ var b: i32 = a.(oops);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

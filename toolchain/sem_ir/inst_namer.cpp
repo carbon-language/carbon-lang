@@ -48,11 +48,11 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
     CollectNamesInBlock(fn_scope, fn.param_patterns_id);
-    if (fn.return_storage_id.is_valid()) {
-      insts_[fn.return_storage_id.index] = {
+    if (fn.return_slot_id.is_valid()) {
+      insts_[fn.return_slot_id.index] = {
           fn_scope,
           GetScopeInfo(fn_scope).insts.AllocateName(
-              *this, sem_ir.insts().GetLocId(fn.return_storage_id), "return")};
+              *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
     }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -530,15 +530,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
         continue;
       }
-      case InstKind::Param: {
-        // TODO: Find a way to use the name of the enclosing bind inst here.
-        add_inst_name("param");
+      case CARBON_KIND(Param inst): {
+        add_inst_name_id(inst.pretty_name_id, ".param");
         continue;
       }
       case InstKind::ParamPattern: {
         add_inst_name_id(
             SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
             ".param_patt");
+        break;
+      }
+      case InstKind::ReturnSlotPattern: {
+        add_inst_name_id(NameId::ReturnSlot, ".patt");
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {
