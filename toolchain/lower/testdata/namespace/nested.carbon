@@ -22,12 +22,14 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CWiz.Bar.Foo.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CBaz.Bar.Foo.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   call void @_CWiz.Bar.Foo.Main(), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }

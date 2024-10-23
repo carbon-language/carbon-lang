@@ -34,7 +34,8 @@ fn G() {
 // CHECK:STDOUT: @struct.2.loc19_16 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @struct.1.loc18_16, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !9

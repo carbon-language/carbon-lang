@@ -18,8 +18,10 @@ fn Copy(x: Make()) -> Make() {
 // CHECK:STDOUT: source_filename = "big_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define {} @_CCopy.Main({} %x) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret {} %x, !dbg !7
+// CHECK:STDOUT:   %return = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   ret {} %x, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -32,4 +34,5 @@ fn Copy(x: Make()) -> Make() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 20, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)

@@ -354,15 +354,17 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // the parameter value. For now this is always a single name binding,
     // possibly wrapped in `addr`.
     //
-    // TODO: Support general patterns here.
-    auto bind_name_id = param_ref_id;
-    auto bind_name = sem_ir().insts().Get(bind_name_id);
-    CARBON_CHECK(bind_name.Is<SemIR::BindName>());
-    function_lowering.SetLocal(bind_name_id, param_value);
   }
 
+  auto decl_block_id = sem_ir()
+                           .insts()
+                           .GetAs<SemIR::FunctionDecl>(function.definition_id)
+                           .decl_block_id;
+
   // Lower all blocks.
-  for (auto block_id : body_block_ids) {
+  for (auto block_id : llvm::concat<const SemIR::InstBlockId>(
+           llvm::ArrayRef{decl_block_id}, body_block_ids)) {
+    // FIXME do I need to worry about edges between blocks?
     CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
     // Keep the LLVM blocks in lexical order.
@@ -374,6 +376,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // LLVM requires that the entry block has no predecessors.
   auto* entry_block = &llvm_function->getEntryBlock();
   if (entry_block->hasNPredecessorsOrMore(1)) {
+    CARBON_FATAL();  // Shouldn't happen because of decl block.
     auto* new_entry_block = llvm::BasicBlock::Create(
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);

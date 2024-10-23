@@ -16,38 +16,40 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: source_filename = "empty_block.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CSelect.Main(i1 %b, i1 %c, i1 %d) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc12_10, label %if.expr.else.loc12_10, !dbg !7
+// CHECK:STDOUT:   %return = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc12_10, label %if.expr.else.loc12_10, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then.loc12_10:                            ; preds = %entry
-// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc12_20, label %if.expr.else.loc12_20, !dbg !8
+// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc12_20, label %if.expr.else.loc12_20, !dbg !9
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then.loc12_20:                            ; preds = %if.expr.then.loc12_10
-// CHECK:STDOUT:   br label %if.expr.result.loc12_20, !dbg !8
+// CHECK:STDOUT:   br label %if.expr.result.loc12_20, !dbg !9
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.else.loc12_20:                            ; preds = %if.expr.then.loc12_10
-// CHECK:STDOUT:   br label %if.expr.result.loc12_20, !dbg !8
+// CHECK:STDOUT:   br label %if.expr.result.loc12_20, !dbg !9
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result.loc12_20:                          ; preds = %if.expr.else.loc12_20, %if.expr.then.loc12_20
-// CHECK:STDOUT:   %0 = phi i32 [ 1, %if.expr.then.loc12_20 ], [ 2, %if.expr.else.loc12_20 ]
-// CHECK:STDOUT:   br label %if.expr.result.loc12_10, !dbg !7
+// CHECK:STDOUT:   %1 = phi i32 [ 1, %if.expr.then.loc12_20 ], [ 2, %if.expr.else.loc12_20 ]
+// CHECK:STDOUT:   br label %if.expr.result.loc12_10, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.else.loc12_10:                            ; preds = %entry
-// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc12_44, label %if.expr.else.loc12_44, !dbg !9
+// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc12_44, label %if.expr.else.loc12_44, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then.loc12_44:                            ; preds = %if.expr.else.loc12_10
-// CHECK:STDOUT:   br label %if.expr.result.loc12_44, !dbg !9
+// CHECK:STDOUT:   br label %if.expr.result.loc12_44, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.else.loc12_44:                            ; preds = %if.expr.else.loc12_10
-// CHECK:STDOUT:   br label %if.expr.result.loc12_44, !dbg !9
+// CHECK:STDOUT:   br label %if.expr.result.loc12_44, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result.loc12_44:                          ; preds = %if.expr.else.loc12_44, %if.expr.then.loc12_44
-// CHECK:STDOUT:   %1 = phi i32 [ 3, %if.expr.then.loc12_44 ], [ 4, %if.expr.else.loc12_44 ]
-// CHECK:STDOUT:   br label %if.expr.result.loc12_10, !dbg !7
+// CHECK:STDOUT:   %2 = phi i32 [ 3, %if.expr.then.loc12_44 ], [ 4, %if.expr.else.loc12_44 ]
+// CHECK:STDOUT:   br label %if.expr.result.loc12_10, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result.loc12_10:                          ; preds = %if.expr.result.loc12_44, %if.expr.result.loc12_20
-// CHECK:STDOUT:   %2 = phi i32 [ %0, %if.expr.result.loc12_20 ], [ %1, %if.expr.result.loc12_44 ]
-// CHECK:STDOUT:   ret i32 %2, !dbg !10
+// CHECK:STDOUT:   %3 = phi i32 [ %1, %if.expr.result.loc12_20 ], [ %2, %if.expr.result.loc12_44 ]
+// CHECK:STDOUT:   ret i32 %3, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -60,7 +62,8 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Select", linkageName: "_CSelect.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 20, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 44, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 38, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 20, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 44, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 3, scope: !4)

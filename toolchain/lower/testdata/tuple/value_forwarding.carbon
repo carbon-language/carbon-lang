@@ -20,7 +20,8 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr %a, ptr %b) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; No predecessors!
 // CHECK:STDOUT:   %tuple = alloca { ptr, ptr }, align 8, !dbg !7
 // CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   store ptr %a, ptr %tuple1, align 8, !dbg !7
