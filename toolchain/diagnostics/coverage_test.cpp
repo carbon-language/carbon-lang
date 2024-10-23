@@ -33,6 +33,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     // should be tested.
     DiagnosticKind::ArrayBoundTooLarge,
 
+    // This isn't feasible to test with a normal testcase, but is tested in
+    // lex/tokenized_buffer_test.cpp.
+    DiagnosticKind::TooManyTokens,
+
     // TODO: Should look closer at these, but adding tests is a high risk of
     // loss in merge conflicts due to the amount of tests being changed right
     // now.
@@ -60,7 +64,8 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 // Looks for diagnostic kinds that aren't covered by a file_test.
 TEST(Coverage, DiagnosticKind) {
   Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
-                            R"(\w\((\w+)\): )", llvm::ArrayRef(DiagnosticKinds),
+                            R"(^ *// CHECK:STDERR: .*\.carbon:.* \[(\w+)\]$)",
+                            llvm::ArrayRef(DiagnosticKinds),
                             llvm::ArrayRef(UntestedDiagnosticKinds));
 }
 
