@@ -72,12 +72,12 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ErrorIfNIsZero.decl: %ErrorIfNIsZero.type = fn_decl @ErrorIfNIsZero [template = constants.%ErrorIfNIsZero] {
 // CHECK:STDOUT:     %N.patt.loc4_19.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc4_19.1, runtime_param<invalid> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: i32 = value_param_pattern %N.patt.loc4_19.1, runtime_param<invalid> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_23.2: type = converted %int.make_type_32, %.loc4_23.1 [template = i32]
-// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.param: i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc4_19.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [template = constants.%CallNegative] {} {}

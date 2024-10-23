@@ -364,7 +364,7 @@ auto DeductionContext::Deduce() -> bool {
         continue;
       }
 
-      case CARBON_KIND(SemIR::ParamPattern pattern): {
+      case CARBON_KIND(SemIR::ValueParamPattern pattern): {
         Add(pattern.subpattern_id, arg_id, needs_substitution);
         continue;
       }

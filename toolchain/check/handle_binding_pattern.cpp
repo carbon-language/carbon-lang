@@ -230,7 +230,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                           .entity_name_id = entity_name_id,
                           .bind_name_id = bind_id});
         }
-        param_pattern_id = context.AddPatternInst<SemIR::ParamPattern>(
+        param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
             node_id,
             {
                 .type_id = context.insts().Get(pattern_inst_id).type_id(),

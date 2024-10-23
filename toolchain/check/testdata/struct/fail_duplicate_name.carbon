@@ -96,7 +96,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc18_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_16.1: type = value_of_initializer %int.make_type_32.loc18_16 [template = i32]
@@ -113,7 +113,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %int.make_type_32.loc18_56: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_56.1: type = value_of_initializer %int.make_type_32.loc18_56 [template = i32]
 // CHECK:STDOUT:     %.loc18_56.2: type = converted %int.make_type_32.loc18_56, %.loc18_56.1 [template = i32]
-// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc27_13: init type = call constants.%Int32() [template = i32]

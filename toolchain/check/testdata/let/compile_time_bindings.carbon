@@ -199,11 +199,11 @@ impl i32 as Empty {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_14.2: type = converted %.loc5_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_12.1: %.1 = tuple_literal ()
@@ -269,11 +269,11 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %x: %.1 = bind_name x, %.loc9_18
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_14.2: type = converted %.loc10_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -344,13 +344,13 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %a: %.1 = bind_name a, %.loc9_18
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %b.patt.loc10_8.2: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: %.2 = param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %.2 = value_param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_16.1: %.2 = tuple_literal (%.loc10_14)
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %b.param: %.2 = param runtime_param<invalid>
+// CHECK:STDOUT:     %b.param: %.2 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc10_8.2: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
@@ -522,11 +522,11 @@ impl i32 as Empty {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_14.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_14.2: type = converted %.loc5_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_12.1: %.1 = tuple_literal ()
@@ -583,12 +583,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -643,12 +643,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -747,14 +747,14 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc5_21.3: %.2 = assoc_entity element0, %T [template = constants.%.3]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc5_21.3 [template = constants.%.3]
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc13_13.1: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.7]
 // CHECK:STDOUT:     %Convert.ref: %.6 = name_ref Convert, %.loc13_13.1 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc13_13.2: type = converted %T.ref, <error> [template = <error>]
-// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: %.9 = assoc_entity element1, %F.decl [template = constants.%.10]
@@ -881,10 +881,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %T: type = bind_name T, %.loc9_21.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @I.%T
-// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -933,10 +933,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @__global_init.%T
-// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

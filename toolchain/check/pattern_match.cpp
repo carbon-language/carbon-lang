@@ -19,7 +19,8 @@ namespace {
 // Returns a best-effort name for the given ParamPattern, suitable for use in
 // IR pretty-printing.
 // TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
-auto GetPrettyName(Context& context, SemIR::ParamPattern param_pattern)
+template <typename ParamPattern>
+auto GetPrettyName(Context& context, ParamPattern param_pattern)
     -> SemIR::NameId {
   if (context.insts().Is<SemIR::ReturnSlotPattern>(
           param_pattern.subpattern_id)) {
@@ -220,7 +221,7 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
           {.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
       break;
     }
-    case CARBON_KIND(SemIR::ParamPattern param_pattern): {
+    case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
       switch (match.kind()) {
         case MatchKind::Caller: {
           CARBON_CHECK(entry.scrutinee_id.is_valid());
@@ -243,12 +244,47 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
           }
           match.AddWork(
               {.pattern_id = param_pattern.subpattern_id,
-               .scrutinee_id = context.AddInst<SemIR::Param>(
+               .scrutinee_id = context.AddInst<SemIR::ValueParam>(
                    pattern.loc_id,
                    {.type_id = param_pattern.type_id,
                     .runtime_index = param_pattern.runtime_index,
                     .pretty_name_id = GetPrettyName(context, param_pattern)})});
-        } break;
+          break;
+        }
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::OutParamPattern param_pattern): {
+      switch (match.kind()) {
+        case MatchKind::Caller: {
+          CARBON_CHECK(entry.scrutinee_id.is_valid());
+          CARBON_CHECK(context.insts().Get(entry.scrutinee_id).type_id() ==
+                       SemIR::GetTypeInSpecific(context.sem_ir(),
+                                                match.callee_specific_id(),
+                                                param_pattern.type_id));
+          match.Finish(entry.scrutinee_id);
+          // Do not traverse farther, because the caller side of the pattern
+          // ends here.
+          break;
+        }
+        case MatchKind::Callee: {
+          // TODO: consider ways to address near-duplication with the
+          // ValueParamPattern case.
+          if (param_pattern.runtime_index ==
+              SemIR::RuntimeParamIndex::Unknown) {
+            param_pattern.runtime_index = match.NextRuntimeIndex();
+            context.ReplaceInstBeforeConstantUse(entry.pattern_id,
+                                                 param_pattern);
+          }
+          match.AddWork(
+              {.pattern_id = param_pattern.subpattern_id,
+               .scrutinee_id = context.AddInst<SemIR::OutParam>(
+                   pattern.loc_id,
+                   {.type_id = param_pattern.type_id,
+                    .runtime_index = param_pattern.runtime_index,
+                    .pretty_name_id = GetPrettyName(context, param_pattern)})});
+          break;
+        }
       }
       break;
     }

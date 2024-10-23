@@ -98,39 +98,39 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [template = constants.%AccessDerived] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc24_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc24_33.2: type = converted %int.make_type_32, %.loc24_33.1 [template = i32]
-// CHECK:STDOUT:     %d.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [template = constants.%AccessBase] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc28_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc28_30.2: type = converted %int.make_type_32, %.loc28_30.1 [template = i32]
-// CHECK:STDOUT:     %d.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [template = constants.%AccessDerivedIndirect] {
 // CHECK:STDOUT:     %p.patt: %.13 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.13 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.13 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.14 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.14 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.14 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.13]
@@ -138,16 +138,16 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %.loc32_45.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_45.2: type = converted %int.make_type_32, %.loc32_45.1 [template = i32]
 // CHECK:STDOUT:     %.loc32_45.3: type = ptr_type i32 [template = constants.%.14]
-// CHECK:STDOUT:     %p.param: %.13 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.13 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.13 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: %.14 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.14 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.14 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [template = constants.%AccessBaseIndirect] {
 // CHECK:STDOUT:     %p.patt: %.13 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.13 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.13 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.14 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.14 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.14 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.13]
@@ -155,9 +155,9 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %.loc36_42.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc36_42.2: type = converted %int.make_type_32, %.loc36_42.1 [template = i32]
 // CHECK:STDOUT:     %.loc36_42.3: type = ptr_type i32 [template = constants.%.14]
-// CHECK:STDOUT:     %p.param: %.13 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.13 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.13 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: %.14 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.14 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.14 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

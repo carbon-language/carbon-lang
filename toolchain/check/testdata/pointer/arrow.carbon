@@ -62,11 +62,11 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.patt: %.2 = binding_pattern ptr
-// CHECK:STDOUT:     %ptr.param_patt: %.2 = param_pattern %ptr.patt, runtime_param0
+// CHECK:STDOUT:     %ptr.param_patt: %.2 = value_param_pattern %ptr.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:     %ptr.param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %ptr.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -74,10 +74,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [template = constants.%Member] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]

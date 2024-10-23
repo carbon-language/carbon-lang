@@ -57,7 +57,7 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc7_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: <error> = param_pattern %T.patt.loc7_6.1, runtime_param<invalid> [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc7_6.1, runtime_param<invalid> [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -68,7 +68,7 @@ fn F(T:! i32 where .Self == bool);
 // CHECK:STDOUT:     %.loc7_14: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.param: <error> = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc7_6.1: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

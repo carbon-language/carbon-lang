@@ -63,7 +63,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc11_17: init type = call constants.%Int32() [template = i32]
@@ -73,12 +73,12 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %.loc11_20.4: type = value_of_initializer %int.make_type_32.loc11_17 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.5: type = converted %int.make_type_32.loc11_17, %.loc11_20.4 [template = i32]
 // CHECK:STDOUT:     %.loc11_20.6: type = converted %.loc11_20.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc13_17: init type = call constants.%Int32() [template = i32]
@@ -88,17 +88,17 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %.loc13_20.4: type = value_of_initializer %int.make_type_32.loc13_17 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.5: type = converted %int.make_type_32.loc13_17, %.loc13_20.4 [template = i32]
 // CHECK:STDOUT:     %.loc13_20.6: type = converted %.loc13_20.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

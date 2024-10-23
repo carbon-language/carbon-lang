@@ -62,11 +62,11 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+2':          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+3':          {kind: SymbolicBindingPattern, arg0: entity_name0, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: SymbolicBindingPattern, arg0: entity_name0, arg1: inst+1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+5':          {kind: ParamPattern, arg0: inst+3, arg1: runtime_param<invalid>, type: typeTypeType}
+// CHECK:STDOUT:     'inst+5':          {kind: ValueParamPattern, arg0: inst+3, arg1: runtime_param<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+6':          {kind: NameRef, arg0: name1, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+7':          {kind: BindName, arg0: entity_name1, arg1: inst+21, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+8':          {kind: BindingPattern, arg0: entity_name1, arg1: inst+7, type: type(symbolicConstant3)}
-// CHECK:STDOUT:     'inst+9':          {kind: ParamPattern, arg0: inst+8, arg1: runtime_param0, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+9':          {kind: ValueParamPattern, arg0: inst+8, arg1: runtime_param0, type: type(symbolicConstant3)}
 // CHECK:STDOUT:     'inst+10':         {kind: NameRef, arg0: name1, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+11':         {kind: TupleType, arg0: type_block0, type: typeTypeType}
 // CHECK:STDOUT:     'inst+12':         {kind: TupleLiteral, arg0: empty, type: type(inst+11)}
@@ -76,10 +76,10 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+16':         {kind: TupleType, arg0: type_block2, type: typeTypeType}
 // CHECK:STDOUT:     'inst+17':         {kind: Converted, arg0: inst+14, arg1: inst+16, type: typeTypeType}
 // CHECK:STDOUT:     'inst+18':         {kind: ReturnSlotPattern, arg0: inst+14, type: type(symbolicConstant5)}
-// CHECK:STDOUT:     'inst+19':         {kind: ParamPattern, arg0: inst+18, arg1: runtime_param1, type: type(symbolicConstant5)}
-// CHECK:STDOUT:     'inst+20':         {kind: Param, arg0: runtime_param<invalid>, arg1: name1, type: typeTypeType}
-// CHECK:STDOUT:     'inst+21':         {kind: Param, arg0: runtime_param0, arg1: name2, type: type(symbolicConstant3)}
-// CHECK:STDOUT:     'inst+22':         {kind: Param, arg0: runtime_param1, arg1: nameReturnSlot, type: type(symbolicConstant5)}
+// CHECK:STDOUT:     'inst+19':         {kind: OutParamPattern, arg0: inst+18, arg1: runtime_param1, type: type(symbolicConstant5)}
+// CHECK:STDOUT:     'inst+20':         {kind: ValueParam, arg0: runtime_param<invalid>, arg1: name1, type: typeTypeType}
+// CHECK:STDOUT:     'inst+21':         {kind: ValueParam, arg0: runtime_param0, arg1: name2, type: type(symbolicConstant3)}
+// CHECK:STDOUT:     'inst+22':         {kind: OutParam, arg0: runtime_param1, arg1: nameReturnSlot, type: type(symbolicConstant5)}
 // CHECK:STDOUT:     'inst+23':         {kind: ReturnSlot, arg0: inst+14, arg1: inst+22, type: type(symbolicConstant5)}
 // CHECK:STDOUT:     'inst+24':         {kind: FunctionDecl, arg0: function0, arg1: block10, type: type(inst+28)}
 // CHECK:STDOUT:     'inst+25':         {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: typeTypeType}

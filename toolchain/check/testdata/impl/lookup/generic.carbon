@@ -168,20 +168,20 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.5 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
-// CHECK:STDOUT:     %x.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -323,26 +323,26 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.5 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.5 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc12_17.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%.5 [template = constants.%.5]
-// CHECK:STDOUT:     %x.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -351,9 +351,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.1.%Self (%Self) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self) = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_14.1: type = facet_type_access %Self.ref.loc5_14 [symbolic = %Self (constants.%Self)]
@@ -361,9 +361,9 @@ fn G(x: A) {
 // CHECK:STDOUT:     %Self.ref.loc5_25: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_25.1: type = facet_type_access %Self.ref.loc5_25 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_25.2: type = converted %Self.ref.loc5_25, %.loc5_25.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %self.param: @F.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self.param: @F.1.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.1.%Self (%Self) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: @F.1.%Self (%Self) = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref @F.1.%Self (%Self) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.1.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
@@ -386,15 +386,15 @@ fn G(x: A) {
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%T (%T) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.2.%T (%T) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @F.2.%T (%T) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %return.patt: @F.2.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %self.param: @F.2.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %self.param: @F.2.%T (%T) = value_param runtime_param0
 // CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: @F.2.%T (%T) = param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.4)]
@@ -537,31 +537,31 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.patt.loc8_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8_9.1, runtime_param<invalid> [symbolic = %T.patt.loc8_9.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_9.1, runtime_param<invalid> [symbolic = %T.patt.loc8_9.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc10_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc10_14.1, runtime_param<invalid> [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc10_14.1, runtime_param<invalid> [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T)]
 // CHECK:STDOUT:     %C.loc10_25.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc10_25.2 (constants.%C.2)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %C.3 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %C.3 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %C.3 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %.loc14_12: %.4 = struct_literal ()
 // CHECK:STDOUT:     %.loc14_10: type = converted %.loc14_12, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
-// CHECK:STDOUT:     %x.param: %C.3 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %C.3 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %C.3 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -745,30 +745,30 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: %HasF.type.1 = interface_decl @HasF [template = constants.%HasF] {
 // CHECK:STDOUT:     %T.patt.loc4_16.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_16.1, runtime_param<invalid> [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_16.1, runtime_param<invalid> [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_16.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_25.1: %.4 = struct_literal ()
 // CHECK:STDOUT:     %.loc8_25.2: type = converted %.loc8_25.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.type.loc8_34.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.4 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.4 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.4 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_10.1: %.4 = struct_literal ()
 // CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:     %x.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -965,24 +965,24 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc9_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc9_14.1, runtime_param<invalid> [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc9_14.1, runtime_param<invalid> [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc9_24.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: type = param_pattern %U.patt.loc9_24.1, runtime_param<invalid> [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc9_24.1, runtime_param<invalid> [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc9_14.1 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc9_14.2 (constants.%T)]
-// CHECK:STDOUT:     %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc9_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.5 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_10.1: %.5 = struct_literal ()
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %.loc13_10.1, constants.%.5 [template = constants.%.5]
-// CHECK:STDOUT:     %x.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1122,30 +1122,30 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: %HasF.type.1 = interface_decl @HasF [template = constants.%HasF] {
 // CHECK:STDOUT:     %T.patt.loc4_16.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_16.1, runtime_param<invalid> [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_16.1, runtime_param<invalid> [symbolic = %T.patt.loc4_16.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_16.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_24: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:     %T.ref.loc8_34: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.type.loc8_33.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %A = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %A = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %A = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %x.param: %A = param runtime_param0
+// CHECK:STDOUT:     %x.param: %A = value_param runtime_param0
 // CHECK:STDOUT:     %x: %A = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

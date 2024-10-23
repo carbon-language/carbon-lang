@@ -112,34 +112,34 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: %C = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign.decl: %TestAssign.type = fn_decl @TestAssign [template = constants.%TestAssign] {
 // CHECK:STDOUT:     %a.patt: %.6 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.6 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %.6 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc30: type = ptr_type %C [template = constants.%.6]
 // CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %.6 = param runtime_param0
+// CHECK:STDOUT:     %a.param: %.6 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.6 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -161,20 +161,20 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Mod.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: %C = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
@@ -187,17 +187,17 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.2: %C.ref as %ModAssign.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %.6 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.6 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.6 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc23_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %C = param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc23_21: type = ptr_type %C [template = constants.%.6]
 // CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %.6 = param runtime_param0
+// CHECK:STDOUT:     %self.param: %.6 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.6 = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = interface_witness (%Op.decl) [template = constants.%.8]

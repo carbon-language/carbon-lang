@@ -84,16 +84,16 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %s.patt: %.7 = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %.7 = param_pattern %s.patt, runtime_param0
+// CHECK:STDOUT:     %s.param_patt: %.7 = value_param_pattern %s.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %B = param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.7]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %s.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %s.param: %.7 = value_param runtime_param0
 // CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
-// CHECK:STDOUT:     %b.param: %B = param runtime_param1
+// CHECK:STDOUT:     %b.param: %B = value_param runtime_param1
 // CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -101,12 +101,12 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.1 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc12_20: type = ptr_type %A [template = constants.%.1]
-// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.3 [template = constants.%.4]

@@ -34,9 +34,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %.1 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %.1 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.2 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
@@ -46,9 +46,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %n.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %n.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: %.2 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

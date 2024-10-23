@@ -52,7 +52,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
 // CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_20: init type = call constants.%Int32() [template = i32]
@@ -62,7 +62,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     %.loc12_23.4: type = value_of_initializer %int.make_type_32.loc12_20 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.5: type = converted %int.make_type_32.loc12_20, %.loc12_23.4 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.6: type = converted %.loc12_23.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -76,9 +76,9 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [template = constants.%ConstMismatch] {
 // CHECK:STDOUT:     %p.patt: %.3 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.3 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.3 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.5 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
@@ -88,9 +88,9 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_44.2: type = ptr_type %.1 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_35: type = const_type %.4 [template = constants.%.5]
-// CHECK:STDOUT:     %p.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

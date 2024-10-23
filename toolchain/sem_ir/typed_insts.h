@@ -825,12 +825,14 @@ struct Namespace {
   AbsoluteInstId import_id;
 };
 
-// A parameter for a function or other parameterized block.
-struct Param {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::Param.Define<Parse::NodeId>({.ir_name = "param"});
+// A parameter for a function or other parameterized block, as exposed in the
+// SemIR calling convention. The sub-kinds differ only in their expression
+// category.
+struct AnyParam {
+  static constexpr InstKind Kinds[] = {InstKind::OutParam,
+                                       InstKind::ValueParam};
 
+  InstKind kind;
   TypeId type_id;
   RuntimeParamIndex runtime_index;
 
@@ -839,12 +841,58 @@ struct Param {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a parameter. It matches the same values as
-// `subpattern_id`.
-struct ParamPattern {
+// An output parameter. See AnyParam for member documentation.
+struct OutParam {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::ParamPattern.Define<Parse::NodeId>(
-      {.ir_name = "param_pattern", .is_lowered = false});
+  static constexpr auto Kind =
+      InstKind::OutParam.Define<Parse::NodeId>({.ir_name = "out_param"});
+
+  TypeId type_id;
+  RuntimeParamIndex runtime_index;
+  NameId pretty_name_id;
+};
+
+// A by-value parameter. See AnyParam for member documentation.
+struct ValueParam {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind =
+      InstKind::ValueParam.Define<Parse::NodeId>({.ir_name = "value_param"});
+
+  TypeId type_id;
+  RuntimeParamIndex runtime_index;
+  NameId pretty_name_id;
+};
+
+// A pattern that represents a parameter. It delegates to subpattern_id
+// in pattern matching. The sub-kinds differ only in the expression category
+// of the corresponding parameter inst.
+struct AnyParamPattern {
+  static constexpr InstKind Kinds[] = {InstKind::OutParamPattern,
+                                       InstKind::ValueParamPattern};
+
+  InstKind kind;
+  TypeId type_id;
+  InstId subpattern_id;
+  RuntimeParamIndex runtime_index;
+};
+
+// A pattern that represents an output parameter.
+struct OutParamPattern {
+  static constexpr auto Kind =
+      InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
+          {.ir_name = "out_param_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  RuntimeParamIndex runtime_index;
+};
+
+// A pattern that represents a by-value parameter.
+struct ValueParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind =
+      InstKind::ValueParamPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_param_pattern", .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;

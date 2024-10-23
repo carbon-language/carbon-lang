@@ -84,9 +84,9 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.4 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.6 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.6 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.6 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
@@ -100,9 +100,9 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_32.loc15_33, %.loc15_36.1 [template = i32]
 // CHECK:STDOUT:     %.loc15_36.3: type = ptr_type i32 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_37: type = ptr_type %.5 [template = constants.%.6]
-// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: %.6 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.6 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.6 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

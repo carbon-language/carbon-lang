@@ -64,17 +64,17 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_29.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:     %.loc21_29.2: type = converted %int.make_type_32.loc21, %.loc21_29.1 [template = i32]
-// CHECK:STDOUT:     %self.param.loc21: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.param.loc21: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %self.param.loc21
-// CHECK:STDOUT:     %return.param.loc21: i32 = param runtime_param1
+// CHECK:STDOUT:     %return.param.loc21: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -82,25 +82,25 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %int.make_type_32.loc12, %.loc12_25.1 [template = i32]
-// CHECK:STDOUT:     %self.param.loc12: %Class = param runtime_param0
+// CHECK:STDOUT:     %self.param.loc12: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %self.param.loc12
-// CHECK:STDOUT:     %return.param.loc12: i32 = param runtime_param1
+// CHECK:STDOUT:     %return.param.loc12: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %.loc12_22: ref i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %return.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]

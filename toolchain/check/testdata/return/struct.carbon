@@ -48,13 +48,13 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
 // CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.2 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.2 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_19.2: type = converted %int.make_type_32, %.loc11_19.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_22: type = struct_type {.a: i32} [template = constants.%.2]
-// CHECK:STDOUT:     %return.param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

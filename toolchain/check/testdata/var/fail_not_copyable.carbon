@@ -64,10 +64,10 @@ fn F(x: X) {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %X = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %x.param: %X = param runtime_param0
+// CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -530,11 +530,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
         continue;
       }
-      case CARBON_KIND(Param inst): {
-        add_inst_name_id(inst.pretty_name_id, ".param");
+      case OutParam::Kind:
+      case ValueParam::Kind: {
+        add_inst_name_id(untyped_inst.As<AnyParam>().pretty_name_id, ".param");
         continue;
       }
-      case InstKind::ParamPattern: {
+      case InstKind::OutParamPattern:
+      case InstKind::ValueParamPattern: {
         add_inst_name_id(
             SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
             ".param_patt");

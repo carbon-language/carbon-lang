@@ -116,11 +116,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self (%Self.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self (%Self.1) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self (%Self.1) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %x.patt: @F.1.%Self (%Self.1) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.1.%Self (%Self.1) = param_pattern %x.patt, runtime_param1
+// CHECK:STDOUT:     %x.param_patt: @F.1.%Self (%Self.1) = value_param_pattern %x.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: @F.1.%Self (%Self.1) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self.1) = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self.1) = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = %Self (constants.%Self.1)]
@@ -131,11 +131,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc12_32: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.1: type = facet_type_access %Self.ref.loc12_32 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %Self.ref.loc12_32, %.loc12_32.1 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %self.param: @F.1.%Self (%Self.1) = param runtime_param0
+// CHECK:STDOUT:     %self.param: @F.1.%Self (%Self.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.1.%Self (%Self.1) = bind_name self, %self.param
-// CHECK:STDOUT:     %x.param: @F.1.%Self (%Self.1) = param runtime_param1
+// CHECK:STDOUT:     %x.param: @F.1.%Self (%Self.1) = value_param runtime_param1
 // CHECK:STDOUT:     %x: @F.1.%Self (%Self.1) = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: @F.1.%Self (%Self.1) = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref @F.1.%Self (%Self.1) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @F.1.%Self (%Self.1) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
@@ -150,7 +150,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type.4 = fn_decl @F.4 [template = constants.%F.4] {
 // CHECK:STDOUT:     %x.patt: @F.4.%.loc28_37.1 (%.12) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.4.%.loc28_37.1 (%.12) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: @F.4.%.loc28_37.1 (%.12) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc28_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc28_16.2: type = facet_type_access %Self.ref.loc28_12 [symbolic = %Self (constants.%Self.2)]
@@ -164,7 +164,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc28_36.2: type = struct_type {.x: %Self.2, .y: %.1} [symbolic = %.loc28_36.1 (constants.%.10)]
 // CHECK:STDOUT:     %.loc28_37.2: %.11 = tuple_literal (%.loc28_16.4, %.loc28_36.2)
 // CHECK:STDOUT:     %.loc28_37.3: type = converted %.loc28_37.2, constants.%.12 [symbolic = %.loc28_37.1 (constants.%.12)]
-// CHECK:STDOUT:     %x.param: @F.4.%.loc28_37.1 (%.12) = param runtime_param0
+// CHECK:STDOUT:     %x.param: @F.4.%.loc28_37.1 (%.12) = value_param runtime_param0
 // CHECK:STDOUT:     %x: @F.4.%.loc28_37.1 (%.12) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc28: %.13 = assoc_entity element0, %F.decl [template = constants.%.14]
@@ -178,20 +178,20 @@ impl D as SelfNested {
 // CHECK:STDOUT: impl @impl.1: %C.ref as %UseSelf.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %C = param_pattern %x.patt, runtime_param1
+// CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc20_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc20_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %x.param: %C = param runtime_param1
+// CHECK:STDOUT:     %x.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: %C = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.6]
@@ -204,20 +204,20 @@ impl D as SelfNested {
 // CHECK:STDOUT: impl @impl.2: %D.ref as %UseSelf.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %self.patt: %D = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %D = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %D = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %x.patt: %D = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %D = param_pattern %x.patt, runtime_param1
+// CHECK:STDOUT:     %x.param_patt: %D = value_param_pattern %x.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %D = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc24_14: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %Self.ref.loc24_23: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %Self.ref.loc24_32: type = name_ref Self, @impl.2.%D.ref [template = constants.%D]
-// CHECK:STDOUT:     %self.param: %D = param runtime_param0
+// CHECK:STDOUT:     %self.param: %D = value_param runtime_param0
 // CHECK:STDOUT:     %self: %D = bind_name self, %self.param
-// CHECK:STDOUT:     %x.param: %D = param runtime_param1
+// CHECK:STDOUT:     %x.param: %D = value_param runtime_param1
 // CHECK:STDOUT:     %x: %D = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: %D = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: <witness> = interface_witness (%F.decl) [template = constants.%.8]
@@ -230,7 +230,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: impl @impl.3: %C.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.5 [template = constants.%F.5] {
 // CHECK:STDOUT:     %x.patt: %.17 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.17 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.17 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc32_12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc32_13: type = ptr_type %C [template = constants.%.15]
@@ -240,7 +240,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc32_30: type = struct_type {.x: %C, .y: %.1} [template = constants.%.16]
 // CHECK:STDOUT:     %.loc32_31.1: %.11 = tuple_literal (%.loc32_13, %.loc32_30)
 // CHECK:STDOUT:     %.loc32_31.2: type = converted %.loc32_31.1, constants.%.17 [template = constants.%.17]
-// CHECK:STDOUT:     %x.param: %.17 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.17 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.17 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc31: <witness> = interface_witness (%F.decl) [template = constants.%.18]
@@ -253,7 +253,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: impl @impl.4: %D.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.6 = fn_decl @F.6 [template = constants.%F.6] {
 // CHECK:STDOUT:     %x.patt: %.21 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.21 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.21 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc36_12: type = name_ref Self, @impl.4.%D.ref [template = constants.%D]
 // CHECK:STDOUT:     %.loc36_16: type = ptr_type %D [template = constants.%.19]
@@ -263,7 +263,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %.loc36_36: type = struct_type {.x: %D, .y: %.1} [template = constants.%.20]
 // CHECK:STDOUT:     %.loc36_37.1: %.11 = tuple_literal (%.loc36_16, %.loc36_36)
 // CHECK:STDOUT:     %.loc36_37.2: type = converted %.loc36_37.1, constants.%.21 [template = constants.%.21]
-// CHECK:STDOUT:     %x.param: %.21 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.21 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.21 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc35: <witness> = interface_witness (%F.decl) [template = constants.%.22]

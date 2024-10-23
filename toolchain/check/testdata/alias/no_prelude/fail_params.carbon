@@ -31,7 +31,7 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc18: type = ptr_type %T [symbolic = constants.%.1]
-// CHECK:STDOUT:   %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
 // CHECK:STDOUT: }

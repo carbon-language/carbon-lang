@@ -46,9 +46,9 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
@@ -56,9 +56,9 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
-// CHECK:STDOUT:     %a.param: <error> = param runtime_param1
+// CHECK:STDOUT:     %a.param: <error> = value_param runtime_param1
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
