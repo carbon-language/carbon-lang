@@ -60,6 +60,10 @@ static auto IsUntestedDiagnostic(DiagnosticKind diagnostic_kind) -> bool {
       // loss in merge conflicts due to the amount of tests being changed right
       // now.
       return true;
+    case DiagnosticKind::TooManyTokens:
+      // This isn't feasible to test with a normal testcase, but is tested in
+      // lex/tokenized_buffer_test.cpp.
+      return true;
     default:
       return false;
   }

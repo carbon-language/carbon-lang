@@ -67,6 +67,7 @@ cc_binary(
         "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
         "//toolchain/install:install_paths_test_helpers",
+        "//toolchain/testing:compile_helper",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],

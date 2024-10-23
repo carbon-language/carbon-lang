@@ -116,14 +116,6 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   return {param_ref_id, ref.As<Param>(), bind_name};
 }
 
-auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {
-  if (bind_name) {
-    return sem_ir.entity_names().Get(bind_name->entity_name_id).name_id;
-  } else {
-    return NameId::Invalid;
-  }
-}
-
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_slot_id.is_valid()) {

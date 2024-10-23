@@ -80,11 +80,8 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
-  // Equivalent to
-  // GetParamPatternInfoFromPatternId(sem_ir, param_pattern_id)
-  //   .GetNameId(sem_ir)
-  // but works even if there is no such ParamPattern inst, e.g. because
-  // it's been replaced with BuiltinError.
+  // Gets the name from the name binding instruction, or invalid if this pattern
+  // has been replaced with BuiltinError.
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
 
@@ -95,9 +92,6 @@ struct Function : public EntityWithParamsBase,
     InstId inst_id;
     Param inst;
     std::optional<AnyBindName> bind_name;
-
-    // Gets the name from `bind_name`. Returns invalid if that is not present.
-    auto GetNameId(const File& sem_ir) -> NameId;
   };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> ParamInfo;

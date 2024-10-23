@@ -83,6 +83,10 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
+  // The maximum number of tokens that can be stored in the buffer, including
+  // the FileStart and FileEnd tokens.
+  static constexpr int MaxTokens = 1 << 23;
+
   // A comment, which can be a block of lines.
   //
   // This is the API version of `CommentData`.
@@ -306,7 +310,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_ident_id(IdentifierId ident_id) -> void {
       CARBON_DCHECK(kind() == TokenKind::Identifier);
-      CARBON_DCHECK(ident_id.index < (2 << PayloadBits));
       token_payload_ = ident_id.index;
     }
 
@@ -334,7 +337,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_closing_token_index(TokenIndex closing_index) -> void {
       CARBON_DCHECK(kind().is_opening_symbol());
-      CARBON_DCHECK(closing_index.index < (2 << PayloadBits));
       token_payload_ = closing_index.index;
     }
 
@@ -344,7 +346,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_opening_token_index(TokenIndex opening_index) -> void {
       CARBON_DCHECK(kind().is_closing_symbol());
-      CARBON_DCHECK(opening_index.index < (2 << PayloadBits));
       token_payload_ = opening_index.index;
     }
 
@@ -395,18 +396,23 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
         : kind_(kind),
           has_leading_space_(has_leading_space),
           token_payload_(payload),
-          byte_offset_(byte_offset) {
-      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits),
-                    "Payload won't fit into unsigned bit pack: {0}", payload);
-    }
+          byte_offset_(byte_offset) {}
 
     // A bitfield that encodes the token's kind, the leading space flag, and the
     // remaining bits in a payload. These are encoded together as a bitfield for
     // density and because these are the hottest fields of tokens for consumers
     // after lexing.
+    //
+    // Payload values are typically ID types for which we create at most one per
+    // token, so we ensure that `token_payload_` is large enough to fit any
+    // token index. Stores to this field may overflow, but we produce an error
+    // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
+    // this value never overflows if lexing succeeds.
     TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
     bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
+    static_assert(MaxTokens <= 1 << PayloadBits,
+                  "Not enough payload bits to store a token index");
 
     // Separate storage for the byte offset, this is hot while lexing but then
     // generally cold.
