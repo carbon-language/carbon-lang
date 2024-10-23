@@ -215,13 +215,10 @@ auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const
   return widths;
 }
 
-auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
-  if (tokens().begin() == tokens().end()) {
-    return;
-  }
-
+auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
+                            bool omit_file_boundary_tokens) const -> void {
   output_stream << "- filename: " << source_->filename() << "\n"
-                << "  tokens: [\n";
+                << "  tokens:\n";
 
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
@@ -230,10 +227,15 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
   }
 
   for (TokenIndex token : tokens()) {
+    if (omit_file_boundary_tokens) {
+      auto kind = GetKind(token);
+      if (kind == TokenKind::FileStart || kind == TokenKind::FileEnd) {
+        continue;
+      }
+    }
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
-  output_stream << "  ]\n";
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
@@ -254,7 +256,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   // justification manually in order to use the dynamically computed widths
   // and get the quotes included.
   output_stream << llvm::formatv(
-      "    { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
+      "  - { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
       llvm::right_justify(
@@ -304,7 +306,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
     output_stream << ", recovery: true";
   }
 
-  output_stream << " },";
+  output_stream << " }";
 }
 
 // Find the line index corresponding to a specific byte offset within the source
