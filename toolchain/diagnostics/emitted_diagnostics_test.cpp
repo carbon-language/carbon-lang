@@ -7,10 +7,14 @@
 #include <fstream>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "common/set.h"
 #include "llvm/ADT/StringExtras.h"
 #include "re2/re2.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
+
+ABSL_FLAG(std::string, testdata_manifest, "",
+          "A path to a file containing repo-relative names of test files.");
 
 namespace Carbon {
 namespace {
@@ -70,7 +74,7 @@ static auto IsUntestedDiagnostic(DiagnosticKind diagnostic_kind) -> bool {
 }
 
 TEST(EmittedDiagnostics, Verify) {
-  std::ifstream manifest_in("toolchain/diagnostics/all_testdata.txt");
+  std::ifstream manifest_in(absl::GetFlag(FLAGS_testdata_manifest));
   ASSERT_TRUE(manifest_in.good());
 
   RE2 diagnostic_re(R"(\w\((\w+)\): )");
