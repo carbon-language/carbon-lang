@@ -20,12 +20,10 @@ def _manifest(ctx):
 
     ctx.actions.write(out, "\n".join(content) + "\n")
 
-    runfiles = ctx.runfiles(files = [out])
     return [
         DefaultInfo(
             files = depset(direct = [out]),
-            data_runfiles = runfiles,
-            default_runfiles = runfiles,
+            runfiles = ctx.runfiles(files = [out]),
         ),
     ]
 
