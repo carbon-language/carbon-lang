@@ -105,20 +105,12 @@ lld_aliases = [
 #
 # This will be how installs are provided on Unix-y platforms, and is loosely
 # based on the FHS (Filesystem Hierarchy Standard).
-#
-# TODO: For the scripts, figure out whether this is the approach we want.
-# Options are:
-# - Shell scripts (current): Less cross-platform and slower than alternatives.
-# - Binaries: Would need to stop using `custom_malloc` to set tcmalloc in order
-#   to have small binaries (~2.3 MB vs ~6 KB).
-# - Symlinks: Bazel doesn't like symlinks, and we'd need to be careful to
-#   resolve user-created symlinks but not Carbon-created symlinks.
 install_dirs = {
     "bin": [
-        install_target(
+        install_symlink(
             "carbon",
-            "scripts/carbon",
-            executable = True,
+            "../lib/carbon/carbon-busybox",
+            is_driver = True,
         ),
     ],
     "lib/carbon": [
@@ -137,10 +129,10 @@ install_dirs = {
             "@llvm-project//lld:lld",
             executable = True,
         ),
-        install_target(
+        install_symlink(
             "clang",
-            "scripts/clang",
-            executable = True,
+            "../../carbon-busybox",
+            is_driver = True,
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
 }

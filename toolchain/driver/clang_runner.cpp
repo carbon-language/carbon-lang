@@ -96,6 +96,17 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
+  if (!args.empty() && args[0].starts_with("-cc1")) {
+    CARBON_VLOG("Calling clang_main for cc1...");
+    // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
+    llvm::ToolContext tool_context = {
+        .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+    int exit_code = clang_main(
+        cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
+    // TODO: Should this be forwarding the full exit code?
+    return exit_code == 0;
+  }
+
   CARBON_VLOG("Preparing Clang driver...\n");
 
   // Create the diagnostic options and parse arguments controlling them out of
