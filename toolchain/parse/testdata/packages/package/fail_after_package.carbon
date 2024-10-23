@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_after_package.carbon
 
 package A;
-// CHECK:STDERR: fail_after_package.carbon:[[@LINE+6]]:1: error(PackageTooLate): the `package` declaration must be the first non-comment line
+// CHECK:STDERR: fail_after_package.carbon:[[@LINE+6]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
 // CHECK:STDERR: package B;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_package.carbon:[[@LINE-4]]:1: note(FirstNonCommentLine): first non-comment line is here
+// CHECK:STDERR: fail_after_package.carbon:[[@LINE-4]]:1: note: first non-comment line is here [FirstNonCommentLine]
 // CHECK:STDERR: package A;
 // CHECK:STDERR: ^~~~~~~
 package B;

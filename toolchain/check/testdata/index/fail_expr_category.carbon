@@ -12,12 +12,12 @@ fn F() -> [i32; 3];
 
 fn G(b: [i32; 3]) {
   // Indexing an array value gives a value.
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error(AddrOfNonRef): cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   var pb: i32* = &b[0];
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   var pb: i32* = &b[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:3: error(AssignmentToNonAssignable): expression is not assignable
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   b[0] = 4;
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -25,12 +25,12 @@ fn G(b: [i32; 3]) {
 
   // Indexing an ephemeral reference (materialized from an initializing
   // expression) gives a value.
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error(AddrOfNonRef): cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   var pf: i32* = &F()[0];
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   var pf: i32* = &F()[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: error(AssignmentToNonAssignable): expression is not assignable
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   F()[0] = 4;
   // CHECK:STDERR:   ^~~~~~
   F()[0] = 4;

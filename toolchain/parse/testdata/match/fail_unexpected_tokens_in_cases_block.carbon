@@ -11,26 +11,26 @@
 fn f() -> i32 {
   var x: i32 = 3;
   match (x) {
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `let`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `let`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     let u: i32 =
     // CHECK:STDERR:     ^~~
     // CHECK:STDERR:
     let u: i32 =
     case y: i32 if (y > 2) => { return 1; }
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `if`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `if`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     if (true) {
     // CHECK:STDERR:     ^~
     // CHECK:STDERR:
     if (true) {
       return 2;
     }
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `var`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `var`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     var w
     // CHECK:STDERR:     ^~~
     // CHECK:STDERR:
     var w
     case z: i32 if (z == 3) => { return 3; }
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `{`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `{`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     {
     // CHECK:STDERR:     ^
     // CHECK:STDERR:
@@ -38,12 +38,12 @@ fn f() -> i32 {
       break;
     }
     default => { return 3; }
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `return`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `return`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     return 1;
     // CHECK:STDERR:     ^~~~~~
     // CHECK:STDERR:
     return 1;
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+3]]:5: error(UnexpectedTokenInMatchCasesBlock): unexpected `(`; expected `case`, `default` or `}`
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+3]]:5: error: unexpected `(`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     ((), (), ())
     // CHECK:STDERR:     ^
     ((), (), ())

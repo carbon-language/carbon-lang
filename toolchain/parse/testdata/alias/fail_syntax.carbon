@@ -8,63 +8,63 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/alias/fail_syntax.carbon
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error(ExpectedDeclName): `alias` introducer should be followed by a name
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: alias = b;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 alias = b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error(ExpectedAliasInitializer): `alias` requires a `=` for the source
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
 // CHECK:STDERR: alias a b;
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 alias a b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:10: error(ExpectedExpr): expected expression
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:10: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: alias a =;
 // CHECK:STDERR:          ^
 // CHECK:STDERR:
 alias a =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error(ExpectedAliasInitializer): `alias` requires a `=` for the source
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
 // CHECK:STDERR: alias a;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 alias a;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error(ExpectedDeclName): `alias` introducer should be followed by a name
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: alias =;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 alias =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error(ExpectedAliasInitializer): `alias` requires a `=` for the source
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
 // CHECK:STDERR: alias a b c = d;
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 alias a b c = d;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:13: error(ExpectedDeclSemi): `alias` declarations must end with a `;`
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:13: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: alias a = b c d;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 alias a = b c d;
 
 fn F() {
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error(ExpectedDeclName): `alias` introducer should be followed by a name
+  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` introducer should be followed by a name [ExpectedDeclName]
   // CHECK:STDERR:   alias;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   alias;
 
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:12: error(ExpectedExpr): expected expression
+  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:12: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   alias a =;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
   alias a =;
 
   alias a =
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:1: error(ExpectedExpr): expected expression
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
@@ -72,7 +72,7 @@ fn F() {
 
 alias a = b
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: error(ExpectedDeclSemi): `alias` declarations must end with a `;`
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_syntax.carbon

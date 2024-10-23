@@ -9,19 +9,19 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_square_brackets.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+15]]:7: error(ExpectedParenAfter): expected `(` after `for`
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+15]]:7: error: expected `(` after `for` [ExpectedParenAfter]
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+11]]:7: error(ExpectedVariableDecl): expected `var` declaration
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+11]]:7: error: expected `var` declaration [ExpectedVariableDecl]
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+7]]:8: error(ExpectedExpr): expected expression
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+7]]:8: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+3]]:8: error(ExpectedArraySemi): expected `;` in array type
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+3]]:8: error: expected `;` in array type [ExpectedArraySemi]
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:        ^
   for [] {

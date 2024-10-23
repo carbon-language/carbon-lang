@@ -33,10 +33,10 @@ fn CallExplicitGenericParamConst(T:! type) {
 }
 
 fn CallExplicitGenericParamNonConst(T: type) {
-  // CHECK:STDERR: fail_deduce_explicit_non_constant.carbon:[[@LINE+7]]:3: error(CompTimeArgumentNotConstant): argument for generic parameter is not a compile-time constant
+  // CHECK:STDERR: fail_deduce_explicit_non_constant.carbon:[[@LINE+7]]:3: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
   // CHECK:STDERR:   ExplicitGenericParam(T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_deduce_explicit_non_constant.carbon:[[@LINE-10]]:25: note(InitializingGenericParam): initializing generic parameter `T` declared here
+  // CHECK:STDERR: fail_deduce_explicit_non_constant.carbon:[[@LINE-10]]:25: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn ExplicitGenericParam(T:! type) -> T* { return ExplicitGenericParam(T); }
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:
@@ -84,10 +84,10 @@ library "[[@TEST_NAME]]";
 fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
 
 fn CallStructParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE+7]]:3: error(DeductionIncomplete): cannot deduce value for generic parameter `T`
+  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
   // CHECK:STDERR:   StructParam({.a = 1, .b = 2});
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE-6]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -103,10 +103,10 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T:! type, U:! type](x: T) -> U;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE+7]]:3: error(DeductionIncomplete): cannot deduce value for generic parameter `U`
+  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `U` [DeductionIncomplete]
   // CHECK:STDERR:   ImplicitNotDeducible(42);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE-6]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_deduce_incomplete.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn ImplicitNotDeducible[T:! type, U:! type](x: T) -> U;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -120,10 +120,10 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE+6]]:3: error(DeductionInconsistent): inconsistent deductions for value of generic parameter `T`
+  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE+6]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
   // CHECK:STDERR:   ImplicitNotDeducible(42, {.x = 12});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE-6]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_deduce_inconsistent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn ImplicitNotDeducible[T:! type](x: T, y: T) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ImplicitNotDeducible(42, {.x = 12});

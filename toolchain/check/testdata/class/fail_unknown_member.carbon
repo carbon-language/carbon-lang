@@ -14,7 +14,7 @@ class Class {
 
 fn G(c: Class) -> i32 {
   // TODO: Mention the scope in which we looked for the name.
-  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+3]]:10: error(NameNotFound): name `something` not found
+  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+3]]:10: error: name `something` not found [NameNotFound]
   // CHECK:STDERR:   return c.something;
   // CHECK:STDERR:          ^~~~~~~~~~~
   return c.something;

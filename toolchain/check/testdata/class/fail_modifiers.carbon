@@ -8,89 +8,89 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error(ModifierRepeated): `private` repeated on declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `private` repeated on declaration [ModifierRepeated]
 // CHECK:STDERR: private private class DuplicatePrivate;
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: private private class DuplicatePrivate;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private private class DuplicatePrivate;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierOnlyAllowedOnDefinition): `abstract` not allowed on `class` forward declaration, only definition
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: abstract class AbstractDecl;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract class AbstractDecl;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error(ModifierNotAllowedWith): `protected` not allowed on declaration with `private`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` not allowed on declaration with `private` [ModifierNotAllowedWith]
 // CHECK:STDERR: private protected class TwoAccess;
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `private` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: private protected class TwoAccess;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 private protected class TwoAccess;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error(ModifierOnlyAllowedOnDefinition): `base` not allowed on `class` forward declaration, only definition
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: base class BaseDecl;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 base class BaseDecl;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error(ModifierRepeated): `abstract` repeated on declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `abstract` repeated on declaration [ModifierRepeated]
 // CHECK:STDERR: abstract abstract class TwoAbstract { }
 // CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract abstract class TwoAbstract { }
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract abstract class TwoAbstract { }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error(ModifierProtectedNotAllowed): `protected` not allowed; requires class scope
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error(ModifierNotAllowedOnDeclaration): `virtual` not allowed on `class` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `virtual` not allowed on `class` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error(ModifierNotAllowedWith): `base` not allowed on declaration with `virtual`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error: `base` not allowed on declaration with `virtual` [ModifierNotAllowedWith]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: note(ModifierPrevious): `virtual` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: note: `virtual` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
 protected virtual base class Virtual {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error(ModifierMustAppearBefore): `protected` must appear before `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `protected` must appear before `abstract` [ModifierMustAppearBefore]
 // CHECK:STDERR: abstract protected class WrongOrder { }
 // CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract protected class WrongOrder { }
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract protected class WrongOrder { }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error(ModifierNotAllowedWith): `base` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note(ModifierPrevious): `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract base class AbstractAndBase {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 abstract base class AbstractAndBase {}
 
 abstract class AbstractWithDefinition {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error(DefinedAbstractFunction): definition of `abstract` function
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:19: error: definition of `abstract` function [DefinedAbstractFunction]
   // CHECK:STDERR:   abstract fn F() {}
   // CHECK:STDERR:                   ^
   // CHECK:STDERR:
   abstract fn F() {}
   abstract fn G();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error(DefinedAbstractFunction): definition of `abstract` function
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
 // CHECK:STDERR: fn AbstractWithDefinition.G() {
 // CHECK:STDERR:                               ^
 fn AbstractWithDefinition.G() {

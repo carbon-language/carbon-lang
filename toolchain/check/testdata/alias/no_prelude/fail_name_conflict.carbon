@@ -11,20 +11,20 @@
 class C {}
 
 alias a = C;
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: var a: C = {};
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias a = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
 alias b = C;

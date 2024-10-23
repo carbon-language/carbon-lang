@@ -24,12 +24,12 @@ var Foo: i32;
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1(InImport): in import
-// CHECK:STDERR: var.carbon:4:5: error(NameDeclDuplicate): duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: var.carbon:4:5: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: var Foo: i32;
 // CHECK:STDERR:     ^~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1(InImport): in import
-// CHECK:STDERR: fn.carbon:4:1: note(NameDeclPrevious): name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn Foo();
 // CHECK:STDERR: ^~~~~~~~~
 import library "fn";

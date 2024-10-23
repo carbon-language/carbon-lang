@@ -15,13 +15,13 @@ interface Interface {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: error(CallToNonCallable): value of type `<associated <type of F> in Interface>` is not callable
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: error: value of type `<associated <type of F> in Interface>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   Interface.F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: error(CoreNotFound): package `Core` implicitly referenced here, but not found
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
   // CHECK:STDERR:   var v: Interface.T;
   // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Interface.T;

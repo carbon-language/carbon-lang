@@ -48,13 +48,13 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `SomeClassAdapter` to `SomeClass`
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `SomeClassAdapter` to `SomeClass` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note(MissingImplInMemberAccessNote): type `SomeClassAdapter` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note: type `SomeClassAdapter` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note(InCallToFunctionSelf): initializing `self` parameter of method declared here
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing `self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
@@ -75,10 +75,10 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: error(ImplicitAsConversionFailure): cannot implicitly convert from `SomeClassAdapter` to `SomeClass`
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `SomeClassAdapter` to `SomeClass` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: note(MissingImplInMemberAccessNote): type `SomeClassAdapter` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: note: type `SomeClassAdapter` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -90,7 +90,7 @@ fn F(a: SomeClassAdapter) -> i32 {
 library "[[@TEST_NAME]]";
 
 class StructAdapter {
-  // CHECK:STDERR: fail_todo_adapt_non_class.carbon:[[@LINE+3]]:3: error(SemanticsTodo): semantics TODO: `extending non-class type`
+  // CHECK:STDERR: fail_todo_adapt_non_class.carbon:[[@LINE+3]]:3: error: semantics TODO: `extending non-class type` [SemanticsTodo]
   // CHECK:STDERR:   extend adapt {.a: i32, .b: i32};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   extend adapt {.a: i32, .b: i32};

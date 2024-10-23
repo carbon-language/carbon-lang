@@ -10,10 +10,10 @@
 
 fn F() -> i32 {
   returned var v: i32 = 0;
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error(ReturnExprWithReturnedVar): can only `return var;` in the scope of a `returned var`
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error: can only `return var;` in the scope of a `returned var` [ReturnExprWithReturnedVar]
   // CHECK:STDERR:   return 1;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note(ReturnedVarHere): `returned var` was declared here
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here [ReturnedVarHere]
   // CHECK:STDERR:   returned var v: i32 = 0;
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -23,10 +23,10 @@ fn F() -> i32 {
 class C { var a: i32; var b: i32; }
 fn G() -> C {
   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: error(ReturnExprWithReturnedVar): can only `return var;` in the scope of a `returned var`
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: error: can only `return var;` in the scope of a `returned var` [ReturnExprWithReturnedVar]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note(ReturnedVarHere): `returned var` was declared here
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here [ReturnedVarHere]
   // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
   // CHECK:STDERR:                ^
   return c;

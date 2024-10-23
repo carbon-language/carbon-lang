@@ -33,10 +33,10 @@ interface N {
   let P:! type;
 }
 
-// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error(ImplicitAsConversionFailure): cannot implicitly convert from `{}` to `<associated type in N>`
+// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error: cannot implicitly convert from `{}` to `<associated type in N>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn Equal(T:! N where .P = {});
 // CHECK:STDERR:                           ^~
-// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+4]]:27: note(MissingImplInMemberAccessNote): type `{}` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+4]]:27: note: type `{}` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn Equal(T:! N where .P = {});
 // CHECK:STDERR:                           ^~
 // CHECK:STDERR:
@@ -53,10 +53,10 @@ interface K {
   let Associated:! L;
 }
 
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error(ImplicitAsConversionFailure): cannot implicitly convert from `<associated L in K>` to `type`
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error: cannot implicitly convert from `<associated L in K>` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note(MissingImplInMemberAccessNote): type `<associated L in K>` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note: type `<associated L in K>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -71,10 +71,10 @@ import library "state_constraints";
 // `2` can't be converted to the type of `I.Member`
 // TODO: The diagnostics are wrong since member access into facets isn't
 // working properly yet.
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `<associated type in I>`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR:
@@ -84,10 +84,10 @@ fn RewriteTypeMismatch(X:! I where .Member = 2);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ fn NonTypeImpls(U:! type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error(ImplicitAsConversionFailure): cannot implicitly convert from `i32` to `type`
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note(MissingImplInMemberAccessNote): type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ fn ImplsNonType(U:! type where .Self impls 7);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:51: error(ImplsOnNonFacetType): right argument of `impls` requirement must be a facet type
+// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:51: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
 // CHECK:STDERR: fn ImplsOfNonFacetType(U:! type where .Self impls i32);
 // CHECK:STDERR:                                                   ^~~
 // CHECK:STDERR:
@@ -128,14 +128,14 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `type` to `J`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `J` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note(MissingImplInMemberAccessNote): type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1(InImport): in import
-  // CHECK:STDERR: state_constraints.carbon:13:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1: in import [InImport]
+  // CHECK:STDERR: state_constraints.carbon:13:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -146,13 +146,13 @@ fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `type` to `J`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `type` to `J` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note(MissingImplInMemberAccessNote): type `type` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:1: note(DeductionGenericHere): while deducing parameters of generic declared here
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   EmptyStruct(C);

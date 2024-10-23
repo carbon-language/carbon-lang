@@ -27,35 +27,35 @@ class Circle {
 
 fn Run() {
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error(ClassInvalidMemberAccess): cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let radius: i32 = circle.radius;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note(ClassMemberDeclaration): declared here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   let radius: i32 = circle.radius;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error(ClassInvalidMemberAccess): cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.radius = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: note(ClassMemberDeclaration): declared here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   circle.radius = 5;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error(ClassInvalidMemberAccess): cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.SOME_INTERNAL_CONSTANT;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note(ClassMemberDeclaration): declared here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
   // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error(ClassInvalidMemberAccess): cannot access private member `SomeInternalFunction` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.SomeInternalFunction();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: note(ClassMemberDeclaration): declared here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private fn SomeInternalFunction() -> i32 {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -71,10 +71,10 @@ class A {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error(ClassInvalidMemberAccess): cannot access protected member `x` of type `A`
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = A.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note(ClassMemberDeclaration): declared here
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   protected var x: i32;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
@@ -120,18 +120,18 @@ class A {
   private let y: i32 = 5;
 }
 
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error(ClassInvalidMemberAccess): cannot access protected member `x` of type `A`
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
 // CHECK:STDERR: let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note(ClassMemberDeclaration): declared here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   protected let x: i32 = 5;
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error(ClassInvalidMemberAccess): cannot access private member `y` of type `A`
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note(ClassMemberDeclaration): declared here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
 let y: i32 = A.y;

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/no_prelude/fail_explicit_self_param.carbon
 
-// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+3]]:6: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+// CHECK:STDERR: fail_explicit_self_param.carbon:[[@LINE+3]]:6: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn F(self: ());
 // CHECK:STDERR:      ^~~~~~~~
 fn F(self: ());

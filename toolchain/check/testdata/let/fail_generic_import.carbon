@@ -12,7 +12,7 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error(SemanticsTodo): semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
@@ -23,7 +23,7 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error(TypeExprEvaluationFailure): cannot evaluate type expression
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR:        ^
 let a: T = 0;

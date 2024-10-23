@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_todo_bound_only.carbon:[[@LINE+4]]:22: error(SemanticsTodo): semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_todo_bound_only.carbon:[[@LINE+4]]:22: error: semantics TODO: `symbolic array bound` [SemanticsTodo]
 // CHECK:STDERR: fn F[N:! i32](a: [C; N]) -> i32 { return N; }
 // CHECK:STDERR:                      ^
 // CHECK:STDERR:
@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_todo_type_and_bound.carbon:[[@LINE+4]]:32: error(SemanticsTodo): semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_todo_type_and_bound.carbon:[[@LINE+4]]:32: error: semantics TODO: `symbolic array bound` [SemanticsTodo]
 // CHECK:STDERR: fn F[T:! type, N:! i32](a: [T; N]) -> T;
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -66,13 +66,13 @@ fn F[T:! type](a: [T; 2]) -> T { return a[0]; }
 fn G() -> C {
   // TODO: We succeed at deducing T here but fail to convert. Is this the right behavior?
   var a: [C; 3] = ({}, {}, {});
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error(ImplicitAsConversionFailure): cannot implicitly convert from `[C; 3]` to `[C; 2]`
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert from `[C; 3]` to `[C; 2]` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note(MissingImplInMemberAccessNote): type `[C; 3]` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `[C; 3]` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note(InCallToFunctionParam): initializing function parameter
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn F[T:! type](a: [T; 2]) -> T { return a[0]; }
   // CHECK:STDERR:                ^~~~~~~~~
   // CHECK:STDERR:
@@ -86,7 +86,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:22: error(SemanticsTodo): semantics TODO: `symbolic array bound`
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:22: error: semantics TODO: `symbolic array bound` [SemanticsTodo]
 // CHECK:STDERR: fn F[N:! i32](a: [C; N]) -> i32 { return N; }
 // CHECK:STDERR:                      ^
 fn F[N:! i32](a: [C; N]) -> i32 { return N; }

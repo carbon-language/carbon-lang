@@ -28,11 +28,11 @@ impl forall [T:! type] C as I(T) {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error(ImplRedefinition): redefinition of `impl C as I`
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error: redefinition of `impl C as I` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6(InImport): in import
-// CHECK:STDERR: import_generic.carbon:8:1: note(ImplPreviousDefinition): previous definition was here
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: import_generic.carbon:8:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! type] C as I(T*) {}

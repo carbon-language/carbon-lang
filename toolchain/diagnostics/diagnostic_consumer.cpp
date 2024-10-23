@@ -31,10 +31,11 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
       case DiagnosticLevel::LocationInfo:
         break;
     }
+    *stream_ << ": " << message.format_fn(message);
     if (include_diagnostic_kind_) {
-      *stream_ << "(" << message.kind << ")";
+      *stream_ << " [" << message.kind << "]";
     }
-    *stream_ << ": " << message.format_fn(message) << "\n";
+    *stream_ << "\n";
     // Don't include a snippet for location information to keep this diagnostic
     // more visually associated with the following diagnostic that it describes
     // and to better match C++ compilers.

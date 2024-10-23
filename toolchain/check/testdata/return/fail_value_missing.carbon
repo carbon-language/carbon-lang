@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_value_missing.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:3: error(ReturnStatementMissingExpr): missing return value
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:3: error: missing return value [ReturnStatementMissingExpr]
   // CHECK:STDERR:   return;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note(ReturnTypeHereNote): return type of function is `i32`
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Main() -> i32 {
   // CHECK:STDERR:           ^~~~~~
   return;

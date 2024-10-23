@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   fn F(self: Self);
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
@@ -18,7 +18,7 @@ class Class {
   fn G() -> Self;
 }
 
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn Class.F(self: Self) {
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
@@ -26,12 +26,12 @@ fn Class.F(self: Self) {
 }
 
 fn Class.G() -> Self {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error(SelfOutsideImplicitParamList): `self` can only be declared in an implicit parameter list
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   var self: Self;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
   var self: Self;
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error(CopyOfUncopyableType): cannot copy value of type `Class`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:
@@ -43,13 +43,13 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error(ImplicitAsConversionFailure): cannot implicitly convert from `WrongSelf` to `Class`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `WrongSelf` to `Class` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note(MissingImplInMemberAccessNote): type `WrongSelf` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note(InCallToFunctionSelf): initializing `self` parameter of method declared here
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing `self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~
   ws.F();
