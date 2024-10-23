@@ -24,7 +24,7 @@ struct FunctionFields {
   // type is the return type of the function. This may or may not be used by the
   // function, depending on whether the return type needs a return slot, but is
   // always present if the function has a declared return type.
-  InstId return_storage_id;
+  InstId return_slot_id;
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
@@ -53,8 +53,8 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_storage_id.is_valid()) {
-      out << ", return_storage: " << return_storage_id;
+    if (return_slot_id.is_valid()) {
+      out << ", return_slot: " << return_slot_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(

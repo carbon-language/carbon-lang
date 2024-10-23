@@ -88,16 +88,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+60, loaded [template = constants.%Inc.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+62, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/arithmetic, inst+80, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+74, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+31, loaded [template = constants.%AddAssign.type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/arithmetic, inst+58, loaded [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+52, loaded [template = constants.%Op.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+74, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+63, loaded [template = constants.%Inc.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+65, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.10 = import_ref Core//prelude/operators/arithmetic, inst+83, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+77, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+34, loaded [template = constants.%AddAssign.type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.12 = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [template = constants.%Op.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+77, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,8 +124,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %a.param_patt: %C = param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -135,10 +135,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc33_25: %C = param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %param.loc33_25
-// CHECK:STDOUT:     %param.loc33_31: %C = param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %param.loc33_31
+// CHECK:STDOUT:     %a.param: %C = param runtime_param0
+// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %C = param runtime_param1
+// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,8 +164,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc16_21: type = ptr_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %self: %.3 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -185,10 +185,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc19_21: type = ptr_type %C [template = constants.%.3]
 // CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %param.loc19_18: %.3 = param runtime_param0
-// CHECK:STDOUT:     %self: %.3 = bind_name self, %param.loc19_18
-// CHECK:STDOUT:     %param.loc19_29: %C = param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %param.loc19_29
+// CHECK:STDOUT:     %self.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %C = param runtime_param1
+// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:

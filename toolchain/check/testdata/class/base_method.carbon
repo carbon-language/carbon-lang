@@ -64,7 +64,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,8 +83,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
-// CHECK:STDOUT:     %param.loc17: %.3 = param runtime_param0
-// CHECK:STDOUT:     %self.loc17: %.3 = bind_name self, %param.loc17
+// CHECK:STDOUT:     %self.param.loc17: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self.loc17: %.3 = bind_name self, %self.param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
@@ -93,8 +93,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc25: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %param: %.11 = param runtime_param0
-// CHECK:STDOUT:     %p: %.11 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.11 = param runtime_param0
+// CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,8 +110,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc14: type = ptr_type %Base [template = constants.%.3]
-// CHECK:STDOUT:     %param.loc14: %.3 = param runtime_param0
-// CHECK:STDOUT:     %self.loc14: %.3 = bind_name self, %param.loc14
+// CHECK:STDOUT:     %self.param.loc14: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self.loc14: %.3 = bind_name self, %self.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:

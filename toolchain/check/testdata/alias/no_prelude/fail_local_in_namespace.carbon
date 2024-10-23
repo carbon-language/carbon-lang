@@ -41,10 +41,14 @@ fn F() -> {} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_12.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %return.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -40,9 +40,13 @@ fn Six() -> x;
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: <error> = param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

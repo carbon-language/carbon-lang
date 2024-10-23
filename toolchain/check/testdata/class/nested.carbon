@@ -104,8 +104,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41: type = ptr_type %Outer [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %a: %.4 = bind_name a, %param
+// CHECK:STDOUT:     %a.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

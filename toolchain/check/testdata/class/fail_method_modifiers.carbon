@@ -108,16 +108,16 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param_patt: %FinalClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %param: %FinalClass = param runtime_param0
-// CHECK:STDOUT:     %self: %FinalClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %FinalClass = param runtime_param0
+// CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: %Virtual.type = fn_decl @Virtual [template = constants.%Virtual] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %FinalClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %param: %FinalClass = param runtime_param0
-// CHECK:STDOUT:     %self: %FinalClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %FinalClass = param runtime_param0
+// CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -133,16 +133,16 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param_patt: %AbstractClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %param: %AbstractClass = param runtime_param0
-// CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %AbstractClass = param runtime_param0
+// CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %AbstractClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %param: %AbstractClass = param runtime_param0
-// CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %AbstractClass = param runtime_param0
+// CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc45: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
@@ -158,8 +158,8 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param_patt: %BaseClass = param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
-// CHECK:STDOUT:     %param: %BaseClass = param runtime_param0
-// CHECK:STDOUT:     %self: %BaseClass = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %BaseClass = param runtime_param0
+// CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:

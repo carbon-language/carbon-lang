@@ -65,7 +65,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,19 +84,19 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc24_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc24_16.2: type = converted %int.make_type_32, %.loc24_16.1 [template = i32]
-// CHECK:STDOUT:   %param.loc24: i32 = param runtime_param0
-// CHECK:STDOUT:   %n: i32 = bind_name n, %param.loc24
+// CHECK:STDOUT:   %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:   %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_14: type = param runtime_param<invalid>
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %param.loc30_14 [symbolic = constants.%T]
-// CHECK:STDOUT:   %param.loc30_24: %T = param runtime_param0
-// CHECK:STDOUT:   %x: %T = bind_name x, %param.loc30_24
+// CHECK:STDOUT:   %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:   %x.param: %T = param runtime_param0
+// CHECK:STDOUT:   %x: %T = bind_name x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc39_6.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc39_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc39_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc39_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

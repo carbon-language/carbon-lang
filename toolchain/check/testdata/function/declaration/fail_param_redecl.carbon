@@ -38,7 +38,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,10 +59,10 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:     %int.make_type_32.loc17_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc17_17.1: type = value_of_initializer %int.make_type_32.loc17_17 [template = i32]
 // CHECK:STDOUT:     %.loc17_17.2: type = converted %int.make_type_32.loc17_17, %.loc17_17.1 [template = i32]
-// CHECK:STDOUT:     %param.loc17_7: i32 = param runtime_param0
-// CHECK:STDOUT:     %n.loc17_6: i32 = bind_name n, %param.loc17_7
-// CHECK:STDOUT:     %param.loc17_15: i32 = param runtime_param1
-// CHECK:STDOUT:     %n.loc17_14: i32 = bind_name n, %param.loc17_15
+// CHECK:STDOUT:     %n.param.loc17_7: i32 = param runtime_param0
+// CHECK:STDOUT:     %n.loc17_6: i32 = bind_name n, %n.param.loc17_7
+// CHECK:STDOUT:     %n.param.loc17_15: i32 = param runtime_param1
+// CHECK:STDOUT:     %n.loc17_14: i32 = bind_name n, %n.param.loc17_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

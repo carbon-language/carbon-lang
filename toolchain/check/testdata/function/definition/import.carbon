@@ -141,7 +141,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -157,6 +157,8 @@ fn D() {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
 // CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: i32 = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
@@ -164,13 +166,16 @@ fn D() {}
 // CHECK:STDOUT:     %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
+// CHECK:STDOUT:     %b.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.4 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.4 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
@@ -181,9 +186,10 @@ fn D() {}
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
 // CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %return: ref %.4 = var <return slot>
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: %.4 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
@@ -266,9 +272,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+24, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+48, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+60, unloaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+27, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+54, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+66, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -280,7 +286,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -354,9 +360,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+24, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+60, unloaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+27, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+66, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -368,7 +374,7 @@ fn D() {}
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -389,9 +395,10 @@ fn D() {}
 // CHECK:STDOUT:     %int.make_type_32.loc23_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc23_17.1: type = value_of_initializer %int.make_type_32.loc23_17 [template = i32]
 // CHECK:STDOUT:     %.loc23_17.2: type = converted %int.make_type_32.loc23_17, %.loc23_17.1 [template = i32]
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %b: i32 = bind_name b, %param
+// CHECK:STDOUT:     %b.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %.loc23_14: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -452,9 +459,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//fns, inst+60, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//fns, inst+66, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

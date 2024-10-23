@@ -39,8 +39,8 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_13.2: type = converted %.loc14_13.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }

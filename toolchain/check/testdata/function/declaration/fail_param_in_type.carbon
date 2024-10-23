@@ -35,7 +35,7 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -56,10 +56,10 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc14_7: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc14_7
-// CHECK:STDOUT:     %param.loc14_15: <error> = param runtime_param1
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_15
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %a.param: <error> = param runtime_param1
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

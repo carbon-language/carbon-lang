@@ -128,10 +128,14 @@ fn Run() {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %A = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %return: ref %A = var <return slot>
+// CHECK:STDOUT:     %return.param: %A = param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,7 +190,7 @@ fn Run() {
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//b, inst+19, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//b, inst+22, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Other//b, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Other//b, inst+4, loaded
 // CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.3, [template] {

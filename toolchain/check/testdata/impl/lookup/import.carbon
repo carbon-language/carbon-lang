@@ -180,8 +180,8 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.8 [template = constants.%C]
-// CHECK:STDOUT:     %param: %C = param runtime_param0
-// CHECK:STDOUT:     %c: %C = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %C = param runtime_param0
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

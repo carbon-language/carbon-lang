@@ -49,7 +49,7 @@ auto GlobalInit::Finalize() -> void {
         .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
         .first_owning_decl_id = SemIR::InstId::Invalid},
-       {.return_storage_id = SemIR::InstId::Invalid,
+       {.return_slot_id = SemIR::InstId::Invalid,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

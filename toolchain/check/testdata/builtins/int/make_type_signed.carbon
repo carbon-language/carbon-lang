@@ -91,7 +91,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -103,13 +103,16 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:     %return: ref type = var <return slot>
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: type = param runtime_param1
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +144,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+20, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
@@ -153,7 +156,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -169,6 +172,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: %.3 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %.3 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.3 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc6_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc6_13: i32 = int_literal 64 [template = constants.%.2]
@@ -180,13 +185,16 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc6_24: init type = call %Int.ref.loc6_21(%.loc6_25) [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_27.1: type = value_of_initializer %int.make_type_signed.loc6_24 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_27.2: type = converted %int.make_type_signed.loc6_24, %.loc6_27.1 [template = constants.%.3]
-// CHECK:STDOUT:     %return: ref %.3 = var <return slot>
-// CHECK:STDOUT:     %param: %.3 = param runtime_param0
-// CHECK:STDOUT:     %n: %.3 = bind_name n, %param
+// CHECK:STDOUT:     %n.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %n: %.3 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.3 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %n.patt: %.5 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %.5 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.5 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Int.ref.loc10_9: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %.loc10_13: i32 = int_literal 13 [template = constants.%.4]
@@ -198,15 +206,18 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc10_24: init type = call %Int.ref.loc10_21(%.loc10_25) [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_27.1: type = value_of_initializer %int.make_type_signed.loc10_24 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc10_27.2: type = converted %int.make_type_signed.loc10_24, %.loc10_27.1 [template = constants.%.5]
-// CHECK:STDOUT:     %return: ref %.5 = var <return slot>
-// CHECK:STDOUT:     %param: %.5 = param runtime_param0
-// CHECK:STDOUT:     %n: %.5 = bind_name n, %param
+// CHECK:STDOUT:     %n.param: %.5 = param runtime_param0
+// CHECK:STDOUT:     %n: %.5 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: %.5 = param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic.decl: %Symbolic.type = fn_decl @Symbolic [template = constants.%Symbolic] {
 // CHECK:STDOUT:     %N.patt.loc14_13.1: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: i32 = param_pattern %N.patt.loc14_13.1, runtime_param<invalid> [symbolic = %N.patt.loc14_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %x.patt: @Symbolic.%.loc14_28 (%.6) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Symbolic.%.loc14_28 (%.6) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: @Symbolic.%.loc14_28 (%.6) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Symbolic.%.loc14_28 (%.6) = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_17.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -221,11 +232,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_signed.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = %.loc14_28 (constants.%.6)]
 // CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = %.loc14_28 (constants.%.6)]
-// CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_28 (%.6) = var <return slot>
-// CHECK:STDOUT:     %param.loc14_14: i32 = param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %param.loc14_14 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %param.loc14_23: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
-// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %param.loc14_23
+// CHECK:STDOUT:     %N.param: i32 = param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc14_13.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_13.2 (constants.%N)]
+// CHECK:STDOUT:     %x.param: @Symbolic.%.loc14_28 (%.6) = param runtime_param0
+// CHECK:STDOUT:     %x: @Symbolic.%.loc14_28 (%.6) = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: @Symbolic.%.loc14_28 (%.6) = param runtime_param1
+// CHECK:STDOUT:     %return: ref @Symbolic.%.loc14_28 (%.6) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -275,7 +287,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+20, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -322,7 +334,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+20, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
@@ -334,7 +346,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -349,6 +361,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [template = constants.%Negate] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_32.loc6_14 [template = i32]
@@ -356,9 +370,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %int.make_type_32.loc6_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_22.1: type = value_of_initializer %int.make_type_32.loc6_22 [template = i32]
 // CHECK:STDOUT:     %.loc6_22.2: type = converted %int.make_type_32.loc6_22, %.loc6_22.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param
+// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.ref: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
@@ -389,7 +404,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+17, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+20, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

@@ -199,7 +199,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -225,46 +225,59 @@ class C {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
 // CHECK:STDOUT:   %global_var: ref <error> = bind_name global_var, %global_var.var
-// CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [template = constants.%ConvertFromStruct] {} {
+// CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [template = constants.%ConvertFromStruct] {
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc44_14: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc44_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc44_20.2: type = converted %int.make_type_32, %.loc44_20.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MemberAccess.decl: %MemberAccess.type = fn_decl @MemberAccess [template = constants.%MemberAccess] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc55_25: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc55_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc55_31.2: type = converted %int.make_type_32, %.loc55_31.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Copy.decl: %Copy.type = fn_decl @Copy [template = constants.%Copy] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %.4 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc73_12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc73: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc73_17: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %Class.ref.loc73_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param1
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Let.decl: %Let.type = fn_decl @Let [template = constants.%Let] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
@@ -272,20 +285,24 @@ class C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc77: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc77: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeIncomplete.decl: %TakeIncomplete.type = fn_decl @TakeIncomplete [template = constants.%TakeIncomplete] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %Class = param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param: %Class = param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %param
+// CHECK:STDOUT:     %c.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnIncomplete.decl: %ReturnIncomplete.type = fn_decl @ReturnIncomplete [template = constants.%ReturnIncomplete] {} {
+// CHECK:STDOUT:   %ReturnIncomplete.decl: %ReturnIncomplete.type = fn_decl @ReturnIncomplete [template = constants.%ReturnIncomplete] {
+// CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Class = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %return: ref %Class = var <return slot>
+// CHECK:STDOUT:     %return.param: %Class = param runtime_param0
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTakeIncomplete.decl: %CallTakeIncomplete.type = fn_decl @CallTakeIncomplete [template = constants.%CallTakeIncomplete] {
 // CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
@@ -293,8 +310,8 @@ class C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc92: type = ptr_type %Class [template = constants.%.4]
-// CHECK:STDOUT:     %param: %.4 = param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %param
+// CHECK:STDOUT:     %p.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallReturnIncomplete.decl: %CallReturnIncomplete.type = fn_decl @CallReturnIncomplete [template = constants.%CallReturnIncomplete] {} {}
 // CHECK:STDOUT: }
@@ -315,7 +332,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertFromStruct() -> %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc42: %.3 = struct_literal ()
+// CHECK:STDOUT:   %.loc42_43: %.3 = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

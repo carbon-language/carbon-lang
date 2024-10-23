@@ -47,8 +47,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -69,8 +69,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_32.loc11_23 [template = i32]
 // CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_23, %.loc11_23.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
-// CHECK:STDOUT:     %param: %.2 = param runtime_param0
-// CHECK:STDOUT:     %s: %.2 = bind_name s, %param
+// CHECK:STDOUT:     %s.param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %s: %.2 = bind_name s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %cond.patt: bool = binding_pattern cond
@@ -79,8 +79,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
-// CHECK:STDOUT:     %param: bool = param runtime_param0
-// CHECK:STDOUT:     %cond: bool = bind_name cond, %param
+// CHECK:STDOUT:     %cond.param: bool = param runtime_param0
+// CHECK:STDOUT:     %cond: bool = bind_name cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

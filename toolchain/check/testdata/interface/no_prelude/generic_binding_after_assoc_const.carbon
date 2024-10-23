@@ -50,8 +50,8 @@ interface I {
 // CHECK:STDOUT:     %T.patt.loc12_8.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc12_8.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc12_8.2, runtime_param<invalid> [symbolic = %T.patt.loc12_8.1 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1, %param [symbolic = %T.loc12_8.1 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc12_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
@@ -60,8 +60,8 @@ interface I {
 // CHECK:STDOUT:     %T.patt.loc16_8.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_8.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc16_8.2, runtime_param<invalid> [symbolic = %T.patt.loc16_8.1 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1, %param [symbolic = %T.loc16_8.1 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: %.6 = assoc_entity element2, %G.decl [template = constants.%.7]
 // CHECK:STDOUT:

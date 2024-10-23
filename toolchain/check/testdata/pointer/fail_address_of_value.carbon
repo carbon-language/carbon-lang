@@ -155,7 +155,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -171,18 +171,26 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     .AddressOfParam = %AddressOfParam.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
+// CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.2 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc13_16.2: type = converted %int.make_type_32, %.loc13_16.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_19: type = struct_type {.a: i32} [template = constants.%.2]
-// CHECK:STDOUT:     %return: ref %.2 = var <return slot>
+// CHECK:STDOUT:     %return.param: %.2 = param runtime_param0
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddressOfLiteral.decl: %AddressOfLiteral.type = fn_decl @AddressOfLiteral [template = constants.%AddressOfLiteral] {} {}
 // CHECK:STDOUT:   %AddressOfOperator.decl: %AddressOfOperator.type = fn_decl @AddressOfOperator [template = constants.%AddressOfOperator] {} {}
@@ -196,8 +204,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %int.make_type_32.loc95: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_32.loc95 [template = i32]
 // CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_32.loc95, %.loc95_26.1 [template = i32]
-// CHECK:STDOUT:     %param.loc95_24: i32 = param runtime_param0
-// CHECK:STDOUT:     %param.loc95_19: i32 = bind_name param, %param.loc95_24
+// CHECK:STDOUT:     %param.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %param: i32 = bind_name param, %param.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,7 +302,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc99_22.3: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:   %param_addr.var: ref %.4 = var param_addr
 // CHECK:STDOUT:   %param_addr: ref %.4 = bind_name param_addr, %param_addr.var
-// CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param.loc95_19
+// CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param
 // CHECK:STDOUT:   %.loc99_26: %.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %.loc99_26
 // CHECK:STDOUT:   return
