@@ -793,6 +793,16 @@ class FormatterImpl {
     }
   }
 
+  auto FormatInstRHS(ReturnSlot inst) -> void {
+    // Omit inst.type_inst_id because it's not semantically significant.
+    FormatArgs(inst.storage_id);
+  }
+
+  auto FormatInstRHS(ReturnSlotPattern /*inst*/) -> void {
+    // No-op because type_id is the only semantically significant field,
+    // and it's handled separately.
+  }
+
   auto FormatInstRHS(StructInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);

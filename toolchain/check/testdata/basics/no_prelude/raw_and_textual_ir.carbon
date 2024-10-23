@@ -59,11 +59,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+11':         {kind: Converted, arg0: inst+7, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+8, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: Converted, arg0: inst+10, arg1: inst+9, type: typeTypeType}
-// CHECK:STDOUT:     'inst+14':         {kind: ReturnSlotPattern, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+14':         {kind: ReturnSlotPattern, arg0: inst+10, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+15':         {kind: ParamPattern, arg0: inst+14, arg1: runtime_param1, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+16':         {kind: Param, arg0: runtime_param0, arg1: name1, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+17':         {kind: Param, arg0: runtime_param1, arg1: nameReturnSlot, type: type(inst+9)}
-// CHECK:STDOUT:     'inst+18':         {kind: ReturnSlot, arg0: inst+17, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+18':         {kind: ReturnSlot, arg0: inst+10, arg1: inst+17, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+19':         {kind: FunctionDecl, arg0: function0, arg1: block8, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
 // CHECK:STDOUT:     'inst+21':         {kind: StructValue, arg0: empty, type: type(inst+20)}

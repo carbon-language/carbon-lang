@@ -256,6 +256,7 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
       CARBON_CHECK(match.kind() == MatchKind::Callee);
       match.set_return_slot_id(context.AddInst<SemIR::ReturnSlot>(
           pattern.loc_id, {.type_id = return_slot_pattern.type_id,
+                           .type_inst_id = return_slot_pattern.type_inst_id,
                            .storage_id = entry.scrutinee_id}));
       break;
     }

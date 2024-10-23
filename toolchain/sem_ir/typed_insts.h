@@ -896,6 +896,10 @@ struct ReturnSlot {
   // type of the function).
   TypeId type_id;
 
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
+
   // The storage that will be initialized by the function.
   InstId storage_id;
 };
@@ -908,7 +912,13 @@ struct ReturnSlotPattern {
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "return_slot_pattern", .is_lowered = false});
 
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
   TypeId type_id;
+
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
 };
 
 // An `expr == expr` clause in a `where` expression or `require` declaration.
