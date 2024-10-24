@@ -18,7 +18,7 @@ filegroup(
         "//language_server",
         "//migrate_cpp:rewriter",
         "//migrate_cpp/cpp_refactoring",
-        "//toolchain/driver:carbon",
+        "//toolchain/install:carbon-busybox",
         "//utils/treesitter",
     ],
     tags = ["manual"],

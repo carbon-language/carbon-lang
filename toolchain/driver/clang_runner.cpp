@@ -68,9 +68,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // driver. Command lines can get quite long in build systems so this tries to
   // minimize the memory allocation overhead.
 
-  // Start with a dummy executable name. We'll manually set the install
-  // directory below.
-  std::array<llvm::StringRef, 1> exe_arg = {"clang-runner"};
+  // Provide the wrapped `clang` path in order to support subprocessing. We also
+  // set the install directory below.
+  std::string clang_path = installation_->clang_path();
+  std::array<llvm::StringRef, 1> exe_arg = {clang_path};
   auto args_range =
       llvm::concat<const llvm::StringRef>(exe_arg, maybe_v_arg, args);
   int total_size = 0;
@@ -95,6 +96,17 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
+  if (!args.empty() && args[0].starts_with("-cc1")) {
+    CARBON_VLOG("Calling clang_main for cc1...");
+    // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
+    llvm::ToolContext tool_context = {
+        .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+    int exit_code = clang_main(
+        cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
+    // TODO: Should this be forwarding the full exit code?
+    return exit_code == 0;
+  }
+
   CARBON_VLOG("Preparing Clang driver...\n");
 
   // Create the diagnostic options and parse arguments controlling them out of
@@ -113,7 +125,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options);
 
-  clang::driver::Driver driver("clang-runner", target_, diagnostics);
+  clang::driver::Driver driver(clang_path, target_, diagnostics);
 
   // Configure the install directory to find other tools and data files.
   //
@@ -128,18 +140,14 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // still subprocess. See `InProcess` comment at:
   // https://github.com/llvm/llvm-project/blob/86ce8e4504c06ecc3cc42f002ad4eb05cac10925/clang/lib/Driver/Job.cpp#L411-L413
   //
-  // TODO: It would be nice to find a way to set up the driver's understanding
-  // of the executable name in a way that causes the multiple `cc1` invocations
-  // to actually result in `carbon clang -- ...` invocations (even if as
-  // subprocesses). This may dovetail with having symlinks that redirect to a
-  // busybox of LLD as well, and having even the subprocesses consistently run
-  // the Carbon install toolchain and not a system toolchain whenever possible.
-  driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& argv) -> int {
-    // TODO: Try to use a better path for argv[0] (maybe in the LLVM install
-    // paths). This works for now.
+  // Note the subprocessing will effectively call `clang -cc1`, which turns into
+  // `carbon-busybox clang -cc1`, which results in an equivalent `clang_main`
+  // call.
+  driver.CC1Main = [](llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+    // cc1_args[0] will be the `clang_path` so we don't need the prepend arg.
     llvm::ToolContext tool_context = {
-        .Path = argv[0], .PrependArg = "clang", .NeedsPrependArg = true};
-    return clang_main(argv.size(), const_cast<char**>(argv.data()),
+        .Path = cc1_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+    return clang_main(cc1_args.size(), const_cast<char**>(cc1_args.data()),
                       tool_context);
   };
 

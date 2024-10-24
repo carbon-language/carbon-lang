@@ -42,7 +42,8 @@ auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
   // FHS-like install prefix. We remove the filename and walk up to find the
   // expected install prefix.
   llvm::sys::path::remove_filename(paths.prefix_);
-  llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix, "../");
+  llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
+                          "../../");
 
   if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
     paths.SetError(error.message());
@@ -159,6 +160,14 @@ auto InstallPaths::llvm_install_bin() const -> std::string {
   // TODO: Adjust this to work equally well on Windows.
   llvm::sys::path::append(path, llvm::sys::path::Style::posix,
                           "lib/carbon/llvm/bin/");
+  return path.str().str();
+}
+
+auto InstallPaths::clang_path() const -> std::string {
+  llvm::SmallString<256> path(prefix_);
+  // TODO: Adjust this to work equally well on Windows.
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin/clang");
   return path.str().str();
 }
 
