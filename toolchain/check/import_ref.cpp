@@ -2105,7 +2105,8 @@ class ImportRefResolver {
 
     return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
+         .int_id =
+             context_.ints().AddSigned(import_ir_.ints().Get(inst.int_id))});
   }
 
   auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {

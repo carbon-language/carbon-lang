@@ -46,7 +46,7 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
   return context.AddInst<SemIR::IntValue>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-       .int_id = context.ints().Add(i32_val)});
+       .int_id = context.ints().AddUnsigned(i32_val)});
 }
 
 // Forms an IntValue instruction with type `IntLiteral` for a given literal

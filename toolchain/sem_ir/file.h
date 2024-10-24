@@ -70,6 +70,30 @@ class File : public Printable<File> {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
+  struct IntTypeInfo {
+    bool is_signed;
+    IntId bit_width = IntId::Invalid;
+  };
+
+  // Compute the core integer type information from a type ID.
+  //
+  // TODO: When we don't have a builtin int type mixed with actual `IntType`
+  // instructions, clients should directly query the `IntType` instruction to
+  // compute this information.
+  auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
+    auto inst_id = types().GetInstId(int_type_id);
+    if (inst_id == InstId::BuiltinIntType) {
+      return {true, ints().LookupSigned(llvm::APInt(/*numBits=*/64, 32))};
+    }
+    auto int_type = insts().TryGetAs<IntType>(inst_id);
+    CARBON_CHECK(int_type,
+                 "Integer type ID associated with an unknown instruction: {0}",
+                 insts().Get(inst_id));
+    auto bit_width_inst = insts().TryGetAs<IntValue>(int_type->bit_width_id);
+    return {int_type->int_kind.is_signed(),
+            bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
+  }
+
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> IdentifierId { return package_id_; }
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }

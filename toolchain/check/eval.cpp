@@ -244,7 +244,7 @@ static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
 // Converts an APInt value into a ConstantId.
 static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                           llvm::APInt value) -> SemIR::ConstantId {
-  auto result = context.ints().Add(std::move(value));
+  auto result = context.ints().AddSigned(std::move(value));
   return MakeConstantResult(
       context, SemIR::IntValue{.type_id = type_id, .int_id = result},
       Phase::Template);
@@ -629,12 +629,14 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
   auto op = context.insts().GetAs<SemIR::IntValue>(arg_id);
-  auto op_val = context.ints().Get(op.int_id);
+  auto [is_signed, bit_width_id] = context.sem_ir().GetIntTypeInfo(op.type_id);
+  CARBON_CHECK(bit_width_id != IntId::Invalid,
+               "Cannot evaluate a generic bit width integer: {0}", op);
+  llvm::APInt op_val = context.ints().GetAtWidth(op.int_id, bit_width_id);
 
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntSNegate:
-      if (context.types().IsSignedInt(op.type_id) &&
-          op_val.isMinSignedValue()) {
+      if (is_signed && op_val.isMinSignedValue()) {
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                           "integer overflow in negation of {0}", TypedInt);
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
@@ -663,8 +665,6 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
     -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntValue>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::IntValue>(rhs_id);
-  const auto& lhs_val = context.ints().Get(lhs.int_id);
-  const auto& rhs_val = context.ints().Get(rhs.int_id);
 
   // Check for division by zero.
   switch (builtin_kind) {
@@ -672,7 +672,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::IntSMod:
     case SemIR::BuiltinFunctionKind::IntUDiv:
     case SemIR::BuiltinFunctionKind::IntUMod:
-      if (rhs_val.isZero()) {
+      if (context.ints().Get(rhs.int_id).isZero()) {
         DiagnoseDivisionByZero(context, loc);
         return SemIR::ConstantId::Error;
       }
@@ -681,9 +681,58 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       break;
   }
 
-  bool overflow = false;
+  auto [lhs_is_signed, lhs_bit_width_id] =
+      context.sem_ir().GetIntTypeInfo(lhs.type_id);
+  llvm::APInt lhs_val = context.ints().GetAtWidth(lhs.int_id, lhs_bit_width_id);
+
   llvm::APInt result_val;
+
+  // First handle switch, which can directly use the canonical RHS and doesn't
+  // overflow.
+  switch (builtin_kind) {
+    // Bit shift.
+    case SemIR::BuiltinFunctionKind::IntLeftShift:
+    case SemIR::BuiltinFunctionKind::IntRightShift: {
+      const auto& rhs_orig_val = context.ints().Get(rhs.int_id);
+      if (rhs_orig_val.uge(lhs_val.getBitWidth()) ||
+          (rhs_orig_val.isNegative() && lhs_is_signed)) {
+        CARBON_DIAGNOSTIC(
+            CompileTimeShiftOutOfRange, Error,
+            "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
+            unsigned, TypedInt, BoolAsSelect, TypedInt);
+        context.emitter().Emit(
+            loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
+            {.type = lhs.type_id, .value = lhs_val},
+            builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
+            {.type = rhs.type_id, .value = rhs_orig_val});
+        // TODO: Is it useful to recover by returning 0 or -1?
+        return SemIR::ConstantId::Error;
+      }
+
+      if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
+        result_val = lhs_val.shl(rhs_orig_val);
+      } else if (lhs_is_signed) {
+        result_val = lhs_val.ashr(rhs_orig_val);
+      } else {
+        result_val = lhs_val.lshr(rhs_orig_val);
+      }
+      return MakeIntResult(context, lhs.type_id, std::move(result_val));
+    }
+
+    default:
+      // Break to do additional setup for other builtin kinds.
+      break;
+  }
+
+  // Other operations are already checked to be homogeneous, so we can extend
+  // the RHS with the LHS bit width.
+  CARBON_CHECK(rhs.type_id == lhs.type_id, "Heterogeneous builtin integer op!");
+  llvm::APInt rhs_val = context.ints().GetAtWidth(rhs.int_id, lhs_bit_width_id);
+
+  // We may also need to diagnose overflow for these operations.
+  bool overflow = false;
   Lex::TokenKind op_token = Lex::TokenKind::Not;
+
   switch (builtin_kind) {
     // Arithmetic.
     case SemIR::BuiltinFunctionKind::IntSAdd:
@@ -744,32 +793,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       op_token = Lex::TokenKind::Caret;
       break;
 
-    // Bit shift.
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift:
-      if (rhs_val.uge(lhs_val.getBitWidth()) ||
-          (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
-        CARBON_DIAGNOSTIC(
-            CompileTimeShiftOutOfRange, Error,
-            "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
-            unsigned, TypedInt, BoolAsSelect, TypedInt);
-        context.emitter().Emit(
-            loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
-            {.type = lhs.type_id, .value = lhs_val},
-            builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
-            {.type = rhs.type_id, .value = rhs_val});
-        // TODO: Is it useful to recover by returning 0 or -1?
-        return SemIR::ConstantId::Error;
-      }
-
-      if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
-        result_val = lhs_val.shl(rhs_val);
-      } else if (context.types().IsSignedInt(lhs.type_id)) {
-        result_val = lhs_val.ashr(rhs_val);
-      } else {
-        result_val = lhs_val.lshr(rhs_val);
-      }
-      break;
+      CARBON_FATAL("Handled specially above.");
 
     default:
       CARBON_FATAL("Unexpected operation kind.");
@@ -795,10 +821,15 @@ static auto PerformBuiltinIntComparison(Context& context,
                                         SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntValue>(lhs_id);
-  const auto& lhs_val = context.ints().Get(lhs.int_id);
-  const auto& rhs_val =
-      context.ints().Get(context.insts().GetAs<SemIR::IntValue>(rhs_id).int_id);
-  bool is_signed = context.types().IsSignedInt(lhs.type_id);
+  auto rhs = context.insts().GetAs<SemIR::IntValue>(rhs_id);
+  CARBON_CHECK(lhs.type_id == rhs.type_id,
+               "Builtin comparison with mismatched types!");
+
+  auto [is_signed, bit_width_id] = context.sem_ir().GetIntTypeInfo(lhs.type_id);
+  CARBON_CHECK(bit_width_id != IntId::Invalid,
+               "Cannot evaluate a generic bit width integer: {0}", lhs);
+  llvm::APInt lhs_val = context.ints().GetAtWidth(lhs.int_id, bit_width_id);
+  llvm::APInt rhs_val = context.ints().GetAtWidth(rhs.int_id, bit_width_id);
 
   bool result;
   switch (builtin_kind) {

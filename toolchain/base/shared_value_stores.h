@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 
+#include "toolchain/base/int_store.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/base/value_store.h"
@@ -17,7 +18,7 @@ namespace Carbon {
 class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
   // Provide types that can be used by APIs to forward access to these stores.
-  using IntStore = CanonicalValueStore<IntId>;
+  using IntStore = IntStore;
   using RealStore = ValueStore<RealId>;
   using FloatStore = CanonicalValueStore<FloatId>;
   using IdentifierStore = CanonicalValueStore<IdentifierId>;
