@@ -1166,10 +1166,6 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     // Too short to form one of these tokens.
     return LexResult::NoMatch();
   }
-  if (word[1] < '1' || word[1] > '9') {
-    // Doesn't start with a valid initial digit.
-    return LexResult::NoMatch();
-  }
 
   TokenKind kind;
   switch (word.front()) {
@@ -1186,17 +1182,49 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
       return LexResult::NoMatch();
   };
 
-  llvm::StringRef suffix = word.substr(1);
-  if (!CanLexInt(emitter_, suffix)) {
-    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
-  }
-  llvm::APInt suffix_value;
-  if (suffix.getAsInteger(10, suffix_value)) {
+  // No leading zeros allowed.
+  if ('1' > word[1] || word[1] > '9') {
     return LexResult::NoMatch();
   }
 
+  llvm::StringRef suffix = word.substr(1);
+
+  // Type bit-widths can't usefully be large integers so we restrict to small
+  // ones that are especially easy to parse into a normal integer variable by
+  // restricting the number of digits to round trip.
+  int64_t suffix_value;
+  constexpr ssize_t DigitLimit =
+      std::numeric_limits<decltype(suffix_value)>::digits10;
+  if (suffix.size() > DigitLimit) {
+    // See if this is not actually a type literal.
+    if (!llvm::all_of(suffix, IsDecimalDigit)) {
+      return LexResult::NoMatch();
+    }
+
+    // Otherwise, diagnose and produce an error token.
+    CARBON_DIAGNOSTIC(TooManyTypeBitWidthDigits, Error,
+                      "found a type literal with a bit width using {0} digits, "
+                      "which is greater than the limit of {1}",
+                      size_t, size_t);
+    emitter_.Emit(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
+                  DigitLimit);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+
+  // It's tempting to do something more clever because we know the length ahead
+  // of time, but we expect these to be short (1-3 digits) and profiling doesn't
+  // show the loop as hot in the short cases.
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return LexResult::NoMatch();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
+  }
+
   return LexTokenWithPayload(
-      kind, buffer_.value_stores_->ints().Add(std::move(suffix_value)).index,
+      kind,
+      buffer_.value_stores_->ints().Add(llvm::APInt(64, suffix_value)).index,
       byte_offset);
 }
 

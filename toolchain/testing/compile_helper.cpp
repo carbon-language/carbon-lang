@@ -17,9 +17,10 @@ auto CompileHelper::GetTokenizedBuffer(llvm::StringRef text,
   return token_storage_.front();
 }
 
-auto CompileHelper::GetTokenizedBufferWithSharedValueStore(llvm::StringRef text)
+auto CompileHelper::GetTokenizedBufferWithSharedValueStore(
+    llvm::StringRef text, DiagnosticConsumer* consumer)
     -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&> {
-  auto& tokens = GetTokenizedBuffer(text);
+  auto& tokens = GetTokenizedBuffer(text, consumer);
   return {tokens, value_store_storage_.front()};
 }
 
