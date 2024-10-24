@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <forward_list>
 #include <iterator>
 
@@ -1023,27 +1024,54 @@ TEST_F(LexerTest, TypeLiterals) {
 }
 
 TEST_F(LexerTest, TypeLiteralTooManyDigits) {
-  std::string code = "i";
-  constexpr int Count = 10000;
-  code.append(Count, '9');
-
+  // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TooManyTypeBitWidthDigits,
+                            DiagnosticLevel::Error, 1, 2, _)));
+  std::string code = "i";
+  // A 128-bit APInt should be plenty large, but if needed in the future it can
+  // be widened without issue.
+  llvm::APInt bits = llvm::APInt::getZero(128);
+  for ([[maybe_unused]] int _ : llvm::seq(1, 30)) {
+    code.append("9");
+    bits = bits * 10 + 9;
+    auto [buffer, value_stores] =
+        compile_helper_.GetTokenizedBufferWithSharedValueStore(code, &consumer);
+    if (buffer.has_errors()) {
+      ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                              {.kind = TokenKind::FileStart},
+                              {.kind = TokenKind::Error, .text = code},
+                              {.kind = TokenKind::FileEnd},
+                          }));
+      break;
+    }
+    ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                            {.kind = TokenKind::FileStart},
+                            {.kind = TokenKind::IntTypeLiteral, .text = code},
+                            {.kind = TokenKind::FileEnd},
+                        }));
+    auto token = buffer.tokens().begin()[1];
+    EXPECT_TRUE(llvm::APInt::isSameValue(
+        value_stores.ints().Get(buffer.GetTypeLiteralSize(token)), bits));
+  }
+
+  // Make sure we can also gracefully reject very large number of digits without
+  // crashing or hanging, and show the correct number.
+  constexpr int Count = 10000;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
                             DiagnosticKind::TooManyTypeBitWidthDigits,
                             DiagnosticLevel::Error, 1, 2,
                             HasSubstr(llvm::formatv(" {0} ", Count)))));
+  code = "i";
+  code.append(Count, '9');
   auto& buffer = compile_helper_.GetTokenizedBuffer(code, &consumer);
-  EXPECT_TRUE(buffer.has_errors());
-  ASSERT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::FileStart, .line = 1, .column = 1},
-                  {.kind = TokenKind::Error,
-                   .line = 1,
-                   .column = 1,
-                   .indent_column = 1,
-                   .text = code},
-                  {.kind = TokenKind::FileEnd, .line = 1, .column = Count + 2},
-              }));
+  ASSERT_TRUE(buffer.has_errors());
+  ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::FileStart},
+                          {.kind = TokenKind::Error, .text = code},
+                          {.kind = TokenKind::FileEnd},
+                      }));
 }
 
 TEST_F(LexerTest, DiagnosticTrailingComment) {

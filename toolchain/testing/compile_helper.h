@@ -25,7 +25,8 @@ class CompileHelper {
       -> Lex::TokenizedBuffer&;
 
   // Returns the result of lex along with shared values.
-  auto GetTokenizedBufferWithSharedValueStore(llvm::StringRef text)
+  auto GetTokenizedBufferWithSharedValueStore(
+      llvm::StringRef text, DiagnosticConsumer* consumer = nullptr)
       -> std::pair<Lex::TokenizedBuffer&, SharedValueStores&>;
 
   // Returns the result of parse.
