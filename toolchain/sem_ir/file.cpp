@@ -269,8 +269,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
       case IntType::Kind:
-      case ValueParam::Kind:
-      case ValueParamPattern::Kind:
       case PointerType::Kind:
       case SpecificFunction::Kind:
       case StringLiteral::Kind:
@@ -282,6 +280,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
+      case ValueParam::Kind:
+      case ValueParamPattern::Kind:
       case WhereExpr::Kind:
         return value_category;
 
