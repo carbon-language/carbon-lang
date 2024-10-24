@@ -1214,10 +1214,12 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   // It's tempting to do something more clever because we know the length ahead
   // of time, but we expect these to be short (1-3 digits) and profiling doesn't
   // show the loop as hot in the short cases.
-  if (auto [ptr, error] =
-          std::from_chars(suffix.begin(), suffix.end(), suffix_value);
-      error != std::errc() || ptr != suffix.end()) {
-    return LexResult::NoMatch();
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return LexResult::NoMatch();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
   }
 
   return LexTokenWithPayload(
