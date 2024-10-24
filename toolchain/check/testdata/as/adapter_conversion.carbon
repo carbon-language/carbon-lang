@@ -178,10 +178,10 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc6_8: %.2 = field_decl y, element1 [template]
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %A = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %return.param: %A = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]

@@ -213,26 +213,26 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [template = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.patt: %Empty.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Empty.type = param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: %Empty.type = value_param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%Empty.type]
-// CHECK:STDOUT:     %e.param: %Empty.type = param runtime_param0
+// CHECK:STDOUT:     %e.param: %Empty.type = value_param runtime_param0
 // CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [template = constants.%UseBasic] {
 // CHECK:STDOUT:     %e.patt: %Basic.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Basic.type = param_pattern %e.patt, runtime_param0
+// CHECK:STDOUT:     %e.param_patt: %Basic.type = value_param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%import_ref.2 [template = constants.%Basic.type]
-// CHECK:STDOUT:     %e.param: %Basic.type = param runtime_param0
+// CHECK:STDOUT:     %e.param: %Basic.type = value_param runtime_param0
 // CHECK:STDOUT:     %e: %Basic.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [template = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %f.patt: %ForwardDeclared.type = binding_pattern f
-// CHECK:STDOUT:     %f.param_patt: %ForwardDeclared.type = param_pattern %f.patt, runtime_param0
+// CHECK:STDOUT:     %f.param_patt: %ForwardDeclared.type = value_param_pattern %f.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %f.param: %ForwardDeclared.type = param runtime_param0
+// CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param runtime_param0
 // CHECK:STDOUT:     %f: %ForwardDeclared.type = bind_name f, %f.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%import_ref.2 [template = constants.%Basic.type]

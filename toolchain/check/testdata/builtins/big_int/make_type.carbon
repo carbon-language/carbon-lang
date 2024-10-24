@@ -51,9 +51,9 @@ var i: BigInt();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %BigInt.decl: %BigInt.type = fn_decl @BigInt [template = constants.%BigInt] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: type = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

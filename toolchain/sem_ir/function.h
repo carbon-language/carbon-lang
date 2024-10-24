@@ -70,7 +70,7 @@ struct Function : public EntityWithParamsBase,
   // binding pattern.
   struct ParamPatternInfo {
     InstId inst_id;
-    ParamPattern inst;
+    AnyParamPattern inst;
     EntityNameId entity_name_id;
 
     auto GetNameId(const File& sem_ir) -> NameId;
@@ -90,7 +90,7 @@ struct Function : public EntityWithParamsBase,
   // corresponding instruction, its ID, and the name binding, if present.
   struct ParamInfo {
     InstId inst_id;
-    Param inst;
+    AnyParam inst;
     std::optional<AnyBindName> bind_name;
   };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)

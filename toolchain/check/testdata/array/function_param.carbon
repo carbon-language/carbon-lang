@@ -60,11 +60,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %arr.patt: %.3 = binding_pattern arr
-// CHECK:STDOUT:     %arr.param_patt: %.3 = param_pattern %arr.patt, runtime_param0
+// CHECK:STDOUT:     %arr.param_patt: %.3 = value_param_pattern %arr.patt, runtime_param0
 // CHECK:STDOUT:     %i.patt: i32 = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: i32 = param_pattern %i.patt, runtime_param1
+// CHECK:STDOUT:     %i.param_patt: i32 = value_param_pattern %i.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
@@ -77,21 +77,21 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc11_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_32.1: type = value_of_initializer %int.make_type_32.loc11_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %int.make_type_32.loc11_32, %.loc11_32.1 [template = i32]
-// CHECK:STDOUT:     %arr.param: %.3 = param runtime_param0
+// CHECK:STDOUT:     %arr.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %arr: %.3 = bind_name arr, %arr.param
-// CHECK:STDOUT:     %i.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %i.param: i32 = value_param runtime_param1
 // CHECK:STDOUT:     %i: i32 = bind_name i, %i.param
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param2
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc15_11.2: type = converted %int.make_type_32, %.loc15_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

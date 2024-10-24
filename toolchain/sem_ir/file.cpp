@@ -195,6 +195,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case Namespace::Kind:
+      case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
@@ -268,8 +269,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
       case IntType::Kind:
-      case Param::Kind:
-      case ParamPattern::Kind:
       case PointerType::Kind:
       case SpecificFunction::Kind:
       case StringLiteral::Kind:
@@ -281,6 +280,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
+      case ValueParam::Kind:
+      case ValueParamPattern::Kind:
       case WhereExpr::Kind:
         return value_category;
 
@@ -352,6 +353,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TemporaryStorage::Kind:
       case ValueAsRef::Kind:
         return ExprCategory::EphemeralRef;
+
+      case OutParam::Kind:
+        // TODO: consider introducing a separate category for OutParam:
+        // unlike other DurableRefs, it permits initialization.
+        return ExprCategory::DurableRef;
     }
   }
 }

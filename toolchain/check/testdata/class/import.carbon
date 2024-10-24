@@ -124,20 +124,20 @@ fn Run() {
 // CHECK:STDOUT: class @ForwardDeclared {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ForwardDeclared = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ForwardDeclared = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %ForwardDeclared = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self.param: %ForwardDeclared = param runtime_param0
+// CHECK:STDOUT:     %self.param: %ForwardDeclared = value_param runtime_param0
 // CHECK:STDOUT:     %self: %ForwardDeclared = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %.7 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.7 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.7 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc15_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type %ForwardDeclared [template = constants.%.7]
-// CHECK:STDOUT:     %self.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %self.param: %.7 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.7 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.1 [template = constants.%.2]

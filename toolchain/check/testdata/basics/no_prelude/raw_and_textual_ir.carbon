@@ -51,7 +51,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: BindName, arg0: entity_name0, arg1: inst+16, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+5':          {kind: BindingPattern, arg0: entity_name0, arg1: inst+4, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+6':          {kind: ParamPattern, arg0: inst+5, arg1: runtime_param0, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+6':          {kind: ValueParamPattern, arg0: inst+5, arg1: runtime_param0, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+9':          {kind: TupleType, arg0: type_block1, type: typeTypeType}
@@ -60,9 +60,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+12':         {kind: Converted, arg0: inst+8, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+13':         {kind: Converted, arg0: inst+10, arg1: inst+9, type: typeTypeType}
 // CHECK:STDOUT:     'inst+14':         {kind: ReturnSlotPattern, arg0: inst+10, type: type(inst+9)}
-// CHECK:STDOUT:     'inst+15':         {kind: ParamPattern, arg0: inst+14, arg1: runtime_param1, type: type(inst+9)}
-// CHECK:STDOUT:     'inst+16':         {kind: Param, arg0: runtime_param0, arg1: name1, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+17':         {kind: Param, arg0: runtime_param1, arg1: nameReturnSlot, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+15':         {kind: OutParamPattern, arg0: inst+14, arg1: runtime_param1, type: type(inst+9)}
+// CHECK:STDOUT:     'inst+16':         {kind: ValueParam, arg0: runtime_param0, arg1: name1, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+17':         {kind: OutParam, arg0: runtime_param1, arg1: nameReturnSlot, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+18':         {kind: ReturnSlot, arg0: inst+10, arg1: inst+17, type: type(inst+9)}
 // CHECK:STDOUT:     'inst+19':         {kind: FunctionDecl, arg0: function0, arg1: block8, type: type(inst+20)}
 // CHECK:STDOUT:     'inst+20':         {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: typeTypeType}
@@ -180,9 +180,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %.1 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: %.1 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.2 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
@@ -192,9 +192,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %n.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %n.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: %.2 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

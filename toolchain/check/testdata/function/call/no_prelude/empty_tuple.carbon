@@ -34,17 +34,17 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [template = constants.%Echo] {
 // CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.1 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_13.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_13.2: type = converted %.loc11_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %a.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: %.1 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}

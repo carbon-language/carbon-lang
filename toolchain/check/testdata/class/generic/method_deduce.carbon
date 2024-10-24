@@ -94,16 +94,16 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc14_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc14_13.1, runtime_param<invalid> [symbolic = %T.patt.loc14_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc14_13.1, runtime_param<invalid> [symbolic = %T.patt.loc14_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc14_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [template = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %c.patt: %Class.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.9 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.9 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.9 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %A.ref.loc19_31: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -112,16 +112,16 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %B.ref.loc19: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc19_43.1: %.4 = tuple_literal (%A.ref.loc19_39, %B.ref.loc19)
 // CHECK:STDOUT:     %.loc19_43.2: type = converted %.loc19_43.1, constants.%.9 [template = constants.%.9]
-// CHECK:STDOUT:     %c.param: %Class.3 = param runtime_param0
+// CHECK:STDOUT:     %c.param: %Class.3 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %Class.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: %.9 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.9 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.decl: %CallGenericMethodWithNonDeducedParam.type = fn_decl @CallGenericMethodWithNonDeducedParam [template = constants.%CallGenericMethodWithNonDeducedParam] {
 // CHECK:STDOUT:     %c.patt: %Class.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class.3 = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.9 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.9 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.9 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %A.ref.loc23_50: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -130,9 +130,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %B.ref.loc23: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc23_62.1: %.4 = tuple_literal (%A.ref.loc23_58, %B.ref.loc23)
 // CHECK:STDOUT:     %.loc23_62.2: type = converted %.loc23_62.1, constants.%.9 [template = constants.%.9]
-// CHECK:STDOUT:     %c.param: %Class.3 = param runtime_param0
+// CHECK:STDOUT:     %c.param: %Class.3 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %Class.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: %.9 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.9 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -164,37 +164,37 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.1)] {
 // CHECK:STDOUT:       %U.patt.loc15_10.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc15_10.1 (constants.%U.patt.1)]
-// CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc15_10.2, runtime_param<invalid> [symbolic = %U.patt.loc15_10.1 (constants.%U.patt.1)]
+// CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc15_10.2, runtime_param<invalid> [symbolic = %U.patt.loc15_10.1 (constants.%U.patt.1)]
 // CHECK:STDOUT:       %return.patt: @Get.%.loc15_28.1 (%.5) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Get.%.loc15_28.1 (%.5) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @Get.%.loc15_28.1 (%.5) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc14_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc15_27: type = name_ref U, %U.loc15_10.2 [symbolic = %U.loc15_10.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc15_28.2: %.4 = tuple_literal (%T.ref, %U.ref.loc15_27)
 // CHECK:STDOUT:       %.loc15_28.3: type = converted %.loc15_28.2, constants.%.5 [symbolic = %.loc15_28.1 (constants.%.5)]
-// CHECK:STDOUT:       %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc15_10.2: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc15_10.1 (constants.%U)]
-// CHECK:STDOUT:       %return.param: @Get.%.loc15_28.1 (%.5) = param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @Get.%.loc15_28.1 (%.5) = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref @Get.%.loc15_28.1 (%.5) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetNoDeduce.decl: @Class.%GetNoDeduce.type (%GetNoDeduce.type.1) = fn_decl @GetNoDeduce [symbolic = @Class.%GetNoDeduce (constants.%GetNoDeduce.1)] {
 // CHECK:STDOUT:       %x.patt: @GetNoDeduce.%T (%T) = binding_pattern x
-// CHECK:STDOUT:       %x.param_patt: @GetNoDeduce.%T (%T) = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:       %x.param_patt: @GetNoDeduce.%T (%T) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:       %U.patt.loc16_24.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc16_24.1 (constants.%U.patt.2)]
-// CHECK:STDOUT:       %U.param_patt: type = param_pattern %U.patt.loc16_24.2, runtime_param<invalid> [symbolic = %U.patt.loc16_24.1 (constants.%U.patt.2)]
+// CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc16_24.2, runtime_param<invalid> [symbolic = %U.patt.loc16_24.1 (constants.%U.patt.2)]
 // CHECK:STDOUT:       %return.patt: @GetNoDeduce.%.loc16_42.1 (%.5) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @GetNoDeduce.%.loc16_42.1 (%.5) = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:       %return.param_patt: @GetNoDeduce.%.loc16_42.1 (%.5) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc16_21: type = name_ref T, @Class.%T.loc14_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc16_38: type = name_ref T, @Class.%T.loc14_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc16_41: type = name_ref U, %U.loc16_24.2 [symbolic = %U.loc16_24.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc16_42.2: %.4 = tuple_literal (%T.ref.loc16_38, %U.ref.loc16_41)
 // CHECK:STDOUT:       %.loc16_42.3: type = converted %.loc16_42.2, constants.%.5 [symbolic = %.loc16_42.1 (constants.%.5)]
-// CHECK:STDOUT:       %x.param: @GetNoDeduce.%T (%T) = param runtime_param0
+// CHECK:STDOUT:       %x.param: @GetNoDeduce.%T (%T) = value_param runtime_param0
 // CHECK:STDOUT:       %x: @GetNoDeduce.%T (%T) = bind_name x, %x.param
-// CHECK:STDOUT:       %U.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc16_24.2: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc16_24.1 (constants.%U)]
-// CHECK:STDOUT:       %return.param: @GetNoDeduce.%.loc16_42.1 (%.5) = param runtime_param1
+// CHECK:STDOUT:       %return.param: ref @GetNoDeduce.%.loc16_42.1 (%.5) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @GetNoDeduce.%.loc16_42.1 (%.5) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc17: <witness> = complete_type_witness %.1 [template = constants.%.2]

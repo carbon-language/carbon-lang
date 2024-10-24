@@ -326,10 +326,10 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %Abstract = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:     %a.param: %Abstract = param runtime_param0
+// CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -438,18 +438,18 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %Param.decl: %Param.type = fn_decl @Param [template = constants.%Param] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %Abstract = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:     %a.param: %Abstract = param runtime_param0
+// CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %Abstract = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %Abstract = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %Abstract = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:     %p.param: %Abstract = param runtime_param0
+// CHECK:STDOUT:     %p.param: %Abstract = value_param runtime_param0
 // CHECK:STDOUT:     %p: %Abstract = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -524,10 +524,10 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %Derived = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Derived = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Derived = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %return.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Derived = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -612,15 +612,15 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Return.decl: %Return.type = fn_decl @Return [template = constants.%Return] {
 // CHECK:STDOUT:     %a.patt: %Abstract = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %Abstract = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %Abstract = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %Abstract = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Abstract = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %Abstract = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:     %a.param: %Abstract = param runtime_param0
+// CHECK:STDOUT:     %a.param: %Abstract = value_param runtime_param0
 // CHECK:STDOUT:     %a: %Abstract = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: %Abstract = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %Abstract = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -706,17 +706,17 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_26.2: type = converted %int.make_type_32, %.loc14_26.1 [template = i32]
-// CHECK:STDOUT:     %d.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -848,10 +848,10 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %ReturnAbstract.decl: %ReturnAbstract.type = fn_decl @ReturnAbstract [template = constants.%ReturnAbstract] {
 // CHECK:STDOUT:     %return.patt: %Abstract = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Abstract = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Abstract = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:     %return.param: %Abstract = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Abstract = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallReturnAbstract.decl: %CallReturnAbstract.type = fn_decl @CallReturnAbstract [template = constants.%CallReturnAbstract] {} {}

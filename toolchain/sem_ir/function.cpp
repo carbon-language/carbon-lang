@@ -65,7 +65,7 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   }
 
   auto param_pattern_id = inst_id;
-  auto param_pattern_inst = inst.As<SemIR::ParamPattern>();
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
 
   inst_id = param_pattern_inst.subpattern_id;
   inst = sem_ir.insts().Get(inst_id);
@@ -90,7 +90,7 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
     return SemIR::NameId::Invalid;
   }
 
-  auto param_pattern_inst = inst.As<SemIR::ParamPattern>();
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
 
   inst_id = param_pattern_inst.subpattern_id;
   inst = sem_ir.insts().Get(inst_id);
@@ -113,7 +113,7 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   } else {
     CARBON_FATAL();
   }
-  return {param_ref_id, ref.As<Param>(), bind_name};
+  return {param_ref_id, ref.As<AnyParam>(), bind_name};
 }
 
 auto Function::GetDeclaredReturnType(const File& file,

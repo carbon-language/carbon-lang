@@ -100,44 +100,44 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCall.decl: %NonInstanceCall.type = fn_decl @NonInstanceCall [template = constants.%NonInstanceCall] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc21_23.2: type = converted %int.make_type_32, %.loc21_23.1 [template = i32]
-// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc25_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_20.2: type = converted %int.make_type_32, %.loc25_20.1 [template = i32]
-// CHECK:STDOUT:     %n.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [template = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %.7 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.7 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.7 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc29_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc29_34.2: type = converted %int.make_type_32, %.loc29_34.1 [template = i32]
 // CHECK:STDOUT:     %.loc29_34.3: type = ptr_type i32 [template = constants.%.7]
-// CHECK:STDOUT:     %p.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.7 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.7 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [template = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %.7 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.7 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.7 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc33_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc33_31.2: type = converted %int.make_type_32, %.loc33_31.1 [template = i32]
 // CHECK:STDOUT:     %.loc33_31.3: type = ptr_type i32 [template = constants.%.7]
-// CHECK:STDOUT:     %p.param: %.7 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.7 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.7 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -148,12 +148,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%Self (%Self) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: @G.1.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = param runtime_param0
+// CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
@@ -169,12 +169,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: i32 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: i32 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc18_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc18_14.2: type = converted %int.make_type_32, %.loc18_14.1 [template = i32]
-// CHECK:STDOUT:     %self.param: i32 = param runtime_param0
+// CHECK:STDOUT:     %self.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_20: <witness> = interface_witness (%F.decl, %G.decl) [template = constants.%.6]

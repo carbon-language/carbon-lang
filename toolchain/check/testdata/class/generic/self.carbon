@@ -63,9 +63,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_13.1, runtime_param<invalid> [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.param: type = param runtime_param<invalid>
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -85,21 +85,21 @@ class Class(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = @Class.%MakeSelf (constants.%MakeSelf)] {
 // CHECK:STDOUT:       %return.patt: @MakeSelf.%Class (%Class.2) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%Class (%Class.2) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%Class (%Class.2) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc14_20: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14_20 [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %return.param: @MakeSelf.%Class (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @MakeSelf.%Class (%Class.2) = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref @MakeSelf.%Class (%Class.2) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = @Class.%MakeClass (constants.%MakeClass)] {
 // CHECK:STDOUT:       %return.patt: @MakeClass.%Class.loc15_26.1 (%Class.2) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeClass.%Class.loc15_26.1 (%Class.2) = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:       %return.param_patt: @MakeClass.%Class.loc15_26.1 (%Class.2) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc15_26.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc15_26.1 (constants.%Class.2)]
-// CHECK:STDOUT:       %return.param: @MakeClass.%Class.loc15_26.1 (%Class.2) = param runtime_param0
+// CHECK:STDOUT:       %return.param: ref @MakeClass.%Class.loc15_26.1 (%Class.2) = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref @MakeClass.%Class.loc15_26.1 (%Class.2) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {} {}

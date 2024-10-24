@@ -173,10 +173,10 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [template = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
-// CHECK:STDOUT:     %a.param: %AdaptNotExtend = param runtime_param0
+// CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param runtime_param0
 // CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

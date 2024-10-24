@@ -78,22 +78,22 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.3 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
-// CHECK:STDOUT:     %self.param.loc17: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self.param.loc17: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc17: %.3 = bind_name self, %self.param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %.11 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.11 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.11 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc25: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %p.param: %.11 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.11 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -105,12 +105,12 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc12_8: %.2 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.3 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.3 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc14: type = ptr_type %Base [template = constants.%.3]
-// CHECK:STDOUT:     %self.param.loc14: %.3 = param runtime_param0
+// CHECK:STDOUT:     %self.param.loc14: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc14: %.3 = bind_name self, %self.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]

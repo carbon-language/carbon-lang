@@ -1421,7 +1421,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::NameRef typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
-    case CARBON_KIND(SemIR::ParamPattern param_pattern): {
+    case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
+      // TODO: treat this as a non-expression (here and in GetExprCategory)
+      // once generic deduction doesn't need patterns to have constant values.
       return eval_context.GetConstantValue(param_pattern.subpattern_id);
     }
     case CARBON_KIND(SemIR::Converted typed_inst): {
@@ -1489,7 +1491,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImportDecl::Kind:
-    case SemIR::Param::Kind:
+    case SemIR::OutParam::Kind:
+    case SemIR::OutParamPattern::Kind:
     case SemIR::RequirementEquivalent::Kind:
     case SemIR::RequirementImpls::Kind:
     case SemIR::RequirementRewrite::Kind:
@@ -1498,6 +1501,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
+    case SemIR::ValueParam::Kind:
     case SemIR::VarStorage::Kind:
       break;
 

@@ -100,11 +100,11 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %a.patt: %.4 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.4 = param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.param_patt: %.4 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc41: type = ptr_type %Outer [template = constants.%.4]
-// CHECK:STDOUT:     %a.param: %.4 = param runtime_param0
+// CHECK:STDOUT:     %a.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -87,17 +87,17 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %Derived = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Derived = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Derived = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %return.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %Derived = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %Derived = param_pattern %d.patt, runtime_param0
+// CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.17 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.17 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.17 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int.make_type_32.loc25_27: init type = call constants.%Int32() [template = i32]
@@ -108,9 +108,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc25_35.4: type = value_of_initializer %int.make_type_32.loc25_32 [template = i32]
 // CHECK:STDOUT:     %.loc25_35.5: type = converted %int.make_type_32.loc25_32, %.loc25_35.4 [template = i32]
 // CHECK:STDOUT:     %.loc25_35.6: type = converted %.loc25_35.1, constants.%.17 [template = constants.%.17]
-// CHECK:STDOUT:     %d.param: %Derived = param runtime_param0
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: %.17 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.17 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.17 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

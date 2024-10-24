@@ -77,9 +77,9 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %p.patt: %.10 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.10 = param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.param_patt: %.10 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %.11 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.11 = param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %.11 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc24_21: type = ptr_type %Derived [template = constants.%.10]
@@ -87,9 +87,9 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %.loc24_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.2: type = converted %int.make_type_32, %.loc24_30.1 [template = i32]
 // CHECK:STDOUT:     %.loc24_30.3: type = ptr_type i32 [template = constants.%.11]
-// CHECK:STDOUT:     %p.param: %.10 = param runtime_param0
+// CHECK:STDOUT:     %p.param: %.10 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.10 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: %.11 = param runtime_param1
+// CHECK:STDOUT:     %return.param: ref %.11 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.11 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

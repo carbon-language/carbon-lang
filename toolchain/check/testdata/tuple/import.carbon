@@ -147,7 +147,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b_ref: ref %.10 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %X.patt.loc7_9.1: %.9 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: %.9 = param_pattern %X.patt.loc7_9.1, runtime_param<invalid> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: %.9 = value_param_pattern %X.patt.loc7_9.1, runtime_param<invalid> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc7_19: init type = call constants.%Int32() [template = i32]
@@ -157,12 +157,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc7_22.4: type = value_of_initializer %int.make_type_32.loc7_19 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.5: type = converted %int.make_type_32.loc7_19, %.loc7_22.4 [template = i32]
 // CHECK:STDOUT:     %.loc7_22.6: type = converted %.loc7_22.1, constants.%.9 [template = constants.%.9]
-// CHECK:STDOUT:     %X.param: %.9 = param runtime_param<invalid>
+// CHECK:STDOUT:     %X.param: %.9 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %X.loc7_9.1: %.9 = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.3 = param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %C.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %.loc9_14: i32 = int_literal 1 [template = constants.%.15]
@@ -171,7 +171,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %tuple: %.9 = tuple_value (%.loc9_14, %.loc9_17) [template = constants.%tuple.5]
 // CHECK:STDOUT:     %.loc9_12: %.9 = converted %.loc9_18, %tuple [template = constants.%tuple.5]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.5) [template = constants.%C.3]
-// CHECK:STDOUT:     %return.param: %C.3 = param runtime_param0
+// CHECK:STDOUT:     %return.param: ref %C.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

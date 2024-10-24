@@ -105,18 +105,18 @@ base class BaseClass {
 // CHECK:STDOUT: class @FinalClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.1 = fn_decl @Abstract.1 [template = constants.%Abstract.1] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %FinalClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %self.param: %FinalClass = param runtime_param0
+// CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: %Virtual.type = fn_decl @Virtual [template = constants.%Virtual] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %FinalClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
-// CHECK:STDOUT:     %self.param: %FinalClass = param runtime_param0
+// CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -130,18 +130,18 @@ base class BaseClass {
 // CHECK:STDOUT: class @AbstractClass {
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [template = constants.%Default] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %self.param: %AbstractClass = param runtime_param0
+// CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
-// CHECK:STDOUT:     %self.param: %AbstractClass = param runtime_param0
+// CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc45: <witness> = complete_type_witness %.2 [template = constants.%.3]
@@ -155,10 +155,10 @@ base class BaseClass {
 // CHECK:STDOUT: class @BaseClass {
 // CHECK:STDOUT:   %Abstract.decl: %Abstract.type.2 = fn_decl @Abstract.2 [template = constants.%Abstract.2] {
 // CHECK:STDOUT:     %self.patt: %BaseClass = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %BaseClass = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %BaseClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
-// CHECK:STDOUT:     %self.param: %BaseClass = param runtime_param0
+// CHECK:STDOUT:     %self.param: %BaseClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %.2 [template = constants.%.3]

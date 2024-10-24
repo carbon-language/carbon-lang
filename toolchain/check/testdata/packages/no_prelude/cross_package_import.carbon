@@ -257,11 +257,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %.1 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.1 = param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.param_patt: %.1 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %x.param: %.1 = param runtime_param0
+// CHECK:STDOUT:     %x.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.1 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

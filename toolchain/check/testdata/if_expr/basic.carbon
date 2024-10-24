@@ -56,13 +56,13 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param1
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:     %m.patt: i32 = binding_pattern m
-// CHECK:STDOUT:     %m.param_patt: i32 = param_pattern %m.patt, runtime_param2
+// CHECK:STDOUT:     %m.param_patt: i32 = value_param_pattern %m.patt, runtime_param2
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = param_pattern %return.patt, runtime_param3
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param3
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -76,13 +76,13 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %int.make_type_32.loc11_34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_32.loc11_34 [template = i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_32.loc11_34, %.loc11_34.1 [template = i32]
-// CHECK:STDOUT:     %b.param: bool = param runtime_param0
+// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %n.param: i32 = param runtime_param1
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param1
 // CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
-// CHECK:STDOUT:     %m.param: i32 = param runtime_param2
+// CHECK:STDOUT:     %m.param: i32 = value_param runtime_param2
 // CHECK:STDOUT:     %m: i32 = bind_name m, %m.param
-// CHECK:STDOUT:     %return.param: i32 = param runtime_param3
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param3
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
