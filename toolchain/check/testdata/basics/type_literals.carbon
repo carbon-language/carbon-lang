@@ -39,10 +39,6 @@ var test_i15: i15;
 // CHECK:STDERR:
 var test_i1000000000: i1000000000;
 // TODO: This diagnostic is not very good.
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+12]]:33: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var test_i10000000000000000000: i10000000000000000000;
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+8]]:33: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
 // CHECK:STDERR: var test_i10000000000000000000: i10000000000000000000;
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
@@ -84,10 +80,6 @@ var test_u15: u15;
 // CHECK:STDERR:
 var test_u1000000000: u1000000000;
 // TODO: This diagnostic is not very good.
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+12]]:33: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var test_u10000000000000000000: u10000000000000000000;
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+8]]:33: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
 // CHECK:STDERR: var test_u10000000000000000000: u10000000000000000000;
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~

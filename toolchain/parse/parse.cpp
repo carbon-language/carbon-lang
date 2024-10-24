@@ -45,7 +45,10 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   }
 
   context.AddLeafNode(NodeKind::FileEnd, *context.position());
-  tree.set_has_errors(err_tracker.seen_error());
+
+  // Mark the tree as potentially having errors if there were errors coming in
+  // from the tokenized buffer or we diagnosed new errors.
+  tree.set_has_errors(tokens.has_errors() || err_tracker.seen_error());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     // TODO: This is temporarily printing to stderr directly during development.
