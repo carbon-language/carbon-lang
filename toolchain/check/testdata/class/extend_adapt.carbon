@@ -54,7 +54,7 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note: type `SomeClassAdapter` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing `self` parameter of method declared here [InCallToFunctionSelf]
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-14]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[self: Self]();
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
@@ -355,7 +355,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %.loc23_3.1: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
 // CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc23_3.1 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc23_3.2: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %.1 = call %.loc23_4(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc23_4(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

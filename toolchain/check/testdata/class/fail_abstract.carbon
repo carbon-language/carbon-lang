@@ -467,7 +467,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [template = constants.%Param]
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
-// CHECK:STDOUT:   %Param.call: init %.3 = call %Param.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Param.call: init %.3 = call %Param.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

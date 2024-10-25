@@ -77,7 +77,7 @@ var b: i32 = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref i32 = import_ref Main//lib, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.1: ref i32 = import_ref Main//lib, inst+15, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude

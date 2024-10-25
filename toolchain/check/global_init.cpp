@@ -45,6 +45,7 @@ auto GlobalInit::Finalize() -> void {
         .implicit_param_patterns_id = SemIR::InstBlockId::Invalid,
         .param_refs_id = SemIR::InstBlockId::Empty,
         .param_patterns_id = SemIR::InstBlockId::Empty,
+        .return_slot_pattern_id = SemIR::InstId::Invalid,
         .is_extern = false,
         .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
