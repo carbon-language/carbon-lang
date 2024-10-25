@@ -45,12 +45,14 @@ struct CompileOptions {
   bool force_obj_output = false;
   bool dump_shared_values = false;
   bool dump_tokens = false;
+  bool omit_file_boundary_tokens = false;
   bool dump_parse_tree = false;
   bool dump_raw_sem_ir = false;
   bool dump_sem_ir = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
   bool dump_mem_usage = false;
+  bool include_diagnostic_kind = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;

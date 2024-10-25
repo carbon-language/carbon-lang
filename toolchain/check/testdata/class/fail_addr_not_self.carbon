@@ -9,13 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_addr_not_self.carbon
 
 class Class {
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter [AddrOnNonSelfParam]
   // CHECK:STDERR:   fn F[addr a:! Class*]();
   // CHECK:STDERR:        ^~~~
   // CHECK:STDERR:
   fn F[addr a:! Class*]();
 
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter [AddrOnNonSelfParam]
   // CHECK:STDERR:   fn G(addr b: Class*);
   // CHECK:STDERR:        ^~~~
   fn G(addr b: Class*);
@@ -62,21 +62,21 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt.loc16_13.2: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.1 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %.1 = param_pattern %a.patt.loc16_13.2, runtime_param<invalid> [symbolic = %a.patt.loc16_13.1 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt.loc16_13.2, runtime_param<invalid> [symbolic = %a.patt.loc16_13.1 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc16_13.2: %.1 = bind_symbolic_name a, 0, %param [symbolic = %a.loc16_13.1 (constants.%a)]
+// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc16_13.2: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.1 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %.1 = param_pattern %b.patt, runtime_param0
+// CHECK:STDOUT:     %b.param_patt: %.1 = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %b: %.1 = bind_name b, %param
+// CHECK:STDOUT:     %b.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %b: %.1 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

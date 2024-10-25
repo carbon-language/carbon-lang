@@ -65,7 +65,7 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   }
 
   auto param_pattern_id = inst_id;
-  auto param_pattern_inst = inst.As<SemIR::ParamPattern>();
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
 
   inst_id = param_pattern_inst.subpattern_id;
   inst = sem_ir.insts().Get(inst_id);
@@ -74,6 +74,32 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   return {.inst_id = param_pattern_id,
           .inst = param_pattern_inst,
           .entity_name_id = binding_pattern.entity_name_id};
+}
+
+auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
+    -> SemIR::NameId {
+  auto inst_id = pattern_id;
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+    inst_id = addr_pattern->inner_id;
+    inst = sem_ir.insts().Get(inst_id);
+  }
+
+  if (inst_id == SemIR::InstId::BuiltinError) {
+    return SemIR::NameId::Invalid;
+  }
+
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
+
+  inst_id = param_pattern_inst.subpattern_id;
+  inst = sem_ir.insts().Get(inst_id);
+
+  if (inst.Is<ReturnSlotPattern>()) {
+    return SemIR::NameId::ReturnSlot;
+  }
+  auto binding_pattern = inst.As<AnyBindingPattern>();
+  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
 }
 
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
@@ -87,24 +113,16 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
   } else {
     CARBON_FATAL();
   }
-  return {param_ref_id, ref.As<Param>(), bind_name};
-}
-
-auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {
-  if (bind_name) {
-    return sem_ir.entity_names().Get(bind_name->entity_name_id).name_id;
-  } else {
-    return NameId::Invalid;
-  }
+  return {param_ref_id, ref.As<AnyParam>(), bind_name};
 }
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_storage_id.is_valid()) {
+  if (!return_slot_id.is_valid()) {
     return TypeId::Invalid;
   }
   return GetTypeInSpecific(file, specific_id,
-                           file.insts().Get(return_storage_id).type_id());
+                           file.insts().Get(return_slot_id).type_id());
 }
 
 }  // namespace Carbon::SemIR

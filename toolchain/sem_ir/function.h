@@ -24,7 +24,7 @@ struct FunctionFields {
   // type is the return type of the function. This may or may not be used by the
   // function, depending on whether the return type needs a return slot, but is
   // always present if the function has a declared return type.
-  InstId return_storage_id;
+  InstId return_slot_id;
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
@@ -53,8 +53,8 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_storage_id.is_valid()) {
-      out << ", return_storage: " << return_storage_id;
+    if (return_slot_id.is_valid()) {
+      out << ", return_slot: " << return_slot_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -70,7 +70,7 @@ struct Function : public EntityWithParamsBase,
   // binding pattern.
   struct ParamPatternInfo {
     InstId inst_id;
-    ParamPattern inst;
+    AnyParamPattern inst;
     EntityNameId entity_name_id;
 
     auto GetNameId(const File& sem_ir) -> NameId;
@@ -80,16 +80,18 @@ struct Function : public EntityWithParamsBase,
                                                InstId param_pattern_id)
       -> ParamPatternInfo;
 
+  // Gets the name from the name binding instruction, or invalid if this pattern
+  // has been replaced with BuiltinError.
+  static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
+      -> SemIR::NameId;
+
   // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns a `ParamInfo` value with the
   // corresponding instruction, its ID, and the name binding, if present.
   struct ParamInfo {
     InstId inst_id;
-    Param inst;
+    AnyParam inst;
     std::optional<AnyBindName> bind_name;
-
-    // Gets the name from `bind_name`. Returns invalid if that is not present.
-    auto GetNameId(const File& sem_ir) -> NameId;
   };
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> ParamInfo;

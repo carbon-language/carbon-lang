@@ -23,6 +23,7 @@
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -861,7 +862,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     auto loc = converter.ConvertLoc(
-        node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+        node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
     loc.FormatLocation(output);
     output << ": checking " << context.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
@@ -1189,19 +1190,18 @@ static auto BuildApiMapAndDiagnosePackaging(
       bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
       auto want_ext = is_impl ? ImplExt : ApiExt;
       if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
-        CARBON_DIAGNOSTIC(IncorrectExtension, Error,
-                          "file extension of `{0}` required for `{1}`",
-                          llvm::StringLiteral, Lex::TokenKind);
+        CARBON_DIAGNOSTIC(
+            IncorrectExtension, Error,
+            "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
+            BoolAsSelect);
         auto diag = unit_info.emitter.Build(
             packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
-            IncorrectExtension, want_ext,
-            is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
+            IncorrectExtension, is_impl);
         if (is_api_with_impl_ext) {
-          CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
-                            "file extension of `{0}` only allowed for `{1}`",
-                            llvm::StringLiteral, Lex::TokenKind);
-          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote, ImplExt,
-                    Lex::TokenKind::Impl);
+          CARBON_DIAGNOSTIC(
+              IncorrectExtensionImplNote, Note,
+              "file extension of `.impl.carbon` only allowed for `impl`");
+          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote);
         }
         diag.Emit();
       }

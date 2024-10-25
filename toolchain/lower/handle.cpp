@@ -178,8 +178,18 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::Param /*inst*/) -> void {
+                SemIR::OutParam /*inst*/) -> void {
   // Parameters are lowered by `BuildFunctionDefinition`.
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ValueParam /*inst*/) -> void {
+  // Parameters are lowered by `BuildFunctionDefinition`.
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ReturnSlot /*inst*/) -> void {
+  CARBON_FATAL("Return slots should be lowered by `BuildFunctionDefinition`");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,

@@ -77,9 +77,9 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
-                      "unexpected tokens before `{0}`", llvm::StringLiteral);
+                      "unexpected tokens before `{0}`", Lex::TokenKind);
     emitter_->Emit(*position_, ExpectedCloseSymbol,
-                   open_token_kind.closing_symbol().fixed_spelling());
+                   open_token_kind.closing_symbol());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
     AddNode(close_kind, Consume(), /*has_error=*/true);

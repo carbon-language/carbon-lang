@@ -8,19 +8,42 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/infix.carbon
 
-var n: i8 = n * n;
+fn F() {
+  n * n;
+  n ^ n;
+  n >= n;
+  n >> n;
+  n / n;
+}
 
 // CHECK:STDOUT: - filename: infix.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'n'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:       {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorCaret', text: '^', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorGreaterEqual', text: '>=', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorGreaterGreater', text: '>>', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorSlash', text: '/', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 26},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

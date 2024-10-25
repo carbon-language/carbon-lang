@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/manifest:defs.bzl", "manifest")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -10,6 +11,11 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "testdata",
     data = glob(["testdata/**/*.carbon"]),
+)
+
+manifest(
+    name = "testdata.txt",
+    srcs = [":testdata"],
 )
 
 cc_library(
@@ -195,6 +201,24 @@ cc_test(
         ":precedence",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "coverage_test",
+    size = "small",
+    srcs = ["coverage_test.cpp"],
+    args = ["--testdata_manifest=$(location :testdata.txt)"],
+    data = [
+        ":testdata",
+        ":testdata.txt",
+    ],
+    deps = [
+        ":node_kind",
+        "//testing/base:gtest_main",
+        "//toolchain/testing:coverage_helper",
+        "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest",
     ],
 )

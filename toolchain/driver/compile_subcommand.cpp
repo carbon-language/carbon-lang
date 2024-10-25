@@ -143,6 +143,15 @@ of a binary object file instead. Ignored for other `--output` values.
 
   b.AddFlag(
       {
+          .name = "include-diagnostic-kind",
+          .help = R"""(
+When printing diagnostics, include the diagnostic kind as part of output. This
+applies to each message that forms a diagnostic, not just the primary message.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
+  b.AddFlag(
+      {
           .name = "stream-errors",
           .help = R"""(
 Stream error messages to stderr as they are generated rather than sorting them
@@ -167,6 +176,16 @@ Dump the tokens to stdout when lexed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_tokens); });
+
+  b.AddFlag(
+      {
+          .name = "omit-file-boundary-tokens",
+          .help = R"""(
+For `--dump-tokens`, omit file start and end boundary tokens.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&omit_file_boundary_tokens); });
+
   b.AddFlag(
       {
           .name = "dump-parse-tree",
@@ -347,7 +366,8 @@ class CompilationUnit {
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
-      driver_env_->output_stream << tokens_;
+      tokens_->Print(driver_env_->output_stream,
+                     options_.omit_file_boundary_tokens);
     }
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);
@@ -635,7 +655,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream);
+  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream,
+                                           options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
 

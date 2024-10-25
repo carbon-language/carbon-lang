@@ -10,7 +10,7 @@
 
 class Class {
   fn F[addr self: Class*]();
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a binding with a pointer type
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a binding with a pointer type [AddrOnNonPointerType]
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -18,10 +18,10 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
   c.F();
@@ -74,38 +74,38 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class = param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.param_patt: %Class = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.1 = param_pattern %p.patt, runtime_param1
+// CHECK:STDOUT:     %p.param_patt: %.1 = value_param_pattern %p.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param.loc20_6: %Class = param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %param.loc20_6
-// CHECK:STDOUT:     %param.loc20_16: %.1 = param runtime_param1
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %param.loc20_16
+// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
+// CHECK:STDOUT:     %p.param: %.1 = value_param runtime_param1
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.1 = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %.1 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_24: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:     %param: %.1 = param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %param: %Class = param runtime_param0
-// CHECK:STDOUT:     %self: %Class = bind_name self, %param
+// CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

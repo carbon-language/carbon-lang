@@ -167,14 +167,21 @@ methods for formatting arguments:
     -   This includes `char` and integer types (`int`, `int32_t`, and so on).
     -   String types can be added as needed, but stringifying values using the
         methods noted below is preferred.
-        -   Use `llvm::StringLiteral` where appropriate; use `std::string` when
-            allocations are required.
+        -   Use `std::string` when allocations are required.
         -   `llvm::StringRef` is disallowed due to lifetime issues.
+        -   `llvm::StringLiteral` is disallowed because format providers such as
+            `BoolAsSelect` should work in cases where a `StringLiteral` could be
+            used, and because string literal parameters tend to make the
+            resulting diagnostics hard to translate.
 -   `llvm::format_provider<...>` specializations.
-    -   This can be used when formatting the parameter doesn't require
-        additional context.
-    -   For example, `Lex::TokenKind` and `Parse::RelativeLoc` provide
-        diagnostic formatting this way.
+    -   `BoolAsSelect` and `IntAsSelect` from
+        [format_providers.h](/toolchain/diagnostics/format_providers.h) are
+        recommended for many cases, because they allow putting the output string
+        in the format.
+        -   `IntAsSelect` can also be used to support pluralization.
+    -   Custom providers can also be added for non-translated values. For
+        example, `Lex::TokenKind` refers to syntax elements, and so can safely
+        have its own format provider.
 -   `DiagnosticConverter::ConvertArg` overrides.
     -   This can provide additional context to a formatter.
     -   For example, formatting `SemIR::NameId` accesses the IR's name list.

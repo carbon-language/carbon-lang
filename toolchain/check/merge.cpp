@@ -244,9 +244,9 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   new_param_pattern = context.insts().Get(
-      new_param_pattern.As<SemIR::ParamPattern>().subpattern_id);
+      new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
   prev_param_pattern = context.insts().Get(
-      prev_param_pattern.As<SemIR::ParamPattern>().subpattern_id);
+      prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
   if (new_param_pattern.kind() != prev_param_pattern.kind()) {
     emit_diagnostic();
     return false;
@@ -284,7 +284,7 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     }
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of "
-                      "{1:'|missing '}{0:implicit |}parameter list",
+                      "{1:|missing }{0:implicit |}parameter list",
                       BoolAsSelect, BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
                       "previously declared "

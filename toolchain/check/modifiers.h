@@ -28,29 +28,14 @@ auto CheckMethodModifiersOnFunction(
     SemIR::InstId parent_scope_inst_id,
     std::optional<SemIR::Inst> parent_scope_inst) -> void;
 
-// Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
-// `context_string` (and optional `context_loc_id`) specifying the context in
-// which those modifiers are forbidden.
-// TODO: Take another look at diagnostic phrasing for callers.
-auto ForbidModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
-                           KeywordModifierSet forbidden,
-                           llvm::StringRef context_string,
-                           SemIR::LocId context_loc_id = SemIR::LocId::Invalid)
-    -> void;
-
 // Reports a diagnostic (using `decl_kind`) if modifiers on this declaration are
 // not in `allowed`. Updates `introducer`.
-inline auto LimitModifiersOnDecl(Context& context,
-                                 DeclIntroducerState& introducer,
-                                 KeywordModifierSet allowed) -> void {
-  ForbidModifiersOnDecl(context, introducer, ~allowed, "");
-}
+auto LimitModifiersOnDecl(Context& context, DeclIntroducerState& introducer,
+                          KeywordModifierSet allowed) -> void;
 
-inline auto LimitModifiersOnNotDefinition(Context& context,
-                                          DeclIntroducerState& introducer,
-                                          KeywordModifierSet allowed) -> void {
-  ForbidModifiersOnDecl(context, introducer, ~allowed, ", only definition");
-}
+auto LimitModifiersOnNotDefinition(Context& context,
+                                   DeclIntroducerState& introducer,
+                                   KeywordModifierSet allowed) -> void;
 
 // Restricts the `extern` modifier to only be used on namespace-scoped
 // declarations. Diagnoses and cleans up:

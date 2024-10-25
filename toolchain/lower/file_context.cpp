@@ -228,7 +228,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   param_inst_ids.reserve(max_llvm_params);
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
-    param_inst_ids.push_back(function.return_storage_id);
+    param_inst_ids.push_back(function.return_slot_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
@@ -280,14 +280,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto name_id = SemIR::NameId::Invalid;
-    if (inst_id == function.return_storage_id) {
+    if (inst_id == function.return_slot_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
-      name_id =
-          SemIR::Function::GetParamPatternInfoFromPatternId(sem_ir(), inst_id)
-              .GetNameId(sem_ir());
+      name_id = SemIR::Function::GetNameFromPatternId(sem_ir(), inst_id);
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -328,7 +326,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   int param_index = 0;
   if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
           .has_return_slot()) {
-    function_lowering.SetLocal(function.return_storage_id,
+    function_lowering.SetLocal(function.return_slot_id,
                                llvm_function->getArg(param_index));
     ++param_index;
   }
@@ -364,8 +362,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
                            .decl_block_id;
 
   // Lower all blocks.
+  llvm::ArrayRef decl_block_id_singleton(decl_block_id);
   for (auto block_id : llvm::concat<const SemIR::InstBlockId>(
-           llvm::ArrayRef{decl_block_id}, body_block_ids)) {
+           decl_block_id_singleton, body_block_ids)) {
     // FIXME do I need to worry about edges between blocks?
     CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
@@ -571,9 +570,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   auto diag_loc = converter_.ConvertLoc(
-      inst_id,
-      [&](DiagnosticLoc /*context_loc*/,
-          const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
+      inst_id, [&](DiagnosticLoc /*context_loc*/,
+                   const DiagnosticBase<>& /*context_diagnostic_base*/) {});
   return {.filename = diag_loc.filename,
           .line_number = diag_loc.line_number == -1 ? 0 : diag_loc.line_number,
           .column_number =

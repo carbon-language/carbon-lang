@@ -21,6 +21,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
@@ -362,13 +363,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   // TODO: Support scoped entities other than just classes.
   auto class_info = context.classes().Get(class_type->class_id);
 
-  CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "cannot access {0} member `{1}` of type {2}",
-                    SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
-                    "the {0} member `{1}` is defined here", SemIR::AccessKind,
-                    SemIR::NameId);
-
   auto parent_type_id = class_info.self_type_id;
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
@@ -384,10 +378,15 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
     }
   }
 
+  CARBON_DIAGNOSTIC(
+      ClassInvalidMemberAccess, Error,
+      "cannot access {0:private|protected} member `{1}` of type {2}",
+      BoolAsSelect, SemIR::NameId, SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
-      .Build(loc, ClassInvalidMemberAccess, access_kind, name_id,
-             parent_type_id)
-      .Note(scope_result_id, ClassMemberDefinition, access_kind, name_id)
+      .Build(loc, ClassInvalidMemberAccess,
+             access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
+      .Note(scope_result_id, ClassMemberDeclaration)
       .Emit();
 }
 

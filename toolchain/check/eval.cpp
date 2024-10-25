@@ -682,65 +682,65 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   bool overflow = false;
   llvm::APInt result_val;
-  llvm::StringLiteral op_str = "<error>";
+  Lex::TokenKind op_token = Lex::TokenKind::Not;
   switch (builtin_kind) {
     // Arithmetic.
     case SemIR::BuiltinFunctionKind::IntSAdd:
       result_val = lhs_val.sadd_ov(rhs_val, overflow);
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntSSub:
       result_val = lhs_val.ssub_ov(rhs_val, overflow);
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntSMul:
       result_val = lhs_val.smul_ov(rhs_val, overflow);
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntSDiv:
       result_val = lhs_val.sdiv_ov(rhs_val, overflow);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntSMod:
       result_val = lhs_val.srem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
       overflow = lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
     case SemIR::BuiltinFunctionKind::IntUAdd:
       result_val = lhs_val + rhs_val;
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntUSub:
       result_val = lhs_val - rhs_val;
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntUMul:
       result_val = lhs_val * rhs_val;
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntUDiv:
       result_val = lhs_val.udiv(rhs_val);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntUMod:
       result_val = lhs_val.urem(rhs_val);
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
 
     // Bitwise.
     case SemIR::BuiltinFunctionKind::IntAnd:
       result_val = lhs_val & rhs_val;
-      op_str = "&";
+      op_token = Lex::TokenKind::And;
       break;
     case SemIR::BuiltinFunctionKind::IntOr:
       result_val = lhs_val | rhs_val;
-      op_str = "|";
+      op_token = Lex::TokenKind::Pipe;
       break;
     case SemIR::BuiltinFunctionKind::IntXor:
       result_val = lhs_val ^ rhs_val;
-      op_str = "^";
+      op_token = Lex::TokenKind::Caret;
       break;
 
     // Bit shift.
@@ -777,9 +777,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
                       "integer overflow in calculation {0} {1} {2}", TypedInt,
-                      llvm::StringLiteral, TypedInt);
+                      Lex::TokenKind, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                           {.type = lhs.type_id, .value = lhs_val}, op_str,
+                           {.type = lhs.type_id, .value = lhs_val}, op_token,
                            {.type = rhs.type_id, .value = rhs_val});
   }
 
@@ -1359,6 +1359,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BindValue::Kind:
     case SemIR::Deref::Kind:
     case SemIR::ImportRefLoaded::Kind:
+    case SemIR::ReturnSlot::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
@@ -1420,7 +1421,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::NameRef typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
-    case CARBON_KIND(SemIR::ParamPattern param_pattern): {
+    case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
+      // TODO: treat this as a non-expression (here and in GetExprCategory)
+      // once generic deduction doesn't need patterns to have constant values.
       return eval_context.GetConstantValue(param_pattern.subpattern_id);
     }
     case CARBON_KIND(SemIR::Converted typed_inst): {
@@ -1488,14 +1491,17 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImportDecl::Kind:
-    case SemIR::Param::Kind:
+    case SemIR::OutParam::Kind:
+    case SemIR::OutParamPattern::Kind:
     case SemIR::RequirementEquivalent::Kind:
     case SemIR::RequirementImpls::Kind:
     case SemIR::RequirementRewrite::Kind:
-    case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
+    case SemIR::ReturnExpr::Kind:
+    case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
+    case SemIR::ValueParam::Kind:
     case SemIR::VarStorage::Kind:
       break;
 

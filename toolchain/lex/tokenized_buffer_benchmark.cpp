@@ -219,7 +219,7 @@ class LexerBenchHelper {
   auto DiagnoseErrors() -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
-    StreamDiagnosticConsumer consumer(out);
+    StreamDiagnosticConsumer consumer(out, /*include_diagnostic_kind=*/false);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),

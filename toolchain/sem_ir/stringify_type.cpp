@@ -299,13 +299,15 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
       case Namespace::Kind:
-      case Param::Kind:
-      case ParamPattern::Kind:
+      case OutParam::Kind:
+      case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
+      case ReturnSlot::Kind:
+      case ReturnSlotPattern::Kind:
       case SpecificFunction::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
@@ -323,6 +325,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case UnaryOperatorNot::Kind:
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
+      case ValueParam::Kind:
+      case ValueParamPattern::Kind:
       case VarStorage::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.

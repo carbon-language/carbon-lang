@@ -10,17 +10,13 @@
 
 namespace Carbon {
 
-// Selects a formatv string based on the value. If the format style is not
-// provided, as in `{0}`, the value uses standard formatting.
+// Selects a formatv string based on the value.
 //
-// When used, the true and false outputs are separated by a `|`.
-//
-// For example, `{0:true|false}` would yield standard bool formatting.
-//
-// If needed, the _full_ style string can be wrapped with `'` in order to
-// preserve prefix or suffix whitespace (which is stripped by formatv). For
-// example, `{0:' true | false '}` retains whitespace which would be dropped
-// before `true` and after `false`.
+// Supported format styles are:
+// - None, as in `{0}`. This uses standard integer formatting.
+// - Selector, as in `{0:true|false}`. The output string used is separated by a
+//   `|`, with the true case first. the example would yield standard bool
+//   formatting.
 struct BoolAsSelect {
   // NOLINTNEXTLINE(google-explicit-constructor)
   BoolAsSelect(bool value) : value(value) {}
@@ -28,8 +24,13 @@ struct BoolAsSelect {
   bool value;
 };
 
-// Selects a formatv string based on the value. If the format style is not
-// provided, as in `{0}`, the value uses standard formatting.
+// Selects a formatv string based on the value.
+//
+// Supported format styles are:
+// - None, as in `{0}`. This uses standard integer formatting.
+// - Selector, as in `{0:=0:zero|:default}`. This is detailed below.
+// - Plural `s`, as in `{0:s}`. This outputs an `s` when the value is not 1,
+//   equivalent to `{0:=1:|:s}`.
 //
 // The style is a series of match cases, separated by `|`. Each case is a pair
 // formatted as `<selector>:<output string>`.
@@ -45,11 +46,6 @@ struct BoolAsSelect {
 // - default -> `other`
 //
 // As another example, `{0:=1:is|:are}` is a way to handle plural-based output.
-//
-// If needed, the _full_ style string can be wrapped with `'` in order to
-// preserve prefix or suffix whitespace (which is stripped by formatv). For
-// example, `{0:'=0: zero |=1: one '}` retains whitespace which would be dropped
-// after `one`.
 struct IntAsSelect {
   // NOLINTNEXTLINE(google-explicit-constructor)
   IntAsSelect(int value) : value(value) {}

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: fn F(n: i32, a: [i32; n]*);
 // CHECK:STDERR:                       ^
 fn F(n: i32, a: [i32; n]*);
@@ -35,7 +35,7 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+9, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,9 +46,9 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: i32 = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = param_pattern %a.patt, runtime_param1
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
@@ -56,10 +56,10 @@ fn F(n: i32, a: [i32; n]*);
 // CHECK:STDOUT:     %int.make_type_32.loc14_18: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:     %.loc14_25: type = ptr_type <error> [template = <error>]
-// CHECK:STDOUT:     %param.loc14_6: i32 = param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %param.loc14_6
-// CHECK:STDOUT:     %param.loc14_14: <error> = param runtime_param1
-// CHECK:STDOUT:     %a: <error> = bind_name a, %param.loc14_14
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %a.param: <error> = value_param runtime_param1
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

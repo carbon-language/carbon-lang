@@ -44,9 +44,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
-  // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush<SemIR::VarStorage>(
-      node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});
+  auto return_slot_id = context.AddPatternInst<SemIR::ReturnSlotPattern>(
+      node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+  auto param_pattern_id = context.AddPatternInst<SemIR::OutParamPattern>(
+      node_id, {.type_id = type_id,
+                .subpattern_id = return_slot_id,
+                .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
 
@@ -65,52 +69,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
-}
-
-// Checks that the parameter lists specified in a function declaration are
-// valid for a function declaration, and numbers the parameters.
-static auto CheckFunctionSignature(Context& context,
-                                   const NameComponent& name_and_params)
-    -> void {
-  RequireGenericOrSelfImplicitFunctionParams(
-      context, name_and_params.implicit_params_id);
-  SemIR::RuntimeParamIndex next_index(0);
-
-  for (auto [params_id, param_patterns_id] :
-       {std::pair{name_and_params.implicit_params_id,
-                  name_and_params.implicit_param_patterns_id},
-        std::pair{name_and_params.params_id,
-                  name_and_params.param_patterns_id}}) {
-    for (auto [param_id, param_pattern_id] :
-         llvm::zip_equal(context.inst_blocks().GetOrEmpty(params_id),
-                         context.inst_blocks().GetOrEmpty(param_patterns_id))) {
-      if (param_id == SemIR::InstId::BuiltinError ||
-          param_pattern_id == SemIR::InstId::BuiltinError) {
-        continue;
-      }
-      auto param_info =
-          SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
-      auto param_pattern_info =
-          SemIR::Function::GetParamPatternInfoFromPatternId(context.sem_ir(),
-                                                            param_pattern_id);
-
-      // If this is a runtime parameter, number it.
-      // TODO: move this logic to pattern_match.cpp, and remove this function
-      // (which is otherwise redundant).
-      if (param_info.bind_name &&
-          param_info.bind_name->kind == SemIR::BindName::Kind) {
-        param_info.inst.runtime_index = next_index;
-        context.ReplaceInstBeforeConstantUse(param_info.inst_id,
-                                             param_info.inst);
-        param_pattern_info.inst.runtime_index = next_index;
-        context.ReplaceInstBeforeConstantUse(param_pattern_info.inst_id,
-                                             param_pattern_info.inst);
-        ++next_index.index;
-      }
-    }
-  }
-
-  // TODO: Also assign a parameter index to the return storage, if present.
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -143,7 +101,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
-    prev_function.return_storage_id = new_function.return_storage_id;
+    prev_function.return_slot_id = new_function.return_slot_id;
   }
   if ((prev_import_ir_id.is_valid() && !new_is_import)) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
@@ -216,21 +174,18 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_storage_id = SemIR::InstId::Invalid;
-  if (auto [return_node, maybe_return_storage_id] =
+  auto return_slot_pattern_id = SemIR::InstId::Invalid;
+  if (auto [return_node, maybe_return_slot_pattern_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      maybe_return_storage_id) {
-    return_storage_id = *maybe_return_storage_id;
+      maybe_return_slot_pattern_id) {
+    return_slot_pattern_id = *maybe_return_slot_pattern_id;
   }
 
-  auto name = PopNameComponent(context);
+  auto name = PopNameComponent(context, return_slot_pattern_id);
   if (!name.params_id.is_valid()) {
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
   }
-
-  // Check that the function signature is valid and number the parameters.
-  CheckFunctionSignature(context, name);
 
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
@@ -281,7 +236,7 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_storage_id = return_storage_id,
+                      {.return_slot_id = name.return_slot_id,
                        .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;
@@ -381,7 +336,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.
-  CheckFunctionReturnType(context, function.return_storage_id, function,
+  CheckFunctionReturnType(context, function.return_slot_id, function,
                           SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
@@ -446,7 +401,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (context.is_current_position_reachable()) {
-    if (context.functions().Get(function_id).return_storage_id.is_valid()) {
+    if (context.functions().Get(function_id).return_slot_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");

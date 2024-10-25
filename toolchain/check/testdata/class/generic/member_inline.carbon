@@ -30,7 +30,7 @@ library "fail_member_inline.carbon";
 
 class C(T:! type) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: error: expression cannot be used as a value
+    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:     data;
     // CHECK:STDERR:     ^~~~
     data;
@@ -78,10 +78,10 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [template = constants.%Class.1] {
 // CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_13.1, runtime_param<invalid> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<invalid> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,24 +102,30 @@ class C(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: @F.%T (%T) = param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:       %n.param_patt: @F.%T (%T) = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:       %return.patt: @F.%T (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @F.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return: ref @F.%T (%T) = var <return slot>
-// CHECK:STDOUT:       %param: @F.%T (%T) = param runtime_param0
-// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %param
+// CHECK:STDOUT:       %n.param: @F.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %n.param
+// CHECK:STDOUT:       %return.param: ref @F.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = @Class.%G (constants.%G)] {
 // CHECK:STDOUT:       %self.patt: @G.%Class (%Class.2) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @G.%Class (%Class.2) = param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.param_patt: @G.%Class (%Class.2) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %return.patt: @G.%T (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @G.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc9: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return: ref @G.%T (%T) = var <return slot>
-// CHECK:STDOUT:       %param: @G.%Class (%Class.2) = param runtime_param0
-// CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %param
+// CHECK:STDOUT:       %self.param: @G.%Class (%Class.2) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @G.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @G.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_8.1: @Class.%.loc13_8.2 (%.2) = field_decl n, element0 [template]
@@ -234,10 +240,10 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
 // CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %param: type = param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %param [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

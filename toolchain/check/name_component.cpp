@@ -9,7 +9,8 @@
 
 namespace Carbon::Check {
 
-auto PopNameComponent(Context& context) -> NameComponent {
+auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
+    -> NameComponent {
   Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
   Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
 
@@ -42,8 +43,9 @@ auto PopNameComponent(Context& context) -> NameComponent {
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  auto [implicit_params_id, params_id] = CalleePatternMatch(
-      context, *implicit_param_patterns_id, *param_patterns_id);
+  auto [implicit_params_id, params_id, return_slot_id] =
+      CalleePatternMatch(context, *implicit_param_patterns_id,
+                         *param_patterns_id, return_slot_pattern_id);
 
   auto [name_loc_id, name_id] = context.node_stack().PopNameWithNodeId();
   return {
@@ -57,6 +59,8 @@ auto PopNameComponent(Context& context) -> NameComponent {
       .params_loc_id = params_loc_id,
       .params_id = params_id,
       .param_patterns_id = *param_patterns_id,
+      .return_slot_pattern_id = return_slot_pattern_id,
+      .return_slot_id = return_slot_id,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }

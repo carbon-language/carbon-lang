@@ -83,6 +83,10 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
+  // The maximum number of tokens that can be stored in the buffer, including
+  // the FileStart and FileEnd tokens.
+  static constexpr int MaxTokens = 1 << 23;
+
   // A comment, which can be a block of lines.
   //
   // This is the API version of `CommentData`.
@@ -169,26 +173,15 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the comment's full text range.
   auto GetCommentText(CommentIndex comment_index) const -> llvm::StringRef;
 
-  // Prints a description of the tokenized stream to the provided `raw_ostream`.
+  // Returns tokens as YAML. This prints the tracked token information on a
+  // single line for each token. We use the single-line format so that output is
+  // compact, and so that tools like `grep` are compatible.
   //
-  // It prints one line of information for each token in the buffer, including
-  // the kind of token, where it occurs within the source file, indentation for
-  // the associated line, the spelling of the token in source, and any
-  // additional information tracked such as which unique identifier it is or any
-  // matched grouping token.
+  // An example token looks like:
   //
-  // Each line is formatted as a YAML record:
-  //
-  // clang-format off
-  // ```
-  // token: { index: 0, kind: 'Semi', line: 1, column: 1, indent: 1, spelling: ';' }
-  // ```
-  // clang-format on
-  //
-  // This can be parsed as YAML using tools like `python-yq` combined with `jq`
-  // on the command line. The format is also reasonably amenable to other
-  // line-oriented shell tools from `grep` to `awk`.
-  auto Print(llvm::raw_ostream& output_stream) const -> void;
+  // - { index: 1, kind: 'Semi', line: 1, column: 1, indent: 1, spelling: ';' }
+  auto Print(llvm::raw_ostream& out,
+             bool omit_file_boundary_tokens = false) const -> void;
 
   // Prints a description of a single token.  See `Print` for details on the
   // format.
@@ -306,7 +299,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_ident_id(IdentifierId ident_id) -> void {
       CARBON_DCHECK(kind() == TokenKind::Identifier);
-      CARBON_DCHECK(ident_id.index < (2 << PayloadBits));
       token_payload_ = ident_id.index;
     }
 
@@ -334,7 +326,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_closing_token_index(TokenIndex closing_index) -> void {
       CARBON_DCHECK(kind().is_opening_symbol());
-      CARBON_DCHECK(closing_index.index < (2 << PayloadBits));
       token_payload_ = closing_index.index;
     }
 
@@ -344,7 +335,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     }
     auto set_opening_token_index(TokenIndex opening_index) -> void {
       CARBON_DCHECK(kind().is_closing_symbol());
-      CARBON_DCHECK(opening_index.index < (2 << PayloadBits));
       token_payload_ = opening_index.index;
     }
 
@@ -395,18 +385,23 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
         : kind_(kind),
           has_leading_space_(has_leading_space),
           token_payload_(payload),
-          byte_offset_(byte_offset) {
-      CARBON_DCHECK(payload >= 0 && payload < (2 << PayloadBits),
-                    "Payload won't fit into unsigned bit pack: {0}", payload);
-    }
+          byte_offset_(byte_offset) {}
 
     // A bitfield that encodes the token's kind, the leading space flag, and the
     // remaining bits in a payload. These are encoded together as a bitfield for
     // density and because these are the hottest fields of tokens for consumers
     // after lexing.
+    //
+    // Payload values are typically ID types for which we create at most one per
+    // token, so we ensure that `token_payload_` is large enough to fit any
+    // token index. Stores to this field may overflow, but we produce an error
+    // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
+    // this value never overflows if lexing succeeds.
     TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
     bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
+    static_assert(MaxTokens <= 1 << PayloadBits,
+                  "Not enough payload bits to store a token index");
 
     // Separate storage for the byte offset, this is hot while lexing but then
     // generally cold.
