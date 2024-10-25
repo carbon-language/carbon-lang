@@ -923,9 +923,9 @@ static auto CheckParseTree(
 
   InitPackageScopeAndImports(context, unit_info, total_ir_count);
 
-  // Import all impls declared in imports.
-  // TODO: Do this selectively when we see an impl query.
-  ImportImpls(context);
+  // Eagerly import the impls declared in the api file to prepare to redeclare
+  // them.
+  ImportImplsFromApiFile(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
                       node_converters[unit_info.check_ir_id.index])) {
