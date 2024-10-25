@@ -113,7 +113,7 @@ struct EntityWithParamsBase {
   InstBlockId param_patterns_id;
   // A reference to the instruction in the entity's pattern block that
   // depends on all other pattern insts pertaining to the return slot pattern.
-  // FIXME should this go on Function, like return_slot_id?
+  // TODO: should this go on Function, like return_slot_id?
   InstId return_slot_pattern_id;
   // True if declarations are `extern`.
   bool is_extern;

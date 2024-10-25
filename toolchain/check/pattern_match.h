@@ -49,8 +49,7 @@ auto CalleePatternMatch(Context& context,
 // parameter patterns, and returns an inst block with one inst for each
 // calling convention argument. This IR performs the caller side of pattern
 // matching.
-auto CallerPatternMatch(Context& context, SemIR::LocId call_loc_id,
-                        SemIR::SpecificId specific_id,
+auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id,

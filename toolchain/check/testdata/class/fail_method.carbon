@@ -23,9 +23,9 @@ fn F(c: Class) {
   // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
-  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
   // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
@@ -40,9 +40,9 @@ fn F(c: Class) {
   // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
-  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   A();
 }
 

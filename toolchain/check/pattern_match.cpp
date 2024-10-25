@@ -55,8 +55,6 @@ class MatchContext {
     SemIR::InstId pattern_id;
     // Invalid when processing the callee side.
     SemIR::InstId scrutinee_id;
-    // FIXME comments
-    SemIR::LocId loc_id_for_self = SemIR::LocId::Invalid;
   };
 
   // Constructs a MatchContext. If `callee_specific_id` is valid, this pattern
@@ -197,22 +195,16 @@ auto MatchContext::EmitPatternMatch(Context& context,
                    results_.size(), param_pattern.runtime_index.index);
       switch (kind_) {
         case MatchKind::Caller: {
-          if (!entry.scrutinee_id.is_valid() &&
-              entry.loc_id_for_self.is_valid()) {
-            CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
-                              "missing object argument in method call");
-            context.emitter()
-                .Build(entry.loc_id_for_self, MissingObjectInMethodCall)
-                .Emit();
-            results_.push_back(SemIR::InstId::BuiltinError);
-            break;
-          }
           CARBON_CHECK(entry.scrutinee_id.is_valid());
-          results_.push_back(ConvertToValueOfType(
-              context, context.insts().GetLocId(entry.scrutinee_id),
-              entry.scrutinee_id,
-              SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id_,
-                                       param_pattern.type_id)));
+          if (entry.scrutinee_id == SemIR::InstId::BuiltinError) {
+            results_.push_back(SemIR::InstId::BuiltinError);
+          } else {
+            results_.push_back(ConvertToValueOfType(
+                context, context.insts().GetLocId(entry.scrutinee_id),
+                entry.scrutinee_id,
+                SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id_,
+                                         param_pattern.type_id)));
+          }
           // Do not traverse farther, because the caller side of the pattern
           // ends here.
           break;
@@ -327,11 +319,13 @@ auto CalleePatternMatch(Context& context,
           .return_slot_id = match.return_slot_id()};
 }
 
-auto CallerPatternMatch(
-    Context& context, SemIR::LocId call_loc_id, SemIR::SpecificId specific_id,
-    SemIR::InstId self_pattern_id, SemIR::InstBlockId param_patterns_id,
-    SemIR::InstId return_slot_pattern_id, SemIR::InstId self_arg_id,
-    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id)
+auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
+                        SemIR::InstId self_pattern_id,
+                        SemIR::InstBlockId param_patterns_id,
+                        SemIR::InstId return_slot_pattern_id,
+                        SemIR::InstId self_arg_id,
+                        llvm::ArrayRef<SemIR::InstId> arg_refs,
+                        SemIR::InstId return_slot_arg_id)
     -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
@@ -357,9 +351,7 @@ auto CallerPatternMatch(
   }
 
   if (self_pattern_id.is_valid()) {
-    match.AddWork({.pattern_id = self_pattern_id,
-                   .scrutinee_id = self_arg_id,
-                   .loc_id_for_self = call_loc_id});
+    match.AddWork({.pattern_id = self_pattern_id, .scrutinee_id = self_arg_id});
   }
 
   return match.DoWork(context);

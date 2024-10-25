@@ -1163,10 +1163,20 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     }
   }
 
-  return CallerPatternMatch(context, call_loc_id, callee_specific_id,
-                            self_param_id, callee.param_patterns_id,
-                            callee.return_slot_pattern_id, self_id, arg_refs,
-                            return_slot_arg_id);
+  if (self_param_id.is_valid() && !self_id.is_valid()) {
+    CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
+                      "missing object argument in method call");
+    CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
+    context.emitter()
+        .Build(call_loc_id, MissingObjectInMethodCall)
+        .Note(callee.callee_loc, InCallToFunction)
+        .Emit();
+    self_id = SemIR::InstId::BuiltinError;
+  }
+
+  return CallerPatternMatch(
+      context, callee_specific_id, self_param_id, callee.param_patterns_id,
+      callee.return_slot_pattern_id, self_id, arg_refs, return_slot_arg_id);
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
