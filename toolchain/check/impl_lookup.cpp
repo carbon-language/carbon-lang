@@ -46,12 +46,16 @@ static auto FindAssociatedImportIRs(Context& context,
          {std::pair{inst.arg0(), arg0_kind}, {inst.arg1(), arg1_kind}}) {
       switch (kind) {
         case SemIR::IdKind::For<SemIR::InstId>: {
-          worklist.push_back(SemIR::InstId(arg));
+          if (auto id = SemIR::InstId(arg); id.is_valid()) {
+            worklist.push_back(id);
+          }
           break;
         }
         case SemIR::IdKind::For<SemIR::InstBlockId>: {
-          auto block = context.inst_blocks().Get(SemIR::InstBlockId(arg));
-          worklist.append(block.begin(), block.end());
+          if (auto id = SemIR::InstBlockId(arg); id.is_valid()) {
+            auto block = context.inst_blocks().Get(id);
+            worklist.append(block.begin(), block.end());
+          }
           break;
         }
         case SemIR::IdKind::For<SemIR::ClassId>: {
