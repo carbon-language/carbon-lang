@@ -21,19 +21,25 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
-// Returns the argument values of the `IndexWith` interface. Arguments correspond to
-// the `SubscriptType` and the `ElementType`. If the class does not implement
-// the said interface, this returns an empty array reference.
-// TODO: Switch to using an associated type instead of a parameter for the `ElementType`.
+// Returns the argument values of the `IndexWith` interface. Arguments
+// correspond to the `SubscriptType` and the `ElementType`. If the class does
+// not implement the said interface, this returns an empty array reference.
+// TODO: Switch to using an associated type instead of a parameter for the
+// `ElementType`.
 static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
                              SemIR::TypeId self_id)
     -> llvm::ArrayRef<SemIR::InstId> {
+  auto index_with_inst = context.insts().TryGetAsIfValid<SemIR::StructValue>(
+      context.LookupNameInCore(node_id, "IndexWith"));
+  if (!index_with_inst) {
+    return {};
+  }
   auto index_with_interface =
-      context.types().GetAs<SemIR::GenericInterfaceType>(
-          context.insts()
-              .GetAs<SemIR::StructValue>(
-                  context.LookupNameInCore(node_id, "IndexWith"))
-              .type_id);
+      context.types().TryGetAs<SemIR::GenericInterfaceType>(
+          index_with_inst->type_id);
+  if (!index_with_interface) {
+    return {};
+  }
 
   for (const auto& impl : context.impls().array_ref()) {
     auto impl_self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
@@ -49,7 +55,7 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
       continue;
     }
 
-    if (index_with_interface.interface_id != interface_type->interface_id) {
+    if (index_with_interface->interface_id != interface_type->interface_id) {
       continue;
     }
 
@@ -62,8 +68,8 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
 
 // Performs an index with base expression `operand_inst_id` and
 // `operand_type_id` for types that are not an array. This checks if
-// the base expression implements the `IndexWith` interface; if so, uses the `At`
-// associative method, otherwise prints a diagnostic.
+// the base expression implements the `IndexWith` interface; if so, uses the
+// `At` associative method, otherwise prints a diagnostic.
 static auto PerformIndex(Context& context, Parse::NodeId node_id,
                          SemIR::InstId operand_inst_id,
                          SemIR::TypeId operand_type_id,
@@ -79,8 +85,8 @@ static auto PerformIndex(Context& context, Parse::NodeId node_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  CARBON_CHECK(args.size() == 2,
-               "IndexWith should have two generic constraints");
+  CARBON_CHECK(args.size() <= 2,
+               "IndexWith should have at most two generic constraints");
 
   Operator op{
       .interface_name = "IndexWith",
