@@ -81,7 +81,7 @@ static auto PerformIndex(Context& context, Parse::NodeId node_id,
   CARBON_CHECK(args.size() == 2,
                "IndexWith should have two generic constraints");
 
-  auto op = Operator{
+  Operator op{
       .interface_name = "IndexWith",
       .interface_args_ref = args,
       .op_name = "At",
