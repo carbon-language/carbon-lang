@@ -60,10 +60,10 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   return {};
 }
 
-// Creates SemIR to perform an index with base expression `operand_inst_id` and
-// `operand_type_id` for types that are not an array. This entails, checking if
-// the base expression implements the `IndexWith` interface, if so uses the `At`
-// associative method while printing a diagnostic if it isn't.
+// Performs an index with base expression `operand_inst_id` and
+// `operand_type_id` for types that are not an array. This checks if
+// the base expression implements the `IndexWith` interface; if so, uses the `At`
+// associative method, otherwise prints a diagnostic.
 static auto PerformIndex(Context& context, Parse::NodeId node_id,
                          SemIR::InstId operand_inst_id,
                          SemIR::TypeId operand_type_id,
