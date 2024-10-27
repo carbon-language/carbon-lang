@@ -24,6 +24,7 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
 // Returns the argument values of the `IndexWith` interface. Arguments correspond to
 // the `SubscriptType` and the `ElementType`. If the class does not implement
 // the said interface, this returns an empty array reference.
+// TODO: Switch to using an associated type instead of a parameter for the `ElementType`.
 static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
                              SemIR::TypeId self_id)
     -> llvm::ArrayRef<SemIR::InstId> {
