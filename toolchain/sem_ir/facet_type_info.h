@@ -10,7 +10,9 @@
 namespace Carbon::SemIR {
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
-  // TODO: Need to switch to a processed, canonical form.
+  // TODO: Need to switch to a processed, canonical form, that can support facet
+  // type equality as defined by
+  // https://github.com/carbon-language/carbon-lang/issues/2409.
   TypeId base_facet_type_id;
   InstBlockId requirement_block_id;
 

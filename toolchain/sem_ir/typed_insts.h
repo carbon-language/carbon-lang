@@ -550,7 +550,8 @@ struct FacetType {
 
   TypeId type_id;
   FacetTypeId facet_type_id;
-  // FIXME: does this need a: SpecificId specific_id;?
+  // FIXME: is this needed?
+  // SpecificId specific_id;
 };
 
 // Represents accessing the `type` field in a facet value, which is notionally a

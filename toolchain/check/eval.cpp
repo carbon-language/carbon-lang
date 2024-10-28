@@ -1279,6 +1279,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           Phase::Template);
     }
 
+    case SemIR::FacetType::Kind:
+      // FIXME: This doesn't seem right.
+      return MakeConstantResult(eval_context.context(), inst, Phase::Template);
+
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       // If the interface has generic parameters, we don't produce an interface
       // type, but a callable whose return value is an interface type.

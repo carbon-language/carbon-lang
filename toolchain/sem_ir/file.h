@@ -122,8 +122,10 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
-  auto facet_types() -> ValueStore<FacetTypeId>& { return facet_types_; }
-  auto facet_types() const -> const ValueStore<FacetTypeId>& {
+  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
+  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
@@ -215,7 +217,7 @@ class File : public Printable<File> {
   ValueStore<InterfaceId> interfaces_;
 
   // Storage for facet types.
-  ValueStore<FacetTypeId> facet_types_;
+  CanonicalValueStore<FacetTypeId> facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
