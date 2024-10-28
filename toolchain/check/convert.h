@@ -99,7 +99,8 @@ struct CalleeParamsInfo {
         implicit_param_refs_id(callee.implicit_param_refs_id),
         implicit_param_patterns_id(callee.implicit_param_patterns_id),
         param_refs_id(callee.param_refs_id),
-        param_patterns_id(callee.param_patterns_id) {}
+        param_patterns_id(callee.param_patterns_id),
+        return_slot_pattern_id(callee.return_slot_pattern_id) {}
 
   // The location of the callee to use in diagnostics.
   SemIRLoc callee_loc;
@@ -109,6 +110,8 @@ struct CalleeParamsInfo {
   // The explicit parameters of the callee.
   SemIR::InstBlockId param_refs_id;
   SemIR::InstBlockId param_patterns_id;
+  // The return slot pattern of the callee.
+  SemIR::InstId return_slot_pattern_id;
 };
 
 // Implicitly converts a set of arguments to match the parameter types in a

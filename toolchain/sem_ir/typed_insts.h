@@ -945,7 +945,8 @@ struct ReturnSlot {
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics
-  // only; this has no semantic significance.
+  // only; this has no semantic significance, and is not preserved across
+  // imports.
   InstId type_inst_id;
 
   // The storage that will be initialized by the function.
@@ -965,7 +966,8 @@ struct ReturnSlotPattern {
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics
-  // only; this has no semantic significance.
+  // only; this has no semantic significance, and is not preserved across
+  // imports.
   InstId type_inst_id;
 };
 

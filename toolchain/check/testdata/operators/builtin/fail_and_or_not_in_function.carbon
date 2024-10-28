@@ -78,8 +78,8 @@ var or_: F(true or true);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block23> [template = constants.%.3]
-// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+67.loc42_10(%.loc42_17)
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block21> [template = constants.%.3]
+// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+73.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
@@ -90,7 +90,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+12.loc12_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+14.loc12_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

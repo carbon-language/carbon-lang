@@ -109,7 +109,7 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Example//fn, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Example//var, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Example//var, inst+15, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

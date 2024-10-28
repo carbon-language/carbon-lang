@@ -77,7 +77,7 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc13_6.2 as %I.ref.loc13 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst+18.loc13_15
+// CHECK:STDOUT:   witness = <unexpected>.inst+20.loc13_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
