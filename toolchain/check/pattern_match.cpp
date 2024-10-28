@@ -14,13 +14,12 @@
 #include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
-namespace {
 
 // Returns a best-effort name for the given ParamPattern, suitable for use in
 // IR pretty-printing.
 // TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
 template <typename ParamPattern>
-auto GetPrettyName(Context& context, ParamPattern param_pattern)
+static auto GetPrettyName(Context& context, ParamPattern param_pattern)
     -> SemIR::NameId {
   if (context.insts().Is<SemIR::ReturnSlotPattern>(
           param_pattern.subpattern_id)) {
@@ -32,6 +31,8 @@ auto GetPrettyName(Context& context, ParamPattern param_pattern)
   }
   return SemIR::NameId::Invalid;
 }
+
+namespace {
 
 // Selects between the different kinds of pattern matching.
 enum class MatchKind {
@@ -70,23 +71,12 @@ class MatchContext {
   // Adds a work item to the stack.
   auto AddWork(WorkItem work_item) -> void { stack_.push_back(work_item); }
 
-  // Processes all work items on the stack, and returns the ID of an inst block
-  // containing the results.
-  auto DoWork(Context& context) -> SemIR::InstBlockId {
-    results_.reserve(stack_.size());
-    while (!stack_.empty()) {
-      EmitPatternMatch(context, stack_.pop_back_val());
-    }
-    if (results_.empty()) {
-      return SemIR::InstBlockId::Empty;
-    }
-    auto block_id = context.inst_blocks().Add(results_);
-    results_.clear();
-    return block_id;
-  }
+  // Processes all work items on the stack. When performing caller pattern
+  // matching, returns an inst block with one inst reference for each
+  // calling-convention argument. When performing callee pattern matching,
+  // returns an inst block with references to all the emitted BindName insts.
+  auto DoWork(Context& context) -> SemIR::InstBlockId;
 
-  // The return slot inst emitted by `DoWork`, if any.
-  // TODO: can this be added to the block returned by `DoWork`, instead?
   auto return_slot_id() const -> SemIR::InstId { return return_slot_id_; }
 
  private:
@@ -99,27 +89,43 @@ class MatchContext {
 
   auto EmitPatternMatch(Context& context, MatchContext::WorkItem entry) -> void;
 
+  // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
 
+  // The next index to be allocated by `NextRuntimeIndex`.
   SemIR::RuntimeParamIndex next_index_;
 
+  // The pending results that will be returned by the current `DoWork` call.
   llvm::SmallVector<SemIR::InstId> results_;
 
+  // The kind of pattern match being performed.
   MatchKind kind_;
 
+  // The SpecificId of the function being called (if any).
   SemIR::SpecificId callee_specific_id_;
 
+  // The return slot inst emitted by `DoWork`, if any.
+  // TODO: can this be added to the block returned by `DoWork`, instead?
   SemIR::InstId return_slot_id_;
 };
 
+auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
+  results_.reserve(stack_.size());
+  while (!stack_.empty()) {
+    EmitPatternMatch(context, stack_.pop_back_val());
+  }
+  auto block_id = context.inst_blocks().AddOrEmpty(results_);
+  results_.clear();
+  return block_id;
+}
+
 // Emits the pattern-match insts necessary to match the pattern inst
-// `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`,
-// and adds to `match` any work necessary to traverse into its subpatterns.
-// This behavior is contingent on the kind of match being performed, as
-// indicated by `match.kind()`. For example, when performing a callee
-// pattern match, this does not emit insts for patterns on the caller side.
-// However, it still traverses into subpatterns if any of their descendants
-// might emit insts.
+// `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and adds
+// to `stack_` any work necessary to traverse into its subpatterns. This
+// behavior is contingent on the kind of match being performed, as indicated by
+// kind_`. For example, when performing a callee pattern match, this does not
+// emit insts for patterns on the caller side. However, it still traverses into
+// subpatterns if any of their descendants might emit insts.
 // TODO: Require that `entry.scrutinee_id` is valid if and only if insts should
 // be emitted, once we start emitting `Param` insts in the `ParamPattern` case.
 auto MatchContext::EmitPatternMatch(Context& context,
