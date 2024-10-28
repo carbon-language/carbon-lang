@@ -893,7 +893,7 @@ class ImportRefResolver {
   auto GetLocalReturnSlotPatternId(SemIR::InstId import_return_slot_pattern_id)
       -> SemIR::InstId {
     if (!import_return_slot_pattern_id.is_valid()) {
-      return import_return_slot_pattern_id;
+      return SemIR::InstId::Invalid;
     }
 
     auto param_pattern = import_ir_.insts().GetAs<SemIR::OutParamPattern>(
