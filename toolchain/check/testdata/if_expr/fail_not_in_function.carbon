@@ -47,7 +47,7 @@ class C {
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.5: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %C, i32 [template]
@@ -69,7 +69,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -96,7 +96,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

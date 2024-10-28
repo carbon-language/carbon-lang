@@ -25,7 +25,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [template]
 // CHECK:STDOUT:   %MakeI32: %MakeI32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeF64.type: type = fn_type @MakeF64 [template]
@@ -52,7 +52,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,7 +77,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_17.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc12_17.1: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc12_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_17.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc12_17.3: type = converted %float.make_type, %.loc12_17.2 [template = f64]
@@ -91,7 +91,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_16.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:     %.loc14_16.2: type = converted %int.make_type_32.loc14, %.loc14_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc14_25.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc14_25.1: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %float.make_type.loc14: init type = call constants.%Float(%.loc14_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc14_25.2: type = value_of_initializer %float.make_type.loc14 [template = f64]
 // CHECK:STDOUT:     %.loc14_25.3: type = converted %float.make_type.loc14, %.loc14_25.2 [template = f64]
@@ -105,7 +105,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeI32() -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeF64() -> f64;
 // CHECK:STDOUT:
@@ -114,7 +114,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %int.make_type_32.loc15, %.loc15_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_24.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_24.1: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type.loc15: init type = call constants.%Float(%.loc15_24.1) [template = f64]
 // CHECK:STDOUT:   %.loc15_24.2: type = value_of_initializer %float.make_type.loc15 [template = f64]
 // CHECK:STDOUT:   %.loc15_24.3: type = converted %float.make_type.loc15, %.loc15_24.2 [template = f64]
@@ -131,7 +131,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %struct.loc15: %.3 = struct_value (%.loc15_62.3, %.loc15_62.5)
 // CHECK:STDOUT:   %.loc15_63: %.3 = converted %.loc15_62.1, %struct.loc15
 // CHECK:STDOUT:   %x: %.3 = bind_name x, %.loc15_63
-// CHECK:STDOUT:   %.loc16_15.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16_15.1: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type.loc16: init type = call constants.%Float(%.loc16_15.1) [template = f64]
 // CHECK:STDOUT:   %.loc16_15.2: type = value_of_initializer %float.make_type.loc16 [template = f64]
 // CHECK:STDOUT:   %.loc16_15.3: type = converted %float.make_type.loc16, %.loc16_15.2 [template = f64]

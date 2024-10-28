@@ -51,7 +51,7 @@ fn F() {
 // CHECK:STDOUT:   %.13: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.14: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %array.1: %.3 = tuple_value (%.5, %.6, %.5, %.5, %.7, %.7) [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.15: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.16: type = array_type %.2, f64 [template]
@@ -80,7 +80,7 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -129,7 +129,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_3.20: init %.3 = array_init (%.loc21_3.4, %.loc21_3.7, %.loc21_3.10, %.loc21_3.13, %.loc21_3.16, %.loc21_3.19) to %ints.var [template = constants.%array.1]
 // CHECK:STDOUT:   %.loc21_4: init %.3 = converted %.loc21_3.1, %.loc21_3.20 [template = constants.%array.1]
 // CHECK:STDOUT:   assign %ints.var, %.loc21_4
-// CHECK:STDOUT:   %.loc22_16.1: i32 = int_literal 64 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc22_16.1: Core.BigInt = int_literal 64 [template = constants.%.15]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc22_16.1) [template = f64]
 // CHECK:STDOUT:   %.loc22_21: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc22_16.2: type = value_of_initializer %float.make_type [template = f64]
@@ -170,5 +170,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:
