@@ -9,6 +9,7 @@ This file gets processed by a repository rule, substituting the
 """
 
 llvm_bindir = "{LLVM_BINDIR}"
+llvm_symbolizer = "{LLVM_SYMBOLIZER}"
 clang_bindir = "{CLANG_BINDIR}"
 clang_version = {CLANG_VERSION}
 clang_version_for_cache = "{CLANG_VERSION_FOR_CACHE}"

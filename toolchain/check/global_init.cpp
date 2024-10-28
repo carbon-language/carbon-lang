@@ -42,12 +42,14 @@ auto GlobalInit::Finalize() -> void {
         .last_param_node_id = Parse::NodeId::Invalid,
         .pattern_block_id = SemIR::InstBlockId::Empty,
         .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
+        .implicit_param_patterns_id = SemIR::InstBlockId::Invalid,
         .param_refs_id = SemIR::InstBlockId::Empty,
+        .param_patterns_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
         .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,
         .first_owning_decl_id = SemIR::InstId::Invalid},
-       {.return_storage_id = SemIR::InstId::Invalid,
+       {.return_slot_id = SemIR::InstId::Invalid,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

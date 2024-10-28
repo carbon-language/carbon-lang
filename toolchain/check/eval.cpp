@@ -8,6 +8,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -515,7 +516,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
               .Get(bound->int_id)
               .ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
-                          "array index `{0}` is past the end of type `{1}`",
+                          "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
             index_inst.index_id, ArrayIndexOutOfBounds,
@@ -684,82 +685,81 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   bool overflow = false;
   llvm::APInt result_val;
-  llvm::StringLiteral op_str = "<error>";
+  Lex::TokenKind op_token = Lex::TokenKind::Not;
   switch (builtin_kind) {
     // Arithmetic.
     case SemIR::BuiltinFunctionKind::IntSAdd:
       result_val = lhs_val.sadd_ov(rhs_val, overflow);
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntSSub:
       result_val = lhs_val.ssub_ov(rhs_val, overflow);
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntSMul:
       result_val = lhs_val.smul_ov(rhs_val, overflow);
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntSDiv:
       result_val = lhs_val.sdiv_ov(rhs_val, overflow);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntSMod:
       result_val = lhs_val.srem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
       overflow = lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
     case SemIR::BuiltinFunctionKind::IntUAdd:
       result_val = lhs_val + rhs_val;
-      op_str = "+";
+      op_token = Lex::TokenKind::Plus;
       break;
     case SemIR::BuiltinFunctionKind::IntUSub:
       result_val = lhs_val - rhs_val;
-      op_str = "-";
+      op_token = Lex::TokenKind::Minus;
       break;
     case SemIR::BuiltinFunctionKind::IntUMul:
       result_val = lhs_val * rhs_val;
-      op_str = "*";
+      op_token = Lex::TokenKind::Star;
       break;
     case SemIR::BuiltinFunctionKind::IntUDiv:
       result_val = lhs_val.udiv(rhs_val);
-      op_str = "/";
+      op_token = Lex::TokenKind::Slash;
       break;
     case SemIR::BuiltinFunctionKind::IntUMod:
       result_val = lhs_val.urem(rhs_val);
-      op_str = "%";
+      op_token = Lex::TokenKind::Percent;
       break;
 
     // Bitwise.
     case SemIR::BuiltinFunctionKind::IntAnd:
       result_val = lhs_val & rhs_val;
-      op_str = "&";
+      op_token = Lex::TokenKind::And;
       break;
     case SemIR::BuiltinFunctionKind::IntOr:
       result_val = lhs_val | rhs_val;
-      op_str = "|";
+      op_token = Lex::TokenKind::Pipe;
       break;
     case SemIR::BuiltinFunctionKind::IntXor:
       result_val = lhs_val ^ rhs_val;
-      op_str = "^";
+      op_token = Lex::TokenKind::Caret;
       break;
 
     // Bit shift.
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift:
-      op_str = (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift)
-                   ? llvm::StringLiteral("<<")
-                   : llvm::StringLiteral(">>");
       if (rhs_val.uge(lhs_val.getBitWidth()) ||
           (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
-        CARBON_DIAGNOSTIC(CompileTimeShiftOutOfRange, Error,
-                          "shift distance not in range [0, {0}) in {1} {2} {3}",
-                          unsigned, TypedInt, llvm::StringLiteral, TypedInt);
-        context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
-                               lhs_val.getBitWidth(),
-                               {.type = lhs.type_id, .value = lhs_val}, op_str,
-                               {.type = rhs.type_id, .value = rhs_val});
+        CARBON_DIAGNOSTIC(
+            CompileTimeShiftOutOfRange, Error,
+            "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
+            unsigned, TypedInt, BoolAsSelect, TypedInt);
+        context.emitter().Emit(
+            loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
+            {.type = lhs.type_id, .value = lhs_val},
+            builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
+            {.type = rhs.type_id, .value = rhs_val});
         // TODO: Is it useful to recover by returning 0 or -1?
         return SemIR::ConstantId::Error;
       }
@@ -780,9 +780,9 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
                       "integer overflow in calculation {0} {1} {2}", TypedInt,
-                      llvm::StringLiteral, TypedInt);
+                      Lex::TokenKind, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                           {.type = lhs.type_id, .value = lhs_val}, op_str,
+                           {.type = lhs.type_id, .value = lhs_val}, op_token,
                            {.type = rhs.type_id, .value = rhs_val});
   }
 
@@ -931,6 +931,10 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::PrintInt: {
       // Providing a constant result would allow eliding the function call.
       return SemIR::ConstantId::NotConstant;
+    }
+
+    case SemIR::BuiltinFunctionKind::BigIntMakeType: {
+      return context.constant_values().Get(SemIR::InstId::BuiltinBigIntType);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeType32: {
@@ -1193,8 +1197,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildAndValidateIfFieldsAreConstant(
           eval_context, inst,
           [&](SemIR::IntType result) {
-            return ValidateIntType(eval_context.context(),
-                                   int_type.bit_width_id, result);
+            return ValidateIntType(
+                eval_context.context(),
+                inst_id.is_valid() ? inst_id : int_type.bit_width_id, result);
           },
           &SemIR::IntType::bit_width_id);
     }
@@ -1210,6 +1215,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           },
           &SemIR::FloatType::bit_width_id);
     }
+    case SemIR::SpecificFunction::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::SpecificFunction::callee_id,
+                                        &SemIR::SpecificFunction::specific_id);
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::StructType::fields_id);
@@ -1376,11 +1385,34 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BindValue::Kind:
     case SemIR::Deref::Kind:
     case SemIR::ImportRefLoaded::Kind:
+    case SemIR::ReturnSlot::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
       break;
 
+    case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
+      // TODO: disable constant evaluation of SymbolicBindingPattern once
+      // DeduceGenericCallArguments no longer needs implicit params to have
+      // constant values.
+      const auto& bind_name =
+          eval_context.entity_names().Get(bind.entity_name_id);
+
+      // If we know which specific we're evaluating within and this is an
+      // argument of that specific, its constant value is the corresponding
+      // argument value.
+      if (auto value =
+              eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+          value.is_valid()) {
+        return value;
+      }
+
+      // The constant form of a symbolic binding is an idealized form of the
+      // original, with no equivalent value.
+      bind.entity_name_id =
+          eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+    }
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
@@ -1414,6 +1446,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
     case CARBON_KIND(SemIR::NameRef typed_inst): {
       return eval_context.GetConstantValue(typed_inst.value_id);
+    }
+    case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
+      // TODO: treat this as a non-expression (here and in GetExprCategory)
+      // once generic deduction doesn't need patterns to have constant values.
+      return eval_context.GetConstantValue(param_pattern.subpattern_id);
     }
     case CARBON_KIND(SemIR::Converted typed_inst): {
       return eval_context.GetConstantValue(typed_inst.result_id);
@@ -1459,15 +1496,14 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // `const (const T)` evaluates to `const T`. Otherwise, `const T` evaluates
     // to itself.
     case CARBON_KIND(SemIR::ConstType typed_inst): {
-      auto inner_id = eval_context.GetConstantValue(typed_inst.inner_id);
-      if (inner_id.is_constant() &&
-          eval_context.insts()
-              .Get(eval_context.constant_values().GetInstId(inner_id))
-              .Is<SemIR::ConstType>()) {
-        return inner_id;
+      auto phase = Phase::Template;
+      auto inner_id =
+          GetConstantValue(eval_context, typed_inst.inner_id, &phase);
+      if (eval_context.context().types().Is<SemIR::ConstType>(inner_id)) {
+        return eval_context.context().types().GetConstantId(inner_id);
       }
-      return MakeConstantResult(eval_context.context(), inst,
-                                GetPhase(inner_id));
+      typed_inst.inner_id = inner_id;
+      return MakeConstantResult(eval_context.context(), typed_inst, phase);
     }
 
     // These cases are either not expressions or not constant.
@@ -1481,15 +1517,17 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImportDecl::Kind:
-    case SemIR::Param::Kind:
+    case SemIR::OutParam::Kind:
+    case SemIR::OutParamPattern::Kind:
     case SemIR::RequirementEquivalent::Kind:
     case SemIR::RequirementImpls::Kind:
     case SemIR::RequirementRewrite::Kind:
-    case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
+    case SemIR::ReturnExpr::Kind:
+    case SemIR::ReturnSlotPattern::Kind:
     case SemIR::StructLiteral::Kind:
-    case SemIR::SymbolicBindingPattern::Kind:
     case SemIR::TupleLiteral::Kind:
+    case SemIR::ValueParam::Kind:
     case SemIR::VarStorage::Kind:
       break;
 

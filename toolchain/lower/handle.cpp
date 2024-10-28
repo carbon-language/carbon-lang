@@ -24,11 +24,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::AddrPattern /*inst*/) -> void {
-  CARBON_FATAL("`addr` should be lowered by `BuildFunctionDefinition`");
-}
-
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
@@ -183,8 +178,18 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::Param /*inst*/) -> void {
+                SemIR::OutParam /*inst*/) -> void {
   CARBON_FATAL("Parameters should be lowered by `BuildFunctionDefinition`");
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ValueParam /*inst*/) -> void {
+  CARBON_FATAL("Parameters should be lowered by `BuildFunctionDefinition`");
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ReturnSlot /*inst*/) -> void {
+  CARBON_FATAL("Return slots should be lowered by `BuildFunctionDefinition`");
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,

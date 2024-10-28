@@ -17,12 +17,12 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
       // make a copy of the argv that LLVM produces in order to support
       // mutation.
       args_(argv, argv + argc) {
-  // Return our mutable copy of argv for the program to use.
-  argc = args_.size();
-  argv = args_.data();
-
-  // `argv[argc]` is expected to be a null pointer.
+  // `argv[argc]` is expected to be a null pointer (may reallocate `args_`).
   args_.push_back(nullptr);
+
+  // Return our mutable copy of argv for the program to use.
+  argc = args_.size() - 1;
+  argv = args_.data();
 
   llvm::setBugReportMsg(
       "Please report issues to "

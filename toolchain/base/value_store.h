@@ -151,7 +151,10 @@ class ValueStore
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
     IdT id(values_.size());
-    CARBON_CHECK(id.index >= 0, "Id overflow");
+    // This routine is especially hot and the check here relatively expensive
+    // for the value provided, so only do this in debug builds to make tracking
+    // down issues easier.
+    CARBON_DCHECK(id.index >= 0, "Id overflow");
     values_.push_back(std::move(value));
     return id;
   }

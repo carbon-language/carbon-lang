@@ -12,9 +12,16 @@ namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::Invalid,
-                           .specific_id = SpecificId::Invalid,
+                           .enclosing_specific_id = SpecificId::Invalid,
+                           .resolved_specific_id = SpecificId::Invalid,
                            .self_id = InstId::Invalid,
                            .is_error = false};
+
+  if (auto specific_function =
+          sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
+    result.resolved_specific_id = specific_function->specific_id;
+    callee_id = specific_function->callee_id;
+  }
 
   if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
     result.self_id = bound_method->object_id;
@@ -38,42 +45,84 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   }
 
   result.function_id = fn_type->function_id;
-  result.specific_id = fn_type->specific_id;
+  result.enclosing_specific_id = fn_type->specific_id;
   return result;
+}
+
+auto Function::ParamPatternInfo::GetNameId(const File& sem_ir) -> NameId {
+  return sem_ir.entity_names().Get(entity_name_id).name_id;
+}
+
+auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
+                                                InstId pattern_id)
+    -> ParamPatternInfo {
+  auto inst_id = pattern_id;
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+    inst_id = addr_pattern->inner_id;
+    inst = sem_ir.insts().Get(inst_id);
+  }
+
+  auto param_pattern_id = inst_id;
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
+
+  inst_id = param_pattern_inst.subpattern_id;
+  inst = sem_ir.insts().Get(inst_id);
+
+  auto binding_pattern = inst.As<AnyBindingPattern>();
+  return {.inst_id = param_pattern_id,
+          .inst = param_pattern_inst,
+          .entity_name_id = binding_pattern.entity_name_id};
+}
+
+auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
+    -> SemIR::NameId {
+  auto inst_id = pattern_id;
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+    inst_id = addr_pattern->inner_id;
+    inst = sem_ir.insts().Get(inst_id);
+  }
+
+  if (inst_id == SemIR::InstId::BuiltinError) {
+    return SemIR::NameId::Invalid;
+  }
+
+  auto param_pattern_inst = inst.As<SemIR::AnyParamPattern>();
+
+  inst_id = param_pattern_inst.subpattern_id;
+  inst = sem_ir.insts().Get(inst_id);
+
+  if (inst.Is<ReturnSlotPattern>()) {
+    return SemIR::NameId::ReturnSlot;
+  }
+  auto binding_pattern = inst.As<AnyBindingPattern>();
+  return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
 }
 
 auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     -> ParamInfo {
   auto ref = sem_ir.insts().Get(param_ref_id);
 
-  if (auto addr_pattern = ref.TryAs<AddrPattern>()) {
-    param_ref_id = addr_pattern->inner_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
   auto bind_name = ref.TryAs<AnyBindName>();
   if (bind_name) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
-  }
-  return {param_ref_id, ref.As<Param>(), bind_name};
-}
-
-auto Function::ParamInfo::GetNameId(const File& sem_ir) -> NameId {
-  if (bind_name) {
-    return sem_ir.entity_names().Get(bind_name->entity_name_id).name_id;
   } else {
-    return NameId::Invalid;
+    CARBON_FATAL();
   }
+  return {param_ref_id, ref.As<AnyParam>(), bind_name};
 }
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_storage_id.is_valid()) {
+  if (!return_slot_id.is_valid()) {
     return TypeId::Invalid;
   }
   return GetTypeInSpecific(file, specific_id,
-                           file.insts().Get(return_storage_id).type_id());
+                           file.insts().Get(return_slot_id).type_id());
 }
 
 }  // namespace Carbon::SemIR

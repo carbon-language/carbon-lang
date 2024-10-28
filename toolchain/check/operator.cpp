@@ -29,10 +29,9 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   return PerformMemberAccess(context, loc_id, interface_id, op_name_id);
 }
 
-auto BuildUnaryOperator(
-    Context& context, SemIR::LocId loc_id, Operator op,
-    SemIR::InstId operand_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
+auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                        SemIR::InstId operand_id,
+                        Context::BuildDiagnosticFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);
@@ -48,10 +47,9 @@ auto BuildUnaryOperator(
   return PerformCall(context, loc_id, bound_op_id, {});
 }
 
-auto BuildBinaryOperator(
-    Context& context, SemIR::LocId loc_id, Operator op, SemIR::InstId lhs_id,
-    SemIR::InstId rhs_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
+auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                         SemIR::InstId lhs_id, SemIR::InstId rhs_id,
+                         Context::BuildDiagnosticFn missing_impl_diagnoser)
     -> SemIR::InstId {
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);

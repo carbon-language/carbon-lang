@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -59,6 +60,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
     functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
+
+  // Specific functions are lowered when we emit a reference to them.
+  specific_functions_.resize(sem_ir_->specifics().size());
 
   // Lower global variable declarations.
   for (auto inst_id :
@@ -161,16 +165,33 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
                sem_ir().insts().Get(inst_id));
 }
 
-auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
+auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
+                                      SemIR::SpecificId specific_id)
+    -> llvm::Function* {
+  // Non-generic functions are declared eagerly.
+  if (!specific_id.is_valid()) {
+    return GetFunction(function_id);
+  }
+
+  if (auto* result = specific_functions_[specific_id.index]) {
+    return result;
+  }
+
+  auto* result = BuildFunctionDecl(function_id, specific_id);
+  // TODO: Add this function to a list of specific functions whose definitions
+  // we need to emit.
+  specific_functions_[specific_id.index] = result;
+  return result;
+}
+
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
+                                    SemIR::SpecificId specific_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
 
-  // Don't lower generic functions or associated functions.
-  // TODO: Associated functions have `Self` in scope so should be treated as
-  // generic functions.
-  if (function.generic_id.is_valid() ||
-      sem_ir().insts().Is<SemIR::InterfaceDecl>(
-          sem_ir().name_scopes().Get(function.parent_scope_id).inst_id)) {
+  // Don't lower generic functions. Note that associated functions in interfaces
+  // have `Self` in scope, so are implicitly generic functions.
+  if (function.generic_id.is_valid() && !specific_id.is_valid()) {
     return nullptr;
   }
 
@@ -182,17 +203,15 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
-  // TODO: Pass in a specific ID for generic functions.
-  const auto specific_id = SemIR::SpecificId::Invalid;
-
   const auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   CARBON_CHECK(return_info.is_valid(), "Should not lower invalid functions.");
 
-  auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
+  auto implicit_param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
   // TODO: Include parameters corresponding to positional parameters.
-  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto param_patterns =
+      sem_ir().inst_blocks().GetOrEmpty(function.param_patterns_id);
 
   auto* return_type =
       return_info.type_id.is_valid() ? GetType(return_info.type_id) : nullptr;
@@ -204,22 +223,24 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // demand.
   llvm::SmallVector<SemIR::InstId> param_inst_ids;
   auto max_llvm_params = (return_info.has_return_slot() ? 1 : 0) +
-                         implicit_param_refs.size() + param_refs.size();
+                         implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
-    param_inst_ids.push_back(function.return_storage_id);
+    param_inst_ids.push_back(function.return_slot_id);
   }
-  for (auto param_ref_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param_info.inst.runtime_index.is_valid()) {
+  for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
+           implicit_param_patterns, param_patterns)) {
+    auto param_pattern = SemIR::Function::GetParamPatternInfoFromPatternId(
+                             sem_ir(), param_pattern_id)
+                             .inst;
+    if (!param_pattern.runtime_index.is_valid()) {
       continue;
     }
-    switch (auto value_rep =
-                SemIR::ValueRepr::ForType(sem_ir(), param_info.inst.type_id);
+    auto param_type_id =
+        SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_pattern.type_id);
+    switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
         CARBON_FATAL("Incomplete parameter type lowering function declaration");
@@ -229,7 +250,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       case SemIR::ValueRepr::Custom:
       case SemIR::ValueRepr::Pointer:
         param_types.push_back(GetType(value_rep.type_id));
-        param_inst_ids.push_back(param_ref_id);
+        param_inst_ids.push_back(param_pattern_id);
         break;
     }
   }
@@ -244,7 +265,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
           : llvm::Type::getVoidTy(llvm_context());
 
   Mangler m(*this);
-  std::string mangled_name = m.Mangle(function_id);
+  std::string mangled_name = m.Mangle(function_id, specific_id);
 
   llvm::FunctionType* function_type = llvm::FunctionType::get(
       function_return_type, param_types, /*isVarArg=*/false);
@@ -259,13 +280,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto name_id = SemIR::NameId::Invalid;
-    if (inst_id == function.return_storage_id) {
+    if (inst_id == function.return_slot_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
     } else {
-      name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
-                    .GetNameId(sem_ir());
+      name_id = SemIR::Function::GetNameFromPatternId(sem_ir(), inst_id);
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -306,7 +326,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   int param_index = 0;
   if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
           .has_return_slot()) {
-    function_lowering.SetLocal(function.return_storage_id,
+    function_lowering.SetLocal(function.return_slot_id,
                                llvm_function->getArg(param_index));
     ++param_index;
   }
@@ -336,10 +356,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     //
     // TODO: Support general patterns here.
     auto bind_name_id = param_ref_id;
-    if (auto addr =
-            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
-      bind_name_id = addr->inner_id;
-    }
     auto bind_name = sem_ir().insts().Get(bind_name_id);
     CARBON_CHECK(bind_name.Is<SemIR::BindName>());
     function_lowering.SetLocal(bind_name_id, param_value);
@@ -397,7 +413,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
     -> llvm::Type* {
   switch (inst.builtin_inst_kind) {
     case SemIR::BuiltinInstKind::Invalid:
-      CARBON_FATAL("Unexpected builtin type in lowering.");
+    case SemIR::BuiltinInstKind::AutoType:
+      CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
     case SemIR::BuiltinInstKind::Error:
       // This is a complete type but uses of it should never be lowered.
       return nullptr;
@@ -412,14 +429,18 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
       // storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(context.llvm_context());
+    case SemIR::BuiltinInstKind::SpecificFunctionType:
     case SemIR::BuiltinInstKind::StringType:
       // TODO: Decide how we want to represent `StringType`.
       return llvm::PointerType::get(context.llvm_context(), 0);
     case SemIR::BuiltinInstKind::BoundMethodType:
+    case SemIR::BuiltinInstKind::BigIntType:
     case SemIR::BuiltinInstKind::NamespaceType:
     case SemIR::BuiltinInstKind::WitnessType:
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(context.llvm_context());
+    case SemIR::BuiltinInstKind::VtableType:
+      return llvm::Type::getVoidTy(context.llvm_context());
   }
 }
 
@@ -545,9 +566,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   auto diag_loc = converter_.ConvertLoc(
-      inst_id,
-      [&](DiagnosticLoc /*context_loc*/,
-          const Internal::DiagnosticBase<>& /*context_diagnostic_base*/) {});
+      inst_id, [&](DiagnosticLoc /*context_loc*/,
+                   const DiagnosticBase<>& /*context_diagnostic_base*/) {});
   return {.filename = diag_loc.filename,
           .line_number = diag_loc.line_number == -1 ? 0 : diag_loc.line_number,
           .column_number =

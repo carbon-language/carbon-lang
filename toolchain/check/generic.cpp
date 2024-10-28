@@ -9,6 +9,7 @@
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -59,11 +60,12 @@ class RebuildGenericConstantInEvalBlockCallbacks final
  public:
   RebuildGenericConstantInEvalBlockCallbacks(
       Context& context, SemIR::GenericId generic_id,
-      SemIR::GenericInstIndex::Region region,
+      SemIR::GenericInstIndex::Region region, SemIR::LocId loc_id,
       ConstantsInGenericMap& constants_in_generic)
       : context_(context),
         generic_id_(generic_id),
         region_(region),
+        loc_id_(loc_id),
         constants_in_generic_(constants_in_generic) {}
 
   // Check for instructions for which we already have a mapping into the eval
@@ -106,6 +108,12 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       return true;
     }
 
+    if (auto pattern =
+            context_.insts().TryGetAs<SemIR::SymbolicBindingPattern>(inst_id)) {
+      inst_id = Rebuild(inst_id, *pattern);
+      return true;
+    }
+
     return false;
   }
 
@@ -121,10 +129,10 @@ class RebuildGenericConstantInEvalBlockCallbacks final
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
-      // TODO: Provide a location based on the location of the instruction
-      // that uses the constant.
+      // TODO: Is the location we pick here always appropriate for the new
+      // instruction?
       auto inst_id = context_.sem_ir().insts().AddInNoBlock(
-          SemIR::LocIdAndInst::NoLoc(new_inst));
+          SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
       auto const_id = AddGenericConstantInstToEvalBlock(
           context_, generic_id_, region_, const_inst_id, inst_id);
       context_.constant_values().Set(inst_id, const_id);
@@ -137,6 +145,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
   Context& context_;
   SemIR::GenericId generic_id_;
   SemIR::GenericInstIndex::Region region_;
+  SemIR::LocId loc_id_;
   ConstantsInGenericMap& constants_in_generic_;
 };
 }  // namespace
@@ -147,7 +156,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
 // type in each specific.
 static auto AddGenericTypeToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
-    SemIR::GenericInstIndex::Region region,
+    SemIR::GenericInstIndex::Region region, SemIR::LocId loc_id,
     ConstantsInGenericMap& constants_in_generic, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
@@ -155,7 +164,7 @@ static auto AddGenericTypeToEvalBlock(
   auto type_inst_id =
       SubstInst(context, context.types().GetInstId(type_id),
                 RebuildGenericConstantInEvalBlockCallbacks(
-                    context, generic_id, region, constants_in_generic));
+                    context, generic_id, region, loc_id, constants_in_generic));
   return context.GetTypeIdForTypeInst(type_inst_id);
 }
 
@@ -174,7 +183,8 @@ static auto AddGenericConstantToEvalBlock(
   auto new_inst_id =
       SubstInst(context, const_inst_id,
                 RebuildGenericConstantInEvalBlockCallbacks(
-                    context, generic_id, region, constants_in_generic));
+                    context, generic_id, region,
+                    context.insts().GetLocId(inst_id), constants_in_generic));
   CARBON_CHECK(new_inst_id != const_inst_id,
                "Did not apply any substitutions to symbolic constant {0}",
                context.insts().Get(const_inst_id));
@@ -227,7 +237,8 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
         GenericRegionStack::DependencyKind::None) {
       auto inst = context.insts().Get(inst_id);
       auto type_id = AddGenericTypeToEvalBlock(
-          context, generic_id, region, constants_in_generic, inst.type_id());
+          context, generic_id, region, context.insts().GetLocId(inst_id),
+          constants_in_generic, inst.type_id());
       // TODO: Eventually, completeness requirements should be modeled as
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
@@ -419,64 +430,6 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
         definition_block_id;
   }
   return true;
-}
-
-// Replace the parameter with an invalid instruction so that we don't try
-// constructing a generic based on it. Note this is updating the param
-// refs block, not the actual params block, so will not be directly
-// reflected in SemIR output.
-static auto ReplaceInstructionWithError(Context& context,
-                                        SemIR::InstId& inst_id) -> void {
-  inst_id = context.AddInstInNoBlock<SemIR::Param>(
-      context.insts().GetLocId(inst_id),
-      {.type_id = SemIR::TypeId::Error,
-       .name_id = SemIR::NameId::Base,
-       .runtime_index = SemIR::RuntimeParamIndex::Invalid});
-}
-
-auto RequireGenericParamsOnType(Context& context, SemIR::InstBlockId block_id)
-    -> void {
-  if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
-    return;
-  }
-  for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
-    if (param_info.GetNameId(context.sem_ir()) == SemIR::NameId::SelfValue) {
-      CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
-                        "`self` parameter only allowed on functions");
-      context.emitter().Emit(inst_id, SelfParameterNotAllowed);
-
-      ReplaceInstructionWithError(context, inst_id);
-    } else if (!context.constant_values().Get(inst_id).is_constant()) {
-      CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
-                        "parameters of generic types must be constant");
-      context.emitter().Emit(inst_id, GenericParamMustBeConstant);
-
-      ReplaceInstructionWithError(context, inst_id);
-    }
-  }
-}
-
-auto RequireGenericOrSelfImplicitFunctionParams(Context& context,
-                                                SemIR::InstBlockId block_id)
-    -> void {
-  if (!block_id.is_valid() || block_id == SemIR::InstBlockId::Empty) {
-    return;
-  }
-  for (auto& inst_id : context.inst_blocks().Get(block_id)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), inst_id);
-    if (param_info.GetNameId(context.sem_ir()) != SemIR::NameId::SelfValue &&
-        !context.constant_values().Get(inst_id).is_constant()) {
-      CARBON_DIAGNOSTIC(
-          ImplictParamMustBeConstant, Error,
-          "implicit parameters of functions must be constant or `self`");
-      context.emitter().Emit(inst_id, ImplictParamMustBeConstant);
-
-      ReplaceInstructionWithError(context, inst_id);
-    }
-  }
 }
 
 }  // namespace Carbon::Check

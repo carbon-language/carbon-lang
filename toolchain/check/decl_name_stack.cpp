@@ -312,7 +312,7 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                                                         SemIR::ClassId class_id)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
-                    "cannot declare a member of incomplete class `{0}`",
+                    "cannot declare a member of incomplete class {0}",
                     SemIR::TypeId);
   auto builder =
       context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,
@@ -327,13 +327,10 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
-                    "cannot declare a member of undefined interface `{0}`",
-                    std::string);
+                    "cannot declare a member of undefined interface {0}",
+                    InstIdAsType);
   auto builder = context.emitter().Build(
-      loc, QualifiedDeclInUndefinedInterfaceScope,
-      context.sem_ir().StringifyTypeExpr(
-          context.sem_ir().constant_values().GetConstantInstId(
-              interface_inst_id)));
+      loc, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
   context.NoteUndefinedInterface(interface_id, builder);
   builder.Emit();
 }
@@ -380,9 +377,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
     return InvalidResult;
   }
 
-  auto new_params = DeclParams(name.name_loc_id, name.first_param_node_id,
-                               name.last_param_node_id, name.implicit_params_id,
-                               name.params_id);
+  auto new_params = DeclParams(
+      name.name_loc_id, name.first_param_node_id, name.last_param_node_id,
+      name.implicit_param_patterns_id, name.param_patterns_id);
 
   // Find the scope corresponding to the resolved instruction.
   // TODO: When diagnosing qualifiers on names, print a diagnostic that talks

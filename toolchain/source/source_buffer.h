@@ -45,6 +45,18 @@ class SourceBuffer {
                            DiagnosticConsumer& consumer)
       -> std::optional<SourceBuffer>;
 
+  // Handles conditional use of stdin based on the filename being "-".
+  static auto MakeFromFileOrStdin(llvm::vfs::FileSystem& fs,
+                                  llvm::StringRef filename,
+                                  DiagnosticConsumer& consumer)
+      -> std::optional<SourceBuffer> {
+    if (filename == "-") {
+      return MakeFromStdin(consumer);
+    } else {
+      return MakeFromFile(fs, filename, consumer);
+    }
+  }
+
   // Use one of the factory functions above to create a source buffer.
   SourceBuffer() = delete;
 

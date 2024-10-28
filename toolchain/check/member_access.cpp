@@ -10,8 +10,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/deduce.h"
-#include "toolchain/check/import_ref.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -38,11 +37,10 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
-                            "member access into incomplete class `{0}`",
-                            std::string);
+                            "member access into incomplete class {0}",
+                            InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteClassScope,
-              context.sem_ir().StringifyType(base_const_id));
+              loc_id, QualifiedExprInIncompleteClassScope, base_id);
         });
     auto& class_info = context.classes().Get(base_as_class->class_id);
     return LookupScope{.name_scope_id = class_info.scope_id,
@@ -52,11 +50,10 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                            "member access into undefined interface `{0}`",
-                            std::string);
+                            "member access into undefined interface {0}",
+                            InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInUndefinedInterfaceScope,
-              context.sem_ir().StringifyType(base_const_id));
+              loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
         });
     auto& interface_info =
         context.interfaces().Get(base_as_interface->interface_id);
@@ -90,11 +87,9 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
-       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_refs_id)) {
-    auto param_name_id =
-        SemIR::Function::GetParamFromParamRefId(sem_ir, param_id)
-            .GetNameId(sem_ir);
-    if (param_name_id == SemIR::NameId::SelfValue) {
+       sem_ir.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id)) {
+    if (SemIR::Function::GetNameFromPatternId(sem_ir, param_id) ==
+        SemIR::NameId::SelfValue) {
       return true;
     }
   }
@@ -174,75 +169,33 @@ static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
   return true;
 }
 
-// Given a type and an interface, searches for an impl that describes how that
-// type implements that interface, and returns the corresponding witness.
-// Returns an invalid InstId if no matching impl is found.
-static auto LookupInterfaceWitness(Context& context,
-                                   SemIR::ConstantId type_const_id,
-                                   SemIR::ConstantId interface_const_id)
-    -> SemIR::InstId {
-  // TODO: Add a better impl lookup system. At the very least, we should only be
-  // considering impls that are for the same interface we're querying. We can
-  // also skip impls that mention any types that aren't part of our impl query.
-  for (const auto& impl : context.impls().array_ref()) {
-    auto specific_id = SemIR::SpecificId::Invalid;
-    if (impl.generic_id.is_valid()) {
-      specific_id =
-          DeduceImplArguments(context, impl, type_const_id, interface_const_id);
-      if (!specific_id.is_valid()) {
-        continue;
-      }
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.self_id),
-            type_const_id)) {
-      continue;
-    }
-    if (!context.constant_values().AreEqualAcrossDeclarations(
-            SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                              impl.constraint_id),
-            interface_const_id)) {
-      // TODO: An impl of a constraint type should be treated as implementing
-      // the constraint's interfaces.
-      continue;
-    }
-    if (!impl.witness_id.is_valid()) {
-      // TODO: Diagnose if the impl isn't defined yet?
-      return SemIR::InstId::Invalid;
-    }
-    LoadImportRef(context, impl.witness_id);
-    return context.constant_values().GetInstId(
-        SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                          impl.witness_id));
-  }
-  return SemIR::InstId::Invalid;
-}
-
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
+    Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
   auto interface_type =
       context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
   auto& interface = context.interfaces().Get(interface_type.interface_id);
-  auto witness_id = LookupInterfaceWitness(
-      context, type_const_id, assoc_type.interface_type_id.AsConstantId());
+  auto witness_id =
+      LookupInterfaceWitness(context, loc_id, type_const_id,
+                             assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.is_valid()) {
     if (missing_impl_diagnoser) {
+      // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
-                        "type `{1}` does not implement interface `{0}`",
+                        "type {1} does not implement interface `{0}`",
                         SemIR::NameId, SemIR::TypeId);
-      (*missing_impl_diagnoser)()
+      missing_impl_diagnoser()
           .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
                 context.GetTypeIdForTypeConstant(type_const_id))
           .Emit();
     } else {
+      // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                        "cannot access member of interface `{0}` in type `{1}` "
+                        "cannot access member of interface `{0}` in type {1} "
                         "that does not implement that interface",
                         SemIR::NameId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
@@ -336,7 +289,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (ScopeNeedsImplLookup(context, lookup_scope)) {
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
-                                    *assoc_type, member_id, std::nullopt);
+                                    *assoc_type, member_id);
     }
   }
 
@@ -399,17 +352,17 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
 // Validates that the index (required to be an IntLiteral) is valid within the
 // tuple size. Returns the index on success, or nullptr on failure.
 static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
-                               SemIR::Inst operand_inst,
+                               SemIR::InstId operand_inst_id,
                                SemIR::IntLiteral index_inst, int size)
     -> const llvm::APInt* {
   const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(TupleIndexOutOfBounds, Error,
-                      "tuple element index `{0}` is past the end of type `{1}`",
-                      TypedInt, SemIR::TypeId);
+                      "tuple element index `{0}` is past the end of type {1}",
+                      TypedInt, TypeOfInstId);
     context.emitter().Emit(loc_id, TupleIndexOutOfBounds,
                            {.type = index_inst.type_id, .value = index_val},
-                           operand_inst.type_id());
+                           operand_inst_id);
     return nullptr;
   }
   return &index_val;
@@ -432,10 +385,10 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   auto base_type_id = context.insts().Get(base_id).type_id();
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
-                          "member access into object of incomplete type `{0}`",
-                          SemIR::TypeId);
+                          "member access into object of incomplete type {0}",
+                          TypeOfInstId);
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
-                                       base_type_id);
+                                       base_id);
       })) {
     return SemIR::InstId::BuiltinError;
   }
@@ -465,18 +418,18 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                        "type `{0}` does not have a member `{1}`",
-                        SemIR::TypeId, SemIR::NameId);
-      context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_type_id,
+                        "type {0} does not have a member `{1}`", TypeOfInstId,
+                        SemIR::NameId);
+      context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
                              name_id);
       return SemIR::InstId::BuiltinError;
     }
 
     if (base_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
-                        "type `{0}` does not support qualified expressions",
-                        SemIR::TypeId);
-      context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_type_id);
+                        "type {0} does not support qualified expressions",
+                        TypeOfInstId);
+      context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
     }
     return SemIR::InstId::BuiltinError;
   }
@@ -494,8 +447,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
-    std::optional<Context::BuildDiagnosticFn> missing_impl_diagnoser)
-    -> SemIR::InstId {
+    Context::BuildDiagnosticFn missing_impl_diagnoser) -> SemIR::InstId {
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrRefExpr(context, base_id);
   auto base_type_id = context.insts().Get(base_id).type_id();
@@ -523,11 +475,11 @@ auto PerformCompoundMemberAccess(
   // because the base expression is not used for anything.
   if (member_id == member_expr_id && member.type_id() != SemIR::TypeId::Error) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
-                      "member name of type `{0}` in compound member access is "
+                      "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",
-                      SemIR::TypeId);
+                      TypeOfInstId);
     context.emitter().Emit(loc_id, CompoundMemberAccessDoesNotUseBase,
-                           member.type_id());
+                           member_id);
   }
 
   return member_id;
@@ -537,16 +489,15 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId tuple_inst_id,
                         SemIR::InstId index_inst_id) -> SemIR::InstId {
   tuple_inst_id = ConvertToValueOrRefExpr(context, tuple_inst_id);
-  auto tuple_inst = context.insts().Get(tuple_inst_id);
-  auto tuple_type_id = tuple_inst.type_id();
+  auto tuple_type_id = context.insts().Get(tuple_inst_id).type_id();
 
   auto tuple_type = context.types().TryGetAs<SemIR::TupleType>(tuple_type_id);
   if (!tuple_type) {
     CARBON_DIAGNOSTIC(TupleIndexOnANonTupleType, Error,
-                      "type `{0}` does not support tuple indexing; only "
+                      "type {0} does not support tuple indexing; only "
                       "tuples can be indexed that way",
-                      SemIR::TypeId);
-    context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_type_id);
+                      TypeOfInstId);
+    context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_inst_id);
     return SemIR::InstId::BuiltinError;
   }
 
@@ -569,7 +520,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
       context.constant_values().GetInstId(index_const_id));
   auto type_block = context.type_blocks().Get(tuple_type->elements_id);
-  const auto* index_val = ValidateTupleIndex(context, loc_id, tuple_inst,
+  const auto* index_val = ValidateTupleIndex(context, loc_id, tuple_inst_id,
                                              index_literal, type_block.size());
   if (!index_val) {
     return SemIR::InstId::BuiltinError;

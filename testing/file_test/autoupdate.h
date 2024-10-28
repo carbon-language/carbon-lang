@@ -37,7 +37,7 @@ class FileTestAutoupdater {
       const std::filesystem::path& file_test_path, std::string test_command,
       std::string dump_command, llvm::StringRef input_content,
       const llvm::SmallVector<llvm::StringRef>& filenames,
-      int autoupdate_line_number,
+      int autoupdate_line_number, bool autoupdate_split,
       const llvm::SmallVector<FileTestLine>& non_check_lines,
       llvm::StringRef stdout, llvm::StringRef stderr,
       const std::optional<RE2>& default_file_re,
@@ -49,6 +49,7 @@ class FileTestAutoupdater {
         input_content_(input_content),
         filenames_(filenames),
         autoupdate_line_number_(autoupdate_line_number),
+        autoupdate_split_(autoupdate_split),
         non_check_lines_(non_check_lines),
         default_file_re_(default_file_re),
         line_number_replacements_(line_number_replacements),
@@ -196,6 +197,7 @@ class FileTestAutoupdater {
   llvm::StringRef input_content_;
   const llvm::SmallVector<llvm::StringRef>& filenames_;
   int autoupdate_line_number_;
+  bool autoupdate_split_;
   const llvm::SmallVector<FileTestLine>& non_check_lines_;
   const std::optional<RE2>& default_file_re_;
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -67,6 +67,7 @@ cc_binary(
         "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
         "//toolchain/install:install_paths_test_helpers",
+        "//toolchain/testing:compile_helper",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
@@ -89,6 +90,8 @@ cc_library(
         "compile_subcommand.h",
         "driver.cpp",
         "driver_env.h",
+        "format_subcommand.cpp",
+        "format_subcommand.h",
         "link_subcommand.cpp",
         "link_subcommand.h",
     ],
@@ -112,6 +115,7 @@ cc_library(
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
+        "//toolchain/format",
         "//toolchain/install:install_paths",
         "//toolchain/lex",
         "//toolchain/lower",
@@ -167,7 +171,6 @@ cc_fuzz_test(
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],
-    data = cc_env_data(),
     env = cc_env(),
     deps = [
         ":driver",

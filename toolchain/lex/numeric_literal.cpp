@@ -9,29 +9,9 @@
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadicDetails.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
-
-// We use formatv primarily for diagnostics. In these cases, it's expected that
-// the spelling in source code should be used.
-template <>
-struct llvm::format_provider<Carbon::Lex::NumericLiteral::Radix> {
-  using Radix = Carbon::Lex::NumericLiteral::Radix;
-  static void format(const Radix& radix, raw_ostream& out,
-                     StringRef /*style*/) {
-    switch (radix) {
-      case Radix::Binary:
-        out << "binary";
-        break;
-      case Radix::Decimal:
-        out << "decimal";
-        break;
-      case Radix::Hexadecimal:
-        out << "hexadecimal";
-        break;
-    }
-  }
-};
 
 namespace Carbon::Lex {
 
@@ -308,10 +288,12 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
       continue;
     }
 
-    CARBON_DIAGNOSTIC(InvalidDigit, Error,
-                      "invalid digit '{0}' in {1} numeric literal", char,
-                      NumericLiteral::Radix);
-    emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
+    CARBON_DIAGNOSTIC(
+        InvalidDigit, Error,
+        "invalid digit '{0}' in {1:=2:binary|=10:decimal|=16:hexadecimal} "
+        "numeric literal",
+        char, IntAsSelect);
+    emitter_.Emit(text.begin() + i, InvalidDigit, c, static_cast<int>(radix));
     return {.ok = false};
   }
 

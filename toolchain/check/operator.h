@@ -23,9 +23,8 @@ struct Operator {
 // operator fails.
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
-                        std::optional<Context::BuildDiagnosticFn>
-                            missing_impl_diagnoser = std::nullopt)
-    -> SemIR::InstId;
+                        Context::BuildDiagnosticFn missing_impl_diagnoser =
+                            nullptr) -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
 // `lhs_id * rhs_id`. If specified, `missing_impl_diagnoser` is used to build a
@@ -33,9 +32,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 // fails.
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         std::optional<Context::BuildDiagnosticFn>
-                             missing_impl_diagnoser = std::nullopt)
-    -> SemIR::InstId;
+                         Context::BuildDiagnosticFn missing_impl_diagnoser =
+                             nullptr) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

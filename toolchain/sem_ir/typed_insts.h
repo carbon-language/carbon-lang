@@ -65,10 +65,10 @@ struct AddrOf {
 };
 
 // An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
-// generally be one of `AnyBindName`.
+// generally be a pattern inst.
 struct AddrPattern {
-  static constexpr auto Kind =
-      InstKind::AddrPattern.Define<Parse::AddrId>({.ir_name = "addr_pattern"});
+  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
+      {.ir_name = "addr_pattern", .is_lowered = false});
 
   TypeId type_id;
   // The `self` binding.
@@ -296,6 +296,7 @@ struct AnyBindingPattern {
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a non-symbolic binding pattern.
@@ -305,16 +306,25 @@ struct BindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Represents a symbolic binding pattern.
+//
+// TODO: Consider dropping this and AnyBindingPattern, using BindingPattern
+// everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
-      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "symbolic_binding_pattern", .is_lowered = false});
+      InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
+          .ir_name = "symbolic_binding_pattern",
+          .is_type = InstIsType::Never,
+          .constant_kind = InstConstantKind::SymbolicOnly,
+          .is_lowered = false,
+      });
 
   TypeId type_id;
   EntityNameId entity_name_id;
+  MatchingInstId bind_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -826,14 +836,77 @@ struct Namespace {
   AbsoluteInstId import_id;
 };
 
-// A parameter for a function or other parameterized block.
-struct Param {
+// A parameter for a function or other parameterized block, as exposed in the
+// SemIR calling convention. The sub-kinds differ only in their expression
+// category.
+struct AnyParam {
+  static constexpr InstKind Kinds[] = {InstKind::OutParam,
+                                       InstKind::ValueParam};
+
+  InstKind kind;
+  TypeId type_id;
+  RuntimeParamIndex runtime_index;
+
+  // A name to associate with this Param in pretty-printed IR. This is not
+  // necessarily unique, or even valid, and has no semantic significance.
+  NameId pretty_name_id;
+};
+
+// An output parameter. See AnyParam for member documentation.
+struct OutParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
-      InstKind::Param.Define<Parse::NodeId>({.ir_name = "param"});
+      InstKind::OutParam.Define<Parse::NodeId>({.ir_name = "out_param"});
 
   TypeId type_id;
-  NameId name_id;
+  RuntimeParamIndex runtime_index;
+  NameId pretty_name_id;
+};
+
+// A by-value parameter. See AnyParam for member documentation.
+struct ValueParam {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind =
+      InstKind::ValueParam.Define<Parse::NodeId>({.ir_name = "value_param"});
+
+  TypeId type_id;
+  RuntimeParamIndex runtime_index;
+  NameId pretty_name_id;
+};
+
+// A pattern that represents a parameter. It delegates to subpattern_id
+// in pattern matching. The sub-kinds differ only in the expression category
+// of the corresponding parameter inst.
+struct AnyParamPattern {
+  static constexpr InstKind Kinds[] = {InstKind::OutParamPattern,
+                                       InstKind::ValueParamPattern};
+
+  InstKind kind;
+  TypeId type_id;
+  InstId subpattern_id;
+  RuntimeParamIndex runtime_index;
+};
+
+// A pattern that represents an output parameter.
+struct OutParamPattern {
+  static constexpr auto Kind =
+      InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
+          {.ir_name = "out_param_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  RuntimeParamIndex runtime_index;
+};
+
+// A pattern that represents a by-value parameter.
+struct ValueParamPattern {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind =
+      InstKind::ValueParamPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_param_pattern", .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
   RuntimeParamIndex runtime_index;
 };
 
@@ -869,6 +942,42 @@ struct ReturnExpr {
   InstId expr_id;
   // The return slot, if any. Invalid if we're not returning through memory.
   InstId dest_id;
+};
+
+// The return slot of a function declaration, as exposed in the function body.
+// This acts as an output parameter, analogous to `BindName` for input
+// parameters.
+struct ReturnSlot {
+  static constexpr auto Kind =
+      InstKind::ReturnSlot.Define<Parse::NodeId>({.ir_name = "return_slot"});
+
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
+  TypeId type_id;
+
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
+
+  // The storage that will be initialized by the function.
+  InstId storage_id;
+};
+
+// The return slot of a function declaration, as exposed to the function's
+// callers. This acts as an output parameter, analogous to `BindingPattern`
+// for input parameters.
+struct ReturnSlotPattern {
+  static constexpr auto Kind =
+      InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
+          {.ir_name = "return_slot_pattern", .is_lowered = false});
+
+  // The type of the value that will be stored in this slot (i.e. the return
+  // type of the function).
+  TypeId type_id;
+
+  // The function return type as originally written by the user. For diagnostics
+  // only; this has no semantic significance.
+  InstId type_inst_id;
 };
 
 // An `expr == expr` clause in a `where` expression or `require` declaration.
@@ -918,6 +1027,27 @@ struct SpecificConstant {
 
   TypeId type_id;
   AbsoluteInstId inst_id;
+  SpecificId specific_id;
+};
+
+// A specific instance of a generic function. This represents the callee in a
+// call instruction that is calling a generic function, where the specific
+// arguments of the function have been deduced.
+//
+// TODO: This value corresponds to the `(FunctionType as Call(...)).Op` function
+// in the overloaded calls design. Eventually we should represent it more
+// directly as a member of the `Call` interface.
+struct SpecificFunction {
+  static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
+      {.ir_name = "specific_function",
+       .constant_kind = InstConstantKind::Always});
+
+  // Always the builtin SpecificFunctionType.
+  TypeId type_id;
+  // The expression denoting the callee.
+  InstId callee_id;
+  // The specific instance of the generic callee that will be called, including
+  // all the compile-time arguments.
   SpecificId specific_id;
 };
 

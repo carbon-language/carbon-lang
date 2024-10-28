@@ -10,6 +10,7 @@
 #include "toolchain/check/impl.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -48,7 +49,6 @@ auto HandleParseNode(Context& context, Parse::ImplForallId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
-  RequireGenericParamsOnType(context, params_id);
   context.node_stack().Push(node_id, params_id);
   return true;
 }
@@ -126,8 +126,9 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::AnyImplDeclId node_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
-                       Parse::NodeId params_node, SemIR::TypeId constraint_id)
-    -> void {
+                       Parse::NodeId params_node,
+                       SemIR::InstId constraint_inst_id,
+                       SemIR::TypeId constraint_id) -> void {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
 
@@ -183,10 +184,10 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   auto& interface = context.interfaces().Get(interface_type->interface_id);
   if (!interface.is_defined()) {
     CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for interface `{0}`",
-                      SemIR::TypeId);
+                      "`extend impl` requires a definition for interface {0}",
+                      InstIdAsType);
     auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                        constraint_id);
+                                        constraint_inst_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
     diag.Emit();
     parent_scope.has_error = true;
@@ -201,8 +202,18 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 static auto PopImplIntroducerAndParamsAsNameComponent(
     Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
     -> NameComponent {
-  auto [implicit_params_loc_id, implicit_params_id] =
+  auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
+
+  ParameterBlocks parameter_blocks{
+      .implicit_params_id = SemIR::InstBlockId::Invalid,
+      .params_id = SemIR::InstBlockId::Invalid,
+      .return_slot_id = SemIR::InstId::Invalid};
+  if (implicit_param_patterns_id) {
+    parameter_blocks =
+        CalleePatternMatch(context, *implicit_param_patterns_id,
+                           SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
+  }
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
@@ -214,10 +225,14 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id =
-          implicit_params_id.value_or(SemIR::InstBlockId::Invalid),
+      .implicit_params_id = parameter_blocks.implicit_params_id,
+      .implicit_param_patterns_id =
+          implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
       .params_id = SemIR::InstBlockId::Invalid,
+      .param_patterns_id = SemIR::InstBlockId::Invalid,
+      .return_slot_pattern_id = SemIR::InstId::Invalid,
+      .return_slot_id = SemIR::InstId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
@@ -317,7 +332,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               name.implicit_params_loc_id, constraint_type_id);
+               name.implicit_params_loc_id, constraint_inst_id,
+               constraint_type_id);
   }
 
   if (!is_definition && context.IsImplFile()) {
@@ -341,14 +357,13 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
 
   if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`", std::string,
-                      std::string);
+                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
+                      InstIdAsRawType);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "previous definition was here");
     context.emitter()
-        .Build(node_id, ImplRedefinition,
-               context.sem_ir().StringifyTypeExpr(impl_info.self_id),
-               context.sem_ir().StringifyTypeExpr(impl_info.constraint_id))
+        .Build(node_id, ImplRedefinition, impl_info.self_id,
+               impl_info.constraint_id)
         .Note(impl_info.definition_id, ImplPreviousDefinition)
         .Emit();
   } else {
@@ -358,7 +373,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
         context.decl_name_stack().PeekParentScopeId());
   }
 
-  context.scope_stack().Push(impl_decl_id, impl_info.scope_id);
+  context.scope_stack().Push(
+      impl_decl_id, impl_info.scope_id,
+      context.generics().GetSelfSpecific(impl_info.generic_id));
+  StartGenericDefinition(context);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
@@ -381,10 +399,12 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
-  if (!context.impls().Get(impl_id).is_defined()) {
-    context.impls().Get(impl_id).witness_id =
-        BuildImplWitness(context, impl_id);
+  auto& impl_info = context.impls().Get(impl_id);
+  if (!impl_info.is_defined()) {
+    impl_info.witness_id = BuildImplWitness(context, impl_id);
   }
+
+  FinishGenericDefinition(context, impl_info.generic_id);
 
   context.inst_block_stack().Pop();
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.

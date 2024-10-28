@@ -72,6 +72,12 @@ class FunctionContext {
     return file_context_->GetFunction(function_id);
   }
 
+  // Gets or creates a callable's function.
+  auto GetOrCreateFunction(SemIR::FunctionId function_id,
+                           SemIR::SpecificId specific_id) -> llvm::Function* {
+    return file_context_->GetOrCreateFunction(function_id, specific_id);
+  }
+
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return file_context_->GetType(type_id);

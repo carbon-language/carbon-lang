@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/manifest:defs.bzl", "manifest")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -10,6 +11,11 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "testdata",
     data = glob(["testdata/**/*.carbon"]),
+)
+
+manifest(
+    name = "testdata.txt",
+    srcs = [":testdata"],
 )
 
 cc_library(
@@ -45,6 +51,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "@googletest//:gtest",
     ],
 )
@@ -61,6 +68,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
@@ -88,6 +96,7 @@ cc_library(
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
@@ -139,6 +148,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -191,6 +201,24 @@ cc_test(
         ":precedence",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "coverage_test",
+    size = "small",
+    srcs = ["coverage_test.cpp"],
+    args = ["--testdata_manifest=$(location :testdata.txt)"],
+    data = [
+        ":testdata",
+        ":testdata.txt",
+    ],
+    deps = [
+        ":node_kind",
+        "//testing/base:gtest_main",
+        "//toolchain/testing:coverage_helper",
+        "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest",
     ],
 )

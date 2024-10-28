@@ -106,6 +106,29 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
+// An ID of an instruction that is the pattern-match counterpart of a pattern
+// inst. This should only be used as the type of a field within a typed
+// instruction class that represents a pattern.
+//
+// In SemIR, a given pattern is represented by one or more pattern insts, which
+// describe the pattern itself, and typically by one or more pattern-match
+// insts, which describe the process of matching the pattern against the
+// scrutinee. The pattern insts are emitted while traversing the parse tree,
+// and then the pattern-match insts are emitted by traversing the pattern
+// insts, but in some cases it's necessary to precompute the pattern-match
+// insts during that first phase. In such a case, the precomputed inst is stored
+// as a MatchingInstId member of the pattern inst, so that it's available when
+// the pattern inst is later traversed.
+class MatchingInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and MatchingInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr MatchingInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
@@ -259,16 +282,26 @@ struct RuntimeParamIndex : public IndexBase,
   // An explicitly invalid index.
   static const RuntimeParamIndex Invalid;
 
+  // An placeholder for index whose value is not yet known.
+  static const RuntimeParamIndex Unknown;
+
   using IndexBase::IndexBase;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "runtime_param";
-    IndexBase::Print(out);
+    if (*this == Unknown) {
+      out << "<unknown>";
+    } else {
+      IndexBase::Print(out);
+    }
   }
 };
 
 constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
     RuntimeParamIndex(InvalidIndex);
+
+constexpr RuntimeParamIndex RuntimeParamIndex::Unknown =
+    RuntimeParamIndex(InvalidIndex - 1);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -557,6 +590,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId PackageNamespace;
   // The name of `base`.
   static const NameId Base;
+  // The name of `vptr`.
+  static const NameId Vptr;
 
   // The number of non-index (<0) that exist, and will need storage in name
   // lookup.
@@ -609,9 +644,10 @@ constexpr NameId NameId::PeriodSelf = NameId(InvalidIndex - 3);
 constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 4);
 constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 5);
 constexpr NameId NameId::Base = NameId(InvalidIndex - 6);
-constexpr int NameId::NonIndexValueCount = 7;
+constexpr NameId NameId::Vptr = NameId(InvalidIndex - 7);
+constexpr int NameId::NonIndexValueCount = 8;
 // Enforce the link between SpecialValueCount and the last special value.
-static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
+static_assert(NameId::NonIndexValueCount == -NameId::Vptr.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
@@ -688,11 +724,16 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
-  // StringifyType() is used for diagnostics.
+  // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
+  // `InstId` describing how the type was written should be preferred, using
+  // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
   // The builtin TypeType.
   static const TypeId TypeType;
+
+  // The builtin placeholder type for patterns with deduced types.
+  static const TypeId AutoType;
 
   // The builtin Error.
   static const TypeId Error;
@@ -716,6 +757,8 @@ struct TypeId : public IdBase, public Printable<TypeId> {
     out << "type";
     if (*this == TypeType) {
       out << "TypeType";
+    } else if (*this == AutoType) {
+      out << "AutoType";
     } else if (*this == Error) {
       out << "Error";
     } else {
@@ -728,6 +771,8 @@ struct TypeId : public IdBase, public Printable<TypeId> {
 
 constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
     ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
+constexpr TypeId TypeId::AutoType = TypeId::ForTypeConstant(
+    ConstantId::ForTemplateConstant(InstId::BuiltinAutoType));
 constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 

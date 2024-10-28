@@ -22,7 +22,6 @@ struct ConversionTarget {
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
-    // TODO: Use of an interface for conversions is not yet supported.
     ExplicitAs,
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
@@ -98,14 +97,18 @@ struct CalleeParamsInfo {
   explicit CalleeParamsInfo(const SemIR::EntityWithParamsBase& callee)
       : callee_loc(callee.latest_decl_id()),
         implicit_param_refs_id(callee.implicit_param_refs_id),
-        param_refs_id(callee.param_refs_id) {}
+        implicit_param_patterns_id(callee.implicit_param_patterns_id),
+        param_refs_id(callee.param_refs_id),
+        param_patterns_id(callee.param_patterns_id) {}
 
   // The location of the callee to use in diagnostics.
   SemIRLoc callee_loc;
   // The implicit parameters of the callee.
   SemIR::InstBlockId implicit_param_refs_id;
+  SemIR::InstBlockId implicit_param_patterns_id;
   // The explicit parameters of the callee.
   SemIR::InstBlockId param_refs_id;
+  SemIR::InstBlockId param_patterns_id;
 };
 
 // Implicitly converts a set of arguments to match the parameter types in a
@@ -114,7 +117,7 @@ struct CalleeParamsInfo {
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id,
+                     SemIR::InstId return_slot_arg_id,
                      const CalleeParamsInfo& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId;

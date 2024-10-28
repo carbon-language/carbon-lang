@@ -373,7 +373,7 @@ Carbon focused talks from the community:
     NDC {TechTown}
 -   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://chandlerc.blog/slides/2024-cppnorth-design-stories),
     CppNorth
--   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
+-   [Generic Arity: Definition-Checked Variadics in Carbon](https://www.youtube.com/watch?v=Y_px536l_80),
     C++Now
 -   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)
     panel session, EuroLLVM
