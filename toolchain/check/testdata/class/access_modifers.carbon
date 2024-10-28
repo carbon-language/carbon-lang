@@ -27,35 +27,35 @@ class Circle {
 
 fn Run() {
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let radius: i32 = circle.radius;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note: the private member `radius` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   let radius: i32 = circle.radius;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.radius = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: note: the private member `radius` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   circle.radius = 5;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.SOME_INTERNAL_CONSTANT;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: the private member `SOME_INTERNAL_CONSTANT` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-32]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
   // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle`
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.SomeInternalFunction();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: note: the private member `SomeInternalFunction` is defined here
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-39]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private fn SomeInternalFunction() -> i32 {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -71,10 +71,10 @@ class A {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A`
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = A.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note: the protected member `x` is defined here
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   protected var x: i32;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
@@ -120,18 +120,18 @@ class A {
   private let y: i32 = 5;
 }
 
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A`
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
 // CHECK:STDERR: let x: i32 = A.x;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: the protected member `x` is defined here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   protected let x: i32 = 5;
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A`
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: the private member `y` is defined here
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
 let y: i32 = A.y;
@@ -180,7 +180,7 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -204,15 +204,23 @@ class A {
 // CHECK:STDOUT:   %.loc6_39.2: type = converted %int.make_type_32.loc6, %.loc6_39.1 [template = i32]
 // CHECK:STDOUT:   %.loc6_45: i32 = int_literal 5 [template = constants.%.3]
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT: i32 = bind_name SOME_INTERNAL_CONSTANT, %.loc6_45
-// CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {} {
+// CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_40.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_40.2: type = converted %int.make_type_32, %.loc8_40.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:     %return.patt: %Circle = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Circle = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %return: ref %Circle = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %Circle = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Circle = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
@@ -298,7 +306,7 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -370,7 +378,7 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -389,31 +397,43 @@ class A {
 // CHECK:STDOUT:   %.loc5_21: %.2 = field_decl radius, element0 [template]
 // CHECK:STDOUT:   %GetRadius.decl: %GetRadius.type = fn_decl @GetRadius [template = constants.%GetRadius] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.param: %Circle = param self, runtime_param0
-// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc7_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc7_33.2: type = converted %int.make_type_32, %.loc7_33.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %self.param: %Circle = value_param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {} {
+// CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_40.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_40.2: type = converted %int.make_type_32, %.loc11_40.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compute.decl: %Compute.type = fn_decl @Compute [template = constants.%Compute] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
-// CHECK:STDOUT:     %self.param: %Circle = param self, runtime_param0
-// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc15_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc15_31.2: type = converted %int.make_type_32, %.loc15_31.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %self.param: %Circle = value_param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -427,7 +447,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetRadius[%self: %Circle]() -> i32 {
+// CHECK:STDOUT: fn @GetRadius[%self.param_patt: %Circle]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %radius.ref: %.2 = name_ref radius, @Circle.%.loc5_21 [template = @Circle.%.loc5_21]
@@ -442,7 +462,7 @@ class A {
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Compute[%self: %Circle]() -> i32 {
+// CHECK:STDOUT: fn @Compute[%self.param_patt: %Circle]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %SomeInternalFunction.ref: %SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%SomeInternalFunction.decl [template = constants.%SomeInternalFunction]
@@ -478,7 +498,7 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -543,7 +563,7 @@ class A {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

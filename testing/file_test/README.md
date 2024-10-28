@@ -109,8 +109,8 @@ Supported comment markers are:
     ```
 
     Controls whether the checks in the file will be autoupdated if --autoupdate
-    is passed. Exactly one of these two markers must be present. If the file
-    uses splits, AUTOUPDATE must currently be before any splits.
+    is passed. Exactly one of these markers must be present. If the file uses
+    splits, the marker must currently be before any splits.
 
     When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When a
     CHECK has line information, autoupdate will try to insert the CHECK
@@ -120,6 +120,10 @@ Supported comment markers are:
     appearing earlier, will immediately follow. As an exception, if no STDOUT
     check line refers to any line in the test, all STDOUT check lines are placed
     at the end of the file instead of immediately after AUTOUPDATE.
+
+    When using split files, if the last split file is named
+    `// --- AUTOUPDATE-SPLIT`, all CHECKs will be added there; no line
+    associations occur.
 
 -   ```
     // ARGS: <arguments>

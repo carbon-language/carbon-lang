@@ -42,7 +42,7 @@ enum class DiagnosticLevel : int8_t {
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
 #define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
   static constexpr auto DiagnosticName =                      \
-      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(        \
+      ::Carbon::DiagnosticBase<__VA_ARGS__>(                  \
           ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 
@@ -110,8 +110,6 @@ struct Diagnostic {
   llvm::SmallVector<DiagnosticMessage> messages;
 };
 
-namespace Internal {
-
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
 template <typename... Args>
@@ -119,9 +117,11 @@ struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {
-    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
-                  "Use std::string or llvm::StringLiteral for diagnostics to "
-                  "avoid lifetime issues.");
+    static_assert((... && !(std::is_same_v<Args, llvm::StringRef> ||
+                            std::is_same_v<Args, llvm::StringLiteral>)),
+                  "String type disallowed in diagnostics. See "
+                  "https://github.com/carbon-language/carbon-lang/blob/trunk/"
+                  "toolchain/docs/diagnostics.md#diagnostic-parameter-types");
   }
 
   // The diagnostic's kind.
@@ -131,8 +131,6 @@ struct DiagnosticBase {
   // The diagnostic's format for llvm::formatv.
   llvm::StringLiteral Format;
 };
-
-}  // namespace Internal
 
 }  // namespace Carbon
 

@@ -13,10 +13,10 @@ namespace NS;
 alias ns = NS;
 
 // Aliases can't be used when declaring names.
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here
+// CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE-6]]:7: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: alias ns = NS;
 // CHECK:STDERR:       ^~
 fn ns.A() -> i32 { return 0; }
@@ -45,7 +45,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,11 +58,15 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc22_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc22_14.2: type = converted %int.make_type_32, %.loc22_14.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

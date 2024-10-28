@@ -12,12 +12,12 @@ fn F() -> [i32; 3];
 
 fn G(b: [i32; 3]) {
   // Indexing an array value gives a value.
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   var pb: i32* = &b[0];
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   var pb: i32* = &b[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:3: error: expression is not assignable
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   b[0] = 4;
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -25,12 +25,12 @@ fn G(b: [i32; 3]) {
 
   // Indexing an ephemeral reference (materialized from an initializing
   // expression) gives a value.
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:18: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   var pf: i32* = &F()[0];
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   var pf: i32* = &F()[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: error: expression is not assignable
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   F()[0] = 4;
   // CHECK:STDERR:   ^~~~~~
   F()[0] = 4;
@@ -67,7 +67,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,23 +77,28 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc11_17: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %int.make_type_32, %.loc11_12.1 [template = i32]
 // CHECK:STDOUT:     %.loc11_18: type = array_type %.loc11_17, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %return: ref %.3 = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %.3 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %.3 = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
 // CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
-// CHECK:STDOUT:     %b.param: %.3 = param b, runtime_param0
+// CHECK:STDOUT:     %b.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %.3 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -102,7 +107,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.3;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b: %.3) {
+// CHECK:STDOUT: fn @G(%b.param_patt: %.3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_14.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]

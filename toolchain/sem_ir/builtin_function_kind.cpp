@@ -173,6 +173,10 @@ constexpr BuiltinInfo None = {"", nullptr};
 constexpr BuiltinInfo PrintInt = {"print.int",
                                   ValidateSignature<auto(AnyInt)->NoReturn>};
 
+// Returns the `Core.BigInt` type.
+constexpr BuiltinInfo BigIntMakeType = {"big_int.make_type",
+                                        ValidateSignature<auto()->Type>};
+
 // Returns the `i32` type. Doesn't take a bit size because we need an integer
 // type as a basis for that.
 constexpr BuiltinInfo IntMakeType32 = {"int.make_type_32",

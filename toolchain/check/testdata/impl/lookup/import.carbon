@@ -121,8 +121,6 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT: --- use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
-// CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
@@ -130,10 +128,12 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %HasF.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.7 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.2) [template]
@@ -152,20 +152,20 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl: <namespace> = namespace file.%Impl.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.8
-// CHECK:STDOUT:     .HasF = %import_ref.9
+// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .HasF = %import_ref.3
 // CHECK:STDOUT:     import Impl//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref Impl//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.2: %.5 = import_ref Impl//default, inst+12, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Impl//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Impl//default, inst+19, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Impl//default, inst+20, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Impl//default, inst+25, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Impl//default, inst+3, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Impl//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Impl//default, inst+14, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Impl//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Impl//default, inst+3, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Impl//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.5: %.5 = import_ref Impl//default, inst+12, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Impl//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Impl//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Impl//default, inst+19, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Impl//default, inst+20, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Impl//default, inst+25, loaded [template = constants.%.7]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -178,37 +178,38 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Impl.import = import Impl
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Impl.ref.loc4: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.8 [template = constants.%C]
-// CHECK:STDOUT:     %c.param: %C = param c, runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.1
-// CHECK:STDOUT:   .F = imports.%import_ref.2
-// CHECK:STDOUT:   witness = (imports.%import_ref.3)
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   .F = imports.%import_ref.5
+// CHECK:STDOUT:   witness = (imports.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.5 as imports.%import_ref.6 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.8 as imports.%import_ref.9 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.7
+// CHECK:STDOUT:   witness = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c: %C) {
+// CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Impl.ref.loc5: <namespace> = name_ref Impl, imports.%Impl [template = imports.%Impl]
-// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.9 [template = constants.%HasF.type]
-// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.2 [template = constants.%.6]
+// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
+// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, imports.%import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc5: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %.3 = call %.loc5()
 // CHECK:STDOUT:   return

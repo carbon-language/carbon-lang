@@ -50,8 +50,12 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Int = %Int.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {} {
-// CHECK:STDOUT:     %return: ref type = var <return slot>
+// CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [template = constants.%Int] {
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,7 +71,7 @@ var i: Int() = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+4, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Main//types, inst+7, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators

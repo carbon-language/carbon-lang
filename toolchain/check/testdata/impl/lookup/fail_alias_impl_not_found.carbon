@@ -17,12 +17,12 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   c.F();
@@ -72,9 +72,10 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %c.param: %C = param c, runtime_param0
+// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -106,7 +107,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c: %C) {
+// CHECK:STDOUT: fn @F.2(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc24: %.2 = name_ref F, @C.%F [template = constants.%.3]

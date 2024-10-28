@@ -97,11 +97,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   }
 }
 
-auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
-  // FIXME: Add support for generic entities.
-
+auto Mangler::Mangle(SemIR::FunctionId function_id,
+                     SemIR::SpecificId specific_id) -> std::string {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
+    CARBON_CHECK(!specific_id.is_valid(), "entry point should not be generic");
     return "main";
   }
   std::string result;
@@ -111,6 +111,12 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   os << names().GetAsStringIfIdentifier(function.name_id);
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
+
+  // TODO: Add proper support for generic entities. The ID we emit here will not
+  // be consistent across object files.
+  if (specific_id.is_valid()) {
+    os << "." << specific_id.index;
+  }
 
   return os.str();
 }

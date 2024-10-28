@@ -13,13 +13,6 @@
 library "[[@TEST_NAME]]";
 
 class A;
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: base class A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_base.carbon:[[@LINE-4]]:1: note: previously declared here
-// CHECK:STDERR: class A;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 base class A {}
 
 // --- fail_add_abstract.carbon
@@ -27,68 +20,49 @@ base class A {}
 library "[[@TEST_NAME]]";
 
 class B;
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: abstract class B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_add_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
-// CHECK:STDERR: class B;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 abstract class B {}
 
 // --- fail_remove_base.carbon
 
 library "[[@TEST_NAME]]";
 
-base class C;
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_base.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_remove_base.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: base class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR:
+base class C;
 class C {}
 
 // --- fail_base_to_abstract.carbon
 
 library "[[@TEST_NAME]]";
 
-base class D;
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: abstract class D {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: base class D;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR:
+base class D;
 abstract class D {}
 
 // --- fail_remove_abstract.carbon
 
 library "[[@TEST_NAME]]";
 
-abstract class E;
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: class E {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: abstract class E;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
+abstract class E;
 class E {}
 
 // --- fail_abstract_to_base.carbon
 
 library "[[@TEST_NAME]]";
 
-abstract class F;
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: error: class redeclared with different inheritance kind
-// CHECK:STDERR: base class F {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: abstract class F;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~
+abstract class F;
 base class F {}
 
 // CHECK:STDOUT: --- fail_add_base.carbon

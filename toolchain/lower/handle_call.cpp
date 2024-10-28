@@ -93,6 +93,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::BigIntMakeType:
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeType32:
@@ -308,7 +309,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto* callee = context.GetFunction(callee_function.function_id);
+  auto* callee = context.GetOrCreateFunction(
+      callee_function.function_id, callee_function.resolved_specific_id);
 
   std::vector<llvm::Value*> args;
 

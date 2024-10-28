@@ -13,17 +13,17 @@
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   adapt 100;
 }
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error: name `F` not found
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error: name `F` not found [NameNotFound]
 // CHECK:STDERR: fn Use(b: Bad) { b.F(); }
 // CHECK:STDERR:                  ^~~
 // CHECK:STDERR:
@@ -34,10 +34,10 @@ fn Use(b: Bad) { b.F(); }
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs`
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -53,10 +53,10 @@ library "[[@TEST_NAME]]";
 
 class MultipleAdapts {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class [AdaptDeclRepeated]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -65,10 +65,10 @@ class MultipleAdapts {
 
 class MultipleAdaptsSameType {
   adapt ();
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE+7]]:3: error: multiple `adapt` declarations in class [AdaptDeclRepeated]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here
+  // CHECK:STDERR: fail_repeated.carbon:[[@LINE-4]]:3: note: previous `adapt` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   adapt ();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -79,14 +79,14 @@ class MultipleAdaptsSameType {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error: `adapt` declaration outside class
+// CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:1: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
 // CHECK:STDERR: adapt {};
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
 adapt {};
 
 interface I {
-  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class
+  // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:3: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -95,7 +95,7 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class
+    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     adapt {};
     // CHECK:STDERR:     ^~~~~~~~~
     adapt {};
@@ -113,6 +113,7 @@ class C {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
@@ -141,12 +142,12 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -159,15 +160,17 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.param: %Bad = param b, runtime_param0
+// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
@@ -203,10 +206,10 @@ class C {
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%b: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
@@ -215,14 +218,17 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
@@ -233,6 +239,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(type) {
 // CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:   %Dest.patt => type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
@@ -254,6 +261,7 @@ class C {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
@@ -282,12 +290,12 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.1: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.3: @ImplicitAs.%.1 (%.3) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.7)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -300,15 +308,17 @@ class C {
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [template = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {
 // CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
-// CHECK:STDOUT:     %b.param: %Bad = param b, runtime_param0
+// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
 // CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
@@ -345,10 +355,10 @@ class C {
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%b: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
@@ -357,14 +367,17 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
@@ -375,6 +388,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(type) {
 // CHECK:STDOUT:   %Dest => type
+// CHECK:STDOUT:   %Dest.patt => type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3

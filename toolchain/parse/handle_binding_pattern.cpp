@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -25,12 +26,13 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&](llvm::StringLiteral expected) {
+  auto on_error = [&](bool expected_name) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
-                        "expected {0} in binding pattern", llvm::StringLiteral);
+                        "expected {0:name|`:` or `:!`} in binding pattern",
+                        BoolAsSelect);
       context.emitter().Emit(*context.position(), ExpectedBindingPattern,
-                             expected);
+                             expected_name);
       state.has_error = true;
     }
   };
@@ -51,7 +53,7 @@ auto HandleBindingPattern(Context& context) -> void {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                         /*has_error=*/true);
-    on_error("name");
+    on_error(/*expected_name=*/true);
   }
 
   if (auto kind = context.PositionKind();
@@ -64,7 +66,7 @@ auto HandleBindingPattern(Context& context) -> void {
     context.PushState(state);
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
-    on_error("`:` or `:!`");
+    on_error(/*expected_name=*/false);
     // Add a placeholder for the type.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);

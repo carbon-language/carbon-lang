@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 namespace Core;
 class Core.IndexWith {}
-// CHECK:STDERR: wrong_index_with.carbon:[[@LINE+4]]:10: error: type `i32` does not support indexing
+// CHECK:STDERR: wrong_index_with.carbon:[[@LINE+4]]:10: error: type ``i32`` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
@@ -24,11 +24,11 @@ fn F() { 0[1]; }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: missing_index_with.carbon:[[@LINE+7]]:10: error: package `Core` implicitly referenced here, but not found
+// CHECK:STDERR: missing_index_with.carbon:[[@LINE+7]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: missing_index_with.carbon:[[@LINE+3]]:10: error: type `i32` does not support indexing
+// CHECK:STDERR: missing_index_with.carbon:[[@LINE+3]]:10: error: type ``i32`` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 fn F() { 0[1]; }
@@ -117,6 +117,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
@@ -149,10 +150,11 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.1 = interface_decl @IndexWith [template = constants.%IndexWith] {
-// CHECK:STDOUT:     %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0
+// CHECK:STDOUT:     %SubscriptType.patt.loc5_26.1: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
+// CHECK:STDOUT:     %SubscriptType.param_patt: type = value_param_pattern %SubscriptType.patt.loc5_26.1, runtime_param<invalid> [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SubscriptType.param: type = param SubscriptType, runtime_param<invalid>
-// CHECK:STDOUT:     %SubscriptType.loc5: type = bind_symbolic_name SubscriptType, 0, %SubscriptType.param [symbolic = %SubscriptType.1 (constants.%SubscriptType)]
+// CHECK:STDOUT:     %SubscriptType.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %SubscriptType.loc5_26.1: type = bind_symbolic_name SubscriptType, 0, %SubscriptType.param [symbolic = %SubscriptType.loc5_26.2 (constants.%SubscriptType)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %.loc9_7.1: %.1 = tuple_literal ()
@@ -166,41 +168,47 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @IndexWith(%SubscriptType.loc5: type) {
-// CHECK:STDOUT:   %SubscriptType.1: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType.1 (constants.%SubscriptType)]
+// CHECK:STDOUT: generic interface @IndexWith(%SubscriptType.loc5_26.1: type) {
+// CHECK:STDOUT:   %SubscriptType.loc5_26.2: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType.loc5_26.2 (constants.%SubscriptType)]
+// CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType.1) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType.loc5_26.2) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType.1) [symbolic = %At.type (constants.%At.type.1)]
+// CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType.loc5_26.2) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type.1) [symbolic = %.1 (constants.%.2)]
-// CHECK:STDOUT:   %.2: @IndexWith.%.1 (%.2) = assoc_entity element0, %At.decl [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc6_52.2: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type.1) [symbolic = %.loc6_52.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc6_52.3: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity element0, %At.decl [symbolic = %.loc6_52.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %At.decl: @IndexWith.%At.type (%At.type.1) = fn_decl @At.1 [symbolic = @IndexWith.%At (constants.%At.1)] {
 // CHECK:STDOUT:       %self.patt: @At.1.%Self (%Self) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @At.1.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %subscript.patt: @At.1.%SubscriptType (%SubscriptType) = binding_pattern subscript
+// CHECK:STDOUT:       %subscript.param_patt: @At.1.%SubscriptType (%SubscriptType) = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:       %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc6_15.1: @At.1.%IndexWith.type (%IndexWith.type.2) = specific_constant @IndexWith.%Self.1, @IndexWith(constants.%SubscriptType) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref: @At.1.%IndexWith.type (%IndexWith.type.2) = name_ref Self, %.loc6_15.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc6_15.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc6_15.3: type = converted %Self.ref, %.loc6_15.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %self.param: @At.1.%Self (%Self) = param self, runtime_param0
-// CHECK:STDOUT:       %self: @At.1.%Self (%Self) = bind_name self, %self.param
-// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc5 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:       %subscript.param: @At.1.%SubscriptType (%SubscriptType) = param subscript, runtime_param1
-// CHECK:STDOUT:       %subscript: @At.1.%SubscriptType (%SubscriptType) = bind_name subscript, %subscript.param
+// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc5_26.1 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:       %.loc6_51.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:       %.loc6_51.2: type = converted %.loc6_51.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:       %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:       %self.param: @At.1.%Self (%Self) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @At.1.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:       %subscript.param: @At.1.%SubscriptType (%SubscriptType) = value_param runtime_param1
+// CHECK:STDOUT:       %subscript: @At.1.%SubscriptType (%SubscriptType) = bind_name subscript, %subscript.param
+// CHECK:STDOUT:       %return.param: ref %.1 = out_param runtime_param2
+// CHECK:STDOUT:       %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc6: @IndexWith.%.1 (%.2) = assoc_entity element0, %At.decl [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:     %.loc6_52.1: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity element0, %At.decl [symbolic = %.loc6_52.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .At = %.loc6
+// CHECK:STDOUT:     .At = %.loc6_52.1
 // CHECK:STDOUT:     witness = (%At.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -208,18 +216,23 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: impl @impl: %.loc9_7.2 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
 // CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.1 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %.1 = binding_pattern subscript
+// CHECK:STDOUT:     %subscript.param_patt: %.1 = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc9_7.2 [template = constants.%.1]
-// CHECK:STDOUT:     %self.param: %.1 = param self, runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
 // CHECK:STDOUT:     %.loc10_33.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_33.2: type = converted %.loc10_33.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %subscript.param: %.1 = param subscript, runtime_param1
-// CHECK:STDOUT:     %subscript: %.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %.loc10_40.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_40.2: type = converted %.loc10_40.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return: ref %.1 = var <return slot>
+// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %subscript.param: %.1 = value_param runtime_param1
+// CHECK:STDOUT:     %subscript: %.1 = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31: <witness> = interface_witness (%At.decl) [template = constants.%.6]
 // CHECK:STDOUT:
@@ -228,15 +241,15 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   witness = %.loc9_31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @At.1(@IndexWith.%SubscriptType.loc5: type, @IndexWith.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
+// CHECK:STDOUT: generic fn @At.1(@IndexWith.%SubscriptType.loc5_26.1: type, @IndexWith.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.1.%Self (%Self)](%subscript: @At.1.%SubscriptType (%SubscriptType)) -> %.1;
+// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType)) -> %.1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self: %.1](%subscript: %.1) -> %.1 {
+// CHECK:STDOUT: fn @At.2[%self.param_patt: %.1](%subscript.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
@@ -253,7 +266,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %tuple.loc15_14: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc15_15.1: %.1 = converted %.loc15_14, %tuple.loc15_14 [template = constants.%tuple]
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%.1) [template = constants.%IndexWith.type.3]
-// CHECK:STDOUT:   %.loc15_15.2: %.4 = specific_constant @IndexWith.%.loc6, @IndexWith(constants.%.1) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_15.2: %.4 = specific_constant @IndexWith.%.loc6_52.1, @IndexWith(constants.%.1) [template = constants.%.5]
 // CHECK:STDOUT:   %At.ref: %.4 = name_ref At, %.loc15_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_15.3: %At.type.3 = interface_witness_access constants.%.6, element0 [template = constants.%At.2]
 // CHECK:STDOUT:   %.loc15_15.4: <bound method> = bound_method %.loc15_11.2, %.loc15_15.3 [template = constants.%.7]
@@ -262,11 +275,13 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType) {
-// CHECK:STDOUT:   %SubscriptType.1 => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.loc5_26.2 => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2 => constants.%SubscriptType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType) {
-// CHECK:STDOUT:   %SubscriptType.1 => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.loc5_26.2 => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2 => constants.%SubscriptType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%Self) {
@@ -275,20 +290,22 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType.1) {
-// CHECK:STDOUT:   %SubscriptType.1 => constants.%SubscriptType
+// CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType.loc5_26.2) {
+// CHECK:STDOUT:   %SubscriptType.loc5_26.2 => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2 => constants.%SubscriptType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%.1) {
-// CHECK:STDOUT:   %SubscriptType.1 => constants.%.1
+// CHECK:STDOUT:   %SubscriptType.loc5_26.2 => constants.%.1
+// CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2 => constants.%.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %At.type => constants.%At.type.3
 // CHECK:STDOUT:   %At => constants.%At.3
-// CHECK:STDOUT:   %.1 => constants.%.4
-// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT:   %.loc6_52.2 => constants.%.4
+// CHECK:STDOUT:   %.loc6_52.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%.1, constants.%.1) {

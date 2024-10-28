@@ -59,11 +59,15 @@ class ToolchainFileTest : public FileTestBase {
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    llvm::SmallVector<std::string> args = {"compile",
-                                           "--phase=" + component_.str()};
+    if (component_ == "format") {
+      return {"format", "%s"};
+    }
+
+    llvm::SmallVector<std::string> args = {
+        "compile", "--include-diagnostic-kind", "--phase=" + component_.str()};
 
     if (component_ == "lex") {
-      args.push_back("--dump-tokens");
+      args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
     } else if (component_ == "parse") {
       args.push_back("--dump-parse-tree");
     } else if (component_ == "check") {

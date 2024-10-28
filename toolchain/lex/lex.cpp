@@ -191,6 +191,11 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void;
 
+  // Perform final checking and cleanup that should be done once we have
+  // finished lexing the whole file, and before we consider the tokenized buffer
+  // to be complete.
+  auto Finalize() -> void;
+
   auto DiagnoseAndFixMismatchedBrackets() -> void;
 
   // The main entry point for dispatching through the lexer's table. This method
@@ -729,6 +734,8 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   // dispatch table until everything from source_text is consumed.
   DispatchNext(*this, source_text, position);
 
+  Finalize();
+
   if (consumer_.seen_error()) {
     buffer_.has_errors_ = true;
   }
@@ -860,6 +867,7 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
+  int32_t comment_start = position;
 
   // Any comment must be the only non-whitespace on the line.
   const auto* line_info = current_line_info();
@@ -874,6 +882,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     // whitespace, which already is designed to skip over any erroneous text at
     // the end of the line.
     LexVerticalWhitespace(source_text, position);
+    buffer_.AddComment(line_info->indent, comment_start, position);
     return;
   }
 
@@ -976,6 +985,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       skip_to_next_line();
     }
   }
+
+  buffer_.AddComment(indent, comment_start, position);
 
   // Now compute the indent of this next line before we finish.
   ssize_t line_start = position;
@@ -1155,10 +1166,6 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     // Too short to form one of these tokens.
     return LexResult::NoMatch();
   }
-  if (word[1] < '1' || word[1] > '9') {
-    // Doesn't start with a valid initial digit.
-    return LexResult::NoMatch();
-  }
 
   TokenKind kind;
   switch (word.front()) {
@@ -1175,17 +1182,49 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
       return LexResult::NoMatch();
   };
 
-  llvm::StringRef suffix = word.substr(1);
-  if (!CanLexInt(emitter_, suffix)) {
-    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
-  }
-  llvm::APInt suffix_value;
-  if (suffix.getAsInteger(10, suffix_value)) {
+  // No leading zeros allowed.
+  if ('1' > word[1] || word[1] > '9') {
     return LexResult::NoMatch();
   }
 
+  llvm::StringRef suffix = word.substr(1);
+
+  // Type bit-widths can't usefully be large integers so we restrict to small
+  // ones that are especially easy to parse into a normal integer variable by
+  // restricting the number of digits to round trip.
+  int64_t suffix_value;
+  constexpr ssize_t DigitLimit =
+      std::numeric_limits<decltype(suffix_value)>::digits10;
+  if (suffix.size() > DigitLimit) {
+    // See if this is not actually a type literal.
+    if (!llvm::all_of(suffix, IsDecimalDigit)) {
+      return LexResult::NoMatch();
+    }
+
+    // Otherwise, diagnose and produce an error token.
+    CARBON_DIAGNOSTIC(TooManyTypeBitWidthDigits, Error,
+                      "found a type literal with a bit width using {0} digits, "
+                      "which is greater than the limit of {1}",
+                      size_t, size_t);
+    emitter_.Emit(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
+                  DigitLimit);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+
+  // It's tempting to do something more clever because we know the length ahead
+  // of time, but we expect these to be short (1-3 digits) and profiling doesn't
+  // show the loop as hot in the short cases.
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return LexResult::NoMatch();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
+  }
+
   return LexTokenWithPayload(
-      kind, buffer_.value_stores_->ints().Add(std::move(suffix_value)).index,
+      kind,
+      buffer_.value_stores_->ints().Add(llvm::APInt(64, suffix_value)).index,
       byte_offset);
 }
 
@@ -1338,10 +1377,30 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   NoteWhitespace();
 
   LexToken(TokenKind::FileEnd, position);
+}
 
+auto Lexer::Finalize() -> void {
   // If we had any mismatched brackets, issue diagnostics and fix them.
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
+  }
+
+  // Reject source files with so many tokens that we may have exceeded the
+  // number of bits in `token_payload_`.
+  //
+  // Note that we rely on this check also catching the case where there are too
+  // many identifiers to fit an `IdentifierId` into a `token_payload_`, and
+  // likewise for `IntId` and so on. If we start adding any of those IDs prior
+  // to lexing, we may need to also limit the number of those IDs here.
+  if (buffer_.token_infos_.size() > TokenizedBuffer::MaxTokens) {
+    CARBON_DIAGNOSTIC(TooManyTokens, Error,
+                      "too many tokens in source file; try splitting into "
+                      "multiple source files");
+    // Subtract one to leave room for the `FileEnd` token.
+    token_emitter_.Emit(TokenIndex(TokenizedBuffer::MaxTokens - 1),
+                        TooManyTokens);
+    // TODO: Convert tokens after the token limit to error tokens to avoid
+    // misinterpretation by consumers of the tokenized buffer.
   }
 }
 

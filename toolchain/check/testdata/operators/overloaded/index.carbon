@@ -54,10 +54,10 @@ impl C as Core.IndexWith(SubscriptType, ElementType) {
 }
 
 let c: C = {};
-// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert from `i32` to `SubscriptType`
+// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert from `i32` to `SubscriptType` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let x: ElementType = c[0];
 // CHECK:STDERR:                      ^~~~
-// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:22: note: type `i32` does not implement interface `ImplicitAs`
+// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:22: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let x: ElementType = c[0];
 // CHECK:STDERR:                      ^~~~
 // CHECK:STDERR:
@@ -70,7 +70,7 @@ library "[[@TEST_NAME]]";
 class C { }
 
 let c: C = {};
-// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+3]]:14: error: type `C` does not support indexing
+// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+3]]:14: error: type ``C`` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: let x: i32 = c[0];
 // CHECK:STDERR:              ^~~~
 let x: i32 = c[0];
@@ -91,6 +91,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %SubscriptType.2: type = bind_symbolic_name SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
@@ -124,12 +126,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+39, loaded [symbolic = @IndexWith.%.2 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+31, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.10)]
+// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -161,7 +163,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType.2: type, constants.%ElementType.2: type) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType.2)]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType.2)]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
@@ -182,16 +186,21 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.1 = binding_pattern subscript
+// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.1 = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = param subscript, runtime_param1
-// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %return: ref %ElementType.1 = var <return slot>
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -227,10 +236,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.1.%Self (%Self.2)](%subscript: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
+// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self: %C](%subscript: %SubscriptType.1) -> %return: %ElementType.1 {
+// CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
@@ -271,17 +280,23 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType.2, constants.%ElementType.2) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType, @At.1.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType.2, constants.%ElementType.2, constants.%Self.1) {
@@ -293,7 +308,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.1
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.1
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.1
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
@@ -325,6 +342,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
@@ -360,13 +379,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+39, loaded [symbolic = @IndexWith.%.2 (constants.%.13)]
-// CHECK:STDOUT:   %import_ref.5: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+31, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.4: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.13)]
+// CHECK:STDOUT:   %import_ref.5: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -410,7 +429,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
@@ -431,20 +452,25 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl: %.loc4_15.6 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.3 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: i32 = binding_pattern subscript
+// CHECK:STDOUT:     %subscript.param_patt: i32 = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc4_15.6 [template = constants.%.3]
-// CHECK:STDOUT:     %self.param: %.3 = param self, runtime_param0
-// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:     %int.make_type_32.loc5_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_32.1: type = value_of_initializer %int.make_type_32.loc5_32 [template = i32]
 // CHECK:STDOUT:     %.loc5_32.2: type = converted %int.make_type_32.loc5_32, %.loc5_32.1 [template = i32]
-// CHECK:STDOUT:     %subscript.param: i32 = param subscript, runtime_param1
-// CHECK:STDOUT:     %subscript: i32 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %int.make_type_32.loc5_40: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc5_40.1: type = value_of_initializer %int.make_type_32.loc5_40 [template = i32]
 // CHECK:STDOUT:     %.loc5_40.2: type = converted %int.make_type_32.loc5_40, %.loc5_40.1 [template = i32]
-// CHECK:STDOUT:     %return: ref i32 = var <return slot>
+// CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
+// CHECK:STDOUT:     %subscript.param: i32 = value_param runtime_param1
+// CHECK:STDOUT:     %subscript: i32 = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_45: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -461,10 +487,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.1.%Self (%Self.2)](%subscript: @At.1.%SubscriptType (%SubscriptType)) -> @At.1.%ElementType (%ElementType);
+// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType)) -> @At.1.%ElementType (%ElementType);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self: %.3](%subscript: i32) -> i32 {
+// CHECK:STDOUT: fn @At.2[%self.param_patt: %.3](%subscript.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc6_17: i32 = int_literal 0 [template = constants.%.10]
@@ -496,17 +522,23 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType, @At.1.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {
@@ -518,7 +550,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(i32, i32) {
 // CHECK:STDOUT:   %SubscriptType => i32
+// CHECK:STDOUT:   %SubscriptType.patt => i32
 // CHECK:STDOUT:   %ElementType => i32
+// CHECK:STDOUT:   %ElementType.patt => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
@@ -551,6 +585,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %SubscriptType.2: type = bind_symbolic_name SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
@@ -573,6 +609,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.4: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
@@ -601,18 +638,18 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+39, loaded [symbolic = @IndexWith.%.2 (constants.%.16)]
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+31, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+40, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.1 (%.11) = import_ref Core//prelude/operators/as, inst+63, loaded [symbolic = @ImplicitAs.%.2 (constants.%.15)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.16)]
+// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.1 (%.11) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -642,7 +679,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType.2: type, constants.%ElementType.2: type) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType.2)]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType.2)]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
@@ -662,6 +701,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
@@ -682,16 +722,21 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.1 = binding_pattern subscript
+// CHECK:STDOUT:     %subscript.param_patt: %SubscriptType.1 = value_param_pattern %subscript.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = param subscript, runtime_param1
-// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %return: ref %ElementType.1 = var <return slot>
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
@@ -727,10 +772,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.1.%Self (%Self.2)](%subscript: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
+// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self: %C](%subscript: %SubscriptType.1) -> %return: %ElementType.1 {
+// CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
@@ -743,7 +788,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @Convert.%Self (%Self.4)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.4)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -777,17 +822,23 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType.2, constants.%ElementType.2) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType, @At.1.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.2
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.2
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.2
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType.2, constants.%ElementType.2, constants.%Self.1) {
@@ -799,7 +850,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.1
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.1
 // CHECK:STDOUT:   %ElementType => constants.%ElementType.1
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
@@ -819,14 +872,17 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.3) {
@@ -837,6 +893,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%SubscriptType.1) {
 // CHECK:STDOUT:   %Dest => constants.%SubscriptType.1
+// CHECK:STDOUT:   %Dest.patt => constants.%SubscriptType.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
@@ -865,6 +922,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %At: %At.type = struct_value () [symbolic]
@@ -886,12 +945,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -911,7 +970,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
@@ -944,7 +1005,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.%Self (%Self.2)](%subscript: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
+// CHECK:STDOUT:   fn[%self.param_patt: @At.%Self (%Self.2)](%subscript.param_patt: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -964,17 +1025,23 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType, @At.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {

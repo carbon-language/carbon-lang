@@ -9,26 +9,26 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_invalid_base.carbon
 
 namespace N;
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value [UseOfNonExprAsValue]
 // CHECK:STDERR: var a: i32 = N[0];
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
 var a: i32 = N[0];
 
 fn F();
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: expression cannot be used as a value [UseOfNonExprAsValue]
 // CHECK:STDERR: var b: i32 = F[1];
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type `{.a: i32, .b: i32}` does not support indexing
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type ``{.a: i32, .b: i32}`` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: error: type `type` does not support indexing
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: error: type ``type`` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 var d: i32 = {.a: i32, .b: i32}[0];
@@ -53,6 +53,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %At: %At.type = struct_value () [symbolic]
@@ -74,12 +76,12 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+9, loaded [template = constants.%IndexWith]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,7 +121,9 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
@@ -147,7 +151,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self: @At.%Self (%Self.2)](%subscript: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
+// CHECK:STDOUT:   fn[%self.param_patt: @At.%Self (%Self.2)](%subscript.param_patt: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -179,17 +183,23 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType, @IndexWith.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType, @At.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
+// CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
+// CHECK:STDOUT:   %ElementType.patt => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%ElementType, constants.%Self.1) {

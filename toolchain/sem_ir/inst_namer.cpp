@@ -46,13 +46,13 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     auto fn_loc = Parse::NodeId::Invalid;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
-    CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
-    CollectNamesInBlock(fn_scope, fn.param_refs_id);
-    if (fn.return_storage_id.is_valid()) {
-      insts_[fn.return_storage_id.index] = {
+    CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
+    CollectNamesInBlock(fn_scope, fn.param_patterns_id);
+    if (fn.return_slot_id.is_valid()) {
+      insts_[fn.return_slot_id.index] = {
           fn_scope,
           GetScopeInfo(fn_scope).insts.AllocateName(
-              *this, sem_ir.insts().GetLocId(fn.return_storage_id), "return")};
+              *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
     }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -401,14 +401,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {
-      case CARBON_KIND(AddrPattern inst): {
-        // TODO: We need to assign names to parameters that appear in
-        // function declarations, which may be nested within a pattern. For
-        // now, just look through `addr`, but we should find a better way to
-        // visit parameters.
-        CollectNamesInBlock(scope_id, inst.inner_id);
-        break;
-      }
       case CARBON_KIND(AssociatedConstantDecl inst): {
         add_inst_name_id(inst.name_id);
         continue;
@@ -538,9 +530,21 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
         continue;
       }
-      case CARBON_KIND(Param inst): {
-        add_inst_name_id(inst.name_id, ".param");
+      case OutParam::Kind:
+      case ValueParam::Kind: {
+        add_inst_name_id(untyped_inst.As<AnyParam>().pretty_name_id, ".param");
         continue;
+      }
+      case OutParamPattern::Kind:
+      case ValueParamPattern::Kind: {
+        add_inst_name_id(
+            SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
+            ".param_patt");
+        break;
+      }
+      case InstKind::ReturnSlotPattern: {
+        add_inst_name_id(NameId::ReturnSlot, ".patt");
+        break;
       }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);

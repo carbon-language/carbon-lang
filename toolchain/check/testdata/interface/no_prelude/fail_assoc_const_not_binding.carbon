@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_binding.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_binding.carbon:[[@LINE+3]]:3: error: semantics TODO: `tuple pattern in let/var`
+  // CHECK:STDERR: fail_assoc_const_not_binding.carbon:[[@LINE+3]]:3: error: semantics TODO: `tuple pattern in let/var` [SemanticsTodo]
   // CHECK:STDERR:   let (T:! type, U:! type);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   let (T:! type, U:! type);
@@ -21,7 +21,9 @@ interface I {
 // CHECK:STDOUT:   %I.type: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U [symbolic]
+// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

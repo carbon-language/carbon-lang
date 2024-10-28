@@ -12,6 +12,7 @@
 #include "common/version.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
+#include "toolchain/driver/format_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
@@ -26,6 +27,7 @@ struct Options {
 
   ClangSubcommand clang;
   CompileSubcommand compile;
+  FormatSubcommand format;
   LinkSubcommand link;
 
   // On success, this is set to the subcommand to run.
@@ -71,6 +73,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
                     compile.BuildOptions(sub_b);
                     sub_b.Do([&] { subcommand = &compile; });
                   });
+
+  b.AddSubcommand(FormatOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
+    format.BuildOptions(sub_b);
+    sub_b.Do([&] { subcommand = &format; });
+  });
 
   b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
     link.BuildOptions(sub_b);

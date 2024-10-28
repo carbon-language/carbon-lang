@@ -74,22 +74,28 @@ fn Initializing() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [template = constants.%Value] {
 // CHECK:STDOUT:     %n.patt: %X = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %X = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %n.param: %X = param n, runtime_param0
+// CHECK:STDOUT:     %n.param: %X = value_param runtime_param0
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
 // CHECK:STDOUT:     %p.patt: %.5 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.5 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.5]
-// CHECK:STDOUT:     %p.param: %.5 = param p, runtime_param0
+// CHECK:STDOUT:     %p.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return: ref %X = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Initializing.decl: %Initializing.type = fn_decl @Initializing [template = constants.%Initializing] {} {}
 // CHECK:STDOUT: }
@@ -101,7 +107,7 @@ fn Initializing() {
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Value(%n: %X) {
+// CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
@@ -110,7 +116,7 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p: %.5) {
+// CHECK:STDOUT: fn @Reference(%p.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.5]

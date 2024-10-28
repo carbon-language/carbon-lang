@@ -21,6 +21,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
@@ -195,6 +196,17 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
+auto Context::NoteAbstractClass(SemIR::ClassId class_id,
+                                DiagnosticBuilder& builder) -> void {
+  const auto& class_info = classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(ClassAbstractHere, Note,
+                    "class was declared abstract here");
+  builder.Note(class_info.definition_id, ClassAbstractHere);
+}
+
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
@@ -351,13 +363,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   // TODO: Support scoped entities other than just classes.
   auto class_info = context.classes().Get(class_type->class_id);
 
-  CARBON_DIAGNOSTIC(ClassInvalidMemberAccess, Error,
-                    "cannot access {0} member `{1}` of type `{2}`",
-                    SemIR::AccessKind, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDefinition, Note,
-                    "the {0} member `{1}` is defined here", SemIR::AccessKind,
-                    SemIR::NameId);
-
   auto parent_type_id = class_info.self_type_id;
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
@@ -373,10 +378,15 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
     }
   }
 
+  CARBON_DIAGNOSTIC(
+      ClassInvalidMemberAccess, Error,
+      "cannot access {0:private|protected} member `{1}` of type {2}",
+      BoolAsSelect, SemIR::NameId, SemIR::TypeId);
+  CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
-      .Build(loc, ClassInvalidMemberAccess, access_kind, name_id,
-             parent_type_id)
-      .Note(scope_result_id, ClassMemberDefinition, access_kind, name_id)
+      .Build(loc, ClassInvalidMemberAccess,
+             access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
+      .Note(scope_result_id, ClassMemberDeclaration)
       .Emit();
 }
 
@@ -910,14 +920,18 @@ class TypeCompleter {
       -> SemIR::ValueRepr {
     switch (builtin.builtin_inst_kind) {
       case SemIR::BuiltinInstKind::TypeType:
+      case SemIR::BuiltinInstKind::AutoType:
       case SemIR::BuiltinInstKind::Error:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
+      case SemIR::BuiltinInstKind::BigIntType:
       case SemIR::BuiltinInstKind::IntType:
       case SemIR::BuiltinInstKind::FloatType:
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
       case SemIR::BuiltinInstKind::WitnessType:
+      case SemIR::BuiltinInstKind::SpecificFunctionType:
+      case SemIR::BuiltinInstKind::VtableType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinInstKind::StringType:
@@ -1098,7 +1112,7 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     // Use overload resolution to select the implementation, producing compile
-    // errors when BuildTypeForInst isn't defined for a given instruction.
+    // errors when BuildValueReprForInst isn't defined for a given instruction.
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)                  \
   case CARBON_KIND(SemIR::Name typed_inst): {          \
@@ -1127,8 +1141,33 @@ class TypeCompleter {
 }  // namespace
 
 auto Context::TryToCompleteType(SemIR::TypeId type_id,
-                                BuildDiagnosticFn diagnoser) -> bool {
-  return TypeCompleter(*this, diagnoser).Complete(type_id);
+                                BuildDiagnosticFn diagnoser,
+                                BuildDiagnosticFn abstract_diagnoser) -> bool {
+  if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
+    return false;
+  }
+
+  if (!abstract_diagnoser) {
+    return true;
+  }
+
+  if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
+    auto& class_info = classes().Get(class_type->class_id);
+    if (class_info.inheritance_kind !=
+        SemIR::Class::InheritanceKind::Abstract) {
+      return true;
+    }
+
+    auto builder = abstract_diagnoser();
+    if (!builder) {
+      return false;
+    }
+    NoteAbstractClass(class_type->class_id, builder);
+    builder.Emit();
+    return false;
+  }
+
+  return true;
 }
 
 auto Context::TryToDefineType(SemIR::TypeId type_id,

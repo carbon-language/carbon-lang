@@ -167,17 +167,60 @@ methods for formatting arguments:
     -   This includes `char` and integer types (`int`, `int32_t`, and so on).
     -   String types can be added as needed, but stringifying values using the
         methods noted below is preferred.
-        -   Use `llvm::StringLiteral` where appropriate; use `std::string` when
-            allocations are required.
+        -   Use `std::string` when allocations are required.
         -   `llvm::StringRef` is disallowed due to lifetime issues.
+        -   `llvm::StringLiteral` is disallowed because format providers such as
+            `BoolAsSelect` should work in cases where a `StringLiteral` could be
+            used, and because string literal parameters tend to make the
+            resulting diagnostics hard to translate.
 -   `llvm::format_provider<...>` specializations.
-    -   This can be used when formatting the parameter doesn't require
-        additional context.
-    -   For example, `Lex::TokenKind` and `Parse::RelativeLoc` provide
-        diagnostic formatting this way.
+    -   `BoolAsSelect` and `IntAsSelect` from
+        [format_providers.h](/toolchain/diagnostics/format_providers.h) are
+        recommended for many cases, because they allow putting the output string
+        in the format.
+        -   `IntAsSelect` can also be used to support pluralization.
+    -   Custom providers can also be added for non-translated values. For
+        example, `Lex::TokenKind` refers to syntax elements, and so can safely
+        have its own format provider.
 -   `DiagnosticConverter::ConvertArg` overrides.
     -   This can provide additional context to a formatter.
     -   For example, formatting `SemIR::NameId` accesses the IR's name list.
+
+For `Check`, a custom diagnostic converter is provided that can convert some
+common argument types. This includes some types defined in
+[`check/diagnostic_helpers.h`](/toolchain/check/diagnostic_helpers.h) that exist
+solely to be used as diagnostic parameter types. The types specifically
+supported in `Check` diagnostics are:
+
+-   For formatting names:
+    -   `NameId` for a general name. This automatically uses raw identifier
+        syntax for names that would collide with keywords.
+    -   `LibraryNameId` for a library name string, which is formatted as either
+        `default library` or `library "foo"`.
+-   For formatting types, use the following, in order of preference:
+
+    -   A `TypeOfInstId` parameter takes an `InstId` and formats the type of
+        that instruction.
+    -   An `InstIdAsType` parameter takes an `InstId` for a type expression and
+        formats that type expression.
+    -   A `TypeId` parameter is formatted as a canonical description of the
+        type. This should be avoided when possible: `TypeId` has no context
+        information, so any information about how the type was written in the
+        source program will be lost.
+
+    The above all include enclosing `` ` ``s around the formatted types. They
+    may also include additional information about the type, such as the names
+    bound to any aliases in the type, although at present they do not.
+
+    When a type is formatted within a larger snippet of Carbon code, it can be
+    desirable to instead just format the type itself; for this, `*AsRawType`
+    parameter types are supported:
+
+    -   `InstIdAsRawType`
+    -   `TypeIdAsRawType`
+
+-   For integer constants, `TypedInt` can be used to format an `APInt` given its
+    type. The type is used to determine the signedness to use for the value.
 
 ## Diagnostic message style guide
 
