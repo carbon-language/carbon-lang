@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:3: error: type ``i32`` does not support indexing [TypeNotIndexable]
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:3: error: type `i32` does not support indexing [TypeNotIndexable]
   // CHECK:STDERR:   0[1];
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:

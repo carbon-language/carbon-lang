@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 namespace Core;
 class Core.IndexWith {}
-// CHECK:STDERR: wrong_index_with.carbon:[[@LINE+4]]:10: error: type ``i32`` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: wrong_index_with.carbon:[[@LINE+4]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: missing_index_with.carbon:[[@LINE+3]]:10: error: type ``i32`` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: missing_index_with.carbon:[[@LINE+3]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 fn F() { 0[1]; }
