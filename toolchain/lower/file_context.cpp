@@ -329,14 +329,14 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
-  // TODO: make this a member of Function.
+  // The SemIR calling-convention parameters of the function, in order of
+  // runtime index. This is a transitional step toward generating this list
+  // in the check phase, which is why we're using the runtime index order
+  // even though it's less convenient for this usage.
   llvm::SmallVector<SemIR::InstId> calling_convention_param_ids;
-  if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
-          .has_return_slot()) {
-    auto return_slot =
-        sem_ir().insts().GetAs<SemIR::ReturnSlot>(function.return_slot_id);
-    calling_convention_param_ids.push_back(return_slot.storage_id);
-  }
+  bool has_return_slot =
+      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+          .has_return_slot();
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param_info =
@@ -345,20 +345,43 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       calling_convention_param_ids.push_back(param_info.inst_id);
     }
   }
+  if (has_return_slot) {
+    auto return_slot =
+        sem_ir().insts().GetAs<SemIR::ReturnSlot>(function.return_slot_id);
+    calling_convention_param_ids.push_back(return_slot.storage_id);
+  }
 
-  for (auto param_id : calling_convention_param_ids) {
+  // TODO: find a way to ensure this code and the function-call lowering use
+  // the same parameter ordering.
+
+  // Lowers the given parameter. Must be called in LLVM calling convention
+  // parameter order.
+  auto lower_param = [&](SemIR::InstId param_id) {
     // Get the value of the parameter from the function argument.
-    auto param_inst = sem_ir().insts().Get(param_id);
+    auto param_inst = sem_ir().insts().GetAs<SemIR::AnyParam>(param_id);
     llvm::Value* param_value =
-        llvm::PoisonValue::get(GetType(param_inst.type_id()));
-    if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id()).kind !=
+        llvm::PoisonValue::get(GetType(param_inst.type_id));
+    if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     }
-
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
+  };
+
+  // The subset of calling_convention_param_id that is in sequential order.
+  llvm::ArrayRef<SemIR::InstId> sequential_param_ids =
+      calling_convention_param_ids;
+
+  // The LLVM calling convention has the return slot first rather than last.
+  if (has_return_slot) {
+    lower_param(calling_convention_param_ids.back());
+
+    sequential_param_ids = sequential_param_ids.drop_back();
+  }
+  for (auto param_id : sequential_param_ids) {
+    lower_param(param_id);
   }
 
   // Lower all blocks.
