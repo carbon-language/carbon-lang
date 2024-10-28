@@ -37,8 +37,7 @@ fn Use(v: Intermediate*) {
 // CHECK:STDOUT: declare void @_CFn.Derived.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   %i.var = alloca { ptr, {} }, align 8, !dbg !8
 // CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !9
@@ -46,8 +45,7 @@ fn Use(v: Intermediate*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Main(ptr %v) !dbg !11 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CFn.Intermediate.Main(), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }

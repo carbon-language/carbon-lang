@@ -210,6 +210,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -358,6 +363,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [template = constants.%Bad]
+// CHECK:STDOUT:     %b.param: %Bad = value_param runtime_param0
+// CHECK:STDOUT:     %b: %Bad = bind_name b, %b.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return

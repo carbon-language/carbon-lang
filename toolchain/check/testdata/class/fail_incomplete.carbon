@@ -284,7 +284,7 @@ class C {
 // CHECK:STDOUT:     %p.param_patt: %.4 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc77: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc77: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc77_16: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -309,7 +309,7 @@ class C {
 // CHECK:STDOUT:     %p.param_patt: %.4 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc92: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc92_31: type = ptr_type %Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -320,11 +320,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallClassFunction() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %Function.ref: <error> = name_ref Function, <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -332,6 +334,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertFromStruct() -> %Class {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc42_33: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc42_43: %.3 = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -340,6 +347,17 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param_patt: %.4) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc44_24: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc44_14: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc44_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc44_20.2: type = converted %int.make_type_32, %.loc44_20.1 [template = i32]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc52: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
@@ -347,6 +365,17 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MemberAccess(%p.param_patt: %.4) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc55_35: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc55_25: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc55_31.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc55_31.2: type = converted %int.make_type_32, %.loc55_31.1 [template = i32]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc63: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
@@ -354,6 +383,15 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Copy(%p.param_patt: %.4) -> %Class {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc73_29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref.loc73_12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc73_17: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %Class.ref.loc73_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc74: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
@@ -361,6 +399,12 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let(%p.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc77_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref.loc77: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc77_16: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc85: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc85: ref %Class = deref %p.ref
@@ -374,6 +418,12 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc92_34: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc92_31: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc103: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc103: ref %Class = deref %p.ref
@@ -386,6 +436,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc118: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %ReturnIncomplete.ref: %ReturnIncomplete.type = name_ref ReturnIncomplete, file.%ReturnIncomplete.decl [template = constants.%ReturnIncomplete]
 // CHECK:STDOUT:   %ReturnIncomplete.call: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return

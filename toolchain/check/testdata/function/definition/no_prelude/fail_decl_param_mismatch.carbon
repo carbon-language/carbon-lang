@@ -186,6 +186,12 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%x.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc19_13: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc19_10.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_10.2: type = converted %.loc19_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %x.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.1 = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,6 +199,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc29: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -200,6 +207,10 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.3(%x.param_patt: <error>) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc36: invalid = splice_block invalid {
+// CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,6 +218,12 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.4() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc46_14: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc46_12.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc46_12.2: type = converted %.loc46_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc46_24: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc46_25: %.1 = converted %.loc46_24, %tuple [template = constants.%tuple]
@@ -217,6 +234,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.5() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc56: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +242,12 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.6() -> %.7 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc65_14: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc65_12.1: %.7 = struct_literal ()
+// CHECK:STDOUT:     %.loc65_12.2: type = converted %.loc65_12.1, constants.%.7 [template = constants.%.7]
+// CHECK:STDOUT:     %return.param: ref %.7 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.7 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc65_24: %.7 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.7 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc65_25: %.7 = converted %.loc65_24, %struct [template = constants.%struct]

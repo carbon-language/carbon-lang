@@ -71,6 +71,18 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: %.3 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_25: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc12_15: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc12_20: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_23.1: %.2 = tuple_literal (%int.make_type_32.loc12_15, %int.make_type_32.loc12_20)
+// CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %int.make_type_32.loc12_15 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.3: type = converted %int.make_type_32.loc12_15, %.loc12_23.2 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.4: type = value_of_initializer %int.make_type_32.loc12_20 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.5: type = converted %int.make_type_32.loc12_20, %.loc12_23.4 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.6: type = converted %.loc12_23.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_11: i32 = int_literal 15 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_15: i32 = int_literal 35 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_17.1: %.3 = tuple_literal (%.loc13_11, %.loc13_15)

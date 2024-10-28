@@ -104,6 +104,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -51,6 +51,7 @@ fn Procedure() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc18_20.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc18_20.2: type = converted %.loc18_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %v: %.1 = bind_name v, <error>

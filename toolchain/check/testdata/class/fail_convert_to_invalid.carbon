@@ -73,6 +73,11 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_16: i32 = int_literal 123 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc19_19: %.3 = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return

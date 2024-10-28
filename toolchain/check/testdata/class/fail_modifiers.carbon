@@ -208,11 +208,13 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: abstract fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc90: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: abstract fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc96: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

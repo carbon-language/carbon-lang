@@ -226,9 +226,14 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                          implicit_param_patterns.size() + param_patterns.size();
   param_types.reserve(max_llvm_params);
   param_inst_ids.reserve(max_llvm_params);
+  auto return_param_id = SemIR::InstId::Invalid;
   if (return_info.has_return_slot()) {
     param_types.push_back(return_type->getPointerTo());
-    param_inst_ids.push_back(function.return_slot_id);
+    return_param_id = sem_ir()
+                          .insts()
+                          .GetAs<SemIR::ReturnSlot>(function.return_slot_id)
+                          .storage_id;
+    param_inst_ids.push_back(return_param_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
@@ -280,7 +285,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto name_id = SemIR::NameId::Invalid;
-    if (inst_id == function.return_slot_id) {
+    if (inst_id == return_param_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(
           llvm::Attribute::getWithStructRetType(llvm_context(), return_type));
@@ -324,48 +329,40 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
   int param_index = 0;
+  // TODO: make this a member of Function.
+  llvm::SmallVector<SemIR::InstId> calling_convention_param_ids;
   if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
           .has_return_slot()) {
-    function_lowering.SetLocal(function.return_slot_id,
-                               llvm_function->getArg(param_index));
-    ++param_index;
+    auto return_slot =
+        sem_ir().insts().GetAs<SemIR::ReturnSlot>(function.return_slot_id);
+    calling_convention_param_ids.push_back(return_slot.storage_id);
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param_info =
         SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (!param_info.inst.runtime_index.is_valid()) {
-      continue;
+    if (param_info.inst.runtime_index.is_valid()) {
+      calling_convention_param_ids.push_back(param_info.inst_id);
     }
+  }
 
+  for (auto param_id : calling_convention_param_ids) {
     // Get the value of the parameter from the function argument.
-    auto param_type_id = param_info.inst.type_id;
-    llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
-    if (SemIR::ValueRepr::ForType(sem_ir(), param_type_id).kind !=
+    auto param_inst = sem_ir().insts().Get(param_id);
+    llvm::Value* param_value =
+        llvm::PoisonValue::get(GetType(param_inst.type_id()));
+    if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id()).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     }
 
     // The value of the parameter is the value of the argument.
-    function_lowering.SetLocal(param_info.inst_id, param_value);
-
-    // Match the portion of the pattern corresponding to the parameter against
-    // the parameter value. For now this is always a single name binding,
-    // possibly wrapped in `addr`.
-    //
+    function_lowering.SetLocal(param_id, param_value);
   }
 
-  auto decl_block_id = sem_ir()
-                           .insts()
-                           .GetAs<SemIR::FunctionDecl>(function.definition_id)
-                           .decl_block_id;
-
   // Lower all blocks.
-  llvm::ArrayRef decl_block_id_singleton(decl_block_id);
-  for (auto block_id : llvm::concat<const SemIR::InstBlockId>(
-           decl_block_id_singleton, body_block_ids)) {
-    // FIXME do I need to worry about edges between blocks?
+  for (auto block_id : body_block_ids) {
     CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
     // Keep the LLVM blocks in lexical order.
@@ -377,7 +374,6 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // LLVM requires that the entry block has no predecessors.
   auto* entry_block = &llvm_function->getEntryBlock();
   if (entry_block->hasNPredecessorsOrMore(1)) {
-    CARBON_FATAL();  // Shouldn't happen because of decl block.
     auto* new_entry_block = llvm::BasicBlock::Create(
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);

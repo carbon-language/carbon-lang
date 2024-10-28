@@ -147,6 +147,11 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc21_22: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %return.param: ref %Derived = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_25: i32 = int_literal 4 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc22_26.1: %.3 = struct_literal (%.loc22_25)
 // CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7 [template = constants.%.14]
@@ -165,6 +170,21 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return: %.17 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_37: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %int.make_type_32.loc25_27: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc25_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc25_35.1: %.16 = tuple_literal (%int.make_type_32.loc25_27, %int.make_type_32.loc25_32)
+// CHECK:STDOUT:     %.loc25_35.2: type = value_of_initializer %int.make_type_32.loc25_27 [template = i32]
+// CHECK:STDOUT:     %.loc25_35.3: type = converted %int.make_type_32.loc25_27, %.loc25_35.2 [template = i32]
+// CHECK:STDOUT:     %.loc25_35.4: type = value_of_initializer %int.make_type_32.loc25_32 [template = i32]
+// CHECK:STDOUT:     %.loc25_35.5: type = converted %int.make_type_32.loc25_32, %.loc25_35.4 [template = i32]
+// CHECK:STDOUT:     %.loc25_35.6: type = converted %.loc25_35.1, constants.%.17 [template = constants.%.17]
+// CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
+// CHECK:STDOUT:     %return.param: ref %.17 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.17 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref.loc26_11: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %d.ref.loc26_12: %.7 = name_ref d, @Derived.%.loc18_8 [template = @Derived.%.loc18_8]
 // CHECK:STDOUT:   %.loc26_12.1: ref i32 = class_element_access %d.ref.loc26_11, element1

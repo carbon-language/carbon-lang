@@ -67,8 +67,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc16: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
-// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, %.loc16 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %.loc16_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, %.loc16_28 [symbolic = constants.%Class.2]
 // CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = constants.%T]
 // CHECK:STDOUT:     %self.param.loc16: %Class.2 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc16: %Class.2 = bind_name self, %self.param.loc16
@@ -123,6 +123,17 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class.2](%n.param_patt: %T) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc16_40: invalid = splice_block invalid {
+// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %T.loc16: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:       %.loc16_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
+// CHECK:STDOUT:       %Self.ref.loc16: type = name_ref Self, %.loc16_28 [symbolic = constants.%Class.2]
+// CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = constants.%T]
+// CHECK:STDOUT:       %self.param.loc16: %Class.2 = value_param runtime_param0
+// CHECK:STDOUT:       %self.loc16: %Class.2 = bind_name self, %self.param.loc16
+// CHECK:STDOUT:       %n.param.loc16: %T = value_param runtime_param1
+// CHECK:STDOUT:       %n.loc16: %T = bind_name n, %n.param.loc16
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

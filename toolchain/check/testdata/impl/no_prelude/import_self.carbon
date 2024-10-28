@@ -188,6 +188,17 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[%self.param_patt: %.1](%other.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_42: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_7.2 [template = constants.%.1]
+// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: %.1 = value_param runtime_param1
+// CHECK:STDOUT:     %other: %.1 = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_52: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc7_53: %.1 = converted %.loc7_52, %tuple [template = constants.%tuple]
@@ -202,6 +213,20 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %.1, %y.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_26: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc10_10.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc10_17.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_17.2: type = converted %.loc10_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc10_24.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %x.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.1 = bind_name x, %x.param
+// CHECK:STDOUT:     %y.param: %.1 = value_param runtime_param1
+// CHECK:STDOUT:     %y: %.1 = bind_name y, %y.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %.3 = name_ref Op, imports.%import_ref.3 [template = constants.%.4]

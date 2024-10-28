@@ -64,16 +64,19 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Baz.ref: %Baz.type.2 = name_ref Baz, file.%Baz.decl.loc17 [template = constants.%Baz.2]
 // CHECK:STDOUT:   %Baz.call: init %.1 = call %Baz.ref()

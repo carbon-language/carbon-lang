@@ -16,8 +16,7 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -94,6 +94,13 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: i32) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc4_28: invalid = splice_block invalid {
+// CHECK:STDOUT:       %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:       %.loc4_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:       %.loc4_23.2: type = converted %int.make_type_32, %.loc4_23.1 [template = i32]
+// CHECK:STDOUT:       %N.param: i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %N.loc4_19.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
 // CHECK:STDOUT:     %N.ref: i32 = name_ref N, %N.loc4_19.1 [symbolic = %N.loc4_19.2 (constants.%N)]
@@ -110,6 +117,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
 // CHECK:STDOUT:   %.loc16_18: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc16_3: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%.3) [template = constants.%.4]

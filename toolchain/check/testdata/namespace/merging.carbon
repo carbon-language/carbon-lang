@@ -81,6 +81,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,11 +128,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,7 +164,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Example//a, inst+4, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3: %B1.type = import_ref Example//b, inst+4, loaded [template = constants.%B1]
-// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref Example//b, inst+10, loaded [template = constants.%B2]
+// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref Example//b, inst+11, loaded [template = constants.%B2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
@@ -194,11 +197,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()

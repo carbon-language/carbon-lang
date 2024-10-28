@@ -70,6 +70,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,6 +109,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,6 +153,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

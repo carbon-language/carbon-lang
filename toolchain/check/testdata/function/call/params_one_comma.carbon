@@ -67,11 +67,19 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a.param_patt: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_32, %.loc11_11.1 [template = i32]
+// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Foo.ref.loc14: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Foo.call.loc14: init %.1 = call %Foo.ref.loc14(%.loc14)

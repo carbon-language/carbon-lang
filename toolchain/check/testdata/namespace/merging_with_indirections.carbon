@@ -153,6 +153,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
+// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_27.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [template = constants.%struct]
@@ -219,6 +225,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
 // CHECK:STDOUT:   %.loc7_10.1: ref %A = temporary_storage

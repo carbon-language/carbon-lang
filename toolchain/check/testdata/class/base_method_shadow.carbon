@@ -206,6 +206,24 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a.param_patt: %.1, %b.param_patt: %.7, %c.param_patt: %.13, %d.param_patt: %.17) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc29_37: invalid = splice_block invalid {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc29_13: type = ptr_type %A [template = constants.%.1]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
+// CHECK:STDOUT:     %.loc29_20: type = ptr_type %B [template = constants.%.7]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc29_27: type = ptr_type %C [template = constants.%.13]
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %.loc29_34: type = ptr_type %D [template = constants.%.17]
+// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %.7 = value_param runtime_param1
+// CHECK:STDOUT:     %b: %.7 = bind_name b, %b.param
+// CHECK:STDOUT:     %c.param: %.13 = value_param runtime_param2
+// CHECK:STDOUT:     %c: %.13 = bind_name c, %c.param
+// CHECK:STDOUT:     %d.param: %.17 = value_param runtime_param3
+// CHECK:STDOUT:     %d: %.17 = bind_name d, %d.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc30_4.1: ref %A = deref %a.ref
 // CHECK:STDOUT:   %F.ref.loc30: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]

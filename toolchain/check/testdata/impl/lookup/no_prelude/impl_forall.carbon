@@ -288,6 +288,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.3)]() -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc11: invalid = splice_block invalid {
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%A.loc10_25.1 [symbolic = %A (constants.%A.3)]
+// CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.%V.loc10_14.1 [symbolic = %V (constants.%V)]
+// CHECK:STDOUT:       %self.param: @F.2.%A (%A.3) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @F.2.%A (%A.3) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @F.2.%V (%V) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.2.%V (%V) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.ref: @F.2.%A (%A.3) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @F.2.%.loc12_16.3 (%.10) = name_ref n, @A.%.loc3_8.1 [template = @A.%.loc3_8.1]
 // CHECK:STDOUT:     %.loc12_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
@@ -311,6 +319,18 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%W.param_patt: type](%a.param_patt: @TestGeneric.%A.loc16_30.2 (%A.4)) -> @TestGeneric.%W.loc16_16.2 (%W) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc16_40: invalid = splice_block invalid {
+// CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
+// CHECK:STDOUT:       %W.ref.loc16_31: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
+// CHECK:STDOUT:       %A.loc16_30.1: type = class_type @A, @A(constants.%W) [symbolic = %A.loc16_30.2 (constants.%A.4)]
+// CHECK:STDOUT:       %W.ref.loc16_38: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
+// CHECK:STDOUT:       %W.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %W.loc16_16.1: type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc16_16.2 (constants.%W)]
+// CHECK:STDOUT:       %a.param: @TestGeneric.%A.loc16_30.2 (%A.4) = value_param runtime_param0
+// CHECK:STDOUT:       %a: @TestGeneric.%A.loc16_30.2 (%A.4) = bind_name a, %a.param
+// CHECK:STDOUT:       %return.param: ref @TestGeneric.%W.loc16_16.2 (%W) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @TestGeneric.%W.loc16_16.2 (%W) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%A.loc16_30.2 (%A.4) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:     %W.ref.loc17: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
@@ -329,6 +349,18 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestSpecific(%a.param_patt: %A.5) -> %.21 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20_33: invalid = splice_block invalid {
+// CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
+// CHECK:STDOUT:     %.loc20_23: %.21 = struct_literal ()
+// CHECK:STDOUT:     %.loc20_21: type = converted %.loc20_23, constants.%.21 [template = constants.%.21]
+// CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%.21) [template = constants.%A.5]
+// CHECK:STDOUT:     %.loc20_31.1: %.21 = struct_literal ()
+// CHECK:STDOUT:     %.loc20_31.2: type = converted %.loc20_31.1, constants.%.21 [template = constants.%.21]
+// CHECK:STDOUT:     %a.param: %A.5 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %A.5 = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref %.21 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.21 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A.5 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:   %.loc21_16: %.21 = struct_literal ()

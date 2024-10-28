@@ -122,19 +122,23 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc30: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc36: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @I.1() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc43:
+// CHECK:STDOUT:   %.loc43: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,11 +148,13 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @I.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc27: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc35: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -187,9 +187,12 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // Parameters are lowered by `BuildFunctionDefinition`.
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::ReturnSlot /*inst*/) -> void {
-  CARBON_FATAL("Return slots should be lowered by `BuildFunctionDefinition`");
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ReturnSlot inst) -> void {
+  if (SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
+      SemIR::InitRepr::InPlace) {
+    context.SetLocal(inst_id, context.GetValue(inst.storage_id));
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -222,7 +225,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlock(inst.block_id);
-  context.SetLocal(inst_id, context.GetValue(inst.result_id));
+  if (inst.result_id.is_valid()) {
+    context.SetLocal(inst_id, context.GetValue(inst.result_id));
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

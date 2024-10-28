@@ -15,8 +15,7 @@ fn r#self() {}
 // CHECK:STDOUT: source_filename = "raw_name.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_Cself.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -190,6 +190,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DF() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc27: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var

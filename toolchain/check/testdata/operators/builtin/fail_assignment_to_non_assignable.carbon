@@ -125,6 +125,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc18_3: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc18_7: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   assign %.loc18_3, %.loc18_7

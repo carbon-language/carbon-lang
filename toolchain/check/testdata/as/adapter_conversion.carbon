@@ -206,6 +206,11 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: invalid = splice_block invalid {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_26: i32 = int_literal 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc9_27.1: %.3 = struct_literal (%.loc9_18, %.loc9_26)

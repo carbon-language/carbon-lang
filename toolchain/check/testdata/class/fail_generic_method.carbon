@@ -156,6 +156,19 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: <error>](%n.param_patt: <error>) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc32_39: invalid = splice_block invalid {
+// CHECK:STDOUT:       %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:       %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:       %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
+// CHECK:STDOUT:       %N.param: i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:       %Self.ref: <error> = name_ref Self, <error> [template = <error>]
+// CHECK:STDOUT:       %T.ref: <error> = name_ref T, <error> [template = <error>]
+// CHECK:STDOUT:       %self.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:       %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:       %n.param: <error> = value_param runtime_param1
+// CHECK:STDOUT:       %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

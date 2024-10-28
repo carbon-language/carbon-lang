@@ -54,5 +54,11 @@ fn F() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_14: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc11_12.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

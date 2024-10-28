@@ -172,6 +172,16 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_33: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc11: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_29.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
+// CHECK:STDOUT:     %.loc11_29.2: type = converted %int.make_type_32.loc11, %.loc11_29.1 [template = i32]
+// CHECK:STDOUT:     %self.param.loc11: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc11: %Class = bind_name self, %self.param.loc11
+// CHECK:STDOUT:     %return.param.loc11: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc11
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc8_8 [template = @Class.%.loc8_8]
 // CHECK:STDOUT:   %.loc12_14.1: ref i32 = class_element_access %self.ref, element0
@@ -181,6 +191,17 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %.2]() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_39: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %.loc15_27: type = ptr_type %Class [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc15_35.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:     %.loc15_35.2: type = converted %int.make_type_32.loc15, %.loc15_35.1 [template = i32]
+// CHECK:STDOUT:     %self.param.loc15: %.2 = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc15: %.2 = bind_name self, %self.param.loc15
+// CHECK:STDOUT:     %return.param.loc15: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc15
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self.loc15
 // CHECK:STDOUT:   %.loc16_11: ref %Class = deref %self.ref
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc8_8 [template = @Class.%.loc8_8]

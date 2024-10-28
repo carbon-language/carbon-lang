@@ -24,8 +24,7 @@ fn G() { A.NS.F(); }
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.NS.A() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,8 +43,7 @@ fn G() { A.NS.F(); }
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.NS.A(), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }

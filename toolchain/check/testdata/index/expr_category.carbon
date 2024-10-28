@@ -119,6 +119,15 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b.param_patt: %.3) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc13_15: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:     %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:     %.loc13_16: type = array_type %.loc13_15, i32 [template = constants.%.3]
+// CHECK:STDOUT:     %b.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %b: %.3 = bind_name b, %b.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_11.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
@@ -163,6 +172,15 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ValueBinding(%b.param_patt: %.3) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc21_30: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc21_26: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
+// CHECK:STDOUT:     %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
+// CHECK:STDOUT:     %.loc21_27: type = array_type %.loc21_26, i32 [template = constants.%.3]
+// CHECK:STDOUT:     %b.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %b: %.3 = bind_name b, %b.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc22_11.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]

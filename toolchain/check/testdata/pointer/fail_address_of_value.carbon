@@ -217,6 +217,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfLiteral() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc20_4: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc20_3: %.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %.loc25_4: bool = bool_literal true [template = constants.%.5]
@@ -237,6 +238,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfOperator() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc48: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc53_5: bool = bool_literal true [template = constants.%.5]
 // CHECK:STDOUT:   %.loc53_10.1: bool = bool_literal false [template = constants.%.17]
 // CHECK:STDOUT:   if %.loc53_5 br !and.rhs else br !and.result(%.loc53_10.1)
@@ -262,6 +264,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc66: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.call: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc71: %.4 = addr_of <error> [template = <error>]
@@ -270,6 +273,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc74: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %int.make_type_32.loc79: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc79: %.18 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %int.make_type_32.loc84: init type = call constants.%Int32() [template = i32]
@@ -283,6 +287,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfTupleElementValue() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc87: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc92_6: i32 = int_literal 1 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc92_9: i32 = int_literal 2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc92_10.1: %.13 = tuple_literal (%.loc92_6, %.loc92_9)
@@ -296,6 +301,13 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc95_31: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc95: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_32.loc95 [template = i32]
+// CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_32.loc95, %.loc95_26.1 [template = i32]
+// CHECK:STDOUT:     %param.param: i32 = value_param runtime_param0
+// CHECK:STDOUT:     %param: i32 = bind_name param, %param.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc99: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_32.loc99 [template = i32]
 // CHECK:STDOUT:   %.loc99_22.2: type = converted %int.make_type_32.loc99, %.loc99_22.1 [template = i32]

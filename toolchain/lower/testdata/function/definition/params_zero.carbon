@@ -14,8 +14,7 @@ fn Foo() {}
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CFoo.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

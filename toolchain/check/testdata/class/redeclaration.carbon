@@ -97,6 +97,16 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class](%b.param_patt: bool) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17_33: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %bool.make_type.loc17: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
+// CHECK:STDOUT:     %.loc17_27.2: type = converted %bool.make_type.loc17, %.loc17_27.1 [template = bool]
+// CHECK:STDOUT:     %self.param.loc17: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %self.loc17: %Class = bind_name self, %self.param.loc17
+// CHECK:STDOUT:     %b.param.loc17: bool = value_param runtime_param1
+// CHECK:STDOUT:     %b.loc17: bool = bind_name b, %b.param.loc17
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

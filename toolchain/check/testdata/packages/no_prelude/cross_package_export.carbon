@@ -236,6 +236,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

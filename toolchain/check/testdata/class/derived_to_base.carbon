@@ -241,6 +241,16 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %.17) -> %.18 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc25_20: type = ptr_type %C [template = constants.%.17]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
+// CHECK:STDOUT:     %.loc25_27: type = ptr_type %B [template = constants.%.18]
+// CHECK:STDOUT:     %p.param: %.17 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.17 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.18 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.18 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.17 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc25_39.2: ref %B = class_element_access %.loc25_39.1, element0
@@ -251,6 +261,16 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p.param_patt: %.18) -> %.22 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc26_29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
+// CHECK:STDOUT:     %.loc26_20: type = ptr_type %B [template = constants.%.18]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc26_27: type = ptr_type %A [template = constants.%.22]
+// CHECK:STDOUT:     %p.param: %.18 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.18 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.22 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.18 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26_39.1: ref %B = deref %p.ref
 // CHECK:STDOUT:   %.loc26_39.2: ref %A = class_element_access %.loc26_39.1, element0
@@ -261,6 +281,16 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p.param_patt: %.17) -> %.22 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc27_29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc27_20: type = ptr_type %C [template = constants.%.17]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc27_27: type = ptr_type %A [template = constants.%.22]
+// CHECK:STDOUT:     %p.param: %.17 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.17 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.22 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.17 = name_ref p, %p
 // CHECK:STDOUT:   %.loc27_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc27_39.2: ref %B = class_element_access %.loc27_39.1, element0
@@ -272,6 +302,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc29: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc30_15.1: ref %B = class_element_access %c.ref, element0
@@ -284,6 +319,16 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c.param_patt: %.17) -> %.22 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc33_28: invalid = splice_block invalid {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc33_19: type = ptr_type %C [template = constants.%.17]
+// CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc33_26: type = ptr_type %A [template = constants.%.22]
+// CHECK:STDOUT:     %c.param: %.17 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %.17 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %.22 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.22 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %.17 = name_ref c, %c
 // CHECK:STDOUT:   %.loc34_12: ref %C = deref %c.ref
 // CHECK:STDOUT:   %A.ref.loc34: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -296,6 +341,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc37: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc38_38: i32 = int_literal 1 [template = constants.%.23]
 // CHECK:STDOUT:   %.loc38_39.1: %.3 = struct_literal (%.loc38_38)

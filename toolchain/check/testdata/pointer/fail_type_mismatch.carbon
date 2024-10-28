@@ -117,6 +117,20 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p.param_patt: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_47: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc11_28: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_21.1: type = converted %.loc11_28, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_21.2: type = const_type %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc11_29: type = ptr_type %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc11_43: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc11_44.1: type = converted %.loc11_43, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_44.2: type = ptr_type %.1 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc11_35: type = const_type %.4 [template = constants.%.5]
+// CHECK:STDOUT:     %p.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.5) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc18_11.1: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.5) [template = constants.%.10]

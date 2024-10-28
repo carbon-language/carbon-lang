@@ -81,6 +81,11 @@ fn F(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %X) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14: invalid = splice_block invalid {
+// CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %x: %X = bind_name x, %x.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref String = var s
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc21: String = string_literal "hello" [template = constants.%.6]

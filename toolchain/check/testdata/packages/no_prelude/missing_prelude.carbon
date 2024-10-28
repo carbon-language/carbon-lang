@@ -146,6 +146,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4_18: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc4_16.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc4_16.2: type = converted %.loc4_16.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_28: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc4_29: %.1 = converted %.loc4_28, %struct [template = constants.%struct]
@@ -221,6 +227,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8_18: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc8_16.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_28: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc8_29: %.1 = converted %.loc8_28, %tuple [template = constants.%tuple]
@@ -269,6 +281,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_23: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc7_21.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc7_21.2: type = converted %.loc7_21.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_33: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc7_34: %.1 = converted %.loc7_33, %struct [template = constants.%struct]
@@ -325,6 +343,12 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6_20: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc6_18.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc6_18.2: type = converted %.loc6_18.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_30: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc6_31: %.1 = converted %.loc6_30, %struct [template = constants.%struct]

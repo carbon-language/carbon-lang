@@ -26,8 +26,7 @@ fn Run() {
 // CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
 // CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(ptr %d.var, ptr %c.var), !dbg !9

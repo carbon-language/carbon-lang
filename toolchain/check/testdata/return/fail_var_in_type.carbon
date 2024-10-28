@@ -64,6 +64,12 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x
+// CHECK:STDOUT:     %.loc15_13: type = bind_value %x.ref
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_24: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

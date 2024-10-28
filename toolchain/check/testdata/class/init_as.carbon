@@ -91,6 +91,13 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc16_11.2: type = converted %int.make_type_32, %.loc16_11.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17_17: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_25: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_26.1: %.3 = struct_literal (%.loc17_17, %.loc17_25)

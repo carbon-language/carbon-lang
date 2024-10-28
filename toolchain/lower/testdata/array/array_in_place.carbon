@@ -20,8 +20,7 @@ fn G() {
 // CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !7
 // CHECK:STDOUT:   %.loc14_42.2.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.2.array.index), !dbg !9

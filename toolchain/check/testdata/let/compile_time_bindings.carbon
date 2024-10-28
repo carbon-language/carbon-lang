@@ -222,6 +222,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc5_14.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_14.2: type = converted %.loc5_14.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, @C.%x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
@@ -286,6 +292,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc10_14.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_14.2: type = converted %.loc10_14.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, @C.%x
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
@@ -351,7 +363,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b.param: %.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc10_8.2: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc10_8.1: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_17: %.1 = tuple_literal ()
@@ -383,8 +395,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%b.loc10_8.2: %.2) {
-// CHECK:STDOUT:   %b.loc10_8.1: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT: generic fn @F(%b.loc10_8.1: %.2) {
+// CHECK:STDOUT:   %b.loc10_8.2: %.2 = bind_symbolic_name b, 0 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:   %b.patt.loc10_8.1: %.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -392,6 +404,14 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%b.param_patt: %.2) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc10_19: invalid = splice_block invalid {
+// CHECK:STDOUT:       %.loc10_14: %.1 = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_16.1: %.2 = tuple_literal (%.loc10_14)
+// CHECK:STDOUT:       %.loc10_16.2: type = converted %.loc10_14, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:       %.loc10_16.3: type = converted %.loc10_16.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:       %b.param: %.2 = value_param runtime_param<invalid>
+// CHECK:STDOUT:       %b.loc10_8.1: %.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.2 (constants.%b)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc11_15: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_19: %.1 = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_20.1: %.7 = tuple_literal (%.loc11_15, %.loc11_19)
@@ -422,7 +442,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     %b1.var: ref %.2 = var b1
 // CHECK:STDOUT:     %b1: ref %.2 = bind_name b1, %b1.var
-// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.2 [symbolic = %b.loc10_8.1 (constants.%b)]
+// CHECK:STDOUT:     %b.ref: %.2 = name_ref b, %b.loc10_8.1 [symbolic = %b.loc10_8.2 (constants.%b)]
 // CHECK:STDOUT:     %.loc14_21.1: %.1 = tuple_access %b.ref, element0
 // CHECK:STDOUT:     %.loc14_21.2: ref %.1 = tuple_access %b1.var, element0
 // CHECK:STDOUT:     %.loc14_21.3: init %.1 = tuple_init () to %.loc14_21.2 [template = constants.%tuple.1]
@@ -481,7 +501,7 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
-// CHECK:STDOUT:   %b.loc10_8.1 => constants.%b
+// CHECK:STDOUT:   %b.loc10_8.2 => constants.%b
 // CHECK:STDOUT:   %b.patt.loc10_8.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -542,6 +562,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_16: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc5_14.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_14.2: type = converted %.loc5_14.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %.1 = name_ref x, @C.%x
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc5_26: %.1 = converted %x.ref, %tuple [template = constants.%tuple]
@@ -597,6 +623,13 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4_15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_14.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_14.2: type = converted %int.make_type_32.loc5, %.loc5_14.1 [template = i32]
@@ -657,6 +690,13 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4_15: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc5 br !if.then else br !if.else
 // CHECK:STDOUT:

@@ -119,8 +119,8 @@ class C(T:! type) {
 // CHECK:STDOUT:       %return.patt: @G.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @G.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc9: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9 [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %.loc9_14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9_14 [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @G.%Class (%Class.2) = value_param runtime_param0
 // CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %self.param
@@ -146,6 +146,14 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param_patt: @F.%T (%T)) -> @F.%T (%T) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc5: invalid = splice_block invalid {
+// CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %n.param: @F.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %n.param
+// CHECK:STDOUT:       %return.param: ref @F.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @F.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:     return %n.ref
 // CHECK:STDOUT:   }
@@ -160,6 +168,15 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class.2)]() -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc9_27: invalid = splice_block invalid {
+// CHECK:STDOUT:       %.loc9_14: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9_14 [symbolic = %Class (constants.%Class.2)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %self.param: @G.%Class (%Class.2) = value_param runtime_param0
+// CHECK:STDOUT:       %self: @G.%Class (%Class.2) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @G.%T (%T) = out_param runtime_param1
+// CHECK:STDOUT:       %return: ref @G.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @G.%.loc10_16.3 (%.2) = name_ref n, @Class.%.loc13_8.1 [template = @Class.%.loc13_8.1]
 // CHECK:STDOUT:     %.loc10_16.1: ref @G.%T (%T) = class_element_access %self.ref, element0
@@ -279,6 +296,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:     %data.ref: @F.%.loc9 (%.3) = name_ref data, @C.%.loc11_11.1 [template = @C.%.loc11_11.1]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

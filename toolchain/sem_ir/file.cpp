@@ -328,8 +328,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(SpliceBlock inst): {
-        inst_id = inst.result_id;
-        continue;
+        if (inst.result_id.is_valid()) {
+          inst_id = inst.result_id;
+          continue;
+        } else {
+          return ExprCategory::NotExpr;
+        }
       }
 
       case StructLiteral::Kind:

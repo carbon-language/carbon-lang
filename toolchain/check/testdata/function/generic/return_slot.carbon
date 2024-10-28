@@ -145,6 +145,11 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc12_18: invalid = splice_block invalid {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param runtime_param0
+// CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc12_27.1: @Make.%Make.type (%Make.type.1) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.1) = name_ref Make, %.loc12_27.1 [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:     %.loc12_27.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc12_27.3 (constants.%.4)]
@@ -159,6 +164,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %int.make_type_32.loc18_10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32.loc18_10 [template = i32]
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32.loc18_10, %.loc18_10.1 [template = i32]

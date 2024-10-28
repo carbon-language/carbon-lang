@@ -80,7 +80,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc20: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %.loc20_24: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:     %p.param: %.1 = value_param runtime_param1
@@ -121,6 +121,15 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c.param_patt: %Class, %p.param_patt: %.1) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20_27: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc20_24: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
+// CHECK:STDOUT:     %p.param: %.1 = value_param runtime_param1
+// CHECK:STDOUT:     %p: %.1 = bind_name p, %p.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc27: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27

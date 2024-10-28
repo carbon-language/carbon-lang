@@ -329,6 +329,21 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return: %.8 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_46: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
+// CHECK:STDOUT:     %int.make_type_32.loc12_36: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc12_41: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc12_44.1: %.7 = tuple_literal (%int.make_type_32.loc12_36, %int.make_type_32.loc12_41)
+// CHECK:STDOUT:     %.loc12_44.2: type = value_of_initializer %int.make_type_32.loc12_36 [template = i32]
+// CHECK:STDOUT:     %.loc12_44.3: type = converted %int.make_type_32.loc12_36, %.loc12_44.2 [template = i32]
+// CHECK:STDOUT:     %.loc12_44.4: type = value_of_initializer %int.make_type_32.loc12_41 [template = i32]
+// CHECK:STDOUT:     %.loc12_44.5: type = converted %int.make_type_32.loc12_41, %.loc12_44.4 [template = i32]
+// CHECK:STDOUT:     %.loc12_44.6: type = converted %.loc12_44.1, constants.%.8 [template = constants.%.8]
+// CHECK:STDOUT:     %self.param: %Circle = value_param runtime_param0
+// CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref %.8 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.8 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @Shape.%.loc5_18 [template = @Shape.%.loc5_18]
 // CHECK:STDOUT:   %.loc13_17.1: ref %Shape = class_element_access %self.ref.loc13_13, element0
@@ -475,6 +490,15 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[%self.param_patt: %C]() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_28: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
+// CHECK:STDOUT:     %.loc15_26.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
@@ -595,12 +619,26 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeProtectedFunction() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6_47: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc6_43.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc6_43.2: type = converted %int.make_type_32, %.loc6_43.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 5 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %int.make_type_32, %.loc14_13.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %SOME_CONSTANT.ref: i32 = name_ref SOME_CONSTANT, @A.%SOME_CONSTANT
 // CHECK:STDOUT:   return %SOME_CONSTANT.ref
@@ -608,6 +646,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc18_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc18_13.2: type = converted %int.make_type_32, %.loc18_13.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %SomeProtectedFunction.ref: %SomeProtectedFunction.type = name_ref SomeProtectedFunction, @A.%SomeProtectedFunction.decl [template = constants.%SomeProtectedFunction]
 // CHECK:STDOUT:   %SomeProtectedFunction.call: init i32 = call %SomeProtectedFunction.ref()
@@ -706,6 +751,16 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Square]() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_39: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc11_35.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_35.2: type = converted %int.make_type_32, %.loc11_35.1 [template = i32]
+// CHECK:STDOUT:     %self.param: %Square = value_param runtime_param0
+// CHECK:STDOUT:     %self: %Square = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -760,11 +815,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @C.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
@@ -820,11 +877,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @C.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
@@ -899,11 +958,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -977,11 +1038,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @B.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
@@ -1113,6 +1176,13 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16_17: invalid = splice_block invalid {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32, %.loc16_13.1 [template = i32]
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [template = <error>]
 // CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -1122,6 +1192,16 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc36_35: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc36_32.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc36_32.2: type = converted %int.make_type_32, %.loc36_32.1 [template = i32]
+// CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %.6 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
@@ -1213,6 +1293,11 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
+// CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
@@ -1302,6 +1387,11 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
+// CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: %.2 = name_ref x, @A.%.loc5_18 [template = @A.%.loc5_18]

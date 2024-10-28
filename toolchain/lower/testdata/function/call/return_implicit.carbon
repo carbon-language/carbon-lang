@@ -20,14 +20,12 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMakeImplicitEmptyTuple.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !9
 // CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11

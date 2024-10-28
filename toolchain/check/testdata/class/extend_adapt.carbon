@@ -210,6 +210,11 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestStaticMemberFunction(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc19: invalid = splice_block invalid {
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %StaticMemberFunction.ref: %StaticMemberFunction.type = name_ref StaticMemberFunction, @SomeClass.%StaticMemberFunction.decl [template = constants.%StaticMemberFunction]
 // CHECK:STDOUT:   %StaticMemberFunction.call: init %.1 = call %StaticMemberFunction.ref()
@@ -218,6 +223,11 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAdapterMethod(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc23: invalid = splice_block invalid {
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %AdapterMethod.ref: %AdapterMethod.type = name_ref AdapterMethod, @SomeClass.%AdapterMethod.decl [template = constants.%AdapterMethod]
 // CHECK:STDOUT:   %.loc24: <bound method> = bound_method %a.ref, %AdapterMethod.ref
@@ -348,6 +358,11 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a.param_patt: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %a.ref, %F.ref
@@ -535,6 +550,16 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_34: invalid = splice_block invalid {
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]
+// CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SomeClass) [template = constants.%ImplicitAs.type.3]

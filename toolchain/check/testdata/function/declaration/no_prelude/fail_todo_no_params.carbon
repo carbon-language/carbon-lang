@@ -74,6 +74,7 @@ fn A => 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

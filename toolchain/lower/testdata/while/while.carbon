@@ -34,8 +34,7 @@ fn While() {
 // CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; No predecessors!
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !7
 // CHECK:STDOUT:   br label %while.cond, !dbg !8
 // CHECK:STDOUT:

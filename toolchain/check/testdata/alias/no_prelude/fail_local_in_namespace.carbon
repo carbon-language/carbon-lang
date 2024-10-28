@@ -54,6 +54,12 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.1 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_14: invalid = splice_block invalid {
+// CHECK:STDOUT:     %.loc13_12.1: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_17: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc22_12: <error> = bind_alias <invalid>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
