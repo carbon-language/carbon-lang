@@ -87,6 +87,16 @@ class MatchContext {
     return result;
   }
 
+  // Emits the pattern-match insts necessary to match the pattern inst
+  // `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and
+  // adds to `stack_` any work necessary to traverse into its subpatterns. This
+  // behavior is contingent on the kind of match being performed, as indicated
+  // by kind_`. For example, when performing a callee pattern match, this does
+  // not emit insts for patterns on the caller side. However, it still traverses
+  // into subpatterns if any of their descendants might emit insts.
+  // TODO: Require that `entry.scrutinee_id` is valid if and only if insts
+  // should be emitted, once we start emitting `Param` insts in the
+  // `ParamPattern` case.
   auto EmitPatternMatch(Context& context, MatchContext::WorkItem entry) -> void;
 
   // The stack of work to be processed.
@@ -119,15 +129,6 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   return block_id;
 }
 
-// Emits the pattern-match insts necessary to match the pattern inst
-// `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and adds
-// to `stack_` any work necessary to traverse into its subpatterns. This
-// behavior is contingent on the kind of match being performed, as indicated by
-// kind_`. For example, when performing a callee pattern match, this does not
-// emit insts for patterns on the caller side. However, it still traverses into
-// subpatterns if any of their descendants might emit insts.
-// TODO: Require that `entry.scrutinee_id` is valid if and only if insts should
-// be emitted, once we start emitting `Param` insts in the `ParamPattern` case.
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::InstId::BuiltinError) {
