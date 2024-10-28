@@ -56,7 +56,6 @@ static auto MakeBigIntLiteral(Context& context, Parse::NodeId node_id,
   // TODO: `IntId`s with different bit-widths are considered different values
   // here. Decide how we want to canonicalize these. For now this is only used
   // by type literals, so we rely on the lexer picking some consistent rule.
-  auto val = context.ints().Get(int_id);
   return context.AddInst<SemIR::IntLiteral>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BigIntType),
