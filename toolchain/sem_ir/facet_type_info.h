@@ -20,7 +20,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     out << "{base_facet_type: " << base_facet_type_id
         << ", requirements: " << requirement_block_id << "}";
   }
-  // TODO: Implement hash and ==
+  auto operator==(const FacetTypeInfo& rhs) const -> bool {
+    return base_facet_type_id == rhs.base_facet_type_id &&
+           requirement_block_id == rhs.requirement_block_id;
+  }
+  // TODO: Implement hash
 };
 
 }  // namespace Carbon::SemIR

@@ -125,6 +125,9 @@ class EvalContext {
   auto interfaces() -> const ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+    return sem_ir().facet_types();
+  }
   auto specifics() -> const SemIR::SpecificStore& {
     return sem_ir().specifics();
   }
@@ -1279,9 +1282,28 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           Phase::Template);
     }
 
-    case SemIR::FacetType::Kind:
-      // FIXME: This doesn't seem right.
-      return MakeConstantResult(eval_context.context(), inst, Phase::Template);
+    case CARBON_KIND(SemIR::FacetType facet_type): {
+      SemIR::FacetTypeInfo info =
+          eval_context.facet_types().Get(facet_type.facet_type_id);
+      Phase phase = Phase::Template;
+      SemIR::TypeId base_facet_type_id =
+          GetConstantValue(eval_context, info.base_facet_type_id, &phase);
+      SemIR::InstBlockId requirement_block_id =
+          GetConstantValue(eval_context, info.requirement_block_id, &phase);
+      // If nothing changed, can reuse this instruction.
+      if (base_facet_type_id == info.base_facet_type_id &&
+          requirement_block_id == info.requirement_block_id) {
+        return MakeConstantResult(eval_context.context(), inst, phase);
+      }
+      SemIR::FacetTypeId facet_type_id = eval_context.facet_types().Add(
+          SemIR::FacetTypeInfo{.base_facet_type_id = base_facet_type_id,
+                               .requirement_block_id = requirement_block_id});
+      return MakeConstantResult(
+          eval_context.context(),
+          SemIR::FacetType{.type_id = SemIR::TypeId::TypeType,
+                           .facet_type_id = facet_type_id},
+          phase);
+    }
 
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
       // If the interface has generic parameters, we don't produce an interface
