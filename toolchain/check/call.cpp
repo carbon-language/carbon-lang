@@ -46,10 +46,8 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  CalleeParamsInfo callee_info(entity);
-
   // Check that the arity matches.
-  auto params = context.inst_blocks().GetOrEmpty(callee_info.param_refs_id);
+  auto params = context.inst_blocks().GetOrEmpty(entity.param_refs_id);
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
@@ -64,7 +62,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), params.size())
-        .Note(callee_info.callee_loc, InCallToEntity,
+        .Note(entity.latest_decl_id(), InCallToEntity,
               static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
     return std::nullopt;
@@ -75,8 +73,8 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (entity_generic_id.is_valid()) {
     specific_id = DeduceGenericCallArguments(
         context, loc_id, entity_generic_id, enclosing_specific_id,
-        callee_info.implicit_param_patterns_id, callee_info.param_patterns_id,
-        self_id, arg_ids);
+        entity.implicit_param_patterns_id, entity.param_patterns_id, self_id,
+        arg_ids);
     if (!specific_id.is_valid()) {
       return std::nullopt;
     }
@@ -212,7 +210,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
       context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
-      CalleeParamsInfo(callable), *callee_specific_id);
+      callable.latest_decl_id(), callable.implicit_param_patterns_id,
+      callable.param_patterns_id, *callee_specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
                                             .callee_id = callee_id,

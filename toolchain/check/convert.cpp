@@ -1172,14 +1172,14 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id,
-                     const CalleeParamsInfo& callee,
+                     SemIR::InstId return_slot_arg_id, SemIRLoc callee_loc,
+                     SemIR::InstBlockId implicit_param_patterns_id,
+                     SemIR::InstBlockId param_patterns_id,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
   auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
+      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
+  auto param_patterns = context.inst_blocks().GetOrEmpty(param_patterns_id);
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -1199,8 +1199,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     if (param_pattern_info.GetNameId(context.sem_ir()) ==
         SemIR::NameId::SelfValue) {
       auto converted_self_id =
-          ConvertSelf(context, call_loc_id, callee.callee_loc,
-                      callee_specific_id, implicit_param_id, self_id);
+          ConvertSelf(context, call_loc_id, callee_loc, callee_specific_id,
+                      implicit_param_id, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
