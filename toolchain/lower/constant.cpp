@@ -206,8 +206,17 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
     -> llvm::Constant* {
-  return llvm::ConstantInt::get(context.GetType(inst.type_id),
-                                context.sem_ir().ints().Get(inst.int_id));
+  auto* type = context.GetType(inst.type_id);
+
+  // BigInt is represented as an empty struct. All other integer types are
+  // represented as an LLVM integer type.
+  if (!llvm::isa<llvm::IntegerType>(type)) {
+    auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
+    CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
+    return llvm::ConstantStruct::get(struct_type);
+  }
+
+  return llvm::ConstantInt::get(type, context.sem_ir().ints().Get(inst.int_id));
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)

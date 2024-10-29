@@ -34,7 +34,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // the `value_id` on the `BindSymbolicName`.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
-       .parent_scope_id = context.decl_name_stack().PeekParentScopeId(),
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .bind_index = context.scope_stack().AddCompileTimeBinding()});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
