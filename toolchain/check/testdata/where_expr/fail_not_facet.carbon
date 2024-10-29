@@ -32,7 +32,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn G(U:! NOT_DECLARED where .Self == bool);
 
-
 // --- fail_var.carbon
 
 library "[[@TEST_NAME]]";
