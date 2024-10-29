@@ -1042,7 +1042,6 @@ class ImportRefResolver {
         .param_patterns_id = import_base.param_patterns_id.is_valid()
                                  ? SemIR::InstBlockId::Empty
                                  : SemIR::InstBlockId::Invalid,
-        .return_slot_pattern_id = SemIR::InstId::Invalid,
         .is_extern = import_base.is_extern,
         .extern_library_id = extern_library_id,
         .non_owning_decl_id = import_base.non_owning_decl_id.is_valid()
@@ -1629,7 +1628,8 @@ class ImportRefResolver {
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
-         {.return_slot_id = SemIR::InstId::Invalid,
+         {.return_slot_pattern_id = SemIR::InstId::Invalid,
+          .return_slot_id = SemIR::InstId::Invalid,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     function_decl.type_id =

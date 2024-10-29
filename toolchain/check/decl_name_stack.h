@@ -105,7 +105,6 @@ class DeclNameStack {
           .implicit_param_patterns_id = name.implicit_param_patterns_id,
           .param_refs_id = name.params_id,
           .param_patterns_id = name.param_patterns_id,
-          .return_slot_pattern_id = name.return_slot_pattern_id,
           .is_extern = is_extern,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
