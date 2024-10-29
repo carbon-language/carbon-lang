@@ -79,7 +79,9 @@ using Bool = BuiltinType<InstId::BuiltinBoolType>;
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    // TODO: Support Core.BigInt once it exists.
+    if (BuiltinType<InstId::BuiltinBigIntType>::Check(sem_ir, state, type_id)) {
+      return true;
+    }
     if (BuiltinType<InstId::BuiltinIntType>::Check(sem_ir, state, type_id)) {
       return true;
     }

@@ -75,6 +75,15 @@ class NodeExtractor {
   auto ExtractTupleLikeType(std::index_sequence<Index...> /*indices*/,
                             std::tuple<U...>* /*type*/) -> std::optional<T>;
 
+  // Split out trace logic. The noinline saves a few seconds on compilation.
+  template <typename... ArgT>
+  [[clang::noinline]] auto MaybeTrace(llvm::StringLiteral format,
+                                      ArgT... args) const -> void {
+    if (trace_) {
+      *trace_ << llvm::formatv(format.data(), args...);
+    }
+  }
+
  private:
   const TreeAndSubtrees* tree_;
   const Lex::TokenizedBuffer* tokens_;
@@ -113,34 +122,25 @@ template <>
 struct Extractable<NodeId> {
   static auto Extract(NodeExtractor& extractor) -> std::optional<NodeId> {
     if (extractor.at_end()) {
-      if (auto* trace = extractor.trace()) {
-        *trace << "NodeId error: no more children\n";
-      }
+      extractor.MaybeTrace("NodeId error: no more children\n");
       return std::nullopt;
     }
-    if (auto* trace = extractor.trace()) {
-      *trace << "NodeId: " << extractor.kind() << " consumed\n";
-    }
+    extractor.MaybeTrace("NodeId: {0} consumed\n", extractor.kind());
     return extractor.ExtractNode();
   }
 };
 
 auto NodeExtractor::MatchesNodeIdForKind(NodeKind expected_kind) const -> bool {
-  if (at_end() || kind() != expected_kind) {
-    if (trace_) {
-      if (at_end()) {
-        *trace_ << "NodeIdForKind error: no more children, expected "
-                << expected_kind << "\n";
-      } else {
-        *trace_ << "NodeIdForKind error: wrong kind " << kind() << ", expected "
-                << expected_kind << "\n";
-      }
-    }
+  if (at_end()) {
+    MaybeTrace("NodeIdForKind error: no more children, expected {0}\n",
+               expected_kind);
+    return false;
+  } else if (kind() != expected_kind) {
+    MaybeTrace("NodeIdForKind error: wrong kind {0}, expected {1}\n", kind(),
+               expected_kind);
     return false;
   }
-  if (trace_) {
-    *trace_ << "NodeIdForKind: " << expected_kind << " consumed\n";
-  }
+  MaybeTrace("NodeIdForKind: {0} consumed\n", expected_kind);
   return true;
 }
 
@@ -160,21 +160,15 @@ struct Extractable<NodeIdForKind<Kind>> {
 
 auto NodeExtractor::MatchesNodeIdInCategory(NodeCategory category) const
     -> bool {
-  if (at_end() || !kind().category().HasAnyOf(category)) {
-    if (trace_) {
-      *trace_ << "NodeIdInCategory " << category << " error: ";
-      if (at_end()) {
-        *trace_ << "no more children\n";
-      } else {
-        *trace_ << "kind " << kind() << " doesn't match\n";
-      }
-    }
+  if (at_end()) {
+    MaybeTrace("NodeIdInCategory {0} error: no more children\n", category);
+    return false;
+  } else if (!kind().category().HasAnyOf(category)) {
+    MaybeTrace("NodeIdInCategory {0} error: kind {1} doesn't match\n", category,
+               kind());
     return false;
   }
-  if (trace_) {
-    *trace_ << "NodeIdInCategory " << category << ": kind " << kind()
-            << " consumed\n";
-  }
+  MaybeTrace("NodeIdInCategory {0}: kind {1} consumed\n", category, kind());
   return true;
 }
 
@@ -200,19 +194,18 @@ auto NodeExtractor::MatchesNodeIdOneOf(
     }
   };
   auto node_kind = kind();
-  if (at_end() ||
-      std::find(kinds.begin(), kinds.end(), node_kind) == kinds.end()) {
+  if (at_end()) {
     if (trace_) {
-      if (at_end()) {
-        *trace_ << "NodeIdOneOf error: no more children, expected ";
-        trace_kinds();
-        *trace_ << "\n";
-      } else {
-        *trace_ << "NodeIdOneOf error: wrong kind " << node_kind
-                << ", expected ";
-        trace_kinds();
-        *trace_ << "\n";
-      }
+      *trace_ << "NodeIdOneOf error: no more children, expected ";
+      trace_kinds();
+      *trace_ << "\n";
+    }
+    return false;
+  } else if (std::find(kinds.begin(), kinds.end(), node_kind) == kinds.end()) {
+    if (trace_) {
+      *trace_ << "NodeIdOneOf error: wrong kind " << node_kind << ", expected ";
+      trace_kinds();
+      *trace_ << "\n";
     }
     return false;
   }
@@ -242,20 +235,17 @@ struct Extractable<NodeIdOneOf<T...>> {
 template <typename T>
 struct Extractable<NodeIdNot<T>> {
   static auto Extract(NodeExtractor& extractor) -> std::optional<NodeIdNot<T>> {
-    if (extractor.at_end() || extractor.kind() == T::Kind) {
-      if (auto* trace = extractor.trace()) {
-        if (extractor.at_end()) {
-          *trace << "NodeIdNot " << T::Kind << " error: no more children\n";
-        } else {
-          *trace << "NodeIdNot error: unexpected " << T::Kind << "\n";
-        }
-      }
+    // This converts NodeKind::Definition to NodeKind.
+    constexpr NodeKind Kind = T::Kind;
+    if (extractor.at_end()) {
+      extractor.MaybeTrace("NodeIdNot {0} error: no more children\n", Kind);
+      return std::nullopt;
+    } else if (extractor.kind() == Kind) {
+      extractor.MaybeTrace("NodeIdNot error: unexpected {0}\n", Kind);
       return std::nullopt;
     }
-    if (auto* trace = extractor.trace()) {
-      *trace << "NodeIdNot " << T::Kind << ": " << extractor.kind()
-             << " consumed\n";
-    }
+    extractor.MaybeTrace("NodeIdNot {0}: {1} consumed\n", Kind,
+                         extractor.kind());
     return NodeIdNot<T>(extractor.ExtractNode());
   }
 };
@@ -265,9 +255,7 @@ template <typename T>
 struct Extractable<llvm::SmallVector<T>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<llvm::SmallVector<T>> {
-    if (auto* trace = extractor.trace()) {
-      *trace << "Vector: begin\n";
-    }
+    extractor.MaybeTrace("Vector: begin\n");
     llvm::SmallVector<T> result;
     while (!extractor.at_end()) {
       auto checkpoint = extractor.Checkpoint();
@@ -279,9 +267,7 @@ struct Extractable<llvm::SmallVector<T>> {
       result.push_back(*item);
     }
     std::reverse(result.begin(), result.end());
-    if (auto* trace = extractor.trace()) {
-      *trace << "Vector: end\n";
-    }
+    extractor.MaybeTrace("Vector: end\n");
     return result;
   }
 };
@@ -292,21 +278,15 @@ template <typename T>
 struct Extractable<std::optional<T>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<std::optional<T>> {
-    if (auto* trace = extractor.trace()) {
-      *trace << "Optional " << typeid(T).name() << ": begin\n";
-    }
+    extractor.MaybeTrace("Optional {0}: begin\n", typeid(T).name());
     auto checkpoint = extractor.Checkpoint();
     std::optional<T> value = Extractable<T>::Extract(extractor);
     if (value) {
-      if (auto* trace = extractor.trace()) {
-        *trace << "Optional " << typeid(T).name() << ": found\n";
-      }
-      return value;
+      extractor.MaybeTrace("Optional {0}: found\n", typeid(T).name());
+    } else {
+      extractor.MaybeTrace("Optional {0}: missing\n", typeid(T).name());
+      extractor.RestoreCheckpoint(checkpoint);
     }
-    if (auto* trace = extractor.trace()) {
-      *trace << "Optional " << typeid(T).name() << ": missing\n";
-    }
-    extractor.RestoreCheckpoint(checkpoint);
     return value;
   }
 };
@@ -314,10 +294,7 @@ struct Extractable<std::optional<T>> {
 auto NodeExtractor::MatchesTokenKind(Lex::TokenKind expected_kind) const
     -> bool {
   if (!node_id_.is_valid()) {
-    if (trace_) {
-      *trace_ << "Token " << expected_kind
-              << " expected but processing root node\n";
-    }
+    MaybeTrace("Token {0} expected but processing root node\n", expected_kind);
     return false;
   }
   if (token_kind() != expected_kind) {
@@ -350,9 +327,7 @@ struct Extractable<Lex::TokenIndex> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<Lex::TokenIndex> {
     if (!extractor.has_token()) {
-      if (auto* trace = extractor.trace()) {
-        *trace << "Token expected but processing root node\n";
-      }
+      extractor.MaybeTrace("Token expected but processing root node\n");
       return std::nullopt;
     }
     return extractor.token();
@@ -364,9 +339,7 @@ auto NodeExtractor::ExtractTupleLikeType(
     std::index_sequence<Index...> /*indices*/, std::tuple<U...>* /*type*/)
     -> std::optional<T> {
   std::tuple<std::optional<U>...> fields;
-  if (trace_) {
-    *trace_ << "Aggregate " << typeid(T).name() << ": begin\n";
-  }
+  MaybeTrace("Aggregate {0}: begin\n", typeid(T).name());
   // Use a fold over the `=` operator to parse fields from right to left.
   [[maybe_unused]] int unused;
   bool ok = true;
@@ -375,15 +348,11 @@ auto NodeExtractor::ExtractTupleLikeType(
                         .has_value()),
         unused) = ... = 0));
   if (!ok) {
-    if (trace_) {
-      *trace_ << "Aggregate " << typeid(T).name() << ": error\n";
-    }
+    MaybeTrace("Aggregate {0}: error\n", typeid(T).name());
     return std::nullopt;
   }
 
-  if (trace_) {
-    *trace_ << "Aggregate " << typeid(T).name() << ": success\n";
-  }
+  MaybeTrace("Aggregate {0}: success\n", typeid(T).name());
   return T{std::move(std::get<Index>(fields).value())...};
 }
 

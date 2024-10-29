@@ -126,6 +126,7 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_diagnostic_converter",
+        "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
