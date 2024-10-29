@@ -119,6 +119,8 @@ class MatchContext {
   SemIR::InstId return_slot_id_;
 };
 
+}  // namespace
+
 auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   results_.reserve(stack_.size());
   while (!stack_.empty()) {
@@ -282,8 +284,6 @@ auto MatchContext::EmitPatternMatch(Context& context,
     }
   }
 }
-
-}  // namespace
 
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
