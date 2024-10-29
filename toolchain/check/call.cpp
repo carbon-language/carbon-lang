@@ -151,12 +151,12 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       }
     }
   }
-  auto& callable = context.functions().Get(callee_function.function_id);
+  auto& function = context.functions().Get(callee_function.function_id);
 
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
-      context, loc_id, callable, EntityKind::Function, callable.generic_id,
+      context, loc_id, function, EntityKind::Function, function.generic_id,
       callee_function.enclosing_specific_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
@@ -179,9 +179,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");
-          builder.Note(callable.return_slot_id, IncompleteReturnTypeHere);
+          builder.Note(function.return_slot_id, IncompleteReturnTypeHere);
         });
-    return CheckFunctionReturnType(context, callee_id, callable,
+    return CheckFunctionReturnType(context, callee_id, function,
                                    *callee_specific_id);
   }();
   switch (return_info.init_repr.kind) {
@@ -208,10 +208,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
-      callable.latest_decl_id(), callable.implicit_param_patterns_id,
-      callable.param_patterns_id, *callee_specific_id);
+  auto converted_args_id =
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_slot_arg_id, function, *callee_specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
                                             .callee_id = callee_id,

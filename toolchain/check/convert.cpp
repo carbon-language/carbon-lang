@@ -1172,14 +1172,17 @@ static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id, SemIRLoc callee_loc,
-                     SemIR::InstBlockId implicit_param_patterns_id,
-                     SemIR::InstBlockId param_patterns_id,
+                     SemIR::InstId return_slot_arg_id,
+                     const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
+  // The callee reference can be invalidated by conversions, so ensure all reads
+  // from it are done before conversion calls.
+  auto callee_loc = callee.latest_decl_id();
   auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  auto param_patterns = context.inst_blocks().GetOrEmpty(param_patterns_id);
+      context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());

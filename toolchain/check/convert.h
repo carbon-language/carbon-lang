@@ -92,15 +92,11 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
 // argument values for runtime parameters.
-//
-// Callee parameters are taken in individually because a callee function
-// reference can be invalidated during conversions.
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id, SemIRLoc callee_loc,
-                     SemIR::InstBlockId implicit_param_patterns_id,
-                     SemIR::InstBlockId param_patterns_id,
+                     SemIR::InstId return_slot_arg_id,
+                     const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId;
 
