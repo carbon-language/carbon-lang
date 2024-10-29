@@ -33,6 +33,7 @@ cc_library(
         "ids.h",
     ],
     deps = [
+        ":inst_kind",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",

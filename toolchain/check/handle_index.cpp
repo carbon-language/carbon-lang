@@ -140,7 +140,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
-      auto elem_id = context.AddInst<SemIR::ArrayIndex>(
+      SemIR::InstId elem_id = context.AddInst<SemIR::ArrayIndex>(
           node_id, {.type_id = array_type.element_type_id,
                     .array_id = operand_inst_id,
                     .index_id = cast_index_id});

@@ -1138,7 +1138,7 @@ struct Temporary {
       InstKind::Temporary.Define<Parse::NodeId>({.ir_name = "temporary"});
 
   TypeId type_id;
-  InstId storage_id;
+  TemporaryStorageInstId storage_id;
   InstId init_id;
 };
 

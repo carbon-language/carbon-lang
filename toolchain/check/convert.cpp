@@ -100,15 +100,12 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   auto return_slot_id = FindReturnSlotForInitializer(sem_ir, init_id);
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_id).kind() ==
-                     SemIR::TemporaryStorage::Kind,
-                 "Return slot for initializer does not contain a temporary; "
-                 "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_id));
+    auto storage_id =
+        sem_ir.insts().InstIdAs<SemIR::TemporaryStorage::Kind>(return_slot_id);
     auto init = sem_ir.insts().Get(init_id);
     return context.AddInst<SemIR::Temporary>(sem_ir.insts().GetLocId(init_id),
                                              {.type_id = init.type_id(),
-                                              .storage_id = return_slot_id,
+                                              .storage_id = storage_id,
                                               .init_id = init_id});
   }
 
@@ -551,22 +548,24 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
-  bool need_temporary = !target.is_initializer();
-  if (need_temporary) {
+  SemIR::TemporaryStorageInstId temporary_storage =
+      SemIR::TemporaryStorageInstId::Invalid;
+  if (!target.is_initializer()) {
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
-    target.init_id = target_block.AddInst<SemIR::TemporaryStorage>(
+    temporary_storage = target_block.AddInst<SemIR::TemporaryStorage>(
         context.insts().GetLocId(value_id), {.type_id = target.type_id});
+    target.init_id = temporary_storage;
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target);
 
-  if (need_temporary) {
+  if (temporary_storage.is_valid()) {
     target_block.InsertHere();
     result_id = context.AddInst<SemIR::Temporary>(
         context.insts().GetLocId(value_id), {.type_id = target.type_id,
-                                             .storage_id = target.init_id,
+                                             .storage_id = temporary_storage,
                                              .init_id = result_id});
   }
   return result_id;
@@ -641,7 +640,7 @@ static auto ConvertDerivedPointerToBasePointer(
     const InheritancePath& path) -> SemIR::InstId {
   // Form `*p`.
   ptr_id = ConvertToValueExpr(context, ptr_id);
-  auto ref_id = context.AddInst<SemIR::Deref>(
+  SemIR::InstId ref_id = context.AddInst<SemIR::Deref>(
       loc_id, {.type_id = src_ptr_type.pointee_id, .pointer_id = ptr_id});
 
   // Convert as a reference expression.

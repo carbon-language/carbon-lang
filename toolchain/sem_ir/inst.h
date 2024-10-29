@@ -426,6 +426,14 @@ class InstStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
+  template <InstKind::RawEnumType Kind>
+  auto InstIdAs(InstId id) -> TypedInstId<Kind> {
+    CARBON_CHECK(Get(id).kind() == Kind,
+                 "InstId `{0}` has incorrect kind `{1}` in `InstIdAs<{2}>`", id,
+                 Get(id).kind(), InstKind::Make(Kind));
+    return TypedInstId<Kind>(id.index);
+  }
+
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 

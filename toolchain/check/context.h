@@ -90,9 +90,9 @@ class Context {
 
   // Convenience for AddInst with typed nodes.
   template <typename InstT, typename LocT>
-  auto AddInst(LocT loc, InstT inst)
-      -> decltype(AddInst(SemIR::LocIdAndInst(loc, inst))) {
-    return AddInst(SemIR::LocIdAndInst(loc, inst));
+  auto AddInst(LocT loc, InstT inst) -> SemIR::TypedInstId<InstT::Kind> {
+    return SemIR::TypedInstId<InstT::Kind>(
+        AddInst(SemIR::LocIdAndInst(loc, inst)).index);
   }
 
   // Returns a LocIdAndInst for an instruction with an imported location. Checks

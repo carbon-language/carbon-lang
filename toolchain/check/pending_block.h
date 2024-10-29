@@ -41,10 +41,10 @@ class PendingBlock {
   };
 
   template <typename InstT, typename LocT>
-  auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
+  auto AddInst(LocT loc_id, InstT inst) -> SemIR::TypedInstId<InstT::Kind> {
     auto inst_id = context_.AddInstInNoBlock(loc_id, inst);
     insts_.push_back(inst_id);
-    return inst_id;
+    return SemIR::TypedInstId<InstT::Kind>(inst_id.index);
   }
 
   // Insert the pending block of code at the current position.

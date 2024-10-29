@@ -275,7 +275,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
-  auto member_id = context.AddInst<SemIR::NameRef>(
+  SemIR::InstId member_id = context.AddInst<SemIR::NameRef>(
       loc_id,
       {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 
@@ -316,7 +316,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                    "Non-constant value {0} of unbound element type",
                    context.insts().Get(member_id));
       auto index = GetClassElementIndex(context, element_id);
-      auto access_id = context.AddInst<SemIR::ClassElementAccess>(
+      SemIR::InstId access_id = context.AddInst<SemIR::ClassElementAccess>(
           loc_id, {.type_id = unbound_element_type.element_type_id,
                    .base_id = base_id,
                    .index = index});

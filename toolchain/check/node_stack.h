@@ -87,6 +87,12 @@ class NodeStack {
     stack_.push_back({.node_id = node_id, .id = Id()});
   }
 
+  // Collapse TypedInstId to InstId.
+  template <SemIR::InstKind::RawEnumType Kind>
+  auto Push(Parse::NodeId node_id, SemIR::TypedInstId<Kind> id) -> void {
+    Push(node_id, static_cast<SemIR::InstId>(id));
+  }
+
   // Pushes a parse tree node onto the stack with an ID.
   template <typename IdT>
   auto Push(Parse::NodeId node_id, IdT id) -> void {

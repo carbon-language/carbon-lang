@@ -12,6 +12,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::SemIR {
 
@@ -85,6 +86,24 @@ constexpr InstId InstId::Invalid = InstId(InvalidIndex);
   constexpr InstId InstId::Builtin##Name =         \
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/builtin_inst_kind.def"
+
+// Use a template on the InstKind to help provide unique InstId types
+// per-instruction.
+template <SemIR::InstKind::RawEnumType Kind>
+class TypedInstId : public InstId {
+ public:
+  static const TypedInstId Invalid;
+  using InstId::InstId;
+};
+
+template <SemIR::InstKind::RawEnumType Kind>
+constexpr TypedInstId<Kind> TypedInstId<Kind>::Invalid =
+    TypedInstId(InvalidIndex);
+
+// Provide names for the per-instruction InstId types.
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  using Name##InstId = TypedInstId<SemIR::InstKind::Name>;
+#include "toolchain/sem_ir/inst_kind.def"
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction

@@ -1053,6 +1053,11 @@ class FormatterImpl {
   // `FormatName` is used when we need the name from an id. Most id types use
   // equivalent name formatting from InstNamer, although there are a few special
   // formats below.
+  template <InstKind::RawEnumType Kind>
+  auto FormatName(TypedInstId<Kind> id) -> void {
+    return FormatName(InstId(id));
+  }
+
   template <typename IdT>
   auto FormatName(IdT id) -> void {
     out_ << inst_namer_->GetNameFor(id);
