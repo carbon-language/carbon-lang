@@ -24,7 +24,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.5: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %array.1: %.3 = tuple_value (%.2) [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.7: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
@@ -58,7 +58,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,7 +76,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref %.3 = var a
 // CHECK:STDOUT:   %a: ref %.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc12_9.1: i32 = int_literal 64 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_9.1: Core.BigInt = int_literal 64 [template = constants.%.7]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
 // CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc12_9.2: type = value_of_initializer %float.make_type [template = f64]
@@ -94,7 +94,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

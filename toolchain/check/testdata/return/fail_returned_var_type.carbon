@@ -27,7 +27,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [template]
 // CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
@@ -47,7 +47,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,7 +72,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_19.1: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_19.1: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc18_19.1) [template = f64]
 // CHECK:STDOUT:   %.loc18_19.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc18_19.3: type = converted %float.make_type, %.loc18_19.2 [template = f64]
@@ -82,5 +82,5 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:

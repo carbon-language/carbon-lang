@@ -20,7 +20,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.3: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: f64 = float_literal 0.10000000000000001 [template]
@@ -42,7 +42,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:     import Core//prelude/types/bool
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,7 +59,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %.loc11_15.2: type = converted %int.make_type_32, %.loc11_15.1 [template = i32]
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
-// CHECK:STDOUT:   %.loc12_15.1: i32 = int_literal 64 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_15.1: Core.BigInt = int_literal 64 [template = constants.%.3]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc12_15.1) [template = f64]
 // CHECK:STDOUT:   %.loc12_15.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc12_15.3: type = converted %float.make_type, %.loc12_15.2 [template = f64]
@@ -71,7 +71,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
