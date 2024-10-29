@@ -80,14 +80,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     .Inc = %import_ref.1
 // CHECK:STDOUT:     .AddAssign = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+63, loaded [template = constants.%Inc.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+65, unloaded

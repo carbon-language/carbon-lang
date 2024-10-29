@@ -53,14 +53,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     .BigInt = %import_ref.1
 // CHECK:STDOUT:     .Int = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %BigInt.type = import_ref Core//prelude/types, inst+7, loaded [template = constants.%BigInt]
 // CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+30, loaded [template = constants.%Int]
