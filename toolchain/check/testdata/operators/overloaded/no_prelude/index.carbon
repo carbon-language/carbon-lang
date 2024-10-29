@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/no_prelude/index.carbon
 
-// --- wrong_index_with.carbon
+// --- fail_wrong_index_with.carbon
 
 library "[[@TEST_NAME]]";
 
 namespace Core;
 class Core.IndexWith {}
-// CHECK:STDERR: wrong_index_with.carbon:[[@LINE+4]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
 fn F() { 0[1]; }
 
-// --- missing_index_with.carbon
+// --- fail_missing_index_with.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: missing_index_with.carbon:[[@LINE+7]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+7]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: missing_index_with.carbon:[[@LINE+3]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+3]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 fn F() { 0[1]; }
@@ -50,7 +50,7 @@ impl () as Core.IndexWith(()) {
 
 fn F() { ()[()]; }
 
-// CHECK:STDOUT: --- wrong_index_with.carbon
+// CHECK:STDOUT: --- fail_wrong_index_with.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IndexWith: type = class_type @IndexWith [template]
@@ -89,7 +89,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- missing_index_with.carbon
+// CHECK:STDOUT: --- fail_missing_index_with.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
