@@ -1110,6 +1110,20 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   return SemIR::ConstantId::NotConstant;
 }
 
+// Creates a FacetType constant.
+static auto MakeFacetTypeResult(Context& context,
+                                SemIR::TypeId base_facet_type_id,
+                                SemIR::InstBlockId requirement_block_id,
+                                Phase phase) -> SemIR::ConstantId {
+  SemIR::FacetTypeId facet_type_id = context.sem_ir().facet_types().Add(
+      SemIR::FacetTypeInfo{.base_facet_type_id = base_facet_type_id,
+                           .requirement_block_id = requirement_block_id});
+  return MakeConstantResult(context,
+                            SemIR::FacetType{.type_id = SemIR::TypeId::TypeType,
+                                             .facet_type_id = facet_type_id},
+                            phase);
+}
+
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
 static auto TryEvalInstInContext(EvalContext& eval_context,
                                  SemIR::InstId inst_id, SemIR::Inst inst)
@@ -1297,21 +1311,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       Phase phase = Phase::Template;
       SemIR::TypeId base_facet_type_id =
           GetConstantValue(eval_context, info.base_facet_type_id, &phase);
-      SemIR::InstBlockId requirement_block_id =
-          GetConstantValue(eval_context, info.requirement_block_id, &phase);
+      // TODO: process & canonicalize requirements
+      SemIR::InstBlockId requirement_block_id = info.requirement_block_id;
       // If nothing changed, can reuse this instruction.
       if (base_facet_type_id == info.base_facet_type_id &&
           requirement_block_id == info.requirement_block_id) {
         return MakeConstantResult(eval_context.context(), inst, phase);
       }
-      SemIR::FacetTypeId facet_type_id = eval_context.facet_types().Add(
-          SemIR::FacetTypeInfo{.base_facet_type_id = base_facet_type_id,
-                               .requirement_block_id = requirement_block_id});
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::FacetType{.type_id = SemIR::TypeId::TypeType,
-                           .facet_type_id = facet_type_id},
-          phase);
+      return MakeFacetTypeResult(eval_context.context(), base_facet_type_id,
+                                 requirement_block_id, phase);
     }
 
     case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
@@ -1470,10 +1478,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.facet_id);
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
-      // TODO: This currently ignores the requirements and just produces the
-      // left-hand type argument to the `where`.
-      return eval_context.GetConstantValue(
-          eval_context.insts().Get(typed_inst.period_self_id).type_id());
+      SemIR::TypeId base_facet_type_id =
+          eval_context.insts().Get(typed_inst.period_self_id).type_id();
+      Phase phase = Phase::Template;
+      base_facet_type_id =
+          GetConstantValue(eval_context, base_facet_type_id, &phase);
+      SemIR::InstBlockId requirement_block_id = typed_inst.requirements_id;
+      // TODO: process & canonicalize requirements
+      return MakeFacetTypeResult(eval_context.context(), base_facet_type_id,
+                                 requirement_block_id, phase);
     }
 
     // `not true` -> `false`, `not false` -> `true`.
