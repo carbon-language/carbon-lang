@@ -23,7 +23,6 @@ def cc_env():
     We're currently setting this on a target-by-target basis, mainly because
     it's difficult to modify default behaviors.
     """
-    env = {"LLVM_SYMBOLIZER_PATH": llvm_symbolizer}
 
     # On macOS, there's a nano zone allocation warning due to asan (arises
     # in fastbuild/dbg). This suppresses the warning in `bazel run`.
@@ -32,6 +31,11 @@ def cc_env():
     # within the select.
     # https://github.com/bazelbuild/bazel/issues/12457
     return select({
-        "//bazel/cc_toolchains:macos_asan": env.update({"MallocNanoZone": "0"}),
-        "//conditions:default": env,
+        "//bazel/cc_toolchains:macos_asan": {
+            "LLVM_SYMBOLIZER_PATH": llvm_symbolizer,
+            "MallocNanoZone": "0",
+        },
+        "//conditions:default": {
+            "LLVM_SYMBOLIZER_PATH": llvm_symbolizer,
+        },
     })
