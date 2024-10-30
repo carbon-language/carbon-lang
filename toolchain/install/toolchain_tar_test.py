@@ -61,6 +61,7 @@ def main() -> None:
         )
     assert len(tar_files), f"`{args.tar_file}` is empty."
 
+    # Verify file sets match.
     tar_okay = expect_empty_set(args.tar_file, tar_files - install_files)
     install_okay = expect_empty_set(
         args.install_data_manifest, install_files - tar_files
