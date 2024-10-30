@@ -38,6 +38,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # Gather install data files.
     with open(args.install_data_manifest) as manifest:
         # Remove everything up to and including `prefix_root`.
         install_files = set(
@@ -48,8 +49,7 @@ def main() -> None:
         )
     assert len(install_files), f"`{args.install_data_manifest}` is empty."
 
-    # First check that every file and directory in the tar file exists in our
-    # prefix root, and build a set of those paths.
+    # Gather tar files.
     with tarfile.open(args.tar_file) as tar:
         # Remove the first path component.
         tar_files = set(
