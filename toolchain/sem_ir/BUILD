@@ -29,11 +29,9 @@ cc_library(
 cc_library(
     name = "ids",
     hdrs = [
-        "id_kind.h",
         "ids.h",
     ],
     deps = [
-        ":inst_kind",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
@@ -48,7 +46,9 @@ cc_library(
     name = "inst_kind",
     srcs = ["inst_kind.cpp"],
     hdrs = [
+        "id_kind.h",
         "inst_kind.h",
+        "typed_inst_id.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],

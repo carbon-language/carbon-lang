@@ -9,6 +9,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_inst_id.h"
 
 // Representations for specific kinds of instructions.
 //

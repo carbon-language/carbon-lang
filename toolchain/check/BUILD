@@ -207,6 +207,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Support",
     ],
 )
