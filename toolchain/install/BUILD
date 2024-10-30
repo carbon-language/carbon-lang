@@ -70,6 +70,25 @@ cc_library(
     ],
 )
 
+# This target doesn't include prelude libraries. To get a target that has the
+# prelude available, use //toolchain.
+cc_binary(
+    name = "carbon-busybox",
+    srcs = ["busybox_main.cpp"],
+    env = cc_env(),
+    deps = [
+        ":install_paths",
+        "//common:all_llvm_targets",
+        "//common:bazel_working_dir",
+        "//common:error",
+        "//common:exe_path",
+        "//common:init_llvm",
+        "//common:version_stamp",
+        "//toolchain/driver",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
@@ -88,15 +107,20 @@ lld_aliases = [
 # based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
-        install_target(
+        install_symlink(
             "carbon",
-            "//toolchain/driver:carbon",
-            executable = True,
+            "../lib/carbon/carbon-busybox",
             is_driver = True,
         ),
     ],
     "lib/carbon": [
         install_target("carbon_install.txt", "carbon_install.txt"),
+        install_target(
+            "carbon-busybox",
+            ":carbon-busybox",
+            executable = True,
+            is_driver = True,
+        ),
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
@@ -104,6 +128,11 @@ install_dirs = {
             "lld",
             "@llvm-project//lld:lld",
             executable = True,
+        ),
+        install_symlink(
+            "clang",
+            "../../carbon-busybox",
+            is_driver = True,
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
 }
@@ -123,6 +152,9 @@ pkg_naming_variables(
 # We build both a compressed and uncompressed tar file with the same code here.
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
+#
+# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
+# `carbon_toolchain_tar_gz_rule`.
 pkg_tar_and_test(
     srcs = [":pkg_data"],
     name_base = "carbon_toolchain",

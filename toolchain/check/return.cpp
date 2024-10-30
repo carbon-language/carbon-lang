@@ -36,7 +36,8 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
   diag.Note(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
 
-// Produces a note describing the return type of the given function.
+// Produces a note describing the return type of the given function, which
+// must be a function whose definition is currently being checked.
 static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   auto return_type_inst_id =

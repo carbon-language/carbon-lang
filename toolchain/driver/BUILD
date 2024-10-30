@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -161,24 +160,6 @@ cc_fuzz_test(
         "//common:exe_path",
         "//testing/base:test_raw_ostream",
         "//testing/fuzzing:libfuzzer_header",
-        "//toolchain/install:install_paths",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-# This target doesn't include prelude libraries. To get a target that has the
-# prelude available, use //toolchain.
-cc_binary(
-    name = "carbon",
-    srcs = ["driver_main.cpp"],
-    env = cc_env(),
-    deps = [
-        ":driver",
-        "//common:all_llvm_targets",
-        "//common:bazel_working_dir",
-        "//common:exe_path",
-        "//common:init_llvm",
-        "//common:version_stamp",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",
     ],

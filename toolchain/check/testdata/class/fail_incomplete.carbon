@@ -195,6 +195,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -377,10 +378,10 @@ class C {
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc103: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc103: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %TakeIncomplete.call.loc103: init %.1 = call %TakeIncomplete.ref.loc103(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc103: init %.1 = call %TakeIncomplete.ref.loc103(<error>)
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc115: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %.loc115: %.3 = struct_literal ()
-// CHECK:STDOUT:   %TakeIncomplete.call.loc115: init %.1 = call %TakeIncomplete.ref.loc115(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc115: init %.1 = call %TakeIncomplete.ref.loc115(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -404,6 +405,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

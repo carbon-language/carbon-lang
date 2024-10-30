@@ -284,6 +284,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -387,6 +388,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -485,14 +487,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+26, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+51, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+54, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+53, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+58, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+60, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -500,6 +502,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -611,14 +614,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+26, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+51, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+54, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+53, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+58, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+60, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -626,6 +629,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -767,14 +771,14 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+26, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+51, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+54, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+53, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+58, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+60, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -782,6 +786,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -922,19 +927,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+26, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+51, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+54, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+53, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+58, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+60, loaded [template = constants.%E]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extern_api, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extern_api, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extern_api, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extern_api, inst+60, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -942,6 +947,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1052,19 +1058,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+26, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+51, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+54, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+28, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+53, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+58, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+60, loaded [template = constants.%E]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//api, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//api, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//api, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//api, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//api, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//api, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//api, inst+60, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -1072,6 +1078,7 @@ import library "extern_api";
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1162,20 +1169,21 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//api, inst+60, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -1199,20 +1207,21 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+57, loaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+56, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+59, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extern_api, inst+60, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/operators
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

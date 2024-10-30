@@ -39,6 +39,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -88,8 +89,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref Implicit//default, inst+23, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref Implicit//default, inst+25, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
@@ -97,6 +98,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool

@@ -20,10 +20,16 @@ struct FunctionFields {
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
+  // A reference to the instruction in the entity's pattern block that depends
+  // on all other pattern insts pertaining to the return slot pattern. This may
+  // or may not be used by the function, depending on whether the return type
+  // needs a return slot, but is always present if the function has a declared
+  // return type.
+  InstId return_slot_pattern_id;
+
   // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. This may or may not be used by the
-  // function, depending on whether the return type needs a return slot, but is
-  // always present if the function has a declared return type.
+  // type is the return type of the function. As with return_slot_pattern_id,
+  // this is always present if the function has a declared return type.
   InstId return_slot_id;
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
@@ -54,6 +60,7 @@ struct Function : public EntityWithParamsBase,
     out << "{";
     PrintBaseFields(out);
     if (return_slot_id.is_valid()) {
+      out << ", return_slot_pattern: " << return_slot_pattern_id;
       out << ", return_slot: " << return_slot_id;
     }
     if (!body_block_ids.empty()) {

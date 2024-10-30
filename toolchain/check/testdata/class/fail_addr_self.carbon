@@ -21,7 +21,7 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
   c.F();
@@ -58,6 +58,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -124,7 +125,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc27: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
-// CHECK:STDOUT:   %F.call.loc27: init %.2 = call %.loc27(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %F.call.loc27: init %.2 = call %.loc27(<error>)
 // CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc29: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29

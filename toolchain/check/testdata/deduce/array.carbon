@@ -132,6 +132,7 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -285,6 +286,7 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -430,6 +432,7 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -593,6 +596,7 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
@@ -717,12 +721,12 @@ fn G() -> C {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %.10 = name_ref a, %a
 // CHECK:STDOUT:   %.loc21_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.15]
-// CHECK:STDOUT:   %.loc21_11: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc8_8.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.14) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc21_12.1: %.19 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.14) [template = constants.%.20]
 // CHECK:STDOUT:   %Convert.ref: %.19 = name_ref Convert, %.loc21_12.1 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc21_12.2: %.14 = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %C = call %.loc21_10(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %F.call: init %C = call %.loc21_10(<error>) to %.loc8_8.2
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -818,6 +822,7 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude/types
 // CHECK:STDOUT:     import Core//prelude/operators/arithmetic
 // CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/index
 // CHECK:STDOUT:     import Core//prelude/operators/bitwise
 // CHECK:STDOUT:     import Core//prelude/operators/comparison
 // CHECK:STDOUT:     import Core//prelude/types/bool
