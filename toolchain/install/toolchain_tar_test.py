@@ -8,67 +8,43 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import argparse
 from pathlib import Path
+import os
 import re
 import tarfile
+import unittest
 
 
-def expect_empty_set(filename: str, file_set: set[str]) -> bool:
-    """Prints and returns false when the set has entries."""
-    if file_set:
-        print(f"error: files only in `{filename}`:")
-        for f in file_set:
-            print(f"  - ${f}")
-        return False
-    return True
+class ToolchainTarTest(unittest.TestCase):
+    def test_tar(self) -> None:
+        install_data_manifest = Path(os.environ["INSTALL_DATA_MANIFEST"])
+        tar_file = Path(os.environ["TAR_FILE"])
 
+        # Gather install data files.
+        with open(install_data_manifest) as manifest:
+            # Remove everything up to and including `prefix_root`.
+            install_files = set(
+                [
+                    re.sub("^.*/prefix_root/", "", entry.strip())
+                    for entry in manifest.readlines()
+                ]
+            )
+        self.assertTrue(install_files, f"`{install_data_manifest}` is empty.")
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "tar_file",
-        type=Path,
-        help="The tar file to test.",
-    )
-    parser.add_argument(
-        "install_data_manifest",
-        type=Path,
-        help="The install data manifest file.",
-    )
-    args = parser.parse_args()
+        # Gather tar files.
+        with tarfile.open(tar_file) as tar:
+            # Remove the first path component.
+            tar_files = set(
+                [
+                    str(Path(*Path(tarinfo.name).parts[1:]))
+                    for tarinfo in tar
+                    if not tarinfo.isdir()
+                ]
+            )
+        self.assertTrue(tar_files, f"`{tar_file}` is empty.")
 
-    # Gather install data files.
-    with open(args.install_data_manifest) as manifest:
-        # Remove everything up to and including `prefix_root`.
-        install_files = set(
-            [
-                re.sub("^.*/prefix_root/", "", entry.strip())
-                for entry in manifest.readlines()
-            ]
-        )
-    assert len(install_files), f"`{args.install_data_manifest}` is empty."
-
-    # Gather tar files.
-    with tarfile.open(args.tar_file) as tar:
-        # Remove the first path component.
-        tar_files = set(
-            [
-                str(Path(*Path(tarinfo.name).parts[1:]))
-                for tarinfo in tar
-                if not tarinfo.isdir()
-            ]
-        )
-    assert len(tar_files), f"`{args.tar_file}` is empty."
-
-    # Verify file sets match.
-    tar_okay = expect_empty_set(args.tar_file, tar_files - install_files)
-    install_okay = expect_empty_set(
-        args.install_data_manifest, install_files - tar_files
-    )
-    if not (tar_okay and install_okay):
-        exit("error: tar and install data did not match.")
+        self.assertSetEqual(install_files, tar_files)
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

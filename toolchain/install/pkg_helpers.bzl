@@ -57,10 +57,10 @@ def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, *
             size = "small",
             srcs = ["toolchain_tar_test.py"],
             data = [":" + tar_target, install_data_manifest],
-            args = [
-                "$(location :{})".format(tar_target),
-                "$(location {})".format(install_data_manifest),
-            ],
+            env = {
+                "INSTALL_DATA_MANIFEST": "$(location {})".format(install_data_manifest),
+                "TAR_FILE": "$(location :{})".format(tar_target),
+            },
             main = "toolchain_tar_test.py",
             # The compressed tar is slow, exclude building and testing that.
             tags = ["manual"] if file_ext == "tar.gz" else [],
