@@ -1042,7 +1042,6 @@ class ImportRefResolver {
         .param_patterns_id = import_base.param_patterns_id.is_valid()
                                  ? SemIR::InstBlockId::Empty
                                  : SemIR::InstBlockId::Invalid,
-        .return_slot_pattern_id = SemIR::InstId::Invalid,
         .is_extern = import_base.is_extern,
         .extern_library_id = extern_library_id,
         .non_owning_decl_id = import_base.non_owning_decl_id.is_valid()
@@ -1629,7 +1628,8 @@ class ImportRefResolver {
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
-         {.return_slot_id = SemIR::InstId::Invalid,
+         {.return_slot_pattern_id = SemIR::InstId::Invalid,
+          .return_slot_id = SemIR::InstId::Invalid,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     function_decl.type_id =
@@ -2413,24 +2413,29 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   }
 }
 
-// TODO: This doesn't belong in this file. Consider moving the import resolver
-// and this file elsewhere.
-auto ImportImpls(Context& context) -> void {
-  for (auto [import_index, import_ir] :
-       llvm::enumerate(context.import_irs().array_ref())) {
-    if (!import_ir.sem_ir) {
-      continue;
-    }
-
-    SemIR::ImportIRId import_ir_id(import_index);
-    for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
-      SemIR::ImplId impl_id(impl_index);
-
-      // Resolve the imported impl to a local impl ID.
-      ImportRefResolver resolver(context, import_ir_id);
-      resolver.Resolve(import_ir.sem_ir->impls().Get(impl_id).first_decl_id());
-    }
+auto ImportImplsFromApiFile(Context& context) -> void {
+  SemIR::ImportIRId import_ir_id = SemIR::ImportIRId::ApiForImpl;
+  auto& import_ir = context.import_irs().Get(import_ir_id);
+  if (!import_ir.sem_ir) {
+    return;
   }
+
+  for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
+    SemIR::ImplId impl_id(impl_index);
+
+    // Resolve the imported impl to a local impl ID.
+    ImportImpl(context, import_ir_id, impl_id);
+  }
+}
+
+auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
+                SemIR::ImplId impl_id) -> void {
+  ImportRefResolver resolver(context, import_ir_id);
+  resolver.Resolve(context.import_irs()
+                       .Get(import_ir_id)
+                       .sem_ir->impls()
+                       .Get(impl_id)
+                       .first_decl_id());
 }
 
 }  // namespace Carbon::Check

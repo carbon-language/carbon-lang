@@ -1137,13 +1137,11 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 }
 
 // TODO: consider moving this to pattern_match.h
-auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
-                     SemIR::InstId self_id,
-                     llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id,
-                     const CalleeParamsInfo& callee,
-                     SemIR::SpecificId callee_specific_id)
-    -> SemIR::InstBlockId {
+auto ConvertCallArgs(
+    Context& context, SemIR::LocId call_loc_id, SemIR::InstId self_id,
+    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id,
+    const CalleeParamsInfo& callee, SemIR::InstId return_slot_pattern_id,
+    SemIR::SpecificId callee_specific_id) -> SemIR::InstBlockId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
@@ -1174,9 +1172,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     self_id = SemIR::InstId::BuiltinError;
   }
 
-  return CallerPatternMatch(
-      context, callee_specific_id, self_param_id, callee.param_patterns_id,
-      callee.return_slot_pattern_id, self_id, arg_refs, return_slot_arg_id);
+  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+                            callee.param_patterns_id, return_slot_pattern_id,
+                            self_id, arg_refs, return_slot_arg_id);
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)

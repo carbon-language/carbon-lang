@@ -49,6 +49,19 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
        .int_id = context.ints().Add(i32_val)});
 }
 
+// Forms an IntLiteral instruction with type `BigInt` for a given literal
+// integer value, which is assumed to be unsigned.
+static auto MakeBigIntLiteral(Context& context, Parse::NodeId node_id,
+                              IntId int_id) -> SemIR::InstId {
+  // TODO: `IntId`s with different bit-widths are considered different values
+  // here. Decide how we want to canonicalize these. For now this is only used
+  // by type literals, so we rely on the lexer picking some consistent rule.
+  return context.AddInst<SemIR::IntLiteral>(
+      node_id,
+      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BigIntType),
+       .int_id = int_id});
+}
+
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
   // Convert the literal to i32.
   // TODO: Form an integer literal value and a corresponding type here instead.
@@ -134,7 +147,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed(),
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
-  auto width_id = MakeI32Literal(context, node_id, size_id);
+  auto width_id = MakeBigIntLiteral(context, node_id, size_id);
   auto fn_inst_id = context.LookupNameInCore(
       node_id, int_kind == SemIR::IntKind::Signed ? "Int" : "UInt");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
@@ -175,7 +188,7 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
   }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto width_id = MakeI32Literal(context, node_id, size_id);
+  auto width_id = MakeBigIntLiteral(context, node_id, size_id);
   auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
   context.node_stack().Push(node_id, type_inst_id);

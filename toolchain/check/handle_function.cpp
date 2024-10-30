@@ -236,7 +236,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_slot_id = name.return_slot_id,
+                      {.return_slot_pattern_id = name.return_slot_pattern_id,
+                       .return_slot_id = name.return_slot_id,
                        .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;

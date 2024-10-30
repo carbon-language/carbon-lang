@@ -49,7 +49,6 @@ struct EntityWithParamsBase {
     implicit_param_patterns_id = definition.implicit_param_patterns_id;
     param_refs_id = definition.param_refs_id;
     param_patterns_id = definition.param_patterns_id;
-    return_slot_pattern_id = definition.return_slot_pattern_id;
     definition_id = definition.definition_id;
   }
 
@@ -111,10 +110,6 @@ struct EntityWithParamsBase {
   // instruction in the entity's pattern block that depends on all other
   // pattern insts pertaining to that parameter.
   InstBlockId param_patterns_id;
-  // A reference to the instruction in the entity's pattern block that
-  // depends on all other pattern insts pertaining to the return slot pattern.
-  // TODO: should this go on Function, like return_slot_id?
-  InstId return_slot_pattern_id;
   // True if declarations are `extern`.
   bool is_extern;
   // For an `extern library` declaration, the library name.
