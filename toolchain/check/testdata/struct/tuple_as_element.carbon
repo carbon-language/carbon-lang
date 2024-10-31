@@ -7,6 +7,109 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/tuple_as_element.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/tuple_as_element.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Inc {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAndAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitComplement {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOrAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXorAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as DivAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Eq {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as ModAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as MulAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Ordered {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Dec {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
 var y: {.a: i32, .b: (i32,)} = x;
@@ -50,26 +153,26 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int.make_type_32.loc11_13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %int.make_type_32.loc11_13 [template = i32]
-// CHECK:STDOUT:   %.loc11_13.2: type = converted %int.make_type_32.loc11_13, %.loc11_13.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc11_23: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_27.1: %.2 = tuple_literal (%int.make_type_32.loc11_23)
-// CHECK:STDOUT:   %.loc11_27.2: type = value_of_initializer %int.make_type_32.loc11_23 [template = i32]
-// CHECK:STDOUT:   %.loc11_27.3: type = converted %int.make_type_32.loc11_23, %.loc11_27.2 [template = i32]
-// CHECK:STDOUT:   %.loc11_27.4: type = converted %.loc11_27.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_28: type = struct_type {.a: i32, .b: %.3} [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_32.loc114_13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc114_13.1: type = value_of_initializer %int.make_type_32.loc114_13 [template = i32]
+// CHECK:STDOUT:   %.loc114_13.2: type = converted %int.make_type_32.loc114_13, %.loc114_13.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc114_23: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc114_27.1: %.2 = tuple_literal (%int.make_type_32.loc114_23)
+// CHECK:STDOUT:   %.loc114_27.2: type = value_of_initializer %int.make_type_32.loc114_23 [template = i32]
+// CHECK:STDOUT:   %.loc114_27.3: type = converted %int.make_type_32.loc114_23, %.loc114_27.2 [template = i32]
+// CHECK:STDOUT:   %.loc114_27.4: type = converted %.loc114_27.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc114_28: type = struct_type {.a: i32, .b: %.3} [template = constants.%.4]
 // CHECK:STDOUT:   %x.var: ref %.4 = var x
 // CHECK:STDOUT:   %x: ref %.4 = bind_name x, %x.var
-// CHECK:STDOUT:   %int.make_type_32.loc12_13: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_13.1: type = value_of_initializer %int.make_type_32.loc12_13 [template = i32]
-// CHECK:STDOUT:   %.loc12_13.2: type = converted %int.make_type_32.loc12_13, %.loc12_13.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc12_23: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_27.1: %.2 = tuple_literal (%int.make_type_32.loc12_23)
-// CHECK:STDOUT:   %.loc12_27.2: type = value_of_initializer %int.make_type_32.loc12_23 [template = i32]
-// CHECK:STDOUT:   %.loc12_27.3: type = converted %int.make_type_32.loc12_23, %.loc12_27.2 [template = i32]
-// CHECK:STDOUT:   %.loc12_27.4: type = converted %.loc12_27.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_28: type = struct_type {.a: i32, .b: %.3} [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_32.loc115_13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc115_13.1: type = value_of_initializer %int.make_type_32.loc115_13 [template = i32]
+// CHECK:STDOUT:   %.loc115_13.2: type = converted %int.make_type_32.loc115_13, %.loc115_13.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc115_23: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc115_27.1: %.2 = tuple_literal (%int.make_type_32.loc115_23)
+// CHECK:STDOUT:   %.loc115_27.2: type = value_of_initializer %int.make_type_32.loc115_23 [template = i32]
+// CHECK:STDOUT:   %.loc115_27.3: type = converted %int.make_type_32.loc115_23, %.loc115_27.2 [template = i32]
+// CHECK:STDOUT:   %.loc115_27.4: type = converted %.loc115_27.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc115_28: type = struct_type {.a: i32, .b: %.3} [template = constants.%.4]
 // CHECK:STDOUT:   %y.var: ref %.4 = var y
 // CHECK:STDOUT:   %y: ref %.4 = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -78,34 +181,34 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_38: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_47: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_49.1: %.3 = tuple_literal (%.loc11_47)
-// CHECK:STDOUT:   %.loc11_50.1: %.4 = struct_literal (%.loc11_38, %.loc11_49.1)
-// CHECK:STDOUT:   %.loc11_50.2: ref i32 = struct_access file.%x.var, element0
-// CHECK:STDOUT:   %.loc11_50.3: init i32 = initialize_from %.loc11_38 to %.loc11_50.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_50.4: ref %.3 = struct_access file.%x.var, element1
-// CHECK:STDOUT:   %.loc11_49.2: init %.3 = tuple_init (%.loc11_47) to %.loc11_50.4 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_50.5: init %.3 = converted %.loc11_49.1, %.loc11_49.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_50.6: init %.3 = initialize_from %.loc11_50.5 to %.loc11_50.4 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_50.7: init %.4 = struct_init (%.loc11_50.3, %.loc11_50.6) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_51: init %.4 = converted %.loc11_50.1, %.loc11_50.7 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_51
+// CHECK:STDOUT:   %.loc114_38: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc114_47: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc114_49.1: %.3 = tuple_literal (%.loc114_47)
+// CHECK:STDOUT:   %.loc114_50.1: %.4 = struct_literal (%.loc114_38, %.loc114_49.1)
+// CHECK:STDOUT:   %.loc114_50.2: ref i32 = struct_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc114_50.3: init i32 = initialize_from %.loc114_38 to %.loc114_50.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc114_50.4: ref %.3 = struct_access file.%x.var, element1
+// CHECK:STDOUT:   %.loc114_49.2: init %.3 = tuple_init (%.loc114_47) to %.loc114_50.4 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc114_50.5: init %.3 = converted %.loc114_49.1, %.loc114_49.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc114_50.6: init %.3 = initialize_from %.loc114_50.5 to %.loc114_50.4 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc114_50.7: init %.4 = struct_init (%.loc114_50.3, %.loc114_50.6) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc114_51: init %.4 = converted %.loc114_50.1, %.loc114_50.7 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc114_51
 // CHECK:STDOUT:   %x.ref: ref %.4 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc12_32.1: ref i32 = struct_access %x.ref, element0
-// CHECK:STDOUT:   %.loc12_32.2: i32 = bind_value %.loc12_32.1
-// CHECK:STDOUT:   %.loc12_32.3: ref i32 = struct_access file.%y.var, element0
-// CHECK:STDOUT:   %.loc12_32.4: init i32 = initialize_from %.loc12_32.2 to %.loc12_32.3
-// CHECK:STDOUT:   %.loc12_32.5: ref %.3 = struct_access %x.ref, element1
-// CHECK:STDOUT:   %.loc12_32.6: ref i32 = tuple_access %.loc12_32.5, element0
-// CHECK:STDOUT:   %.loc12_32.7: i32 = bind_value %.loc12_32.6
-// CHECK:STDOUT:   %.loc12_32.8: ref %.3 = struct_access file.%y.var, element1
-// CHECK:STDOUT:   %.loc12_32.9: init %.3 = tuple_init (%.loc12_32.7) to %.loc12_32.8
-// CHECK:STDOUT:   %.loc12_32.10: init %.3 = converted %.loc12_32.5, %.loc12_32.9
-// CHECK:STDOUT:   %.loc12_32.11: init %.3 = initialize_from %.loc12_32.10 to %.loc12_32.8
-// CHECK:STDOUT:   %.loc12_32.12: init %.4 = struct_init (%.loc12_32.4, %.loc12_32.11) to file.%y.var
-// CHECK:STDOUT:   %.loc12_33: init %.4 = converted %x.ref, %.loc12_32.12
-// CHECK:STDOUT:   assign file.%y.var, %.loc12_33
+// CHECK:STDOUT:   %.loc115_32.1: ref i32 = struct_access %x.ref, element0
+// CHECK:STDOUT:   %.loc115_32.2: i32 = bind_value %.loc115_32.1
+// CHECK:STDOUT:   %.loc115_32.3: ref i32 = struct_access file.%y.var, element0
+// CHECK:STDOUT:   %.loc115_32.4: init i32 = initialize_from %.loc115_32.2 to %.loc115_32.3
+// CHECK:STDOUT:   %.loc115_32.5: ref %.3 = struct_access %x.ref, element1
+// CHECK:STDOUT:   %.loc115_32.6: ref i32 = tuple_access %.loc115_32.5, element0
+// CHECK:STDOUT:   %.loc115_32.7: i32 = bind_value %.loc115_32.6
+// CHECK:STDOUT:   %.loc115_32.8: ref %.3 = struct_access file.%y.var, element1
+// CHECK:STDOUT:   %.loc115_32.9: init %.3 = tuple_init (%.loc115_32.7) to %.loc115_32.8
+// CHECK:STDOUT:   %.loc115_32.10: init %.3 = converted %.loc115_32.5, %.loc115_32.9
+// CHECK:STDOUT:   %.loc115_32.11: init %.3 = initialize_from %.loc115_32.10 to %.loc115_32.8
+// CHECK:STDOUT:   %.loc115_32.12: init %.4 = struct_init (%.loc115_32.4, %.loc115_32.11) to file.%y.var
+// CHECK:STDOUT:   %.loc115_33: init %.4 = converted %x.ref, %.loc115_32.12
+// CHECK:STDOUT:   assign file.%y.var, %.loc115_33
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

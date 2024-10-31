@@ -7,6 +7,110 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/index.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/index.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Inc {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAndAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitComplement {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOrAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXorAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as DivAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Eq {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as ModAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as MulAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Ordered {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Dec {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 
 // --- overloaded_index.carbon
 
@@ -16,6 +120,10 @@ class C {}
 class ElementType {}
 class SubscriptType {}
 
+// CHECK:STDERR: overloaded_index.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl C as Core.IndexWith(SubscriptType, ElementType) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as Core.IndexWith(SubscriptType, ElementType) {
   fn At[self: Self](subscript: SubscriptType) -> ElementType {
     return {};
@@ -30,6 +138,10 @@ let x: ElementType = c[s];
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: overloaded_builtin.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl (i32, i32) as Core.IndexWith(i32, i32) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl (i32, i32) as Core.IndexWith(i32, i32) {
   fn At[self: Self](subscript: i32) -> i32 {
     return self.0;
@@ -47,6 +159,10 @@ class C { }
 class ElementType {}
 class SubscriptType {}
 
+// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl C as Core.IndexWith(SubscriptType, ElementType) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as Core.IndexWith(SubscriptType, ElementType) {
   fn At[self: Self](subscript: SubscriptType) -> ElementType {
     return {};
@@ -101,16 +217,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
-// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%At.2) [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct.1: %ElementType.1 = struct_value () [template]
 // CHECK:STDOUT:   %struct.2: %SubscriptType.1 = struct_value () [template]
 // CHECK:STDOUT:   %struct.3: %C = struct_value () [template]
-// CHECK:STDOUT:   %.10: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
+// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.9: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -128,8 +243,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.10)]
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.9)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
@@ -202,11 +317,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %At.decl
-// CHECK:STDOUT:   witness = %.loc8
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -241,40 +355,36 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc10_14: init %ElementType.1 = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   %.loc14_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc14_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc14_14: init %ElementType.1 = converted %.loc14_13.1, %.loc14_13.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   return %.loc14_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_25.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_25.2: ref %SubscriptType.1 = temporary_storage
-// CHECK:STDOUT:   %.loc14_25.3: init %SubscriptType.1 = class_init (), %.loc14_25.2 [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.1 = temporary %.loc14_25.2, %.loc14_25.3
-// CHECK:STDOUT:   %.loc14_26.1: ref %SubscriptType.1 = converted %.loc14_25.1, %.loc14_25.4
-// CHECK:STDOUT:   %.loc14_26.2: %SubscriptType.1 = bind_value %.loc14_26.1
-// CHECK:STDOUT:   %s: %SubscriptType.1 = bind_name s, %.loc14_26.2
-// CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc15_13.3: init %C = class_init (), %.loc15_13.2 [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.2, %.loc15_13.3
-// CHECK:STDOUT:   %.loc15_14.1: ref %C = converted %.loc15_13.1, %.loc15_13.4
-// CHECK:STDOUT:   %.loc15_14.2: %C = bind_value %.loc15_14.1
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc15_14.2
+// CHECK:STDOUT:   %.loc18_25.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc18_25.2: ref %SubscriptType.1 = temporary_storage
+// CHECK:STDOUT:   %.loc18_25.3: init %SubscriptType.1 = class_init (), %.loc18_25.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc18_25.4: ref %SubscriptType.1 = temporary %.loc18_25.2, %.loc18_25.3
+// CHECK:STDOUT:   %.loc18_26.1: ref %SubscriptType.1 = converted %.loc18_25.1, %.loc18_25.4
+// CHECK:STDOUT:   %.loc18_26.2: %SubscriptType.1 = bind_value %.loc18_26.1
+// CHECK:STDOUT:   %s: %SubscriptType.1 = bind_name s, %.loc18_26.2
+// CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc19_13.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc19_13.3: init %C = class_init (), %.loc19_13.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc19_13.4: ref %C = temporary %.loc19_13.2, %.loc19_13.3
+// CHECK:STDOUT:   %.loc19_14.1: ref %C = converted %.loc19_13.1, %.loc19_13.4
+// CHECK:STDOUT:   %.loc19_14.2: %C = bind_value %.loc19_14.1
+// CHECK:STDOUT:   %c: %C = bind_name c, %.loc19_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %s.ref: %SubscriptType.1 = name_ref s, %s
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
-// CHECK:STDOUT:   %.loc16_25.1: %.6 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
-// CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc16_25.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc16_25.2: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc16_25.3: <bound method> = bound_method %c.ref, %.loc16_25.2
-// CHECK:STDOUT:   %.loc16_25.4: ref %ElementType.1 = temporary_storage
-// CHECK:STDOUT:   %At.call: init %ElementType.1 = call %.loc16_25.3(%c.ref, %s.ref) to %.loc16_25.4
-// CHECK:STDOUT:   %.loc16_25.5: ref %ElementType.1 = temporary %.loc16_25.4, %At.call
-// CHECK:STDOUT:   %.loc16_25.6: %ElementType.1 = bind_value %.loc16_25.5
-// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, %.loc16_25.6
+// CHECK:STDOUT:   %.loc20_25.1: %.7 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.8]
+// CHECK:STDOUT:   %At.ref: %.7 = name_ref At, %.loc20_25.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc20_25.2: %At.type.3 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc20_25.3: <bound method> = bound_method %c.ref, %.loc20_25.2
+// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -317,15 +427,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %At.type => constants.%At.type.3
 // CHECK:STDOUT:   %At => constants.%At.3
-// CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %.2 => constants.%.7
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @At.1(constants.%SubscriptType.1, constants.%ElementType.1, constants.%C) {
-// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.1
-// CHECK:STDOUT:   %ElementType => constants.%ElementType.1
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
-// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:   %.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- overloaded_builtin.carbon
@@ -352,17 +455,16 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(i32, i32) [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.8, %.9) [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(i32, i32) [template]
 // CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%At.2) [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.12: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.11, %.12) [template]
-// CHECK:STDOUT:   %.13: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.12: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -382,8 +484,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//prelude/operators/index, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.13)]
-// CHECK:STDOUT:   %import_ref.5: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.4: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.12)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT: }
@@ -396,35 +498,35 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %int.make_type_32.loc4_7: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc4_12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc4_15.1: %.2 = tuple_literal (%int.make_type_32.loc4_7, %int.make_type_32.loc4_12)
-// CHECK:STDOUT:     %.loc4_15.2: type = value_of_initializer %int.make_type_32.loc4_7 [template = i32]
-// CHECK:STDOUT:     %.loc4_15.3: type = converted %int.make_type_32.loc4_7, %.loc4_15.2 [template = i32]
-// CHECK:STDOUT:     %.loc4_15.4: type = value_of_initializer %int.make_type_32.loc4_12 [template = i32]
-// CHECK:STDOUT:     %.loc4_15.5: type = converted %int.make_type_32.loc4_12, %.loc4_15.4 [template = i32]
-// CHECK:STDOUT:     %.loc4_15.6: type = converted %.loc4_15.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_32.loc8_7: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc8_12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_15.1: %.2 = tuple_literal (%int.make_type_32.loc8_7, %int.make_type_32.loc8_12)
+// CHECK:STDOUT:     %.loc8_15.2: type = value_of_initializer %int.make_type_32.loc8_7 [template = i32]
+// CHECK:STDOUT:     %.loc8_15.3: type = converted %int.make_type_32.loc8_7, %.loc8_15.2 [template = i32]
+// CHECK:STDOUT:     %.loc8_15.4: type = value_of_initializer %int.make_type_32.loc8_12 [template = i32]
+// CHECK:STDOUT:     %.loc8_15.5: type = converted %int.make_type_32.loc8_12, %.loc8_15.4 [template = i32]
+// CHECK:STDOUT:     %.loc8_15.6: type = converted %.loc8_15.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.1 = name_ref IndexWith, imports.%import_ref.2 [template = constants.%IndexWith]
-// CHECK:STDOUT:     %int.make_type_32.loc4_35: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc4_40: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc4_34.1: type = value_of_initializer %int.make_type_32.loc4_35 [template = i32]
-// CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_35, %.loc4_34.1 [template = i32]
-// CHECK:STDOUT:     %.loc4_34.3: type = value_of_initializer %int.make_type_32.loc4_40 [template = i32]
-// CHECK:STDOUT:     %.loc4_34.4: type = converted %int.make_type_32.loc4_40, %.loc4_34.3 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc8_35: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc8_40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_34.1: type = value_of_initializer %int.make_type_32.loc8_35 [template = i32]
+// CHECK:STDOUT:     %.loc8_34.2: type = converted %int.make_type_32.loc8_35, %.loc8_34.1 [template = i32]
+// CHECK:STDOUT:     %.loc8_34.3: type = value_of_initializer %int.make_type_32.loc8_40 [template = i32]
+// CHECK:STDOUT:     %.loc8_34.4: type = converted %int.make_type_32.loc8_40, %.loc8_34.3 [template = i32]
 // CHECK:STDOUT:     %IndexWith.type: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int.make_type_32.loc10_9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc10_14: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc10_17.1: %.2 = tuple_literal (%int.make_type_32.loc10_9, %int.make_type_32.loc10_14)
-// CHECK:STDOUT:   %.loc10_17.2: type = value_of_initializer %int.make_type_32.loc10_9 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.3: type = converted %int.make_type_32.loc10_9, %.loc10_17.2 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.4: type = value_of_initializer %int.make_type_32.loc10_14 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.5: type = converted %int.make_type_32.loc10_14, %.loc10_17.4 [template = i32]
-// CHECK:STDOUT:   %.loc10_17.6: type = converted %.loc10_17.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
-// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_9: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc14_17.1: %.2 = tuple_literal (%int.make_type_32.loc14_9, %int.make_type_32.loc14_14)
+// CHECK:STDOUT:   %.loc14_17.2: type = value_of_initializer %int.make_type_32.loc14_9 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.3: type = converted %int.make_type_32.loc14_9, %.loc14_17.2 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.4: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.5: type = converted %int.make_type_32.loc14_14, %.loc14_17.4 [template = i32]
+// CHECK:STDOUT:   %.loc14_17.6: type = converted %.loc14_17.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
+// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @IndexWith(constants.%SubscriptType: type, constants.%ElementType: type) {
@@ -449,7 +551,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc4_15.6 as %IndexWith.type {
+// CHECK:STDOUT: impl @impl: %.loc8_15.6 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
 // CHECK:STDOUT:     %self.patt: %.3 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.3 = value_param_pattern %self.patt, runtime_param0
@@ -458,13 +560,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc4_15.6 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_32.loc5_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_32.1: type = value_of_initializer %int.make_type_32.loc5_32 [template = i32]
-// CHECK:STDOUT:     %.loc5_32.2: type = converted %int.make_type_32.loc5_32, %.loc5_32.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc5_40: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_40.1: type = value_of_initializer %int.make_type_32.loc5_40 [template = i32]
-// CHECK:STDOUT:     %.loc5_40.2: type = converted %int.make_type_32.loc5_40, %.loc5_40.1 [template = i32]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc8_15.6 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_32.loc9_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc9_32.1: type = value_of_initializer %int.make_type_32.loc9_32 [template = i32]
+// CHECK:STDOUT:     %.loc9_32.2: type = converted %int.make_type_32.loc9_32, %.loc9_32.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc9_40: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc9_40.1: type = value_of_initializer %int.make_type_32.loc9_40 [template = i32]
+// CHECK:STDOUT:     %.loc9_40.2: type = converted %int.make_type_32.loc9_40, %.loc9_40.1 [template = i32]
 // CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: i32 = value_param runtime_param1
@@ -472,11 +574,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_45: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %At.decl
-// CHECK:STDOUT:   witness = %.loc4_45
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -493,30 +594,27 @@ let x: i32 = c[0];
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %.3](%subscript.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
-// CHECK:STDOUT:   %.loc6_17: i32 = int_literal 0 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc6_16: i32 = tuple_access %self.ref, element0
-// CHECK:STDOUT:   return %.loc6_16
+// CHECK:STDOUT:   %.loc10_17: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_16: i32 = tuple_access %self.ref, element0
+// CHECK:STDOUT:   return %.loc10_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_22: i32 = int_literal 1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_25: i32 = int_literal 5 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc10_26: %.3 = tuple_literal (%.loc10_22, %.loc10_25)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc10_22, %.loc10_25) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc10_27: %.3 = converted %.loc10_26, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %s: %.3 = bind_name s, %.loc10_27
+// CHECK:STDOUT:   %.loc14_22: i32 = int_literal 1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_25: i32 = int_literal 5 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14_26: %.3 = tuple_literal (%.loc14_22, %.loc14_25)
+// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc14_22, %.loc14_25) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_27: %.3 = converted %.loc14_26, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %s: %.3 = bind_name s, %.loc14_27
 // CHECK:STDOUT:   %s.ref: %.3 = name_ref s, %s
-// CHECK:STDOUT:   %.loc11_16: i32 = int_literal 0 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%IndexWith.type.3]
-// CHECK:STDOUT:   %.loc11_17.1: %.6 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.7]
-// CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc11_17.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_17.2: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc11_17.3: <bound method> = bound_method %s.ref, %.loc11_17.2
-// CHECK:STDOUT:   %At.call: init i32 = call %.loc11_17.3(%s.ref, %.loc11_16)
-// CHECK:STDOUT:   %.loc11_18.1: i32 = value_of_initializer %At.call
-// CHECK:STDOUT:   %.loc11_18.2: i32 = converted %At.call, %.loc11_18.1
-// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc11_18.2
+// CHECK:STDOUT:   %.loc15_17.1: %.10 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.11]
+// CHECK:STDOUT:   %At.ref: %.10 = name_ref At, %.loc15_17.1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc15_17.2: %At.type.3 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc15_17.3: <bound method> = bound_method %s.ref, %.loc15_17.2
+// CHECK:STDOUT:   %e: i32 = bind_name e, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -559,15 +657,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %At.type => constants.%At.type.3
 // CHECK:STDOUT:   %At => constants.%At.3
-// CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %.2 => constants.%.7
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @At.1(i32, i32, constants.%.3) {
-// CHECK:STDOUT:   %SubscriptType => i32
-// CHECK:STDOUT:   %ElementType => i32
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
-// CHECK:STDOUT:   %Self => constants.%.3
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_subscript_type.carbon
@@ -595,15 +686,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
-// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%At.2) [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct.1: %ElementType.1 = struct_value () [template]
 // CHECK:STDOUT:   %struct.2: %C = struct_value () [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -613,15 +699,19 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self.4: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.10 [symbolic]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, imports.%import_ref.10 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%SubscriptType.1) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%SubscriptType.1) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
-// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.10 [template]
-// CHECK:STDOUT:   %.15: %.11 = assoc_entity element0, imports.%import_ref.11 [symbolic]
-// CHECK:STDOUT:   %.16: %.4 = assoc_entity element0, imports.%import_ref.12 [symbolic]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.12: %.8 = assoc_entity element0, imports.%import_ref.11 [symbolic]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
+// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.15: %.4 = assoc_entity element0, imports.%import_ref.12 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -640,12 +730,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %IndexWith.type.1 = import_ref Core//prelude/operators/index, inst+13, loaded [template = constants.%IndexWith]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/index, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.16)]
-// CHECK:STDOUT:   %import_ref.4: @IndexWith.%At.type (%At.type.1) = import_ref Core//prelude/operators/index, inst+42, loaded [symbolic = @IndexWith.%At (constants.%At.1)]
+// CHECK:STDOUT:   %import_ref.3: @IndexWith.%.1 (%.4) = import_ref Core//prelude/operators/index, inst+50, loaded [symbolic = @IndexWith.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//prelude/operators/index, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.6: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+55, unloaded
-// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.1 (%.11) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.8: @ImplicitAs.%.1 (%.8) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.12)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/as, inst+70, unloaded
 // CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+70, unloaded
@@ -708,8 +798,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.11)]
-// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.11) = assoc_entity element0, imports.%import_ref.10 [symbolic = %.2 (constants.%.12)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.8)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.8) = assoc_entity element0, imports.%import_ref.10 [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -738,11 +828,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = interface_witness (%At.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %At.decl
-// CHECK:STDOUT:   witness = %.loc8
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -777,10 +866,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc10_14: init %ElementType.1 = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   %.loc14_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc14_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc14_14: init %ElementType.1 = converted %.loc14_13.1, %.loc14_13.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   return %.loc14_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
@@ -793,29 +882,25 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_13.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc14_13.3: init %C = class_init (), %.loc14_13.2 [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc14_13.4: ref %C = temporary %.loc14_13.2, %.loc14_13.3
-// CHECK:STDOUT:   %.loc14_14.1: ref %C = converted %.loc14_13.1, %.loc14_13.4
-// CHECK:STDOUT:   %.loc14_14.2: %C = bind_value %.loc14_14.1
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc14_14.2
+// CHECK:STDOUT:   %.loc18_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc18_13.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc18_13.3: init %C = class_init (), %.loc18_13.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc18_13.4: ref %C = temporary %.loc18_13.2, %.loc18_13.3
+// CHECK:STDOUT:   %.loc18_14.1: ref %C = converted %.loc18_13.1, %.loc18_13.4
+// CHECK:STDOUT:   %.loc18_14.2: %C = bind_value %.loc18_14.1
+// CHECK:STDOUT:   %c: %C = bind_name c, %.loc18_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc22_24: i32 = int_literal 0 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc26_24: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc22_25.1: %.13 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc22_25.1 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc22_25.2: %SubscriptType.1 = converted %.loc22_24, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc26_25.1: %.10 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc26_25.1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc26_25.2: %SubscriptType.1 = converted %.loc26_24, <error> [template = <error>]
 // CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
-// CHECK:STDOUT:   %.loc22_25.3: %.6 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
-// CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc22_25.3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc22_25.4: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc22_25.5: <bound method> = bound_method %c.ref, %.loc22_25.4
-// CHECK:STDOUT:   %.loc22_25.6: ref %ElementType.1 = temporary_storage
-// CHECK:STDOUT:   %At.call: init %ElementType.1 = call %.loc22_25.5(%c.ref, <error>) to %.loc22_25.6
-// CHECK:STDOUT:   %.loc22_25.7: ref %ElementType.1 = temporary %.loc22_25.6, %At.call
-// CHECK:STDOUT:   %.loc22_25.8: %ElementType.1 = bind_value %.loc22_25.7
-// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, %.loc22_25.8
+// CHECK:STDOUT:   %.loc26_25.3: %.13 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.14]
+// CHECK:STDOUT:   %At.ref: %.13 = name_ref At, %.loc26_25.3 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc26_25.4: %At.type.3 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc26_25.5: <bound method> = bound_method %c.ref, %.loc26_25.4
+// CHECK:STDOUT:   %x: %ElementType.1 = bind_name x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -858,15 +943,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %At.type => constants.%At.type.3
 // CHECK:STDOUT:   %At => constants.%At.3
-// CHECK:STDOUT:   %.1 => constants.%.6
-// CHECK:STDOUT:   %.2 => constants.%.7
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @At.1(constants.%SubscriptType.1, constants.%ElementType.1, constants.%C) {
-// CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType.1
-// CHECK:STDOUT:   %ElementType => constants.%ElementType.1
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
-// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %.1 => constants.%.13
+// CHECK:STDOUT:   %.2 => constants.%.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -899,8 +977,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Self => constants.%Self.4
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.1 => constants.%.13
-// CHECK:STDOUT:   %.2 => constants.%.14
+// CHECK:STDOUT:   %.1 => constants.%.10
+// CHECK:STDOUT:   %.2 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_index_with_not_implemented.carbon

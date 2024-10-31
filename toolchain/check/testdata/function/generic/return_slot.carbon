@@ -7,6 +7,109 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/return_slot.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/return_slot.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Inc {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAndAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitComplement {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOrAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXorAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as DivAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Eq {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as ModAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as MulAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Ordered {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Dec {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 
 class Wrap(T:! type) {
   fn Make() -> T { return Make(); }
@@ -87,22 +190,22 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [template = constants.%Wrap.1] {
-// CHECK:STDOUT:     %T.patt.loc11_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_12.1, runtime_param<invalid> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc114_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc114_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc114_12.1, runtime_param<invalid> [symbolic = %T.patt.loc114_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc114_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc114_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Wrap(%T.loc11_12.1: type) {
-// CHECK:STDOUT:   %T.loc11_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic class @Wrap(%T.loc114_12.1: type) {
+// CHECK:STDOUT:   %T.loc114_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc114_12.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc114_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc114_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc11_12.2) [symbolic = %Make.type (constants.%Make.type.1)]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc114_12.2) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Wrap.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -110,11 +213,11 @@ fn G() {
 // CHECK:STDOUT:       %return.patt: @Make.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @Make.%T (%T) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc114_12.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc116: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Wrap.2
@@ -124,35 +227,35 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 100 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc15_21.2: type = converted %int.make_type_32, %.loc15_21.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_29: type = array_type %.loc15_26, i32 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc15_18: %.8 = field_decl arr, element0 [template]
-// CHECK:STDOUT:   %.loc15_32: <witness> = complete_type_witness %.9 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc118_26: i32 = int_literal 100 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc118_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc118_21.2: type = converted %int.make_type_32, %.loc118_21.1 [template = i32]
+// CHECK:STDOUT:   %.loc118_29: type = array_type %.loc118_26, i32 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc118_18: %.8 = field_decl arr, element0 [template]
+// CHECK:STDOUT:   %.loc118_32: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .arr = %.loc15_18
+// CHECK:STDOUT:   .arr = %.loc118_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11_12.1: type) {
+// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc114_12.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Make.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:   %.loc12_27.3: <specific function> = specific_function %Make, @Make(%T) [symbolic = %.loc12_27.3 (constants.%.4)]
+// CHECK:STDOUT:   %.loc115_27.3: <specific function> = specific_function %Make, @Make(%T) [symbolic = %.loc115_27.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc12_27.1: @Make.%Make.type (%Make.type.1) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.1) = name_ref Make, %.loc12_27.1 [symbolic = %Make (constants.%Make.1)]
-// CHECK:STDOUT:     %.loc12_27.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc12_27.3 (constants.%.4)]
-// CHECK:STDOUT:     %Make.call: init @Make.%T (%T) = call %.loc12_27.2()
-// CHECK:STDOUT:     %.loc12_33.1: @Make.%T (%T) = value_of_initializer %Make.call
-// CHECK:STDOUT:     %.loc12_33.2: @Make.%T (%T) = converted %Make.call, %.loc12_33.1
-// CHECK:STDOUT:     return %.loc12_33.2
+// CHECK:STDOUT:     %.loc115_27.1: @Make.%Make.type (%Make.type.1) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.1)]
+// CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.1) = name_ref Make, %.loc115_27.1 [symbolic = %Make (constants.%Make.1)]
+// CHECK:STDOUT:     %.loc115_27.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc115_27.3 (constants.%.4)]
+// CHECK:STDOUT:     %Make.call: init @Make.%T (%T) = call %.loc115_27.2()
+// CHECK:STDOUT:     %.loc115_33.1: @Make.%T (%T) = value_of_initializer %Make.call
+// CHECK:STDOUT:     %.loc115_33.2: @Make.%T (%T) = converted %Make.call, %.loc115_33.1
+// CHECK:STDOUT:     return %.loc115_33.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,52 +263,52 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.make_type_32.loc18_10: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32.loc18_10 [template = i32]
-// CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32.loc18_10, %.loc18_10.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc121_10: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc121_10.1: type = value_of_initializer %int.make_type_32.loc121_10 [template = i32]
+// CHECK:STDOUT:   %.loc121_10.2: type = converted %int.make_type_32.loc121_10, %.loc121_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %int.make_type_32.loc18_21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_20.1: type = value_of_initializer %int.make_type_32.loc18_21 [template = i32]
-// CHECK:STDOUT:   %.loc18_20.2: type = converted %int.make_type_32.loc18_21, %.loc18_20.1 [template = i32]
-// CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(i32) [template = constants.%Wrap.3]
-// CHECK:STDOUT:   %.loc18_25.1: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(i32) [template = constants.%Make.2]
-// CHECK:STDOUT:   %Make.ref.loc18: %Make.type.2 = name_ref Make, %.loc18_25.1 [template = constants.%Make.2]
-// CHECK:STDOUT:   %.loc18_25.2: <specific function> = specific_function %Make.ref.loc18, @Make(i32) [template = constants.%.12]
-// CHECK:STDOUT:   %Make.call.loc18: init i32 = call %.loc18_25.2()
-// CHECK:STDOUT:   assign %a.var, %Make.call.loc18
-// CHECK:STDOUT:   %.loc19_11.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_11.2: type = converted %.loc19_11.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %Wrap.ref.loc121: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %int.make_type_32.loc121_21: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc121_20.1: type = value_of_initializer %int.make_type_32.loc121_21 [template = i32]
+// CHECK:STDOUT:   %.loc121_20.2: type = converted %int.make_type_32.loc121_21, %.loc121_20.1 [template = i32]
+// CHECK:STDOUT:   %Wrap.loc121: type = class_type @Wrap, @Wrap(i32) [template = constants.%Wrap.3]
+// CHECK:STDOUT:   %.loc121_25.1: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(i32) [template = constants.%Make.2]
+// CHECK:STDOUT:   %Make.ref.loc121: %Make.type.2 = name_ref Make, %.loc121_25.1 [template = constants.%Make.2]
+// CHECK:STDOUT:   %.loc121_25.2: <specific function> = specific_function %Make.ref.loc121, @Make(i32) [template = constants.%.12]
+// CHECK:STDOUT:   %Make.call.loc121: init i32 = call %.loc121_25.2()
+// CHECK:STDOUT:   assign %a.var, %Make.call.loc121
+// CHECK:STDOUT:   %.loc122_11.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc122_11.2: type = converted %.loc122_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref %.1 = var b
 // CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
-// CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %.loc19_21: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_19: type = converted %.loc19_21, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %Wrap.loc19: type = class_type @Wrap, @Wrap(constants.%.1) [template = constants.%Wrap.4]
-// CHECK:STDOUT:   %.loc19_23.1: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%.1) [template = constants.%Make.3]
-// CHECK:STDOUT:   %Make.ref.loc19: %Make.type.3 = name_ref Make, %.loc19_23.1 [template = constants.%Make.3]
-// CHECK:STDOUT:   %.loc19_23.2: <specific function> = specific_function %Make.ref.loc19, @Make(constants.%.1) [template = constants.%.13]
-// CHECK:STDOUT:   %Make.call.loc19: init %.1 = call %.loc19_23.2()
-// CHECK:STDOUT:   assign %b.var, %Make.call.loc19
-// CHECK:STDOUT:   %C.ref.loc20_10: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %Wrap.ref.loc122: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %.loc122_21: %.1 = tuple_literal ()
+// CHECK:STDOUT:   %.loc122_19: type = converted %.loc122_21, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %Wrap.loc122: type = class_type @Wrap, @Wrap(constants.%.1) [template = constants.%Wrap.4]
+// CHECK:STDOUT:   %.loc122_23.1: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%.1) [template = constants.%Make.3]
+// CHECK:STDOUT:   %Make.ref.loc122: %Make.type.3 = name_ref Make, %.loc122_23.1 [template = constants.%Make.3]
+// CHECK:STDOUT:   %.loc122_23.2: <specific function> = specific_function %Make.ref.loc122, @Make(constants.%.1) [template = constants.%.13]
+// CHECK:STDOUT:   %Make.call.loc122: init %.1 = call %.loc122_23.2()
+// CHECK:STDOUT:   assign %b.var, %Make.call.loc122
+// CHECK:STDOUT:   %C.ref.loc123_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %C.ref.loc20_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Wrap.loc20: type = class_type @Wrap, @Wrap(constants.%C) [template = constants.%Wrap.5]
-// CHECK:STDOUT:   %.loc20_21.1: %Make.type.4 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [template = constants.%Make.4]
-// CHECK:STDOUT:   %Make.ref.loc20: %Make.type.4 = name_ref Make, %.loc20_21.1 [template = constants.%Make.4]
-// CHECK:STDOUT:   %.loc20_21.2: <specific function> = specific_function %Make.ref.loc20, @Make(constants.%C) [template = constants.%.16]
-// CHECK:STDOUT:   %.loc20_7: ref %C = splice_block %c.var {}
-// CHECK:STDOUT:   %Make.call.loc20: init %C = call %.loc20_21.2() to %.loc20_7
-// CHECK:STDOUT:   assign %c.var, %Make.call.loc20
+// CHECK:STDOUT:   %Wrap.ref.loc123: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %C.ref.loc123_19: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %Wrap.loc123: type = class_type @Wrap, @Wrap(constants.%C) [template = constants.%Wrap.5]
+// CHECK:STDOUT:   %.loc123_21.1: %Make.type.4 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [template = constants.%Make.4]
+// CHECK:STDOUT:   %Make.ref.loc123: %Make.type.4 = name_ref Make, %.loc123_21.1 [template = constants.%Make.4]
+// CHECK:STDOUT:   %.loc123_21.2: <specific function> = specific_function %Make.ref.loc123, @Make(constants.%C) [template = constants.%.16]
+// CHECK:STDOUT:   %.loc123_7: ref %C = splice_block %c.var {}
+// CHECK:STDOUT:   %Make.call.loc123: init %C = call %.loc123_21.2() to %.loc123_7
+// CHECK:STDOUT:   assign %c.var, %Make.call.loc123
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
+// CHECK:STDOUT:   %T.loc114_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.1
@@ -218,17 +321,17 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.1
 // CHECK:STDOUT:   %Make => constants.%Make.1
-// CHECK:STDOUT:   %.loc12_27.3 => constants.%.4
+// CHECK:STDOUT:   %.loc115_27.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(@Wrap.%T.loc11_12.2) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
+// CHECK:STDOUT: specific @Wrap(@Wrap.%T.loc114_12.2) {
+// CHECK:STDOUT:   %T.loc114_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(@Make.%T) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
+// CHECK:STDOUT:   %T.loc114_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(@Make.%T) {
@@ -236,8 +339,8 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(i32) {
-// CHECK:STDOUT:   %T.loc11_12.2 => i32
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => i32
+// CHECK:STDOUT:   %T.loc114_12.2 => i32
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
@@ -250,12 +353,12 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
 // CHECK:STDOUT:   %Make => constants.%Make.2
-// CHECK:STDOUT:   %.loc12_27.3 => constants.%.12
+// CHECK:STDOUT:   %.loc115_27.3 => constants.%.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%.1) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%.1
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%.1
+// CHECK:STDOUT:   %T.loc114_12.2 => constants.%.1
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => constants.%.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
@@ -268,12 +371,12 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
 // CHECK:STDOUT:   %Make => constants.%Make.3
-// CHECK:STDOUT:   %.loc12_27.3 => constants.%.13
+// CHECK:STDOUT:   %.loc115_27.3 => constants.%.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%C
+// CHECK:STDOUT:   %T.loc114_12.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc114_12.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.4
@@ -286,6 +389,6 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.4
 // CHECK:STDOUT:   %Make => constants.%Make.4
-// CHECK:STDOUT:   %.loc12_27.3 => constants.%.16
+// CHECK:STDOUT:   %.loc115_27.3 => constants.%.16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -210,19 +210,30 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   auto& impl = context.impls().Get(impl_id);
   CARBON_CHECK(impl.is_being_defined());
 
-  // TODO: Handle non-interface constraints.
-  auto interface_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
-  auto interface_type =
-      context.types().TryGetAs<SemIR::InterfaceType>(interface_type_id);
-  if (!interface_type) {
-    context.TODO(impl.definition_id, "impl as non-interface");
+  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
+    context.emitter().Emit(impl.definition_id, ImplAsNonFacetType);
     return SemIR::InstId::BuiltinError;
   }
+  auto facet_type_info =
+      context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+  // TODO: handle requirements
+
+  if (facet_type_info.interface_type_ids.size() != 1) {
+    context.TODO(impl.definition_id, "impl as not 1 interface");
+    return SemIR::InstId::BuiltinError;
+  }
+
+  auto interface_type_id = facet_type_info.interface_type_ids.front();
+  auto interface_type =
+      context.types().GetAs<SemIR::InterfaceType>(interface_type_id);
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   auto witness_id = BuildInterfaceWitness(context, impl, interface_type_id,
-                                          *interface_type, used_decl_ids);
+                                          interface_type, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 

@@ -7,6 +7,109 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/arrow.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/arrow.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Inc {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitAndAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitComplement {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitOrAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as BitXorAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as DivAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Eq {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as LeftShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as ModAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as MulAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Ordered {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as RightShiftAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Dec {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 
 class C {
   fn Member[self: Self]();
@@ -66,7 +169,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %ptr.param_patt: %.2 = value_param_pattern %ptr.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc16: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:     %.loc119: type = ptr_type %C [template = constants.%.2]
 // CHECK:STDOUT:     %ptr.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %ptr: %.2 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
@@ -82,48 +185,48 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_12: %.3 = field_decl field, element0 [template]
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc116_15: type = ptr_type %C [template = constants.%.2]
+// CHECK:STDOUT:   %.loc116_12: %.3 = field_decl field, element0 [template]
+// CHECK:STDOUT:   %.loc117: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %Member.decl
-// CHECK:STDOUT:   .field = %.loc13_12
+// CHECK:STDOUT:   .field = %.loc116_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Member[%self.param_patt: %C]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr.param_patt: %.2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ptr.ref.loc17: %.2 = name_ref ptr, %ptr
-// CHECK:STDOUT:   %.loc17_4.1: ref %C = deref %ptr.ref.loc17
-// CHECK:STDOUT:   %Member.ref.loc17: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
-// CHECK:STDOUT:   %.loc17_9: <bound method> = bound_method %.loc17_4.1, %Member.ref.loc17
-// CHECK:STDOUT:   %.loc17_4.2: %C = bind_value %.loc17_4.1
-// CHECK:STDOUT:   %Member.call.loc17: init %.1 = call %.loc17_9(%.loc17_4.2)
-// CHECK:STDOUT:   %ptr.ref.loc18: %.2 = name_ref ptr, %ptr
-// CHECK:STDOUT:   %.loc18_6.1: ref %C = deref %ptr.ref.loc18
-// CHECK:STDOUT:   %Member.ref.loc18: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
-// CHECK:STDOUT:   %.loc18_6.2: <bound method> = bound_method %.loc18_6.1, %Member.ref.loc18
-// CHECK:STDOUT:   %.loc18_6.3: %C = bind_value %.loc18_6.1
-// CHECK:STDOUT:   %Member.call.loc18: init %.1 = call %.loc18_6.2(%.loc18_6.3)
-// CHECK:STDOUT:   %ptr.ref.loc20: %.2 = name_ref ptr, %ptr
-// CHECK:STDOUT:   %.loc20_4: ref %C = deref %ptr.ref.loc20
-// CHECK:STDOUT:   %field.ref.loc20: %.3 = name_ref field, @C.%.loc13_12 [template = @C.%.loc13_12]
-// CHECK:STDOUT:   %.loc20_9: ref %.2 = class_element_access %.loc20_4, element0
-// CHECK:STDOUT:   %ptr.ref.loc21: %.2 = name_ref ptr, %ptr
-// CHECK:STDOUT:   %.loc21_6.1: ref %C = deref %ptr.ref.loc21
-// CHECK:STDOUT:   %field.ref.loc21: %.3 = name_ref field, @C.%.loc13_12 [template = @C.%.loc13_12]
-// CHECK:STDOUT:   %.loc21_6.2: ref %.2 = class_element_access %.loc21_6.1, element0
-// CHECK:STDOUT:   %ptr.ref.loc23: %.2 = name_ref ptr, %ptr
-// CHECK:STDOUT:   %.loc23_6.1: ref %C = deref %ptr.ref.loc23
-// CHECK:STDOUT:   %field.ref.loc23_6: %.3 = name_ref field, @C.%.loc13_12 [template = @C.%.loc13_12]
-// CHECK:STDOUT:   %.loc23_6.2: ref %.2 = class_element_access %.loc23_6.1, element0
-// CHECK:STDOUT:   %.loc23_6.3: %.2 = bind_value %.loc23_6.2
-// CHECK:STDOUT:   %.loc23_13.1: ref %C = deref %.loc23_6.3
-// CHECK:STDOUT:   %field.ref.loc23_13: %.3 = name_ref field, @C.%.loc13_12 [template = @C.%.loc13_12]
-// CHECK:STDOUT:   %.loc23_13.2: ref %.2 = class_element_access %.loc23_13.1, element0
+// CHECK:STDOUT:   %ptr.ref.loc120: %.2 = name_ref ptr, %ptr
+// CHECK:STDOUT:   %.loc120_4.1: ref %C = deref %ptr.ref.loc120
+// CHECK:STDOUT:   %Member.ref.loc120: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
+// CHECK:STDOUT:   %.loc120_9: <bound method> = bound_method %.loc120_4.1, %Member.ref.loc120
+// CHECK:STDOUT:   %.loc120_4.2: %C = bind_value %.loc120_4.1
+// CHECK:STDOUT:   %Member.call.loc120: init %.1 = call %.loc120_9(%.loc120_4.2)
+// CHECK:STDOUT:   %ptr.ref.loc121: %.2 = name_ref ptr, %ptr
+// CHECK:STDOUT:   %.loc121_6.1: ref %C = deref %ptr.ref.loc121
+// CHECK:STDOUT:   %Member.ref.loc121: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
+// CHECK:STDOUT:   %.loc121_6.2: <bound method> = bound_method %.loc121_6.1, %Member.ref.loc121
+// CHECK:STDOUT:   %.loc121_6.3: %C = bind_value %.loc121_6.1
+// CHECK:STDOUT:   %Member.call.loc121: init %.1 = call %.loc121_6.2(%.loc121_6.3)
+// CHECK:STDOUT:   %ptr.ref.loc123: %.2 = name_ref ptr, %ptr
+// CHECK:STDOUT:   %.loc123_4: ref %C = deref %ptr.ref.loc123
+// CHECK:STDOUT:   %field.ref.loc123: %.3 = name_ref field, @C.%.loc116_12 [template = @C.%.loc116_12]
+// CHECK:STDOUT:   %.loc123_9: ref %.2 = class_element_access %.loc123_4, element0
+// CHECK:STDOUT:   %ptr.ref.loc124: %.2 = name_ref ptr, %ptr
+// CHECK:STDOUT:   %.loc124_6.1: ref %C = deref %ptr.ref.loc124
+// CHECK:STDOUT:   %field.ref.loc124: %.3 = name_ref field, @C.%.loc116_12 [template = @C.%.loc116_12]
+// CHECK:STDOUT:   %.loc124_6.2: ref %.2 = class_element_access %.loc124_6.1, element0
+// CHECK:STDOUT:   %ptr.ref.loc126: %.2 = name_ref ptr, %ptr
+// CHECK:STDOUT:   %.loc126_6.1: ref %C = deref %ptr.ref.loc126
+// CHECK:STDOUT:   %field.ref.loc126_6: %.3 = name_ref field, @C.%.loc116_12 [template = @C.%.loc116_12]
+// CHECK:STDOUT:   %.loc126_6.2: ref %.2 = class_element_access %.loc126_6.1, element0
+// CHECK:STDOUT:   %.loc126_6.3: %.2 = bind_value %.loc126_6.2
+// CHECK:STDOUT:   %.loc126_13.1: ref %C = deref %.loc126_6.3
+// CHECK:STDOUT:   %field.ref.loc126_13: %.3 = name_ref field, @C.%.loc116_12 [template = @C.%.loc116_12]
+// CHECK:STDOUT:   %.loc126_13.2: ref %.2 = class_element_access %.loc126_13.1, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

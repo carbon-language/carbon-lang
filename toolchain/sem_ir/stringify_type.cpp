@@ -121,18 +121,27 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(FacetType inst): {
-        if (step.index == 0) {
+        FacetTypeInfo facet_type_info =
+            sem_ir.facet_types().Get(inst.facet_type_id);
+        if (facet_type_info.interface_type_ids.empty()) {
+          out << "<facet type `type`>";
+          break;
+        } else if (step.index == 0) {
           out << "<facet type ";
-          steps.push_back(step.Next());
-          FacetTypeInfo facet_type_info =
-              sem_ir.facet_types().Get(inst.facet_type_id);
-          // TODO: also output restrictions from
-          // facet_type_info.requirement_block_id.
-          TypeId type_id = facet_type_info.base_facet_type_id;
-          push_inst_id(sem_ir.types().GetInstId(type_id));
+        } else if (step.index <
+                   static_cast<int>(
+                       facet_type_info.interface_type_ids.size())) {
+          out << ", ";
         } else {
           out << ">";
+          break;
         }
+        // TODO: also output restrictions from
+        // facet_type_info.requirement_block_id.
+
+        steps.push_back(step.Next());
+        push_inst_id(sem_ir.types().GetInstId(
+            facet_type_info.interface_type_ids[step.index]));
         break;
       }
       case CARBON_KIND(FacetTypeAccess inst): {

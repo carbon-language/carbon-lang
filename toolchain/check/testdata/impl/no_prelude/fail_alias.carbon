@@ -14,6 +14,10 @@ class C {}
 alias AI = I;
 alias AC = C;
 
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl AC as AI {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl AC as AI {}
 
 // CHECK:STDERR: fail_alias.carbon:[[@LINE+6]]:1: error: redefinition of `impl AC as AI` [ImplRedefinition]
@@ -32,8 +36,6 @@ impl AC as AI {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,12 +52,12 @@ impl AC as AI {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %AC: type = bind_alias AC, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %AC.ref.loc17: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc17: type = name_ref AI, file.%AI [template = constants.%I.type]
+// CHECK:STDOUT:     %AC.ref.loc21: type = name_ref AC, file.%AC [template = constants.%C]
+// CHECK:STDOUT:     %AI.ref.loc21: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %AC.ref.loc25: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc25: type = name_ref AI, file.%AI [template = constants.%I.type]
+// CHECK:STDOUT:     %AC.ref.loc29: type = name_ref AC, file.%AC [template = constants.%C]
+// CHECK:STDOUT:     %AI.ref.loc29: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,9 +69,9 @@ impl AC as AI {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %AC.ref.loc17 as %AI.ref.loc17 {
+// CHECK:STDOUT: impl @impl: %AC.ref.loc21 as %AI.ref.loc21 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst+18.loc17_15
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

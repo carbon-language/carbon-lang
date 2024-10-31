@@ -24,6 +24,9 @@ import Core;
 
 // TODO: This should be in `Core`, but currently impl lookup only looks in the
 // current file.
+// CHECK:STDERR: user.carbon:[[@LINE+3]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl i32 as Core.Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 impl i32 as Core.Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
@@ -115,23 +118,14 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness (%Op.1) [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %Add.type, %Op.type.2 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.7: <bound method> = bound_method %.3, %Op.1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.9: type = array_type %.8, i32 [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.12: <bound method> = bound_method %.8, %Op.1 [template]
-// CHECK:STDOUT:   %.13: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %array: %.9 = tuple_value (%.8, %.11, %.13) [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Add.type, %Op.type.2 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.6 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -143,8 +137,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+9, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+11, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.5 = import_ref Core//default, inst+39, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+34, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.4: %.4 = import_ref Core//default, inst+39, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Core//default, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,23 +150,22 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_32, %.loc6_6.1 [template = i32]
+// CHECK:STDOUT:     %.loc9_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc9_6.2: type = converted %int.make_type_32, %.loc9_6.1 [template = i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.2 [template = constants.%Add.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.4]
-// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_18.1: %Op.type.2 = interface_witness_access constants.%.2, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc10_18.2: <bound method> = bound_method %.loc10_16, %.loc10_18.1 [template = constants.%.7]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18.2(%.loc10_16, %.loc10_20) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc10_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc10_11.2: type = converted %int.make_type_32, %.loc10_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_21: type = array_type %int.sadd, i32 [template = constants.%.9]
-// CHECK:STDOUT:   %arr.var: ref %.9 = var arr
-// CHECK:STDOUT:   %arr: ref %.9 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_20: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, imports.%import_ref.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_18.1: %Op.type.2 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc13_18.2: <bound method> = bound_method %.loc13_16, %.loc13_18.1 [template = <error>]
+// CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_21: type = array_type <error>, i32 [template = <error>]
+// CHECK:STDOUT:   %arr.var: ref <error> = var arr
+// CHECK:STDOUT:   %arr: ref <error> = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
@@ -182,7 +175,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   witness = (imports.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc6_6.2 as %Add.ref {
+// CHECK:STDOUT: impl @impl: %.loc9_6.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: i32 = value_param_pattern %self.patt, runtime_param0
@@ -191,9 +184,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
-// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_6.2 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc10_15: type = name_ref Self, @impl.%.loc9_6.2 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc10_28: type = name_ref Self, @impl.%.loc9_6.2 [template = i32]
+// CHECK:STDOUT:     %Self.ref.loc10_37: type = name_ref Self, @impl.%.loc9_6.2 [template = i32]
 // CHECK:STDOUT:     %self.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: i32 = value_param runtime_param1
@@ -201,11 +194,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6_22: <witness> = interface_witness (%Op.decl) [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.loc6_22
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -220,35 +212,19 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc10_29: i32 = int_literal 4 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.11]
-// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.4 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_34.1: %Op.type.2 = interface_witness_access constants.%.2, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc10_34.2: <bound method> = bound_method %.loc10_32, %.loc10_34.1 [template = constants.%.12]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_34.2(%.loc10_32, %.loc10_36) [template = constants.%.13]
-// CHECK:STDOUT:   %.loc10_37.1: %.14 = tuple_literal (%.loc10_26, %.loc10_29, %int.sadd)
-// CHECK:STDOUT:   %.loc10_37.2: i32 = int_literal 0 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc10_37.3: ref i32 = array_index file.%arr.var, %.loc10_37.2
-// CHECK:STDOUT:   %.loc10_37.4: init i32 = initialize_from %.loc10_26 to %.loc10_37.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc10_37.5: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_37.6: ref i32 = array_index file.%arr.var, %.loc10_37.5
-// CHECK:STDOUT:   %.loc10_37.7: init i32 = initialize_from %.loc10_29 to %.loc10_37.6 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_37.8: i32 = int_literal 2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_37.9: ref i32 = array_index file.%arr.var, %.loc10_37.8
-// CHECK:STDOUT:   %.loc10_37.10: init i32 = initialize_from %int.sadd to %.loc10_37.9 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc10_37.11: init %.9 = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc10_38: init %.9 = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%array]
-// CHECK:STDOUT:   assign file.%arr.var, %.loc10_38
+// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_29: i32 = int_literal 4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_32: i32 = int_literal 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_36: i32 = int_literal 4 [template = constants.%.7]
+// CHECK:STDOUT:   %Op.ref: %.4 = name_ref Op, imports.%import_ref.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_34.1: %Op.type.2 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc13_34.2: <bound method> = bound_method %.loc13_32, %.loc13_34.1 [template = <error>]
+// CHECK:STDOUT:   %.loc13_37: <error> = tuple_literal (%.loc13_26, %.loc13_29, <error>)
+// CHECK:STDOUT:   assign file.%arr.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(i32) {
-// CHECK:STDOUT:   %Self => i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

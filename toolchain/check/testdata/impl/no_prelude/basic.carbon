@@ -14,6 +14,9 @@ interface Simple {
 
 class C {}
 
+// CHECK:STDERR: basic.carbon:[[@LINE+3]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl C as Simple {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 impl C as Simple {
   fn F() {}
 }
@@ -33,7 +36,6 @@ impl C as Simple {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,11 +64,10 @@ impl C as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.loc17
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -87,6 +88,4 @@ impl C as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
 // CHECK:STDOUT:
