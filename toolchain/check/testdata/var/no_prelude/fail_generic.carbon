@@ -21,7 +21,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, 0 [symbolic]
+// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x [symbolic]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -37,7 +37,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_12.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, 0, %x.var [symbolic = constants.%x]
+// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, %x.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %.loc15_17.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_17.2: init %.1 = tuple_init () to %x.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc15_18: init %.1 = converted %.loc15_17.1, %.loc15_17.2 [template = constants.%tuple]
