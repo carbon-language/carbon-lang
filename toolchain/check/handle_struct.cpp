@@ -34,13 +34,20 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::StructCommaId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::StructLiteralCommaId /*node_id*/)
     -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::StructFieldId node_id) -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::StructTypeLiteralCommaId /*node_id*/) -> bool {
+  context.param_and_arg_refs_stack().ApplyComma();
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
+    -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
@@ -56,7 +63,7 @@ auto HandleParseNode(Context& context, Parse::StructFieldId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::StructTypeFieldId node_id)
+auto HandleParseNode(Context& context, Parse::StructTypeLiteralFieldId node_id)
     -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id).type_id;

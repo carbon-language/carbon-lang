@@ -149,8 +149,9 @@ auto HandleBraceExprParamAfterDesignatorAsUnknown(Context& context) -> void {
 }
 
 // Handles BraceExprParamFinishAs(Type|Value|Unknown).
-static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
-                                       State param_state) -> void {
+static auto HandleBraceExprParamFinish(Context& context, NodeKind field_kind,
+                                       NodeKind comma_kind, State param_state)
+    -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -158,28 +159,31 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
                         /*has_error=*/true);
     context.ReturnErrorOnState();
   } else {
-    context.AddNode(node_kind, state.token, /*has_error=*/false);
+    context.AddNode(field_kind, state.token, /*has_error=*/false);
   }
 
-  if (context.ConsumeListToken(
-          NodeKind::StructComma, Lex::TokenKind::CloseCurlyBrace,
-          state.has_error) == Context::ListTokenKind::Comma) {
+  if (context.ConsumeListToken(comma_kind, Lex::TokenKind::CloseCurlyBrace,
+                               state.has_error) ==
+      Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
 
 auto HandleBraceExprParamFinishAsType(Context& context) -> void {
-  HandleBraceExprParamFinish(context, NodeKind::StructTypeField,
+  HandleBraceExprParamFinish(context, NodeKind::StructTypeLiteralField,
+                             NodeKind::StructTypeLiteralComma,
                              State::BraceExprParamAsType);
 }
 
 auto HandleBraceExprParamFinishAsValue(Context& context) -> void {
-  HandleBraceExprParamFinish(context, NodeKind::StructField,
+  HandleBraceExprParamFinish(context, NodeKind::StructLiteralField,
+                             NodeKind::StructLiteralComma,
                              State::BraceExprParamAsValue);
 }
 
 auto HandleBraceExprParamFinishAsUnknown(Context& context) -> void {
   HandleBraceExprParamFinish(context, NodeKind::InvalidParse,
+                             NodeKind::InvalidParse,
                              State::BraceExprParamAsUnknown);
 }
 
