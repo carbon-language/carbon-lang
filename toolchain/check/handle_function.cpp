@@ -183,8 +183,10 @@ static auto BuildFunctionDecl(Context& context,
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
   if (!name.params_id.is_valid()) {
+    CARBON_CHECK(!name.param_patterns_id.is_valid());
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
+    name.param_patterns_id = SemIR::InstBlockId::Empty;
   }
 
   auto name_context = context.decl_name_stack().FinishName(name);
