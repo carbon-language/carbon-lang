@@ -21,16 +21,12 @@ var a: i32 = test_a();
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_Ctest_a.Main() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !8 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %test_a.call = call i32 @_Ctest_a.Main(), !dbg !9
 // CHECK:STDOUT:   store i32 %test_a.call, ptr @a, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11

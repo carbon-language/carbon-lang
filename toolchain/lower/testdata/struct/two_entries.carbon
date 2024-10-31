@@ -20,9 +20,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: @struct.loc12_47 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc12_46.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_46.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8

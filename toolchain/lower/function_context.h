@@ -33,7 +33,7 @@ class FunctionContext {
       -> bool;
 
   // Builds LLVM IR for the sequence of instructions in `block_id`.
-  auto LowerBlock(SemIR::InstBlockId block_id) -> void;
+  auto LowerBlockContents(SemIR::InstBlockId block_id) -> void;
 
   // Builds LLVM IR for the specified instruction.
   auto LowerInst(SemIR::InstId inst_id) -> void;

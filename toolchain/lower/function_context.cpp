@@ -49,7 +49,7 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
   return true;
 }
 
-auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
+auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
     LowerInst(inst_id);
   }

@@ -22,18 +22,14 @@ fn G() -> i32 {
 // CHECK:STDOUT: @array.loc16_20.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
 // CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4, !dbg !7
 // CHECK:STDOUT:   ret i32 %.loc12_15.3, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4, !dbg !10
 // CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1, !dbg !10

@@ -25,16 +25,12 @@ fn G(T: J) {}
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !8 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

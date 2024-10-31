@@ -16,9 +16,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: source_filename = "not.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CNot.Main(i1 %b) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12 = xor i1 %b, true, !dbg !7
 // CHECK:STDOUT:   ret i1 %.loc12, !dbg !8
 // CHECK:STDOUT: }

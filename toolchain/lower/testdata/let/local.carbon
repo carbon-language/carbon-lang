@@ -18,9 +18,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 1, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

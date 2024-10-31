@@ -28,9 +28,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "field.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %c) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_13.1.b = getelementptr inbounds nuw { i32, ptr }, ptr %c, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   %.loc17_13.2 = load ptr, ptr %.loc17_13.1.b, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc17_16.1.a = getelementptr inbounds nuw { i32, ptr }, ptr %.loc17_13.2, i32 0, i32 0, !dbg !8
@@ -39,9 +37,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !10 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !11
 // CHECK:STDOUT:   %.loc22_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   store i32 1, ptr %.loc22_4.a, align 4, !dbg !12

@@ -32,24 +32,18 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTypeAccess.Main() !dbg !8 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !9
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) !dbg !11 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !12
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !13
 // CHECK:STDOUT: }

@@ -18,17 +18,15 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: source_filename = "and_empty_block.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CAnd.Main(i1 %b, i1 %c) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result, !dbg !7
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs:                                          ; preds = %entry
 // CHECK:STDOUT:   br label %and.result, !dbg !7
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
-// CHECK:STDOUT:   %1 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
-// CHECK:STDOUT:   ret i1 %1, !dbg !8
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
+// CHECK:STDOUT:   ret i1 %0, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

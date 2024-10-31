@@ -18,9 +18,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !9

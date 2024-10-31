@@ -18,17 +18,13 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !7
 // CHECK:STDOUT:   ret i32 %int.sadd, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) !dbg !9 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
 // CHECK:STDOUT: }

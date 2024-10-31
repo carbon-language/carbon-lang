@@ -19,16 +19,12 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CDoNothing.Main(i32 %a) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4, !dbg !11

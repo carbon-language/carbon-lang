@@ -17,30 +17,22 @@ fn F_u65536(a: u65536) -> u65536 { return a; }
 // CHECK:STDOUT: source_filename = "int_types.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i8 @_CF_i8.Main(i8 %a) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i8 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CF_u16.Main(i16 %a) !dbg !8 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i16 %a, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @_CF_i64.Main(i64 %a) !dbg !10 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i64 %a, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i65536 @_CF_u65536.Main(i65536 %a) !dbg !12 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i65536 %a, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

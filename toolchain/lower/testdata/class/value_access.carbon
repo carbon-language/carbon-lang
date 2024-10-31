@@ -23,9 +23,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: source_filename = "value_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %c) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc19_11.1.a = getelementptr inbounds nuw { { i32, i32, i32 } }, ptr %c, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc19_11.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc19_11.1.a, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc19_11.3 = load i32, ptr %.loc19_11.2.tuple.elem, align 4, !dbg !7

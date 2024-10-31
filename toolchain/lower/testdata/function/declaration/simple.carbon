@@ -18,9 +18,7 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT: declare void @_CF.Main(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main(i32 %n) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main(i32 %n), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }

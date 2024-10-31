@@ -397,25 +397,45 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
                         .GetAs<SemIR::FunctionDecl>(function.latest_decl_id())
                         .decl_block_id;
   }
-  llvm::ArrayRef<SemIR::InstBlockId> singleton_decl_block = decl_block_id;
 
-  // Lower all blocks.
-  for (auto block_id : llvm::concat<const SemIR::InstBlockId>(
-           singleton_decl_block, body_block_ids)) {
+  // Lowers the contents of block_id into the corresponding LLVM block,
+  // creating it if it doesn't already exist.
+  auto lower_block = [&](SemIR::InstBlockId block_id) {
     CARBON_VLOG("Lowering {0}\n", block_id);
     auto* llvm_block = function_lowering.GetBlock(block_id);
     // Keep the LLVM blocks in lexical order.
     llvm_block->moveBefore(llvm_function->end());
     function_lowering.builder().SetInsertPoint(llvm_block);
-    function_lowering.LowerBlock(block_id);
+    function_lowering.LowerBlockContents(block_id);
+    return llvm_block;
+  };
+
+  auto* llvm_decl_block = lower_block(decl_block_id);
+
+  // If the decl block is empty, reuse it as the first body block. We don't do
+  // this when the decl block is non-empty so that any branches back to the
+  // first body block don't also re-execute the decl.
+  if (llvm_decl_block->empty()) {
+    CARBON_CHECK(function_lowering.TryToReuseBlock(body_block_ids.front(),
+                                                   llvm_decl_block));
+  } else {
+    function_lowering.builder().SetInsertPoint(llvm_decl_block);
+    function_lowering.builder().CreateBr(
+        function_lowering.GetBlock(body_block_ids.front()));
   }
 
-  // Add a terminator to the decl block.
-  function_lowering.builder().SetInsertPoint(
-      function_lowering.GetBlock(decl_block_id));
-  function_lowering.builder().CreateBr(
-      function_lowering.GetBlock(body_block_ids.front()));
-  function_lowering.builder().ClearInsertionPoint();
+  // Lower all blocks.
+  for (auto block_id : body_block_ids) {
+    lower_block(block_id);
+  }
+
+  // LLVM requires that the entry block has no predecessors.
+  auto* entry_block = &llvm_function->getEntryBlock();
+  if (entry_block->hasNPredecessorsOrMore(1)) {
+    auto* new_entry_block = llvm::BasicBlock::Create(
+        llvm_context(), "entry", llvm_function, entry_block);
+    llvm::BranchInst::Create(entry_block, new_entry_block);
+  }
 }
 
 auto FileContext::BuildDISubprogram(const SemIR::Function& function,

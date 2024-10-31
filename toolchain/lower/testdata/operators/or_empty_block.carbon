@@ -18,9 +18,7 @@ fn Or(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: source_filename = "or_empty_block.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_COr.Main(i1 %b, i1 %c) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_12.1 = xor i1 %b, true, !dbg !7
 // CHECK:STDOUT:   br i1 %.loc14_12.1, label %or.rhs, label %or.result, !dbg !7
 // CHECK:STDOUT:
@@ -28,8 +26,8 @@ fn Or(b: bool, c: bool) -> bool {
 // CHECK:STDOUT:   br label %or.result, !dbg !7
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %or.rhs, %entry
-// CHECK:STDOUT:   %1 = phi i1 [ true, %entry ], [ %c, %or.rhs ]
-// CHECK:STDOUT:   ret i1 %1, !dbg !8
+// CHECK:STDOUT:   %0 = phi i1 [ true, %entry ], [ %c, %or.rhs ]
+// CHECK:STDOUT:   ret i1 %0, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

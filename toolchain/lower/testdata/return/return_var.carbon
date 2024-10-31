@@ -23,9 +23,7 @@ fn Make() -> C {
 // CHECK:STDOUT: source_filename = "return_var.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, ptr }) %return) !dbg !4 {
-// CHECK:STDOUT:   br label %entry
-// CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %0
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_30.2.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc18_30.4.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   store ptr %return, ptr %.loc18_30.4.next, align 8, !dbg !7
