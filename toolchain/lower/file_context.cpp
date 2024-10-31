@@ -334,6 +334,10 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // in the check phase, which is why we're using the runtime index order
   // even though it's less convenient for this usage.
   llvm::SmallVector<SemIR::InstId> calling_convention_param_ids;
+  // This is an upper bound on the size because `self` and the return slot
+  // are the only runtime parameters that don't appear in the explicit
+  // parameter list.
+  calling_convention_param_ids.reserve(param_refs.size() + 2);
   bool has_return_slot =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
           .has_return_slot();
