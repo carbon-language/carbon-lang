@@ -1192,6 +1192,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::IntLiteral inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::IntType inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::PointerType inst): {
         return TryResolveTypedInst(inst);
       }
@@ -2065,6 +2068,18 @@ class ImportRefResolver {
     return ResolveAs<SemIR::IntLiteral>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
+  }
+
+  auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto bit_width_id = GetLocalConstantInstId(inst.bit_width_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    return ResolveAs<SemIR::IntType>({.type_id = SemIR::TypeId::TypeType,
+                                      .int_kind = inst.int_kind,
+                                      .bit_width_id = bit_width_id});
   }
 
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {

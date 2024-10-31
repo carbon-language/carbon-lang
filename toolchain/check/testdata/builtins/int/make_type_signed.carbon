@@ -32,6 +32,25 @@ fn Symbolic(N:! i32, x: Int(N)) -> Int(N) {
   return x;
 }
 
+// --- import_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "types";
+import library "use_types";
+
+fn UseF(n: Int(64)) -> Int(64) {
+  return F(n);
+}
+
+fn UseG(n: Int(13)) -> Int(13) {
+  return G(n);
+}
+
+fn UseSymbolic(n: Int(24)) -> Int(24) {
+  return Symbolic(24, n);
+}
+
 // --- fail_zero_size.carbon
 
 library "[[@TEST_NAME]]";
@@ -275,6 +294,193 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %N.loc14_13.2 => constants.%N
 // CHECK:STDOUT:   %N.patt.loc14_13.2 => constants.%N
 // CHECK:STDOUT:   %.loc14_28 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_types.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.3: type = int_type signed, %.2 [template]
+// CHECK:STDOUT:   %UseF.type: type = fn_type @UseF [template]
+// CHECK:STDOUT:   %UseF: %UseF.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 13 [template]
+// CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %UseG.type: type = fn_type @UseG [template]
+// CHECK:STDOUT:   %UseG: %UseG.type = struct_value () [template]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 24 [template]
+// CHECK:STDOUT:   %.7: type = int_type signed, %.6 [template]
+// CHECK:STDOUT:   %UseSymbolic.type: type = fn_type @UseSymbolic [template]
+// CHECK:STDOUT:   %UseSymbolic: %UseSymbolic.type = struct_value () [template]
+// CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
+// CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %.8: type = int_type signed, %N [symbolic]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %Symbolic, @Symbolic(%.6) [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: %Int.type = import_ref Main//types, inst+20, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.2: %F.type = import_ref Main//use_types, inst+34, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3: %G.type = import_ref Main//use_types, inst+59, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.4: %Symbolic.type = import_ref Main//use_types, inst+97, loaded [template = constants.%Symbolic]
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/operators
+// CHECK:STDOUT:     import Core//prelude/types
+// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
+// CHECK:STDOUT:     import Core//prelude/operators/as
+// CHECK:STDOUT:     import Core//prelude/operators/bitwise
+// CHECK:STDOUT:     import Core//prelude/operators/comparison
+// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Int = imports.%import_ref.1
+// CHECK:STDOUT:     .F = imports.%import_ref.2
+// CHECK:STDOUT:     .G = imports.%import_ref.3
+// CHECK:STDOUT:     .Symbolic = imports.%import_ref.4
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .UseF = %UseF.decl
+// CHECK:STDOUT:     .UseG = %UseG.decl
+// CHECK:STDOUT:     .UseSymbolic = %UseSymbolic.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %UseF.decl: %UseF.type = fn_decl @UseF [template = constants.%UseF] {
+// CHECK:STDOUT:     %n.patt: %.3 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %.3 = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Int.ref.loc7_12: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc7_16: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc7_15: init type = call %Int.ref.loc7_12(%.loc7_16) [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_18.1: type = value_of_initializer %int.make_type_signed.loc7_15 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_18.2: type = converted %int.make_type_signed.loc7_15, %.loc7_18.1 [template = constants.%.3]
+// CHECK:STDOUT:     %Int.ref.loc7_24: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc7_28: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc7_27: init type = call %Int.ref.loc7_24(%.loc7_28) [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_30.1: type = value_of_initializer %int.make_type_signed.loc7_27 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc7_30.2: type = converted %int.make_type_signed.loc7_27, %.loc7_30.1 [template = constants.%.3]
+// CHECK:STDOUT:     %n.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %n: %.3 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %UseG.decl: %UseG.type = fn_decl @UseG [template = constants.%UseG] {
+// CHECK:STDOUT:     %n.patt: %.5 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %.5 = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Int.ref.loc11_12: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc11_16: i32 = int_literal 13 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed.loc11_15: init type = call %Int.ref.loc11_12(%.loc11_16) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_signed.loc11_15 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_signed.loc11_15, %.loc11_18.1 [template = constants.%.5]
+// CHECK:STDOUT:     %Int.ref.loc11_24: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc11_28: i32 = int_literal 13 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed.loc11_27: init type = call %Int.ref.loc11_24(%.loc11_28) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_30.1: type = value_of_initializer %int.make_type_signed.loc11_27 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_30.2: type = converted %int.make_type_signed.loc11_27, %.loc11_30.1 [template = constants.%.5]
+// CHECK:STDOUT:     %n.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %n: %.5 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %UseSymbolic.decl: %UseSymbolic.type = fn_decl @UseSymbolic [template = constants.%UseSymbolic] {
+// CHECK:STDOUT:     %n.patt: %.7 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %.7 = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.7 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.7 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Int.ref.loc15_19: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc15_23: i32 = int_literal 24 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_signed.loc15_22: init type = call %Int.ref.loc15_19(%.loc15_23) [template = constants.%.7]
+// CHECK:STDOUT:     %.loc15_25.1: type = value_of_initializer %int.make_type_signed.loc15_22 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc15_25.2: type = converted %int.make_type_signed.loc15_22, %.loc15_25.1 [template = constants.%.7]
+// CHECK:STDOUT:     %Int.ref.loc15_31: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
+// CHECK:STDOUT:     %.loc15_35: i32 = int_literal 24 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_signed.loc15_34: init type = call %Int.ref.loc15_31(%.loc15_35) [template = constants.%.7]
+// CHECK:STDOUT:     %.loc15_37.1: type = value_of_initializer %int.make_type_signed.loc15_34 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc15_37.2: type = converted %int.make_type_signed.loc15_34, %.loc15_37.1 [template = constants.%.7]
+// CHECK:STDOUT:     %n.param: %.7 = value_param runtime_param0
+// CHECK:STDOUT:     %n: %.7 = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: ref %.7 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.7 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int(%n.param_patt: i32) -> type = "int.make_type_signed";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @UseF(%n.param_patt: %.3) -> %.3 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.2 [template = constants.%F]
+// CHECK:STDOUT:   %n.ref: %.3 = name_ref n, %n
+// CHECK:STDOUT:   %F.call: init %.3 = call %F.ref(%n.ref)
+// CHECK:STDOUT:   %.loc8_14.1: %.3 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc8_14.2: %.3 = converted %F.call, %.loc8_14.1
+// CHECK:STDOUT:   return %.loc8_14.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%n.param_patt: %.3) -> %.3;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @UseG(%n.param_patt: %.5) -> %.5 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.3 [template = constants.%G]
+// CHECK:STDOUT:   %n.ref: %.5 = name_ref n, %n
+// CHECK:STDOUT:   %G.call: init %.5 = call %G.ref(%n.ref)
+// CHECK:STDOUT:   %.loc12_14.1: %.5 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc12_14.2: %.5 = converted %G.call, %.loc12_14.1
+// CHECK:STDOUT:   return %.loc12_14.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%n.param_patt: %.5) -> %.5;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @UseSymbolic(%n.param_patt: %.7) -> %.7 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Symbolic.ref: %Symbolic.type = name_ref Symbolic, imports.%import_ref.4 [template = constants.%Symbolic]
+// CHECK:STDOUT:   %.loc16_19: i32 = int_literal 24 [template = constants.%.6]
+// CHECK:STDOUT:   %n.ref: %.7 = name_ref n, %n
+// CHECK:STDOUT:   %.loc16_10: <specific function> = specific_function %Symbolic.ref, @Symbolic(constants.%.6) [template = constants.%.9]
+// CHECK:STDOUT:   %Symbolic.call: init %.7 = call %.loc16_10(%n.ref)
+// CHECK:STDOUT:   %.loc16_25.1: %.7 = value_of_initializer %Symbolic.call
+// CHECK:STDOUT:   %.loc16_25.2: %.7 = converted %Symbolic.call, %.loc16_25.1
+// CHECK:STDOUT:   return %.loc16_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Symbolic(constants.%N: i32) {
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
+// CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic = %.1 (constants.%.8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%N.param_patt: i32, %x.param_patt: @Symbolic.%.1 (%.8)) -> @Symbolic.%.1 (%.8);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Symbolic(constants.%N) {
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
+// CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Symbolic(constants.%.6) {
+// CHECK:STDOUT:   %N => constants.%.6
+// CHECK:STDOUT:   %N.patt => constants.%.6
+// CHECK:STDOUT:   %.1 => constants.%.7
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon
