@@ -481,11 +481,10 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
 // element.
-static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
+static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
     -> SemIR::ConstantId {
-  auto index_inst = inst.As<SemIR::ArrayIndex>();
   Phase phase = Phase::Template;
-  auto index_id = GetConstantValue(eval_context, index_inst.index_id, &phase);
+  auto index_id = GetConstantValue(eval_context, inst.index_id, &phase);
 
   if (!index_id.is_valid()) {
     return MakeNonConstantResult(phase);
@@ -501,7 +500,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetConstantValueAsType(
-      eval_context.insts().Get(index_inst.array_id).type_id());
+      eval_context.insts().Get(inst.array_id).type_id());
   if (auto array_type =
           eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntLiteral>(
@@ -516,15 +515,14 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::Inst inst)
                           "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
-            index_inst.index_id, ArrayIndexOutOfBounds,
+            inst.index_id, ArrayIndexOutOfBounds,
             {.type = index->type_id, .value = index_val}, aggregate_type_id);
         return SemIR::ConstantId::Error;
       }
     }
   }
 
-  auto aggregate_id =
-      GetConstantValue(eval_context, index_inst.array_id, &phase);
+  auto aggregate_id = GetConstantValue(eval_context, inst.array_id, &phase);
   if (!aggregate_id.is_valid()) {
     return MakeNonConstantResult(phase);
   }
@@ -1348,8 +1346,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
-    case SemIR::ArrayIndex::Kind:
-      return PerformArrayIndex(eval_context, inst);
+
+    case CARBON_KIND(SemIR::ArrayIndex index): {
+      return PerformArrayIndex(eval_context, index);
+    }
 
     case CARBON_KIND(SemIR::Call call): {
       return MakeConstantForCall(eval_context, inst_id, call);
