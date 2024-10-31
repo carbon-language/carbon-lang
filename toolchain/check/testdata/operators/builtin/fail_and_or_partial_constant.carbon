@@ -93,13 +93,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_29: invalid = splice_block invalid {
-// CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc4_23.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
-// CHECK:STDOUT:     %.loc4_23.2: type = converted %bool.make_type.loc4, %.loc4_23.1 [template = bool]
-// CHECK:STDOUT:     %x.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc9_13 br !and.rhs else br !and.result(%.loc9_18.1)
@@ -208,13 +201,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_47: invalid = splice_block invalid {
-// CHECK:STDOUT:     %bool.make_type.loc4: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc4_41.1: type = value_of_initializer %bool.make_type.loc4 [template = bool]
-// CHECK:STDOUT:     %.loc4_41.2: type = converted %bool.make_type.loc4, %.loc4_41.1 [template = bool]
-// CHECK:STDOUT:     %x.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
 // CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   if %x.ref.loc11 br !and.rhs else br !and.result(%.loc11_15.1)

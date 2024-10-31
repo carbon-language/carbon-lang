@@ -308,16 +308,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20_33: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc20_29.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
-// CHECK:STDOUT:     %.loc20_29.2: type = converted %int.make_type_32.loc20, %.loc20_29.1 [template = i32]
-// CHECK:STDOUT:     %self.param.loc20: %Class = value_param runtime_param0
-// CHECK:STDOUT:     %self.loc20: %Class = bind_name self, %self.param.loc20
-// CHECK:STDOUT:     %return.param.loc20: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc20
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc20
 // CHECK:STDOUT:   %k.ref: %.3 = name_ref k, @Class.%.loc17_8 [template = @Class.%.loc17_8]
 // CHECK:STDOUT:   %.loc21_14.1: ref i32 = class_element_access %self.ref, element0
@@ -329,16 +319,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c.param_patt: %Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_26: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc24_22.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc24_22.2: type = converted %int.make_type_32, %.loc24_22.1 [template = i32]
-// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc27_11: <bound method> = bound_method %c.ref, %F.ref
@@ -350,16 +330,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAlias(%c.param_patt: %Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc30_31: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc30_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc30_27.2: type = converted %int.make_type_32, %.loc30_27.1 [template = i32]
-// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %F.type = name_ref A, @Class.%A [template = constants.%F]
 // CHECK:STDOUT:   %.loc31_11: <bound method> = bound_method %c.ref, %A.ref
@@ -371,13 +341,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc34_36: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc34_32.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc34_32.2: type = converted %int.make_type_32, %.loc34_32.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc35_17: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc35_18.1: %.4 = struct_literal (%.loc35_17)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
@@ -398,13 +361,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc38_26: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc38_22.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc38_22.2: type = converted %int.make_type_32, %.loc38_22.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
@@ -420,17 +376,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFThroughPointer(%p.param_patt: %.2) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc43_42: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc43_32: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc43_38.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc43_38.2: type = converted %int.make_type_32, %.loc43_38.1 [template = i32]
-// CHECK:STDOUT:     %p.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.2 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc44_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
@@ -444,17 +389,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %.2) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc47_42: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc47_32: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc47_38.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc47_38.2: type = converted %int.make_type_32, %.loc47_38.1 [template = i32]
-// CHECK:STDOUT:     %p.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.2 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc48_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
@@ -470,13 +404,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc53_37: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc53_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc53_33.2: type = converted %int.make_type_32, %.loc53_33.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc54_14.1: ref %Class = temporary_storage
 // CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc54_14.1
@@ -492,13 +419,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc57_37: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc57_33.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc57_33.2: type = converted %int.make_type_32, %.loc57_33.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc58_14.1: ref %Class = temporary_storage
 // CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_14.1

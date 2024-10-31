@@ -66,10 +66,6 @@ fn G(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc11: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc11_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_16: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc13_17.1: type = array_type %.loc13_16, %T [symbolic = %.loc13_17.2 (constants.%.3)]

@@ -133,7 +133,6 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DuplicateVirtual() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc35: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +140,6 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ModifiersConflict() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc57: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -149,13 +147,11 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ModifiersConflict2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc83: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @ExternOrderAndConflict() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc91: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

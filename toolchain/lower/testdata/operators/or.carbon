@@ -19,17 +19,23 @@ fn Or() -> bool {
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret i1 true, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CG.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret i1 true, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_COr.Main() !dbg !10 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !11
 // CHECK:STDOUT:   %.loc15_14.3 = xor i1 %F.call, true, !dbg !11
 // CHECK:STDOUT:   br i1 %.loc15_14.3, label %or.rhs, label %or.result, !dbg !11
@@ -39,8 +45,8 @@ fn Or() -> bool {
 // CHECK:STDOUT:   br label %or.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %or.rhs, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ true, %entry ], [ %G.call, %or.rhs ]
-// CHECK:STDOUT:   ret i1 %0, !dbg !13
+// CHECK:STDOUT:   %1 = phi i1 [ true, %entry ], [ %G.call, %or.rhs ]
+// CHECK:STDOUT:   ret i1 %1, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

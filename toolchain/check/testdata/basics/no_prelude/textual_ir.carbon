@@ -55,20 +55,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n.param_patt: %.1) -> %return: %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_27: invalid = splice_block invalid {
-// CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
-// CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %n.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc16_16.1: %.2 = tuple_literal (%n.ref, %.loc16_15.1)

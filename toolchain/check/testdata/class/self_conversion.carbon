@@ -183,16 +183,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_42: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:     %int.make_type_32.loc22: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc22_38.1: type = value_of_initializer %int.make_type_32.loc22 [template = i32]
-// CHECK:STDOUT:     %.loc22_38.2: type = converted %int.make_type_32.loc22, %.loc22_38.1 [template = i32]
-// CHECK:STDOUT:     %self.param.loc22: %Base = value_param runtime_param0
-// CHECK:STDOUT:     %self.loc22: %Base = bind_name self, %self.param.loc22
-// CHECK:STDOUT:     %return.param.loc22: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param.loc22
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc22
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc23_14.1: ref i32 = class_element_access %self.ref, element0
@@ -202,12 +192,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddrSelfBase[addr %self.param_patt: %.7]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc26_45: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:     %.loc26_40: type = ptr_type %Base [template = constants.%.7]
-// CHECK:STDOUT:     %self.param.loc26: %.7 = value_param runtime_param0
-// CHECK:STDOUT:     %self.loc26: %.7 = bind_name self, %self.param.loc26
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %.7 = name_ref self, %self.loc26
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
@@ -219,17 +203,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param_patt: %.11) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc30_29: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc30_19: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc30_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc30_25.2: type = converted %int.make_type_32, %.loc30_25.1 [template = i32]
-// CHECK:STDOUT:     %p.param: %.11 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref.loc31: %.11 = name_ref p, %p
 // CHECK:STDOUT:   %.loc31_4.1: ref %Derived = deref %p.ref.loc31
 // CHECK:STDOUT:   %AddrSelfBase.ref: %AddrSelfBase.type = name_ref AddrSelfBase, @Derived.%AddrSelfBase.decl [template = constants.%AddrSelfBase]

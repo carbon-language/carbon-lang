@@ -100,42 +100,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p.param_patt: %.2) -> %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_25: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32.loc11_11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11_11 [template = i32]
-// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11_11, %.loc11_14.1 [template = i32]
-// CHECK:STDOUT:     %.loc11_14.3: type = ptr_type i32 [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_32.loc11_20: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_32.loc11_20 [template = i32]
-// CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_32.loc11_20, %.loc11_23.1 [template = i32]
-// CHECK:STDOUT:     %.loc11_23.3: type = ptr_type i32 [template = constants.%.2]
-// CHECK:STDOUT:     %p.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.2 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p.param_patt: %.4) -> %.4 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_44: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32.loc15_22: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_32.loc15_22 [template = i32]
-// CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_32.loc15_22, %.loc15_16.1 [template = i32]
-// CHECK:STDOUT:     %.loc15_16.3: type = const_type i32 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc15_25: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %int.make_type_32.loc15_38: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_32.loc15_38 [template = i32]
-// CHECK:STDOUT:     %.loc15_32.2: type = converted %int.make_type_32.loc15_38, %.loc15_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc15_32.3: type = const_type i32 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc15_42: type = ptr_type %.3 [template = constants.%.4]
-// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }

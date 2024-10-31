@@ -66,109 +66,145 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: source_filename = "int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestNegate.Main(i32 %a) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.snegate = sub i32 0, %a, !dbg !7
 // CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAdd.Main(i32 %a, i32 %b) !dbg !9 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestSub.Main(i32 %a, i32 %b) !dbg !12 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.ssub = sub i32 %a, %b, !dbg !13
 // CHECK:STDOUT:   ret i32 %int.ssub, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestMul.Main(i32 %a, i32 %b) !dbg !15 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.smul = mul i32 %a, %b, !dbg !16
 // CHECK:STDOUT:   ret i32 %int.smul, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestDiv.Main(i32 %a, i32 %b) !dbg !18 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b, !dbg !19
 // CHECK:STDOUT:   ret i32 %int.sdiv, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestMod.Main(i32 %a, i32 %b) !dbg !21 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.smod = srem i32 %a, %b, !dbg !22
 // CHECK:STDOUT:   ret i32 %int.smod, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestComplement.Main(i32 %a) !dbg !24 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.complement = xor i32 -1, %a, !dbg !25
 // CHECK:STDOUT:   ret i32 %int.complement, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAnd.Main(i32 %a, i32 %b) !dbg !27 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.and = and i32 %a, %b, !dbg !28
 // CHECK:STDOUT:   ret i32 %int.and, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestOr.Main(i32 %a, i32 %b) !dbg !30 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.or = or i32 %a, %b, !dbg !31
 // CHECK:STDOUT:   ret i32 %int.or, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestXor.Main(i32 %a, i32 %b) !dbg !33 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.xor = xor i32 %a, %b, !dbg !34
 // CHECK:STDOUT:   ret i32 %int.xor, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestLeftShift.Main(i32 %a, i32 %b) !dbg !36 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.left_shift = shl i32 %a, %b, !dbg !37
 // CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestRightShift.Main(i32 %a, i32 %b) !dbg !39 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b, !dbg !40
 // CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq.Main(i32 %a, i32 %b) !dbg !42 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !43
 // CHECK:STDOUT:   ret i1 %int.eq, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestNeq.Main(i32 %a, i32 %b) !dbg !45 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !46
 // CHECK:STDOUT:   ret i1 %int.neq, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess.Main(i32 %a, i32 %b) !dbg !48 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !49
 // CHECK:STDOUT:   ret i1 %int.less, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLessEq.Main(i32 %a, i32 %b) !dbg !51 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !52
 // CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreater.Main(i32 %a, i32 %b) !dbg !54 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !55
 // CHECK:STDOUT:   ret i1 %int.greater, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i32 %a, i32 %b) !dbg !57 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !58
 // CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !59
 // CHECK:STDOUT: }

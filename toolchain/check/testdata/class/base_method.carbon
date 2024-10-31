@@ -93,7 +93,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     %p.param_patt: %.11 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc25_19: type = ptr_type %Derived [template = constants.%.11]
+// CHECK:STDOUT:     %.loc25: type = ptr_type %Derived [template = constants.%.11]
 // CHECK:STDOUT:     %p.param: %.11 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -137,12 +137,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt: %.3]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_31: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %.loc17_26: type = ptr_type %Base [template = constants.%.3]
-// CHECK:STDOUT:     %self.param.loc17: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %self.loc17: %.3 = bind_name self, %self.param.loc17
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self.loc17
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
@@ -154,12 +148,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%p.param_patt: %.11) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_22: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc25_19: type = ptr_type %Derived [template = constants.%.11]
-// CHECK:STDOUT:     %p.param: %.11 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.11 = bind_name p, %p.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26_4.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Base.%F.decl [template = constants.%F]

@@ -19,17 +19,23 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret i32 1, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CG.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret i32 2, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CSelect.Main(i1 %b) !dbg !10 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then:                                     ; preds = %entry
@@ -41,8 +47,8 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT:   br label %if.expr.result, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result:                                   ; preds = %if.expr.else, %if.expr.then
-// CHECK:STDOUT:   %0 = phi i32 [ %F.call, %if.expr.then ], [ %G.call, %if.expr.else ]
-// CHECK:STDOUT:   ret i32 %0, !dbg !14
+// CHECK:STDOUT:   %1 = phi i32 [ %F.call, %if.expr.then ], [ %G.call, %if.expr.else ]
+// CHECK:STDOUT:   ret i32 %1, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

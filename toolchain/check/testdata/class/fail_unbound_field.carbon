@@ -106,26 +106,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_17: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc13_13.2: type = converted %int.make_type_32, %.loc13_13.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %field.ref: %.2 = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_15: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc22_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc22_11.2: type = converted %int.make_type_32, %.loc22_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %field.ref: %.2 = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>

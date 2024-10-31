@@ -378,10 +378,6 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc10_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_6.2 (constants.%T)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
 // CHECK:STDOUT:     %A: type = class_type @A [template = constants.%A.2]

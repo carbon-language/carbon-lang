@@ -131,14 +131,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[%self.param_patt: %C]() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc19_14: init %C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct]
@@ -153,14 +145,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_22: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]

@@ -84,7 +84,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_8: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc10_10: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   return
@@ -109,7 +108,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_8: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc11_10: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return
@@ -253,19 +251,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %.1](%subscript.param_patt: %.1) -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_42: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc9_7.2 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc10_33.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_33.2: type = converted %.loc10_33.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc10_40.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_40.2: type = converted %.loc10_40.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %.1 = value_param runtime_param1
-// CHECK:STDOUT:     %subscript: %.1 = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_13: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_14: %.1 = converted %.loc11_13, %tuple [template = constants.%tuple]
@@ -274,7 +259,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_8: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc15_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_14: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %tuple.loc15_11: %.1 = tuple_value () [template = constants.%tuple]

@@ -85,7 +85,7 @@ fn Initializing() {
 // CHECK:STDOUT:     %p.param_patt: %.5 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.5]
+// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.5]
 // CHECK:STDOUT:     %p.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -109,11 +109,6 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {
-// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %n.param: %X = value_param runtime_param0
-// CHECK:STDOUT:     %n: %X = bind_name n, %n.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
 // CHECK:STDOUT:   %X.ref.loc18_19: type = name_ref X, file.%X.decl [template = constants.%X]
@@ -123,12 +118,6 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Reference(%p.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_21: invalid = splice_block invalid {
-// CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21_18: type = ptr_type %X [template = constants.%.5]
-// CHECK:STDOUT:     %p.param: %.5 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.5]
 // CHECK:STDOUT:   %p.ref: %.5 = name_ref p, %p
@@ -143,7 +132,6 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %X.ref.loc28_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %x.var: ref %X = var x
 // CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var

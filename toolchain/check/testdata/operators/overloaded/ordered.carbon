@@ -394,19 +394,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_33: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc13_16: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc13_22: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc13_28.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc13_28.2: type = converted %bool.make_type, %.loc13_28.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Less.ref: %.6 = name_ref Less, imports.%import_ref.3 [template = constants.%.7]
@@ -420,19 +407,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_38: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc17_21: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc17_27: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc17_33.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc17_33.2: type = converted %bool.make_type, %.loc17_33.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %LessOrEquivalent.ref: %.8 = name_ref LessOrEquivalent, imports.%import_ref.4 [template = constants.%.9]
@@ -446,19 +420,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_36: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc21_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc21_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc21_31.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc21_31.2: type = converted %bool.make_type, %.loc21_31.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Greater.ref: %.10 = name_ref Greater, imports.%import_ref.5 [template = constants.%.11]
@@ -472,19 +433,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_41: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc25_24: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc25_30: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc25_36.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc25_36.2: type = converted %bool.make_type, %.loc25_36.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %GreaterOrEquivalent.ref: %.12 = name_ref GreaterOrEquivalent, imports.%import_ref.6 [template = constants.%.13]
@@ -711,19 +659,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_33: invalid = splice_block invalid {
-// CHECK:STDOUT:     %D.ref.loc6_16: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %D.ref.loc6_22: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc6_28.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc6_28.2: type = converted %bool.make_type, %.loc6_28.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %D = value_param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %Less.ref: %.5 = name_ref Less, imports.%import_ref.4 [template = constants.%.6]
@@ -738,19 +673,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_38: invalid = splice_block invalid {
-// CHECK:STDOUT:     %D.ref.loc14_21: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %D.ref.loc14_27: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc14_33.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc14_33.2: type = converted %bool.make_type, %.loc14_33.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %D = value_param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %LessOrEquivalent.ref: %.7 = name_ref LessOrEquivalent, imports.%import_ref.5 [template = constants.%.8]
@@ -765,19 +687,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_36: invalid = splice_block invalid {
-// CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %D.ref.loc22_25: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc22_31.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc22_31.2: type = converted %bool.make_type, %.loc22_31.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %D = value_param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %Greater.ref: %.9 = name_ref Greater, imports.%import_ref.6 [template = constants.%.10]
@@ -792,19 +701,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc30_41: invalid = splice_block invalid {
-// CHECK:STDOUT:     %D.ref.loc30_24: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %D.ref.loc30_30: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc30_36.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc30_36.2: type = converted %bool.make_type, %.loc30_36.1 [template = bool]
-// CHECK:STDOUT:     %a.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %a: %D = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %D = value_param runtime_param1
-// CHECK:STDOUT:     %b: %D = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %GreaterOrEquivalent.ref: %.11 = name_ref GreaterOrEquivalent, imports.%import_ref.7 [template = constants.%.12]

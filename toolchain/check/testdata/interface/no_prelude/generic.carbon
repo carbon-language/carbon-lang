@@ -281,11 +281,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return: %X {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: invalid = splice_block invalid {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %X = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17_15.1: %.2 = struct_literal ()
 // CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc17_16: init %X = converted %.loc17_15.1, %.loc17_15.2 [template = constants.%struct]
@@ -300,13 +295,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Simple.type.3) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc24: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Simple.ref: %Simple.type.1 = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %Simple.type: type = interface_type @Simple, @Simple(constants.%C) [template = constants.%Simple.type.3]
-// CHECK:STDOUT:       %T.param: %Simple.type.3 = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc24_12.1: %Simple.type.3 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc24_12.2 (constants.%T.2)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -320,13 +308,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Simple.type.3) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc25: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Simple.ref: %Simple.type.1 = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %Simple.type: type = interface_type @Simple, @Simple(constants.%C) [template = constants.%Simple.type.3]
-// CHECK:STDOUT:       %T.param: %Simple.type.3 = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc25_9.1: %Simple.type.3 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc25_9.2 (constants.%T.2)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
 // CHECK:STDOUT:     %T.ref: %Simple.type.3 = name_ref T, %T.loc25_9.1 [symbolic = %T.loc25_9.2 (constants.%T.2)]
 // CHECK:STDOUT:     %.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.2) [symbolic = %.loc26_3.2 (constants.%.11)]
@@ -516,13 +497,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Generic.type.4) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Generic.ref: %Generic.type.1 = name_ref Generic, file.%Generic.decl [template = constants.%Generic]
-// CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:       %Generic.type: type = interface_type @Generic, @Generic(constants.%B) [template = constants.%Generic.type.4]
-// CHECK:STDOUT:       %T.param: %Generic.type.4 = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc10_6.1: %Generic.type.4 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_6.2 (constants.%T.3)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.4 = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T.3)]
 // CHECK:STDOUT:     %.loc18: %Generic.type.3 = converted %T.ref, <error> [template = <error>]

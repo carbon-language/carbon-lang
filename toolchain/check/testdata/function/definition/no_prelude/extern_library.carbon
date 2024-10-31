@@ -141,7 +141,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -202,7 +201,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -263,7 +261,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,7 +317,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,7 +366,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -277,31 +277,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%e.param_patt: %Empty.type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%Empty.type]
-// CHECK:STDOUT:     %e.param: %Empty.type = value_param runtime_param0
-// CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseBasic(%e.param_patt: %Basic.type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%import_ref.2 [template = constants.%Basic.type]
-// CHECK:STDOUT:     %e.param: %Basic.type = value_param runtime_param0
-// CHECK:STDOUT:     %e: %Basic.type = bind_name e, %e.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseForwardDeclared(%f.param_patt: %ForwardDeclared.type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: invalid = splice_block invalid {
-// CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param runtime_param0
-// CHECK:STDOUT:     %f: %ForwardDeclared.type = bind_name f, %f.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

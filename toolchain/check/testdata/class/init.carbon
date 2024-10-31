@@ -130,20 +130,6 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: i32, %next.param_patt: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_40: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc16_12.2: type = converted %int.make_type_32, %.loc16_12.1 [template = i32]
-// CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16_28: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
-// CHECK:STDOUT:     %next.param: %.3 = value_param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
-// CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %.loc17_31.1: %.5 = struct_literal (%n.ref, %next.ref)
@@ -158,20 +144,6 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n.param_patt: i32, %next.param_patt: %.3) -> %return: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20_47: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_32, %.loc20_19.1 [template = i32]
-// CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc20_35: type = ptr_type %Class [template = constants.%.3]
-// CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
-// CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
-// CHECK:STDOUT:     %next.param: %.3 = value_param runtime_param1
-// CHECK:STDOUT:     %next: %.3 = bind_name next, %next.param
-// CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc21_31.1: %.8 = struct_literal (%next.ref, %n.ref)

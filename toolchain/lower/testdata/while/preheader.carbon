@@ -38,10 +38,9 @@ fn While() {
 // CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond.loc20:                                 ; preds = %entry, %while.body.loc20
+// CHECK:STDOUT: while.cond.loc20:                                 ; preds = %0, %while.body.loc20
 // CHECK:STDOUT:   %Cond.call.loc20 = call i1 @_CCond.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %Cond.call.loc20, label %while.body.loc20, label %while.done.loc20, !dbg !8
 // CHECK:STDOUT:

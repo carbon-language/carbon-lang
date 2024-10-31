@@ -21,7 +21,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: @tuple.loc12_37 = internal constant { i32, i32, i32 } { i32 0, i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc12_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !8

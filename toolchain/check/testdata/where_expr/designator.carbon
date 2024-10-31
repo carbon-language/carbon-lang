@@ -344,12 +344,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_16: invalid = splice_block invalid {
-// CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_11.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
@@ -399,12 +393,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() -> %.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_16: invalid = splice_block invalid {
-// CHECK:STDOUT:     %.loc4_14.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -462,11 +450,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
@@ -523,11 +506,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: invalid = splice_block invalid {
-// CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

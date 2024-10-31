@@ -17,7 +17,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: source_filename = "return_var_byval.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CMain.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %x.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc12_16 = load i32, ptr %x.var, align 4, !dbg !7

@@ -18,7 +18,9 @@ fn Copy(x: Make()) -> Make() {
 // CHECK:STDOUT: source_filename = "big_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define {} @_CCopy.Main({} %x) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret {} %x, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

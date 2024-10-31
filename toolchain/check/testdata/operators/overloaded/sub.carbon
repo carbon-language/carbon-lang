@@ -136,7 +136,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc30_19: type = ptr_type %C [template = constants.%.6]
+// CHECK:STDOUT:     %.loc30: type = ptr_type %C [template = constants.%.6]
 // CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %.6 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.6 = bind_name a, %a.param
@@ -217,17 +217,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[%self.param_patt: %C](%other.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc18_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc18_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc19_14: init %C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct]
@@ -242,15 +231,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %.6](%other.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_34: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc23_21: type = ptr_type %C [template = constants.%.6]
-// CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %.6 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.6 = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %other: %C = bind_name other, %other.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -258,22 +238,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Self: %SubAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+96: @Op.4.%.2 (%.7)](%other.param_patt: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+95: @Op.4.%.2 (%.7)](%other.param_patt: @Op.4.%Self (%Self.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C, %b.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc26_28: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc26_14: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc26_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc26_26: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %a: %C = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
@@ -286,15 +255,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a.param_patt: %.6, %b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc30_28: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref.loc30_18: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc30_19: type = ptr_type %C [template = constants.%.6]
-// CHECK:STDOUT:     %C.ref.loc30_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %.6 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %.6 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %b: %C = bind_name b, %b.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %.6 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

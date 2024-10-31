@@ -129,10 +129,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc15: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc15_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_6.2 (constants.%T)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
 // CHECK:STDOUT:     %I.type.loc19_4.1: type = interface_type @I, @I(constants.%T) [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
@@ -144,7 +140,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc23_6: %.4 = struct_literal ()
 // CHECK:STDOUT:   %.loc23_4: type = converted %.loc23_6, constants.%.4 [template = constants.%.4]

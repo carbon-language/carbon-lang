@@ -247,16 +247,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10_33: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc10: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:       %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:       %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:       %n.param.loc10: %T = value_param runtime_param0
-// CHECK:STDOUT:       %n.loc10: %T = bind_name n, %n.param.loc10
-// CHECK:STDOUT:       %return.param.loc10: ref %T = out_param runtime_param1
-// CHECK:STDOUT:       %return: ref %T = return_slot %return.param.loc10
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n.ref: @F.%T.loc5 (%T) = name_ref n, %n.loc10
 // CHECK:STDOUT:     return %n.ref
 // CHECK:STDOUT:   }
@@ -271,17 +261,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class.2]() -> %T {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc14_41: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc14: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:       %.loc14_28: type = specific_constant constants.%Class.2, @Class(constants.%T) [symbolic = constants.%Class.2]
-// CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, %.loc14_28 [symbolic = constants.%Class.2]
-// CHECK:STDOUT:       %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = constants.%T]
-// CHECK:STDOUT:       %self.param.loc14: %Class.2 = value_param runtime_param0
-// CHECK:STDOUT:       %self.loc14: %Class.2 = bind_name self, %self.param.loc14
-// CHECK:STDOUT:       %return.param.loc14: ref %T = out_param runtime_param1
-// CHECK:STDOUT:       %return: ref %T = return_slot %return.param.loc14
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, %self.loc14
 // CHECK:STDOUT:     %n.ref: @G.%.loc15_14.3 (%.2) = name_ref n, @Class.%.loc7_8.1 [template = @Class.%.loc7_8.1]
 // CHECK:STDOUT:     %.loc15_14.1: ref @G.%T.loc6 (%T) = class_element_access %self.ref, element0
@@ -385,8 +364,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.param: %T = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N, 1, %N.param [symbolic = constants.%N]
-// CHECK:STDOUT:     %.loc10_33: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
-// CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10_33 [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
+// CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10 [symbolic = constants.%B.2]
 // CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %self.param.loc10: %B.2 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc10: %B.2 = bind_name self, %self.param.loc10
@@ -461,20 +440,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %B.2](%a.param_patt: %T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10_45: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc10: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:       %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:       %N.param: %T = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %N.loc10: %T = bind_symbolic_name N, 1, %N.param [symbolic = constants.%N]
-// CHECK:STDOUT:       %.loc10_33: type = specific_constant constants.%B.2, @B(constants.%T, constants.%N) [symbolic = constants.%B.2]
-// CHECK:STDOUT:       %Self.ref.loc10: type = name_ref Self, %.loc10_33 [symbolic = constants.%B.2]
-// CHECK:STDOUT:       %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
-// CHECK:STDOUT:       %self.param.loc10: %B.2 = value_param runtime_param0
-// CHECK:STDOUT:       %self.loc10: %B.2 = bind_name self, %self.param.loc10
-// CHECK:STDOUT:       %a.param.loc10: %T = value_param runtime_param1
-// CHECK:STDOUT:       %a.loc10: %T = bind_name a, %a.param.loc10
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -582,10 +547,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc15: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc15_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_15.2 (constants.%T)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -667,7 +628,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -771,12 +731,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc15: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc15_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_12.2 (constants.%T)]
-// CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc15_22.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc15_22.2 (constants.%U)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -885,12 +839,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc14_32: invalid = splice_block invalid {
-// CHECK:STDOUT:       %.loc14_17.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:       %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:       %T.param: %.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc14_12.1: %.1 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_12.2 (constants.%T.2)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

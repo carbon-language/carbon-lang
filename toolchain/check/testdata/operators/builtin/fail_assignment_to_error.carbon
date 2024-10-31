@@ -54,7 +54,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc16: i32 = int_literal 42 [template = constants.%.2]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>

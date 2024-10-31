@@ -100,11 +100,6 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc13: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:       %T.param: %Interface.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc13_15.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_15.2 (constants.%T)]
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %.2 = name_ref F, @Interface.%.loc11 [template = constants.%.3]
 // CHECK:STDOUT:     return
@@ -119,16 +114,6 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type, %x.param_patt: @CallFacet.%T.loc21_14.2 (%T)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc21_35: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:       %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:       %.loc21_32.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:       %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:       %T.param: %Interface.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:       %x.param: @CallFacet.%T.loc21_14.2 (%T) = value_param runtime_param0
-// CHECK:STDOUT:       %x: @CallFacet.%T.loc21_14.2 (%T) = bind_name x, %x.param
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.ref: @CallFacet.%T.loc21_14.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

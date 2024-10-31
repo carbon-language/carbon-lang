@@ -22,7 +22,9 @@ fn Main() {
 // CHECK:STDOUT: @tuple.3.loc16_20.2 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
 // CHECK:STDOUT:   %.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_17.tuple.elem.load = load i32, ptr %.loc12_17.tuple.elem, align 4, !dbg !8
@@ -38,7 +40,9 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !12 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc16_20.2), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14

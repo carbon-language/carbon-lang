@@ -57,9 +57,5 @@ fn Run() -> String {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %return: String {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_20: invalid = splice_block invalid {
-// CHECK:STDOUT:     %return.param: ref String = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref String = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -165,16 +165,6 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%c.param_patt: %C) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_19: invalid = splice_block invalid {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc11 [template = constants.%C]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc23_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc23_15.2: type = converted %int.make_type_32, %.loc23_15.1 [template = i32]
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%.loc14 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc24_11.1: %F.type.1 = interface_witness_access constants.%.4, element0 [template = constants.%F.2]

@@ -48,11 +48,6 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%e.param_patt: %Empty.type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
-// CHECK:STDOUT:     %e.param: %Empty.type = value_param runtime_param0
-// CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

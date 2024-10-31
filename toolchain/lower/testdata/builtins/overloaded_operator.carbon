@@ -22,7 +22,9 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT: source_filename = "overloaded_operator.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CAddThreeIntegers.Main(i32 %a, i32 %b, i32 %c) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %int.sadd.loc18_12 = add i32 %a, %b, !dbg !7
 // CHECK:STDOUT:   %.loc18_12.3.temp = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   store i32 %int.sadd.loc18_12, ptr %.loc18_12.3.temp, align 4, !dbg !7

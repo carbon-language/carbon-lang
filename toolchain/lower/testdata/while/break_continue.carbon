@@ -29,10 +29,9 @@ fn While() {
 // CHECK:STDOUT: declare i1 @_CC.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc18, %if.then.loc17
+// CHECK:STDOUT: while.cond:                                       ; preds = %0, %if.else.loc18, %if.then.loc17
 // CHECK:STDOUT:   %A.call = call i1 @_CA.Main(), !dbg !7
 // CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:

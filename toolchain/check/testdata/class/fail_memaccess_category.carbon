@@ -90,7 +90,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.7]
+// CHECK:STDOUT:     %.loc19: type = struct_type {.a: %A} [template = constants.%.7]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %s.param: %.7 = value_param runtime_param0
 // CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
@@ -131,15 +131,6 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s.param_patt: %.7, %b.param_patt: %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_24: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc19_15: type = struct_type {.a: %A} [template = constants.%.7]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %s.param: %.7 = value_param runtime_param0
-// CHECK:STDOUT:     %s: %.7 = bind_name s, %s.param
-// CHECK:STDOUT:     %b.param: %B = value_param runtime_param1
-// CHECK:STDOUT:     %b: %B = bind_name b, %b.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %.7 = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]

@@ -87,7 +87,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.var: ref %Class = var cv
 // CHECK:STDOUT:   %cv: ref %Class = bind_name cv, %cv.var

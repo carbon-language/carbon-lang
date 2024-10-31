@@ -99,7 +99,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc21_9: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc21_10.1: %.6 = struct_literal (%.loc21_9)
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]

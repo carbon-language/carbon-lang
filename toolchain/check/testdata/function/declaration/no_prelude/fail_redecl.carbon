@@ -129,17 +129,14 @@ fn E() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc41: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @E() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc51: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc58:
-// CHECK:STDOUT:   %.loc58: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -205,17 +205,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_12: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, file.%Action.decl [template = constants.%Action]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
@@ -292,7 +286,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+33, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.4) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.9)]
@@ -371,11 +365,6 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_12: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
@@ -455,7 +444,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+33, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+36, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.4) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.11)]
@@ -540,17 +529,12 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a.param_patt: %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_12: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Action.ref: %Action.type.1 = name_ref Action, imports.%import_ref.1 [template = constants.%Action]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %Action.type: type = interface_type @Action, @Action(constants.%C) [template = constants.%Action.type.4]
-// CHECK:STDOUT:   %.loc8_26: %.9 = specific_constant imports.%import_ref.8, @Action(constants.%C) [template = constants.%.10]
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, %.loc8_26 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc8: %.9 = specific_constant imports.%import_ref.8, @Action(constants.%C) [template = constants.%.10]
+// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, %.loc8 [template = constants.%.10]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -862,14 +846,6 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeB(%a.param_patt: %A) -> %return: %B {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_21: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %B = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1 = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
 // CHECK:STDOUT:   %B.ref.loc5: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
@@ -1042,14 +1018,6 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeC(%a.param_patt: %A) -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_21: invalid = splice_block invalid {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
-// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1 = name_ref Factory, imports.%import_ref.1 [template = constants.%Factory]
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]

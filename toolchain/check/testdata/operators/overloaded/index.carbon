@@ -241,17 +241,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
-// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType.1 = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct.1]
@@ -503,21 +492,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %.3](%subscript.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5_44: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc4_15.6 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_32.loc5_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_32.1: type = value_of_initializer %int.make_type_32.loc5_32 [template = i32]
-// CHECK:STDOUT:     %.loc5_32.2: type = converted %int.make_type_32.loc5_32, %.loc5_32.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc5_40: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc5_40.1: type = value_of_initializer %int.make_type_32.loc5_40 [template = i32]
-// CHECK:STDOUT:     %.loc5_40.2: type = converted %int.make_type_32.loc5_40, %.loc5_40.1 [template = i32]
-// CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: i32 = value_param runtime_param1
-// CHECK:STDOUT:     %subscript: i32 = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %.3 = name_ref self, %self
 // CHECK:STDOUT:   %.loc6_17: i32 = int_literal 0 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc6_16: i32 = tuple_access %self.ref, element0
@@ -803,17 +777,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.1) -> %return: %ElementType.1 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
-// CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
-// CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.1 = class_init (), %return [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType.1 = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct.1]

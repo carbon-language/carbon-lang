@@ -123,21 +123,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_17: invalid = splice_block invalid {
-// CHECK:STDOUT:     %.loc11_13.1: Core.BigInt = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
-// CHECK:STDOUT:     %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
-// CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_26: f64 = float_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc20_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc20_10.2: type = converted %int.make_type_32, %.loc20_10.1 [template = i32]

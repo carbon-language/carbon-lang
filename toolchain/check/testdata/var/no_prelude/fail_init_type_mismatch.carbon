@@ -34,7 +34,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc15_11.1: %.2 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref %.2 = var x

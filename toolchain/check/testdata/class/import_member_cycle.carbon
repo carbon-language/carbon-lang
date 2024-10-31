@@ -118,7 +118,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, imports.%import_ref.1 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type %Cycle [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a

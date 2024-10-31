@@ -20,12 +20,16 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "i32.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CEcho.Main(i32 %a) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   ret i32 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %Echo.call = call i32 @_CEcho.Main(i32 1), !dbg !10
 // CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4, !dbg !11

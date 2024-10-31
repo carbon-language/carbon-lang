@@ -122,11 +122,6 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: invalid = splice_block invalid {
-// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
-// CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc19: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%NoSelf]
 // CHECK:STDOUT:   %NoSelf.call.loc19: init %.1 = call %NoSelf.ref.loc19()

@@ -50,7 +50,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_8: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc11_14: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:

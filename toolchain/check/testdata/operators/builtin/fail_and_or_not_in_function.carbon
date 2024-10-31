@@ -80,7 +80,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block21> [template = constants.%.3]
-// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+74.loc42_10(%.loc42_17)
+// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+73.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
@@ -91,16 +91,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_23: invalid = splice_block invalid {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc12_9.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc12_9.2: type = converted %bool.make_type, %.loc12_9.1 [template = bool]
-// CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref type = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+14.loc12_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

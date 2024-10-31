@@ -189,7 +189,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc23: invalid = splice_block invalid {}
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -329,20 +328,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %C.2](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc20_51: invalid = splice_block invalid {
-// CHECK:STDOUT:       %.loc20_24: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
-// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24 [symbolic = constants.%C.2]
-// CHECK:STDOUT:       %U.ref.loc20_43: type = name_ref U, %U.loc20 [symbolic = constants.%U]
-// CHECK:STDOUT:       %U.ref.loc20_49: type = name_ref U, %U.loc20 [symbolic = constants.%U]
-// CHECK:STDOUT:       %self.param.loc20: %C.2 = value_param runtime_param0
-// CHECK:STDOUT:       %self.loc20: %C.2 = bind_name self, %self.param.loc20
-// CHECK:STDOUT:       %U.param.loc20: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %U.loc20: type = bind_symbolic_name U, 1, %U.param.loc20 [symbolic = constants.%U]
-// CHECK:STDOUT:       %u.param.loc20: %U = value_param runtime_param1
-// CHECK:STDOUT:       %u.loc20: %U = bind_name u, %u.param.loc20
-// CHECK:STDOUT:       %return.param.loc20: ref %U = out_param runtime_param2
-// CHECK:STDOUT:       %return: ref %U = return_slot %return.param.loc20
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref
 // CHECK:STDOUT:   }

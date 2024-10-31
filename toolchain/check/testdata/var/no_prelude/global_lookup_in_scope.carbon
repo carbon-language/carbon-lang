@@ -40,7 +40,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %.loc14_16.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_16.2: type = converted %.loc14_16.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_17: type = struct_type {.v: %.1} [template = constants.%.2]

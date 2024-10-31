@@ -165,11 +165,6 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: @F.2.%T (%T)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc20: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc19_23.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param runtime_param0
-// CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

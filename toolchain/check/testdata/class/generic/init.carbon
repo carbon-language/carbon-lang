@@ -168,16 +168,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_47: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.ref.loc8_39: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
-// CHECK:STDOUT:       %T.ref.loc8_45: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc8_26.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_26.2 (constants.%T)]
-// CHECK:STDOUT:       %x.param: @InitFromStructGeneric.%T.loc8_26.2 (%T) = value_param runtime_param0
-// CHECK:STDOUT:       %x: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_name x, %x.param
-// CHECK:STDOUT:       %return.param: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = out_param runtime_param1
-// CHECK:STDOUT:       %return: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = return_slot %return.param
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
 // CHECK:STDOUT:     %Class.loc9_15.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc9_15.2 (constants.%Class.2)]
@@ -202,18 +192,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_42: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32.loc13_30: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32.loc13_30 [template = i32]
-// CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32.loc13_30, %.loc13_30.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc13_38: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_38.1: type = value_of_initializer %int.make_type_32.loc13_38 [template = i32]
-// CHECK:STDOUT:     %.loc13_38.2: type = converted %int.make_type_32.loc13_38, %.loc13_38.1 [template = i32]
-// CHECK:STDOUT:     %x.param: i32 = value_param runtime_param0
-// CHECK:STDOUT:     %x: i32 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_15.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
@@ -386,16 +364,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_48: invalid = splice_block invalid {
-// CHECK:STDOUT:       %T.ref.loc8_40: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
-// CHECK:STDOUT:       %T.ref.loc8_46: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
-// CHECK:STDOUT:       %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %T.loc8_27.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_27.2 (constants.%T)]
-// CHECK:STDOUT:       %x.param: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = value_param runtime_param0
-// CHECK:STDOUT:       %x: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = bind_name x, %x.param
-// CHECK:STDOUT:       %return.param: ref @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = out_param runtime_param1
-// CHECK:STDOUT:       %return: ref @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = return_slot %return.param
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.ref: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [template = constants.%Adapt.1]
 // CHECK:STDOUT:     %T.ref.loc9_22: type = name_ref T, %T.loc8_27.1 [symbolic = %T.loc8_27.2 (constants.%T)]
@@ -413,18 +381,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromAdaptedSpecific(%x.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_43: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32.loc12_31: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc12_31.1: type = value_of_initializer %int.make_type_32.loc12_31 [template = i32]
-// CHECK:STDOUT:     %.loc12_31.2: type = converted %int.make_type_32.loc12_31, %.loc12_31.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc12_39: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc12_39.1: type = value_of_initializer %int.make_type_32.loc12_39 [template = i32]
-// CHECK:STDOUT:     %.loc12_39.2: type = converted %int.make_type_32.loc12_39, %.loc12_39.1 [template = i32]
-// CHECK:STDOUT:     %x.param: i32 = value_param runtime_param0
-// CHECK:STDOUT:     %x: i32 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: i32 = name_ref x, %x
 // CHECK:STDOUT:   %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [template = constants.%Adapt.1]
 // CHECK:STDOUT:   %int.make_type_32.loc13_22: init type = call constants.%Int32() [template = i32]

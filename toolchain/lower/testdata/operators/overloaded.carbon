@@ -32,7 +32,9 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: source_filename = "overloaded.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1, !dbg !7
 // CHECK:STDOUT:   %.loc17_28 = xor i1 %.loc17_36.2, true, !dbg !8
@@ -42,7 +44,9 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_COp.Number.Main:Mul.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1, !dbg !12
 // CHECK:STDOUT:   br i1 %.loc22_33.2, label %and.rhs.loc22, label %and.result.loc22, !dbg !12
@@ -53,8 +57,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   br label %and.result.loc22, !dbg !12
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result.loc22:                                 ; preds = %and.rhs.loc22, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc22_55.2, %and.rhs.loc22 ]
-// CHECK:STDOUT:   %.loc22_69.1 = xor i1 %0, true, !dbg !14
+// CHECK:STDOUT:   %1 = phi i1 [ false, %entry ], [ %.loc22_55.2, %and.rhs.loc22 ]
+// CHECK:STDOUT:   %.loc22_69.1 = xor i1 %1, true, !dbg !14
 // CHECK:STDOUT:   br i1 %.loc22_69.1, label %or.rhs, label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc22
@@ -70,18 +74,20 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   br label %and.result.loc23, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result.loc23:                                 ; preds = %and.rhs.loc23, %or.rhs
-// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc23_55, %and.rhs.loc23 ]
+// CHECK:STDOUT:   %2 = phi i1 [ false, %or.rhs ], [ %.loc23_55, %and.rhs.loc23 ]
 // CHECK:STDOUT:   br label %or.result, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc23, %and.result.loc22
-// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc22 ], [ %1, %and.result.loc23 ]
+// CHECK:STDOUT:   %3 = phi i1 [ true, %and.result.loc22 ], [ %2, %and.result.loc23 ]
 // CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !19
-// CHECK:STDOUT:   store i1 %2, ptr %.loc23_77.2.is_positive, align 1, !dbg !19
+// CHECK:STDOUT:   store i1 %3, ptr %.loc23_77.2.is_positive, align 1, !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:
+// CHECK:STDOUT: entry:                                            ; preds = %0
 // CHECK:STDOUT:   %.loc28_10.3.temp = alloca { i1 }, align 8, !dbg !22
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.3.temp, ptr %a), !dbg !22
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core"(ptr %return, ptr %.loc28_10.3.temp, ptr %b), !dbg !22

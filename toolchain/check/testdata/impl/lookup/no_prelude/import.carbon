@@ -136,7 +136,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,13 +275,11 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,7 +290,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.3() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: invalid = splice_block invalid {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,12 +375,12 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:   %import_ref.16: type = import_ref PackageB//default, inst+24, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.17: type = import_ref PackageB//default, inst+25, loaded [template = constants.%HasG.type]
 // CHECK:STDOUT:   %import_ref.18: <witness> = import_ref PackageB//default, inst+30, loaded [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref PackageB//default, inst+34, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.20: type = import_ref PackageB//default, inst+43, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.21: <witness> = import_ref PackageB//default, inst+51, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.22: type = import_ref PackageB//default, inst+55, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.23: type = import_ref PackageB//default, inst+56, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.24: <witness> = import_ref PackageB//default, inst+61, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.19: type = import_ref PackageB//default, inst+33, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.20: type = import_ref PackageB//default, inst+42, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.21: <witness> = import_ref PackageB//default, inst+50, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.22: type = import_ref PackageB//default, inst+53, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.23: type = import_ref PackageB//default, inst+54, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.24: <witness> = import_ref PackageB//default, inst+59, loaded [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.25: type = import_ref PackageB//default, inst+3, loaded [template = constants.%HasG.type]
 // CHECK:STDOUT:   %import_ref.26 = import_ref PackageB//default, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -484,12 +480,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestCF(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5: invalid = splice_block invalid {
-// CHECK:STDOUT:     %PackageA.ref.loc5: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %PackageA.ref.loc6: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
@@ -508,12 +498,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestDF(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: invalid = splice_block invalid {
-// CHECK:STDOUT:     %PackageB.ref: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
-// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.11 [template = constants.%D]
-// CHECK:STDOUT:     %d.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %d: %D = bind_name d, %d.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
@@ -527,12 +511,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestCG(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: invalid = splice_block invalid {
-// CHECK:STDOUT:     %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %PackageB.ref: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
 // CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.25 [template = constants.%HasG.type]
@@ -551,12 +529,6 @@ fn TestDG(d: PackageB.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestDG(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: invalid = splice_block invalid {
-// CHECK:STDOUT:     %PackageB.ref.loc17: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
-// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.11 [template = constants.%D]
-// CHECK:STDOUT:     %d.param: %D = value_param runtime_param0
-// CHECK:STDOUT:     %d: %D = bind_name d, %d.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %PackageB.ref.loc18: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
 // CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.25 [template = constants.%HasG.type]

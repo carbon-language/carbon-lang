@@ -57,23 +57,13 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_15: invalid = splice_block invalid {
-// CHECK:STDOUT:     %x.ref: type = name_ref x, <unexpected>.inst+3.loc11_5
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_24: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc28_21: invalid = splice_block invalid {
-// CHECK:STDOUT:     %y.ref: type = name_ref y, <unexpected>.inst+27.loc23_5
-// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28_30: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc28: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

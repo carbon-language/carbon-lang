@@ -106,7 +106,6 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %Undefined.ref: type = name_ref Undefined, file.%Undefined.decl [template = constants.%Undefined.type]
 // CHECK:STDOUT:   %G.ref: <error> = name_ref G, <error> [template = <error>]
 // CHECK:STDOUT:   return

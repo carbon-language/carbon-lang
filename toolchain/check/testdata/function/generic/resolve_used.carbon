@@ -106,20 +106,6 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.BigInt](%n.param_patt: <error>) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc10_61: invalid = splice_block invalid {
-// CHECK:STDOUT:       %Core.ref.loc10_23: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %BigInt.ref: %BigInt.type = name_ref BigInt, imports.%import_ref.1 [template = constants.%BigInt]
-// CHECK:STDOUT:       %big_int.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
-// CHECK:STDOUT:       %.loc10_35.1: type = value_of_initializer %big_int.make_type [template = Core.BigInt]
-// CHECK:STDOUT:       %.loc10_35.2: type = converted %big_int.make_type, %.loc10_35.1 [template = Core.BigInt]
-// CHECK:STDOUT:       %Core.ref.loc10_41: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: <error> = name_ref IntLiteral, <error> [template = <error>]
-// CHECK:STDOUT:       %N.ref.loc10: Core.BigInt = name_ref N, %N.loc10_19.1 [symbolic = %N.loc10_19.2 (constants.%N)]
-// CHECK:STDOUT:       %N.param: Core.BigInt = value_param runtime_param<invalid>
-// CHECK:STDOUT:       %N.loc10_19.1: Core.BigInt = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc10_19.2 (constants.%N)]
-// CHECK:STDOUT:       %n.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:       %n: <error> = bind_name n, %n.param
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
 // CHECK:STDOUT:     %N.ref.loc15: Core.BigInt = name_ref N, %N.loc10_19.1 [symbolic = %N.loc10_19.2 (constants.%N)]
@@ -136,7 +122,6 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: invalid = splice_block invalid {}
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
 // CHECK:STDOUT:   %.loc19: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   return

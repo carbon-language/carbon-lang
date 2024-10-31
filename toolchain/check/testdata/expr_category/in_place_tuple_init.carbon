@@ -110,18 +110,6 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: %.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_22: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32.loc13_12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc13_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_20.1: %.2 = tuple_literal (%int.make_type_32.loc13_12, %int.make_type_32.loc13_17)
-// CHECK:STDOUT:     %.loc13_20.2: type = value_of_initializer %int.make_type_32.loc13_12 [template = i32]
-// CHECK:STDOUT:     %.loc13_20.3: type = converted %int.make_type_32.loc13_12, %.loc13_20.2 [template = i32]
-// CHECK:STDOUT:     %.loc13_20.4: type = value_of_initializer %int.make_type_32.loc13_17 [template = i32]
-// CHECK:STDOUT:     %.loc13_20.5: type = converted %int.make_type_32.loc13_17, %.loc13_20.4 [template = i32]
-// CHECK:STDOUT:     %.loc13_20.6: type = converted %.loc13_20.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc14_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_19.1: %.2 = tuple_literal (%int.make_type_32.loc14_11, %int.make_type_32.loc14_16)
@@ -149,13 +137,6 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_15: invalid = splice_block invalid {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc19_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc19_11.2: type = converted %int.make_type_32, %.loc19_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc20_11.1: ref %.3 = temporary_storage
 // CHECK:STDOUT:   %G.call: init %.3 = call %G.ref() to %.loc20_11.1
