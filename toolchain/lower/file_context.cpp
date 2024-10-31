@@ -548,13 +548,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> llvm::Type* {
-  auto fields = context.sem_ir().inst_blocks().Get(inst.fields_id);
+  auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
-  for (auto field_id : fields) {
-    auto field =
-        context.sem_ir().insts().GetAs<SemIR::StructTypeField>(field_id);
-    subtypes.push_back(context.GetType(field.field_type_id));
+  for (auto field : fields) {
+    subtypes.push_back(context.GetType(field.type_id));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }

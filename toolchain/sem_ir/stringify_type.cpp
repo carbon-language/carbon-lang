@@ -206,26 +206,22 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(StructType inst): {
-        auto refs = sem_ir.inst_blocks().Get(inst.fields_id);
-        if (refs.empty()) {
+        auto fields = sem_ir.struct_type_fields().Get(inst.fields_id);
+        if (fields.empty()) {
           out << "{}";
           break;
-        } else if (step.index == 0) {
-          out << "{";
-        } else if (step.index < static_cast<int>(refs.size())) {
-          out << ", ";
-        } else {
+        }
+
+        if (step.index >= static_cast<int>(fields.size())) {
           out << "}";
           break;
         }
 
+        const auto& field = fields[step.index];
+        out << (step.index == 0 ? "{" : ", ") << "."
+            << sem_ir.names().GetFormatted(field.name_id) << ": ";
         steps.push_back(step.Next());
-        push_inst_id(refs[step.index]);
-        break;
-      }
-      case CARBON_KIND(StructTypeField inst): {
-        out << "." << sem_ir.names().GetFormatted(inst.name_id) << ": ";
-        push_inst_id(sem_ir.types().GetInstId(inst.field_type_id));
+        push_inst_id(sem_ir.types().GetInstId(field.type_id));
         break;
       }
       case CARBON_KIND(TupleType inst): {

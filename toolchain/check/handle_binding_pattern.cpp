@@ -131,15 +131,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             binding_id,
             {.type_id = field_type_id,
              .name_id = name_id,
-             .index = SemIR::ElementIndex(context.args_type_info_stack()
-                                              .PeekCurrentBlockContents()
-                                              .size())});
+             .index = SemIR::ElementIndex(
+                 context.struct_type_fields_stack().PeekArray().size())});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddInstId(
-            context.AddInstInNoBlock<SemIR::StructTypeField>(
-                binding_id,
-                {.name_id = name_id, .field_type_id = cast_type_id}));
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_id = cast_type_id});
         context.node_stack().Push(node_id, field_id);
         break;
       }

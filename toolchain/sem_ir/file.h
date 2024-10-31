@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 
@@ -142,6 +143,12 @@ class File : public Printable<File> {
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
+  auto struct_type_fields() -> StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
+  auto struct_type_fields() const -> const StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
   auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
@@ -255,6 +262,9 @@ class File : public Printable<File> {
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
+
+  // Storage for StructTypeField lists.
+  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);

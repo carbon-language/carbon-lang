@@ -29,6 +29,7 @@ struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct NameScope;
+struct StructTypeField;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -721,6 +722,25 @@ constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
+
+// The ID of a type block.
+struct StructTypeFieldsId : public IdBase,
+                            public Printable<StructTypeFieldsId> {
+  using ElementType = StructTypeField;
+  using ValueType = llvm::MutableArrayRef<StructTypeField>;
+
+  // An explicitly invalid ID.
+  static const StructTypeFieldsId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "type_block";
+    IdBase::Print(out);
+  }
+};
+
+constexpr StructTypeFieldsId StructTypeFieldsId::Invalid =
+    StructTypeFieldsId(InvalidIndex);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {

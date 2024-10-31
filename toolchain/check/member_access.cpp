@@ -405,14 +405,13 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
             context.constant_values().GetInstId(base_type_const_id))) {
       // TODO: Do we need to optimize this with a lookup table for O(1)?
-      for (auto [i, ref_id] :
-           llvm::enumerate(context.inst_blocks().Get(struct_type->fields_id))) {
-        auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
+      for (auto [i, field] : llvm::enumerate(
+               context.struct_type_fields().Get(struct_type->fields_id))) {
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
           // binding separately. Perhaps a struct type should be a name scope.
           return context.AddInst<SemIR::StructAccess>(
-              loc_id, {.type_id = field.field_type_id,
+              loc_id, {.type_id = field.type_id,
                        .struct_id = base_id,
                        .index = SemIR::ElementIndex(i)});
         }

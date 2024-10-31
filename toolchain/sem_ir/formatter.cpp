@@ -342,14 +342,6 @@ class FormatterImpl {
              sem_ir_.inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
              sem_ir_.inst_blocks().GetOrEmpty(
                  specific.GetValueBlock(region)))) {
-      if (generic_inst_id && specific_inst_id &&
-          sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
-          sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {
-        // Skip printing struct type fields to match the way we print the
-        // generic.
-        continue;
-      }
-
       Indent();
       if (generic_inst_id) {
         FormatName(*generic_inst_id);
@@ -899,18 +891,14 @@ class FormatterImpl {
     FormatTrailingBlock(inst.requirements_id);
   }
 
-  // StructTypeFields are formatted as part of their StructType.
-  auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
-
   auto FormatInstRHS(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
+    for (auto field : sem_ir_.struct_type_fields().Get(inst.fields_id)) {
       out_ << sep << ".";
-      auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
       FormatName(field.name_id);
       out_ << ": ";
-      FormatType(field.field_type_id);
+      FormatType(field.type_id);
     }
     out_ << "}";
   }

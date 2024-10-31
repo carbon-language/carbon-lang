@@ -77,6 +77,13 @@ static auto PushOperand(Context& context, Worklist& worklist,
         worklist.Push(inst_id);
       }
       break;
+    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
+      for (auto field :
+           context.struct_type_fields().Get(SemIR::StructTypeFieldsId(arg))) {
+        worklist.Push(context.types().GetInstId(field.type_id));
+      }
+      break;
+    }
     case SemIR::IdKind::For<SemIR::TypeBlockId>:
       for (auto type_id : context.type_blocks().Get(SemIR::TypeBlockId(arg))) {
         worklist.Push(context.types().GetInstId(type_id));
@@ -133,6 +140,18 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         new_inst_block.Set(i, worklist.Pop());
       }
       return new_inst_block.GetCanonical().index;
+    }
+    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
+      SemIR::StructTypeFieldsId old_fields_id(arg);
+      auto old_fields = context.struct_type_fields().Get(old_fields_id);
+      SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(context.sem_ir(),
+                                                         old_fields_id);
+      for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
+        new_fields.Set(
+            i, {.name_id = old_fields[i].name_id,
+                .type_id = context.GetTypeIdForTypeInst(worklist.Pop())});
+      }
+      return new_fields.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::TypeBlockId>: {
       SemIR::TypeBlockId old_type_block_id(arg);

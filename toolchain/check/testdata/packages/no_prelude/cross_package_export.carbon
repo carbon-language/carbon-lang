@@ -346,9 +346,9 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -546,9 +546,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -600,9 +600,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -653,9 +653,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name_indirect, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name_indirect, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -712,9 +712,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -828,9 +828,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//export_name, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//conflict, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

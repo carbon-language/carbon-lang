@@ -82,10 +82,15 @@ auto Context::VerifyOnFinish() -> void {
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
   // node_stack_ will still contain top-level entities.
-  scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
   pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
+  args_type_info_stack_.VerifyOnFinish();
+  CARBON_CHECK(struct_type_fields_stack_.empty());
+  // TODO: Add verification for decl_name_stack_ and
+  // decl_introducer_state_stack_.
+  scope_stack_.VerifyOnFinish();
+  // TODO: Add verification for generic_region_stack_.
 }
 
 // Finish producing an instruction. Set its constant value, and register it in
@@ -833,10 +838,8 @@ class TypeCompleter {
         break;
       }
       case CARBON_KIND(SemIR::StructType inst): {
-        for (auto field_id : context_.inst_blocks().Get(inst.fields_id)) {
-          Push(context_.insts()
-                   .GetAs<SemIR::StructTypeField>(field_id)
-                   .field_type_id);
+        for (auto field : context_.struct_type_fields().Get(inst.fields_id)) {
+          Push(field.type_id);
         }
         break;
       }
@@ -967,33 +970,30 @@ class TypeCompleter {
   auto BuildValueReprForInst(SemIR::TypeId type_id,
                              SemIR::StructType struct_type) const
       -> SemIR::ValueRepr {
-    // TODO: Share more code with tuples.
-    auto fields = context_.inst_blocks().Get(struct_type.fields_id);
+    auto fields = context_.struct_type_fields().Get(struct_type.fields_id);
     if (fields.empty()) {
       return MakeEmptyValueRepr();
     }
 
     // Find the value representation for each field, and construct a struct
     // of value representations.
-    llvm::SmallVector<SemIR::InstId> value_rep_fields;
+    llvm::SmallVector<SemIR::StructTypeField> value_rep_fields;
     value_rep_fields.reserve(fields.size());
     bool same_as_object_rep = true;
-    for (auto field_id : fields) {
-      auto field = context_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      auto field_value_rep = GetNestedValueRepr(field.field_type_id);
-      if (field_value_rep.type_id != field.field_type_id) {
+    for (auto field : fields) {
+      auto field_value_rep = GetNestedValueRepr(field.type_id);
+      if (field_value_rep.type_id != field.type_id) {
         same_as_object_rep = false;
-        field.field_type_id = field_value_rep.type_id;
-        field_id = context_.constant_values().GetInstId(
-            TryEvalInst(context_, SemIR::InstId::Invalid, field));
+        field.type_id = field_value_rep.type_id;
       }
-      value_rep_fields.push_back(field_id);
+      value_rep_fields.push_back(field);
     }
 
-    auto value_rep = same_as_object_rep
-                         ? type_id
-                         : context_.GetStructType(
-                               context_.inst_blocks().Add(value_rep_fields));
+    auto value_rep =
+        same_as_object_rep
+            ? type_id
+            : context_.GetStructType(
+                  context_.struct_type_fields().AddCanonical(value_rep_fields));
     return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                        same_as_object_rep);
   }
@@ -1229,8 +1229,9 @@ static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
   return type_id;
 }
 
-auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::StructType>(*this, refs_id);
+auto Context::GetStructType(SemIR::StructTypeFieldsId fields_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::StructType>(*this, fields_id);
 }
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)

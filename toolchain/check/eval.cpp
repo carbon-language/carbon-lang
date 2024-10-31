@@ -313,6 +313,36 @@ static auto GetConstantValue(EvalContext& eval_context,
 // Compute the constant value of a type block. This may be different from the
 // input type block if we have known generic arguments.
 static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::StructTypeFieldsId fields_id, Phase* phase)
+    -> SemIR::StructTypeFieldsId {
+  if (!fields_id.is_valid()) {
+    return SemIR::StructTypeFieldsId::Invalid;
+  }
+  auto fields = eval_context.context().struct_type_fields().Get(fields_id);
+  llvm::SmallVector<SemIR::StructTypeField> new_fields;
+  for (auto field : fields) {
+    auto new_type_id = GetConstantValue(eval_context, field.type_id, phase);
+    if (!new_type_id.is_valid()) {
+      return SemIR::StructTypeFieldsId::Invalid;
+    }
+
+    // Once we leave the small buffer, we know the first few elements are all
+    // constant, so it's likely that the entire block is constant. Resize to the
+    // target size given that we're going to allocate memory now anyway.
+    if (new_fields.size() == new_fields.capacity()) {
+      new_fields.reserve(fields.size());
+    }
+
+    new_fields.push_back({.name_id = field.name_id, .type_id = new_type_id});
+  }
+  // TODO: If the new block is identical to the original block, and we know the
+  // old ID was canonical, return the original ID.
+  return eval_context.context().struct_type_fields().AddCanonical(new_fields);
+}
+
+// Compute the constant value of a type block. This may be different from the
+// input type block if we have known generic arguments.
+static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeBlockId type_block_id, Phase* phase)
     -> SemIR::TypeBlockId {
   if (!type_block_id.is_valid()) {
@@ -1235,9 +1265,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::StructType::fields_id);
-    case SemIR::StructTypeField::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::StructTypeField::field_type_id);
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::StructValue::type_id,

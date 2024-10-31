@@ -390,8 +390,8 @@ static auto ConvertStructToStructOrClass(Context& context,
       std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT>;
 
   auto& sem_ir = context.sem_ir();
-  auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
-  auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
+  auto src_elem_fields = sem_ir.struct_type_fields().Get(src_type.fields_id);
+  auto dest_elem_fields = sem_ir.struct_type_fields().Get(dest_type.fields_id);
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -426,9 +426,8 @@ static auto ConvertStructToStructOrClass(Context& context,
   // Prepare to look up fields in the source by index.
   Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
-    for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
-      auto result = src_field_indexes.Insert(
-          context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i);
+    for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
+      auto result = src_field_indexes.Insert(field.name_id, i);
       CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
   }
@@ -454,10 +453,7 @@ static auto ConvertStructToStructOrClass(Context& context,
           : SemIR::CopyOnWriteInstBlock(
                 sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
                             src_elem_fields.size()});
-  for (auto [i, dest_field_id] : llvm::enumerate(dest_elem_fields)) {
-    auto dest_field =
-        sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
-
+  for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     // Find the matching source field.
     auto src_field_index = i;
     if (src_type.fields_id != dest_type.fields_id) {
@@ -483,16 +479,15 @@ static auto ConvertStructToStructOrClass(Context& context,
         return SemIR::InstId::BuiltinError;
       }
     }
-    auto src_field = sem_ir.insts().GetAs<SemIR::StructTypeField>(
-        src_elem_fields[src_field_index]);
+    auto src_field = src_elem_fields[src_field_index];
 
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
-            context, value_loc_id, value_id, src_field.field_type_id,
-            literal_elems, inner_kind, target.init_id, dest_field.field_type_id,
-            target.init_block, src_field_index);
+            context, value_loc_id, value_id, src_field.type_id, literal_elems,
+            inner_kind, target.init_id, dest_field.type_id, target.init_block,
+            src_field_index);
     if (init_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstId::BuiltinError;
     }
