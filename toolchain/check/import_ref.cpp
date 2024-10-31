@@ -1195,6 +1195,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::PointerType inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::SpecificFunction inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
         return TryResolveTypedInst(inst);
       }
@@ -2077,6 +2080,21 @@ class ImportRefResolver {
     auto pointee_type_id = context_.GetTypeIdForTypeConstant(pointee_const_id);
     return ResolveAs<SemIR::PointerType>(
         {.type_id = SemIR::TypeId::TypeType, .pointee_id = pointee_type_id});
+  }
+
+  auto TryResolveTypedInst(SemIR::SpecificFunction inst) -> ResolveResult {
+    auto type_const_id = GetLocalConstantId(inst.type_id);
+    auto callee_id = GetLocalConstantInstId(inst.callee_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    auto type_id = context_.GetTypeIdForTypeConstant(type_const_id);
+    auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
+    return ResolveAs<SemIR::SpecificFunction>({.type_id = type_id,
+                                               .callee_id = callee_id,
+                                               .specific_id = specific_id});
   }
 
   auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
