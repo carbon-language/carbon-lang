@@ -22,7 +22,7 @@ def install_filegroup(name, filegroup_target):
         "name": name,
     }
 
-def install_symlink(name, symlink_to):
+def install_symlink(name, symlink_to, is_driver = False):
     """Adds a symlink for install.
 
     Used in the `install_dirs` dict.
@@ -30,9 +30,11 @@ def install_symlink(name, symlink_to):
     Args:
       name: The filename to use.
       symlink_to: A relative path for the symlink.
+      is_driver: False if it should be included in the `no_driver_name`
+        filegroup.
     """
     return {
-        "is_driver": False,
+        "is_driver": is_driver,
         "name": name,
         "symlink": symlink_to,
     }
@@ -117,10 +119,23 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                 )
             elif "symlink" in entry:
                 symlink_to = "{0}/{1}/{2}".format(prefix, dir, entry["symlink"])
+
+                # For bazel, we need to resolve relative symlinks.
+                if "../" in symlink_to:
+                    parts = symlink_to.split("/")
+                    result = []
+                    for part in parts:
+                        if part == "..":
+                            result = result[:-1]
+                        else:
+                            result.append(part)
+                    symlink_to = "/".join(result)
                 symlink_file(
                     name = prefixed_path,
-                    symlink_label = symlink_to,
+                    symlink_binary = symlink_to,
                 )
+
+                # For the distributed package, we retain relative symlinks.
                 pkg_mklink(
                     name = pkg_path,
                     link_name = path,

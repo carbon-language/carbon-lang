@@ -542,11 +542,24 @@ class FormatterImpl {
       out_ << "extend " << extended_scope_id << "\n";
     }
 
+    // This is used to cluster all "Core//prelude/..." imports, but not
+    // "Core//prelude" itself. This avoids unrelated churn in test files when we
+    // add or remove an unused prelude file, but is intended to still show the
+    // existence of indirect imports.
+    bool has_prelude_components = false;
     for (auto [import_ir_id, unused] : scope.import_ir_scopes) {
+      auto label = GetImportIRLabel(import_ir_id);
+      if (label.starts_with("Core//prelude/")) {
+        if (has_prelude_components) {
+          // Only print the existence once.
+          continue;
+        } else {
+          has_prelude_components = true;
+          label = "Core//prelude/...";
+        }
+      }
       Indent();
-      out_ << "import ";
-      FormatArg(import_ir_id);
-      out_ << "\n";
+      out_ << "import " << label << "\n";
     }
 
     if (scope.has_error) {
@@ -948,23 +961,10 @@ class FormatterImpl {
   auto FormatArg(FloatKind k) -> void { k.Print(out_); }
 
   auto FormatArg(ImportIRId id) -> void {
-    if (!id.is_valid()) {
+    if (id.is_valid()) {
+      out_ << GetImportIRLabel(id);
+    } else {
       out_ << id;
-      return;
-    }
-    const auto& import_ir = *sem_ir_.import_irs().Get(id).sem_ir;
-    if (import_ir.package_id().is_valid()) {
-      out_ << import_ir.identifiers().Get(import_ir.package_id());
-    } else {
-      out_ << "Main";
-    }
-    out_ << "//";
-    CARBON_CHECK(import_ir.library_id().is_valid());
-    if (import_ir.library_id() == LibraryNameId::Default) {
-      out_ << "default";
-    } else {
-      out_ << import_ir.string_literal_values().Get(
-          import_ir.library_id().AsStringLiteralValueId());
     }
   }
 
@@ -1116,6 +1116,25 @@ class FormatterImpl {
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
       FormatConstant(sem_ir_.types().GetConstantId(id));
     }
+  }
+
+  // Returns the label for the indicated IR.
+  auto GetImportIRLabel(ImportIRId id) -> std::string {
+    CARBON_CHECK(id.is_valid(),
+                 "GetImportIRLabel should only be called where we a valid ID.");
+    const auto& import_ir = *sem_ir_.import_irs().Get(id).sem_ir;
+    CARBON_CHECK(import_ir.library_id().is_valid());
+
+    llvm::StringRef package_name =
+        import_ir.package_id().is_valid()
+            ? import_ir.identifiers().Get(import_ir.package_id())
+            : "Main";
+    llvm::StringRef library_name =
+        (import_ir.library_id() != LibraryNameId::Default)
+            ? import_ir.string_literal_values().Get(
+                  import_ir.library_id().AsStringLiteralValueId())
+            : "default";
+    return llvm::formatv("{0}//{1}", package_name, library_name);
   }
 
   const File& sem_ir_;

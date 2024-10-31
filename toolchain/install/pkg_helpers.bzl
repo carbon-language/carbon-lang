@@ -25,7 +25,7 @@ pkg_naming_variables = rule(
     attrs = VERSION_ATTRS,
 )
 
-def pkg_tar_and_test(name_base, package_file_name_base, test_data, test_install_marker, **kwargs):
+def pkg_tar_and_test(name_base, package_file_name_base, install_data_manifest, **kwargs):
     """Create a `pkg_tar` and a test for both `.tar` and `.tar.gz` extensions.
 
     Args:
@@ -35,10 +35,8 @@ def pkg_tar_and_test(name_base, package_file_name_base, test_data, test_install_
         package_file_name_base:
             The base of the `package_file_name` attribute to `pkg_tar`. The file
             extensions will be appended after a `.`.
-        test_data:
-            The test data to verify the tar file against.
-        test_install_marker:
-            The install marker within the test data to locate the installation.
+        install_data_manifest:
+            The install data manifest file to compare with.
         **kwargs:
             Passed to `pkg_tar` for all the rest of its attributes.
     """
@@ -58,11 +56,11 @@ def pkg_tar_and_test(name_base, package_file_name_base, test_data, test_install_
             name = name_base + "_" + target_ext + "_test",
             size = "small",
             srcs = ["toolchain_tar_test.py"],
-            data = [":" + tar_target, test_install_marker] + test_data,
-            args = [
-                "$(location :{})".format(tar_target),
-                "$(location {})".format(test_install_marker),
-            ],
+            data = [":" + tar_target, install_data_manifest],
+            env = {
+                "INSTALL_DATA_MANIFEST": "$(location {})".format(install_data_manifest),
+                "TAR_FILE": "$(location :{})".format(tar_target),
+            },
             main = "toolchain_tar_test.py",
             # The compressed tar is slow, exclude building and testing that.
             tags = ["manual"] if file_ext == "tar.gz" else [],

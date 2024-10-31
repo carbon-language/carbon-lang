@@ -888,6 +888,34 @@ class ImportRefResolver {
     return context_.inst_blocks().Add(new_patterns);
   }
 
+  // Returns a version of import_return_slot_pattern_id localized to the current
+  // IR.
+  auto GetLocalReturnSlotPatternId(SemIR::InstId import_return_slot_pattern_id)
+      -> SemIR::InstId {
+    if (!import_return_slot_pattern_id.is_valid()) {
+      return SemIR::InstId::Invalid;
+    }
+
+    auto param_pattern = import_ir_.insts().GetAs<SemIR::OutParamPattern>(
+        import_return_slot_pattern_id);
+    auto return_slot_pattern =
+        import_ir_.insts().GetAs<SemIR::ReturnSlotPattern>(
+            param_pattern.subpattern_id);
+    auto type_id = context_.GetTypeIdForTypeConstant(
+        GetLocalConstantIdChecked(return_slot_pattern.type_id));
+
+    auto new_return_slot_pattern_id = context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::ReturnSlotPattern>(
+            AddImportIRInst(param_pattern.subpattern_id),
+            {.type_id = type_id, .type_inst_id = SemIR::InstId::Invalid}));
+    return context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::OutParamPattern>(
+            AddImportIRInst(import_return_slot_pattern_id),
+            {.type_id = type_id,
+             .subpattern_id = new_return_slot_pattern_id,
+             .runtime_index = param_pattern.runtime_index}));
+  }
+
   // Translates a NameId from the import IR to a local NameId.
   auto GetLocalNameId(SemIR::NameId import_name_id) -> SemIR::NameId {
     if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.is_valid()) {
@@ -1600,7 +1628,8 @@ class ImportRefResolver {
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
-         {.return_slot_id = SemIR::InstId::Invalid,
+         {.return_slot_pattern_id = SemIR::InstId::Invalid,
+          .return_slot_id = SemIR::InstId::Invalid,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     function_decl.type_id =
@@ -1671,6 +1700,8 @@ class ImportRefResolver {
         GetLocalParamRefsId(import_function.param_refs_id);
     new_function.param_patterns_id =
         GetLocalParamPatternsId(import_function.param_patterns_id);
+    new_function.return_slot_pattern_id =
+        GetLocalReturnSlotPatternId(import_function.return_slot_pattern_id);
     SetGenericData(import_function.generic_id, new_function.generic_id,
                    generic_data);
 
