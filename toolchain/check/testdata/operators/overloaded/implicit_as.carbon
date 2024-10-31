@@ -313,7 +313,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc30_18.7: init i32 = converted %Source.call.loc30, %Convert.call.loc30
 // CHECK:STDOUT:   %.loc30_18.8: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc30_18.9: ref i32 = temporary %.loc30_18.8, %.loc30_18.7
-// CHECK:STDOUT:   %.loc30_18.10: %X = bind_value %.loc30_18.9
+// CHECK:STDOUT:   %.loc30_18.10: i32 = bind_value %.loc30_18.9
 // CHECK:STDOUT:   %Sink_i32.call: init %.1 = call %Sink_i32.ref(%.loc30_18.10)
 // CHECK:STDOUT:   %Sink_X.ref: %Sink_X.type = name_ref Sink_X, file.%Sink_X.decl [template = constants.%Sink_X]
 // CHECK:STDOUT:   %Source.ref.loc31: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
@@ -334,7 +334,7 @@ fn Test() {
 // CHECK:STDOUT:   %Convert.call.loc31: init %X = call %.loc31_16.7(%.loc31_16.9) to %.loc31_16.8
 // CHECK:STDOUT:   %.loc31_16.10: init %X = converted %Source.call.loc31, %Convert.call.loc31
 // CHECK:STDOUT:   %.loc31_16.11: ref %X = temporary %.loc31_16.8, %.loc31_16.10
-// CHECK:STDOUT:   %.loc31_16.12: i32 = bind_value %.loc31_16.11
+// CHECK:STDOUT:   %.loc31_16.12: %X = bind_value %.loc31_16.11
 // CHECK:STDOUT:   %Sink_X.call: init %.1 = call %Sink_X.ref(%.loc31_16.12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

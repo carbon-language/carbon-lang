@@ -975,8 +975,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
-  SemIR::Inst expr = sem_ir.insts().Get(expr_id);
-  if (expr.type_id() != target.type_id) {
+  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
     SemIR::InstId interface_args[] = {
         context.types().GetInstId(target.type_id)};
     Operator op = {
@@ -1019,7 +1018,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL("Unexpected expression {0} after builtin conversions", expr);
+      CARBON_FATAL("Unexpected expression {0} after builtin conversions",
+                   sem_ir.insts().Get(expr_id));
 
     case SemIR::ExprCategory::Error:
       return SemIR::InstId::BuiltinError;
@@ -1057,7 +1057,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // TODO: Support types with custom value representations.
       expr_id = context.AddInst<SemIR::BindValue>(
           context.insts().GetLocId(expr_id),
-          {.type_id = expr.type_id(), .value_id = expr_id});
+          {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
       [[fallthrough]];
 
