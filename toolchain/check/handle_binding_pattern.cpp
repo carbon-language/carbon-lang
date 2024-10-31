@@ -93,6 +93,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             CompileTimeBindingInVarDecl, Error,
             "`var` declaration cannot declare a compile-time binding");
         context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
+        // Prevent lambda helpers from creating a compile time binding.
+        needs_compile_time_binding = false;
       }
       auto binding_id =
           is_generic

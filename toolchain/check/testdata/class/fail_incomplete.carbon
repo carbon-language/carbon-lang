@@ -191,13 +191,7 @@ class C {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -377,10 +371,10 @@ class C {
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc103: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc103: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %TakeIncomplete.call.loc103: init %.1 = call %TakeIncomplete.ref.loc103(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc103: init %.1 = call %TakeIncomplete.ref.loc103(<error>)
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc115: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %.loc115: %.3 = struct_literal ()
-// CHECK:STDOUT:   %TakeIncomplete.call.loc115: init %.1 = call %TakeIncomplete.ref.loc115(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc115: init %.1 = call %TakeIncomplete.ref.loc115(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,13 +394,7 @@ class C {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

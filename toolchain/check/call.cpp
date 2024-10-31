@@ -210,9 +210,10 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
-      CalleeParamsInfo(callable), *callee_specific_id);
+  auto converted_args_id =
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_slot_arg_id, CalleeParamsInfo(callable),
+                      callable.return_slot_pattern_id, *callee_specific_id);
   auto call_inst_id =
       context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
                                             .callee_id = callee_id,

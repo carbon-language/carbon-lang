@@ -13,6 +13,6 @@ export import library "prelude/types/bool";
 
 fn BigInt() -> type = "big_int.make_type";
 fn Int32() -> type = "int.make_type_32";
-fn Int(size: i32) -> type = "int.make_type_signed";
-fn UInt(size: i32) -> type = "int.make_type_unsigned";
-fn Float(size: i32) -> type = "float.make_type";
+fn Int(size: BigInt()) -> type = "int.make_type_signed";
+fn UInt(size: BigInt()) -> type = "int.make_type_unsigned";
+fn Float(size: BigInt()) -> type = "float.make_type";

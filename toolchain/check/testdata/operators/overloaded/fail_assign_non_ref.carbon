@@ -23,7 +23,7 @@ fn TestIncNonRef(a: C) {
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:     ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -34,7 +34,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing `addr self` parameter of method declared here [InCallToFunctionSelf]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:         ^~~~~~~~~~~~~
   a += b;
@@ -80,13 +80,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     .Inc = %import_ref.1
 // CHECK:STDOUT:     .AddAssign = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+63, loaded [template = constants.%Inc.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+65, unloaded
@@ -228,7 +222,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.ref: %.10 = name_ref Op, imports.%import_ref.3 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access constants.%.6, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30_3.2(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc30_3.2(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,7 +233,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.ref: %.12 = name_ref Op, imports.%import_ref.7 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access constants.%.8, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
-// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40_5.2(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.4 = call %.loc40_5.2(<error>, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

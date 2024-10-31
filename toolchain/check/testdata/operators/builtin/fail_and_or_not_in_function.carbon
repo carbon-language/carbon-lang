@@ -51,7 +51,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: Core.BigInt = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
@@ -64,22 +64,16 @@ var or_: F(true or true);
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     .Float = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+57, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.3: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block23> [template = constants.%.3]
-// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+67.loc42_10(%.loc42_17)
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block21> [template = constants.%.3]
+// CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+73.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
@@ -90,7 +84,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+12.loc12_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst+14.loc12_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -100,7 +94,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_20.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc13_29: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_29: Core.BigInt = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc13_29) [template = f64]
 // CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [template = f64]
@@ -113,5 +107,5 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
 // CHECK:STDOUT:

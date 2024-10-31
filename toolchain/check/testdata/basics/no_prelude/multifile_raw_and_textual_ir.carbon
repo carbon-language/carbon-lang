@@ -36,7 +36,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block5]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -68,10 +68,9 @@ fn B() {
 // CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block4:          {}
-// CHECK:STDOUT:     block5:
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+5
-// CHECK:STDOUT:     block6:
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
@@ -111,7 +110,7 @@ fn B() {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block5]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [block4]}
 // CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
@@ -163,14 +162,12 @@ fn B() {
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block4:          {}
-// CHECK:STDOUT:     block5:
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT:       1:               inst+12
 // CHECK:STDOUT:       2:               inst+13
 // CHECK:STDOUT:       3:               inst+14
-// CHECK:STDOUT:     block6:          {}
-// CHECK:STDOUT:     block7:
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT:       2:               inst+3

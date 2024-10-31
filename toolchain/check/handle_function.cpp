@@ -183,8 +183,10 @@ static auto BuildFunctionDecl(Context& context,
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
   if (!name.params_id.is_valid()) {
+    CARBON_CHECK(!name.param_patterns_id.is_valid());
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
+    name.param_patterns_id = SemIR::InstBlockId::Empty;
   }
 
   auto name_context = context.decl_name_stack().FinishName(name);
@@ -236,7 +238,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_slot_id = name.return_slot_id,
+                      {.return_slot_pattern_id = name.return_slot_pattern_id,
+                       .return_slot_id = name.return_slot_id,
                        .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;

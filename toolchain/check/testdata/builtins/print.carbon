@@ -37,16 +37,10 @@ fn Main() {
 // CHECK:STDOUT:     .Int32 = %import_ref.1
 // CHECK:STDOUT:     .Print = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Print.type.2 = import_ref Core//prelude, inst+48, loaded [template = constants.%Print.2]
+// CHECK:STDOUT:   %import_ref.2: %Print.type.2 = import_ref Core//prelude, inst+51, loaded [template = constants.%Print.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
