@@ -26,6 +26,7 @@ jobs:
           # prettier-ignore
           allowed-endpoints: >
             *.dl.sourceforge.net:443
+            api.github.com:443
             bcr.bazel.build:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
