@@ -674,6 +674,32 @@ static auto IsValidExprCategoryForConversionTarget(
   }
 }
 
+// Determines whether we can pull a value directly out of an initializing
+// expression of type `type_id` to initialize a target of type `type_id` and
+// kind `target_kind`.
+static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
+                                     SemIR::TypeId type_id,
+                                     ConversionTarget::Kind target_kind)
+    -> bool {
+  if (!IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
+                                              target_kind)) {
+    // We don't want a value expression.
+    return false;
+  }
+
+  if (SemIR::InitRepr::ForType(sem_ir, type_id).kind !=
+      SemIR::InitRepr::ByCopy) {
+    // The initializing expression doesn't contain a copy of a value.
+    return false;
+  }
+
+  // If the value representation is a copy of the object representation, we
+  // already have a value of the right form and can use that value directly.
+  auto value_rep = SemIR::ValueRepr::ForType(sem_ir, type_id);
+  return value_rep.kind == SemIR::ValueRepr::Copy &&
+         value_rep.type_id == type_id;
+}
+
 // Returns the non-adapter type that is compatible with the specified type.
 static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
@@ -738,19 +764,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // If the source is an initializing expression, we may be able to pull a
     // value right out of it.
     if (value_cat == SemIR::ExprCategory::Initializing &&
-        IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
-                                               target.kind) &&
-        SemIR::InitRepr::ForType(sem_ir, value_type_id).kind ==
-            SemIR::InitRepr::ByCopy) {
-      auto value_rep = SemIR::ValueRepr::ForType(sem_ir, value_type_id);
-      if (value_rep.kind == SemIR::ValueRepr::Copy &&
-          value_rep.type_id == value_type_id) {
-        // The initializer produces an object representation by copy, and the
-        // value representation is a copy of the object representation, so we
-        // already have a value of the right form.
-        return context.AddInst<SemIR::ValueOfInitializer>(
-            loc_id, {.type_id = value_type_id, .init_id = value_id});
-      }
+        CanUseValueOfInitializer(sem_ir, value_type_id, target.kind)) {
+      return context.AddInst<SemIR::ValueOfInitializer>(
+          loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
   }
 
@@ -998,6 +1014,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                          : ImplicitAsConversionFailure,
                                      expr_id, target.type_id);
     });
+
+    // Pull a value directly out of the initializer if possible and wanted.
+    if (expr_id != SemIR::InstId::BuiltinError &&
+        CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
+      expr_id = context.AddInst<SemIR::ValueOfInitializer>(
+          loc_id, {.type_id = target.type_id, .init_id = expr_id});
+    }
   }
 
   // Track that we performed a type conversion, if we did so.

@@ -310,11 +310,9 @@ fn Test() {
 // CHECK:STDOUT:   %.loc30_18.5: <bound method> = bound_method %.loc30_18.3, %.loc30_18.4
 // CHECK:STDOUT:   %.loc30_18.6: %X = bind_value %.loc30_18.3
 // CHECK:STDOUT:   %Convert.call.loc30: init i32 = call %.loc30_18.5(%.loc30_18.6)
-// CHECK:STDOUT:   %.loc30_18.7: init i32 = converted %Source.call.loc30, %Convert.call.loc30
-// CHECK:STDOUT:   %.loc30_18.8: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc30_18.9: ref i32 = temporary %.loc30_18.8, %.loc30_18.7
-// CHECK:STDOUT:   %.loc30_18.10: i32 = bind_value %.loc30_18.9
-// CHECK:STDOUT:   %Sink_i32.call: init %.1 = call %Sink_i32.ref(%.loc30_18.10)
+// CHECK:STDOUT:   %.loc30_18.7: i32 = value_of_initializer %Convert.call.loc30
+// CHECK:STDOUT:   %.loc30_18.8: i32 = converted %Source.call.loc30, %.loc30_18.7
+// CHECK:STDOUT:   %Sink_i32.call: init %.1 = call %Sink_i32.ref(%.loc30_18.8)
 // CHECK:STDOUT:   %Sink_X.ref: %Sink_X.type = name_ref Sink_X, file.%Sink_X.decl [template = constants.%Sink_X]
 // CHECK:STDOUT:   %Source.ref.loc31: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]

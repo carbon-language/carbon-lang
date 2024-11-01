@@ -246,10 +246,9 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc23_32.3: <bound method> = bound_method %.loc23_26.6, %.loc23_32.2
 // CHECK:STDOUT:   %.loc23_26.7: %X = bind_value %.loc23_26.6
 // CHECK:STDOUT:   %Convert.call.loc23_32: init i32 = call %.loc23_32.3(%.loc23_26.7)
-// CHECK:STDOUT:   %.loc23_32.4: init i32 = converted %.loc23_26.5, %Convert.call.loc23_32
-// CHECK:STDOUT:   %.loc23_38.1: i32 = value_of_initializer %.loc23_32.4
-// CHECK:STDOUT:   %.loc23_38.2: i32 = converted %.loc23_32.4, %.loc23_38.1
-// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc23_38.2
+// CHECK:STDOUT:   %.loc23_32.4: i32 = value_of_initializer %Convert.call.loc23_32
+// CHECK:STDOUT:   %.loc23_32.5: i32 = converted %.loc23_26.5, %.loc23_32.4
+// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc23_32.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
