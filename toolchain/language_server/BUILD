@@ -2,25 +2,23 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
-package(default_visibility = [
-    "//bazel/check_deps:__pkg__",
-    "//installers:__subpackages__",
-    "//language_server:__subpackages__",
-])
+package(default_visibility = ["//visibility:public"])
 
-cc_binary(
+cc_library(
     name = "language_server",
     srcs = [
         "language_server.cpp",
-        "language_server.h",
-        "main.cpp",
+        "server.cpp",
+        "server.h",
     ],
+    hdrs = ["language_server.h"],
     # Some parameters are unused in clangd headers.
     copts = ["-Wno-unused-parameter"],
     deps = [
         "//common:error",
+        "//common:ostream",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",

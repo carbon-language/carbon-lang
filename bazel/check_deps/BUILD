@@ -15,7 +15,6 @@ filegroup(
     data = [
         "//explorer",
         "//installers/local:carbon",
-        "//language_server",
         "//migrate_cpp:rewriter",
         "//migrate_cpp/cpp_refactoring",
         "//toolchain/install:carbon-busybox",

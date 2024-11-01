@@ -21,5 +21,5 @@ developers and developers writing Carbon code.
 
 Any editor that supports Language server protocol and/or tree-sitter is
 supported. The editor just needs to be configured manually.
-`bazel build language_server` produces the language server binary.
+`bazel build //toolchain` produces the language server binary.
 `utils/treesitter` contains the treesitter grammar.
