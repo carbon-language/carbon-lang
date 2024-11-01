@@ -9,7 +9,18 @@
 
 namespace Carbon {
 
-constexpr CommandLine::CommandInfo ClangOptions::Info = {
+auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
+  b.AddStringPositionalArg(
+      {
+          .name = "ARG",
+          .help = R"""(
+Arguments passed to Clang.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Append(&args); });
+}
+
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "clang",
     .help = R"""(
 Runs Clang on arguments.
@@ -27,16 +38,7 @@ results in an indirect Clang invocation.
 )""",
 };
 
-auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  b.AddStringPositionalArg(
-      {
-          .name = "ARG",
-          .help = R"""(
-Arguments passed to Clang.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&args); });
-}
+ClangSubcommand::ClangSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 // TODO: This lacks a lot of features from the main driver code. We may need to
 // add more.

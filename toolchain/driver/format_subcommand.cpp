@@ -14,13 +14,6 @@
 
 namespace Carbon {
 
-constexpr CommandLine::CommandInfo FormatOptions::Info = {
-    .name = "format",
-    .help = R"""(
-Format Carbon source code.
-)""",
-};
-
 auto FormatOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
       {
@@ -48,6 +41,15 @@ Not valid when multiple files are passed for formatting.
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
 }
+
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
+    .name = "format",
+    .help = R"""(
+Format Carbon source code.
+)""",
+};
+
+FormatSubcommand::FormatSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   DriverResult result = {.success = true};

@@ -8,12 +8,15 @@
 
 namespace Carbon {
 
-constexpr CommandLine::CommandInfo LanguageServerSubcommand::Info = {
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "language-server",
     .help = R"""(
 Runs the language server.
 )""",
 };
+
+LanguageServerSubcommand::LanguageServerSubcommand()
+    : DriverSubcommand(SubcommandInfo) {}
 
 auto LanguageServerSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Consider a way to override stdin, but it's a `FILE*` so less

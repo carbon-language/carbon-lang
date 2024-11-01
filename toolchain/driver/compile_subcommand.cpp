@@ -42,21 +42,6 @@ auto operator<<(llvm::raw_ostream& out, CompileOptions::Phase phase)
   return out;
 }
 
-constexpr CommandLine::CommandInfo CompileOptions::Info = {
-    .name = "compile",
-    .help = R"""(
-Compile Carbon source code.
-
-This subcommand runs the Carbon compiler over input source code, checking it for
-errors and producing the requested output.
-
-Error messages are written to the standard error stream.
-
-Different phases of the compiler can be selected to run, and intermediate state
-can be written to standard output as these phases progress.
-)""",
-};
-
 auto CompileOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
       {
@@ -283,6 +268,23 @@ Emit DWARF debug information.
         arg_b.Set(&include_debug_info);
       });
 }
+
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
+    .name = "compile",
+    .help = R"""(
+Compile Carbon source code.
+
+This subcommand runs the Carbon compiler over input source code, checking it for
+errors and producing the requested output.
+
+Error messages are written to the standard error stream.
+
+Different phases of the compiler can be selected to run, and intermediate state
+can be written to standard output as these phases progress.
+)""",
+};
+
+CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
   using Phase = CompileOptions::Phase;
