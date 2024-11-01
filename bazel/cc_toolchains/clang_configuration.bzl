@@ -183,7 +183,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx,
     )
     if clang_version and clang_version < 16:
-        fail("Found clang {0}.".format(clang_version) +
+        fail("Found clang {0}. ".format(clang_version) +
              "Carbon requires clang >=16. See " +
              "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md#old-llvm-versions")
 
