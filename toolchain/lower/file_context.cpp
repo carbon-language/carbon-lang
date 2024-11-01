@@ -410,16 +410,15 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     return llvm_block;
   };
 
-  auto* llvm_decl_block = lower_block(decl_block_id);
-
   // If the decl block is empty, reuse it as the first body block. We don't do
   // this when the decl block is non-empty so that any branches back to the
   // first body block don't also re-execute the decl.
-  if (llvm_decl_block->empty()) {
-    CARBON_CHECK(function_lowering.TryToReuseBlock(body_block_ids.front(),
-                                                   llvm_decl_block));
+  llvm::BasicBlock* block = context.builder().GetInsertBlock();
+  if (block->empty() &&
+      function_lowering.TryToReuseBlock(body_block_ids.front(),
+                                        block))) {
+    // Reuse this block as the first block of the function body.
   } else {
-    function_lowering.builder().SetInsertPoint(llvm_decl_block);
     function_lowering.builder().CreateBr(
         function_lowering.GetBlock(body_block_ids.front()));
   }
