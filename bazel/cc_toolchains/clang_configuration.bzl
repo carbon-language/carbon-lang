@@ -121,7 +121,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     Returns the resulting paths as a list of strings.
     """
 
-    # Create file for Clang to use as input.
+    # Create a file for Clang to use as input.
     repository_ctx.file("_temp", _CLANG_INCLUDE_FILE_CONTENT)
     input_file = repository_ctx.path("_temp")
 
