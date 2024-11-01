@@ -5,6 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_LANGUAGE_SERVER_SERVER_H_
 #define CARBON_TOOLCHAIN_LANGUAGE_SERVER_SERVER_H_
 
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "clang-tools-extra/clangd/Transport.h"
