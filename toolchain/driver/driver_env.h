@@ -25,6 +25,9 @@ struct DriverEnv {
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;
+
+  // Tracks when the driver is being fuzzed.
+  bool fuzzing = false;
 };
 
 }  // namespace Carbon

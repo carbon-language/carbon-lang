@@ -24,6 +24,7 @@ struct Options {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   bool verbose;
+  bool fuzzing;
 
   ClangSubcommand clang;
   CompileSubcommand compile;
@@ -62,6 +63,13 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
           .help = "Enable verbose logging to the stderr stream.",
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
+
+  b.AddFlag(
+      {
+          .name = "fuzzing",
+          .help = "Configure the command line for fuzzing.",
+      },
+      [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&fuzzing); });
 
   b.AddSubcommand(ClangOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
     clang.BuildOptions(sub_b);
@@ -109,8 +117,14 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     // Note this implies streamed output in order to interleave.
     driver_env_.vlog_stream = &driver_env_.error_stream;
   }
+  if (options.fuzzing) {
+    SetFuzzing();
+  }
+
   CARBON_CHECK(options.subcommand != nullptr);
   return options.subcommand->Run(driver_env_);
 }
+
+auto Driver::SetFuzzing() -> void { driver_env_.fuzzing = true; }
 
 }  // namespace Carbon
