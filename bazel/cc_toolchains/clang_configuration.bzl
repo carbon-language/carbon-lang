@@ -13,7 +13,11 @@ def _run(repository_ctx, cmd):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(cmd)
     if exec_result.return_code != 0:
-        fail("Command failed with return code {0}: {1}\n{2}".format(exec_result.return_code, str(cmd), exec_result.stderr))
+        fail("Command failed with return code {0}: {1}\n{2}".format(
+            exec_result.return_code,
+            str(cmd),
+            exec_result.stderr,
+        ))
 
     return exec_result
 
