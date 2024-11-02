@@ -105,13 +105,13 @@ fn G() -> C {
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.4: type = array_type %.3, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.4 [symbolic]
-// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
@@ -119,8 +119,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %.10: type = ptr_type %.9 [template]
 // CHECK:STDOUT:   %.11: type = tuple_type (%.1, %.1, %.1) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.12: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.13: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.12: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.13: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %array: %.9 = tuple_value (%struct, %struct, %struct) [template]
 // CHECK:STDOUT:   %.14: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
@@ -150,7 +150,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc6_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_23: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc6_23: i32 = int_value 3 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
@@ -187,7 +187,7 @@ fn G() -> C {
 // CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%.loc6_24.2 (%.4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
-// CHECK:STDOUT:     %.loc6_43: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc6_43: i32 = int_value 0 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
 // CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
@@ -198,7 +198,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc9_14: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_14: i32 = int_value 3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc9_15: type = array_type %.loc9_14, %C [template = constants.%.9]
 // CHECK:STDOUT:   %a.var: ref %.9 = var a
 // CHECK:STDOUT:   %a: ref %.9 = bind_name a, %a.var
@@ -206,15 +206,15 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc9_25.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %.11 = tuple_literal (%.loc9_21.1, %.loc9_25.1, %.loc9_29.1)
-// CHECK:STDOUT:   %.loc9_30.2: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_30.2: i32 = int_value 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc9_30.3: ref %C = array_index %a.var, %.loc9_30.2
 // CHECK:STDOUT:   %.loc9_21.2: init %C = class_init (), %.loc9_30.3 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_30.4: init %C = converted %.loc9_21.1, %.loc9_21.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_30.5: i32 = int_literal 1 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc9_30.5: i32 = int_value 1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc9_30.6: ref %C = array_index %a.var, %.loc9_30.5
 // CHECK:STDOUT:   %.loc9_25.2: init %C = class_init (), %.loc9_30.6 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_30.8: i32 = int_literal 2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc9_30.8: i32 = int_value 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc9_30.9: ref %C = array_index %a.var, %.loc9_30.8
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.9 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_30.10: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%struct]
@@ -260,14 +260,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, %C [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.1, %.1, %.1) [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %array: %.6 = tuple_value (%struct, %struct, %struct) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,7 +348,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc13_14: i32 = int_literal 3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_14: i32 = int_value 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_15: type = array_type %.loc13_14, %C [template = constants.%.6]
 // CHECK:STDOUT:   %a.var: ref %.6 = var a
 // CHECK:STDOUT:   %a: ref %.6 = bind_name a, %a.var
@@ -356,15 +356,15 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_25.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_30.1: %.8 = tuple_literal (%.loc13_21.1, %.loc13_25.1, %.loc13_29.1)
-// CHECK:STDOUT:   %.loc13_30.2: i32 = int_literal 0 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_30.2: i32 = int_value 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_30.3: ref %C = array_index %a.var, %.loc13_30.2
 // CHECK:STDOUT:   %.loc13_21.2: init %C = class_init (), %.loc13_30.3 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.4: init %C = converted %.loc13_21.1, %.loc13_21.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.5: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc13_30.5: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc13_30.6: ref %C = array_index %a.var, %.loc13_30.5
 // CHECK:STDOUT:   %.loc13_25.2: init %C = class_init (), %.loc13_30.6 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.7: init %C = converted %.loc13_25.1, %.loc13_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.8: i32 = int_literal 2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc13_30.8: i32 = int_value 2 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc13_30.9: ref %C = array_index %a.var, %.loc13_30.8
 // CHECK:STDOUT:   %.loc13_29.2: init %C = class_init (), %.loc13_30.9 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.10: init %C = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%struct]
@@ -399,14 +399,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, %C [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.1, %.1, %.1) [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %array: %.6 = tuple_value (%struct, %struct, %struct) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -485,7 +485,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc13_14: i32 = int_literal 3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_14: i32 = int_value 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_15: type = array_type %.loc13_14, %C [template = constants.%.6]
 // CHECK:STDOUT:   %a.var: ref %.6 = var a
 // CHECK:STDOUT:   %a: ref %.6 = bind_name a, %a.var
@@ -493,15 +493,15 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_25.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_30.1: %.8 = tuple_literal (%.loc13_21.1, %.loc13_25.1, %.loc13_29.1)
-// CHECK:STDOUT:   %.loc13_30.2: i32 = int_literal 0 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_30.2: i32 = int_value 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_30.3: ref %C = array_index %a.var, %.loc13_30.2
 // CHECK:STDOUT:   %.loc13_21.2: init %C = class_init (), %.loc13_30.3 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.4: init %C = converted %.loc13_21.1, %.loc13_21.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.5: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc13_30.5: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc13_30.6: ref %C = array_index %a.var, %.loc13_30.5
 // CHECK:STDOUT:   %.loc13_25.2: init %C = class_init (), %.loc13_30.6 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.7: init %C = converted %.loc13_25.1, %.loc13_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.8: i32 = int_literal 2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc13_30.8: i32 = int_value 2 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc13_30.9: ref %C = array_index %a.var, %.loc13_30.8
 // CHECK:STDOUT:   %.loc13_29.2: init %C = class_init (), %.loc13_30.9 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.10: init %C = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%struct]
@@ -528,22 +528,22 @@ fn G() -> C {
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.4: type = array_type %.3, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.4 [symbolic]
-// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, %C [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.10 [template]
 // CHECK:STDOUT:   %.12: type = tuple_type (%.1, %.1, %.1) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %.13: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.13: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %array: %.10 = tuple_value (%struct, %struct, %struct) [template]
 // CHECK:STDOUT:   %.14: type = array_type %.3, %C [template]
 // CHECK:STDOUT:   %.15: <specific function> = specific_function %F, @F(%C) [template]
@@ -599,7 +599,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc6_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_23: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc6_23: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc6_24.1: type = array_type %.loc6_23, %T [symbolic = %.loc6_24.2 (constants.%.4)]
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
@@ -656,7 +656,7 @@ fn G() -> C {
 // CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%.loc6_24.2 (%.4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
-// CHECK:STDOUT:     %.loc6_43: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc6_43: i32 = int_value 0 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
 // CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
@@ -667,7 +667,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc10_14: i32 = int_value 3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, %C [template = constants.%.10]
 // CHECK:STDOUT:   %a.var: ref %.10 = var a
 // CHECK:STDOUT:   %a: ref %.10 = bind_name a, %a.var
@@ -675,15 +675,15 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc10_25.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_29.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc10_30.1: %.12 = tuple_literal (%.loc10_21.1, %.loc10_25.1, %.loc10_29.1)
-// CHECK:STDOUT:   %.loc10_30.2: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_30.2: i32 = int_value 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc10_30.3: ref %C = array_index %a.var, %.loc10_30.2
 // CHECK:STDOUT:   %.loc10_21.2: init %C = class_init (), %.loc10_30.3 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc10_30.4: init %C = converted %.loc10_21.1, %.loc10_21.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc10_30.5: i32 = int_literal 1 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc10_30.5: i32 = int_value 1 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc10_30.6: ref %C = array_index %a.var, %.loc10_30.5
 // CHECK:STDOUT:   %.loc10_25.2: init %C = class_init (), %.loc10_30.6 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc10_30.7: init %C = converted %.loc10_25.1, %.loc10_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc10_30.8: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_30.8: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_30.9: ref %C = array_index %a.var, %.loc10_30.8
 // CHECK:STDOUT:   %.loc10_29.2: init %C = class_init (), %.loc10_30.9 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc10_30.10: init %C = converted %.loc10_29.1, %.loc10_29.2 [template = constants.%struct]
@@ -775,14 +775,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, %D [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.1, %.1, %.1) [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct: %D = struct_value () [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %array: %.6 = tuple_value (%struct, %struct, %struct) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -872,7 +872,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %.loc13_14: i32 = int_literal 3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_14: i32 = int_value 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_15: type = array_type %.loc13_14, %D [template = constants.%.6]
 // CHECK:STDOUT:   %a.var: ref %.6 = var a
 // CHECK:STDOUT:   %a: ref %.6 = bind_name a, %a.var
@@ -880,15 +880,15 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_25.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_30.1: %.8 = tuple_literal (%.loc13_21.1, %.loc13_25.1, %.loc13_29.1)
-// CHECK:STDOUT:   %.loc13_30.2: i32 = int_literal 0 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_30.2: i32 = int_value 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_30.3: ref %D = array_index %a.var, %.loc13_30.2
 // CHECK:STDOUT:   %.loc13_21.2: init %D = class_init (), %.loc13_30.3 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.4: init %D = converted %.loc13_21.1, %.loc13_21.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.5: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc13_30.5: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc13_30.6: ref %D = array_index %a.var, %.loc13_30.5
 // CHECK:STDOUT:   %.loc13_25.2: init %D = class_init (), %.loc13_30.6 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.7: init %D = converted %.loc13_25.1, %.loc13_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_30.8: i32 = int_literal 2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc13_30.8: i32 = int_value 2 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc13_30.9: ref %D = array_index %a.var, %.loc13_30.8
 // CHECK:STDOUT:   %.loc13_29.2: init %D = class_init (), %.loc13_30.9 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_30.10: init %D = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%struct]

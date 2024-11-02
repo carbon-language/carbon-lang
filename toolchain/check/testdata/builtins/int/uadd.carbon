@@ -94,9 +94,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
@@ -147,8 +147,8 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %.loc4_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_23: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_20: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_23: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.uadd: init i32 = call %Add.ref(%.loc4_20, %.loc4_23) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
@@ -156,7 +156,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %arr.var: ref %.5 = var arr
 // CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_18: i32 = int_value 3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
@@ -226,9 +226,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %BadReturnType: %BadReturnType.type = struct_value () [template]
 // CHECK:STDOUT:   %JustRight.type: type = fn_type @JustRight [template]
 // CHECK:STDOUT:   %JustRight: %JustRight.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %RuntimeCallTooFew.type: type = fn_type @RuntimeCallTooFew [template]
 // CHECK:STDOUT:   %RuntimeCallTooFew: %RuntimeCallTooFew.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallTooMany.type: type = fn_type @RuntimeCallTooMany [template]
@@ -362,30 +362,30 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, %TooFew.decl [template = constants.%TooFew]
-// CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc25: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %TooFew.call: init i32 = call %TooFew.ref(%.loc25)
 // CHECK:STDOUT:   %too_few.var: ref <error> = var too_few
 // CHECK:STDOUT:   %too_few: ref <error> = bind_name too_few, %too_few.var
 // CHECK:STDOUT:   %int.make_type_32.loc30: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, %TooMany.decl [template = constants.%TooMany]
-// CHECK:STDOUT:   %.loc30_29: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc30_32: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc30_35: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc30_29: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc30_32: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc30_35: i32 = int_value 3 [template = constants.%.4]
 // CHECK:STDOUT:   %TooMany.call: init i32 = call %TooMany.ref(%.loc30_29, %.loc30_32, %.loc30_35)
 // CHECK:STDOUT:   %too_many.var: ref <error> = var too_many
 // CHECK:STDOUT:   %too_many: ref <error> = bind_name too_many, %too_many.var
 // CHECK:STDOUT:   %int.make_type_32.loc35: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, %BadReturnType.decl [template = constants.%BadReturnType]
-// CHECK:STDOUT:   %.loc35_42: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc35_45: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc35_42: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc35_45: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(%.loc35_42, %.loc35_45)
 // CHECK:STDOUT:   %bad_return_type.var: ref <error> = var bad_return_type
 // CHECK:STDOUT:   %bad_return_type: ref <error> = bind_name bad_return_type, %bad_return_type.var
 // CHECK:STDOUT:   %int.make_type_32.loc43: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %JustRight.ref: %JustRight.type = name_ref JustRight, %JustRight.decl [template = constants.%JustRight]
-// CHECK:STDOUT:   %.loc43_31: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc43_34: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc43_37: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc43_31: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc43_34: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc43_37: i32 = int_value 3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc43_16.1: type = value_of_initializer %int.make_type_32.loc43 [template = i32]
 // CHECK:STDOUT:   %.loc43_16.2: type = converted %int.make_type_32.loc43, %.loc43_16.1 [template = i32]
 // CHECK:STDOUT:   %.loc43_39: type = array_type <error>, i32 [template = <error>]
@@ -518,10 +518,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 2147483647 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal -2147483648 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 2147483647 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value -2147483648 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -580,15 +580,15 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref.loc7: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_30: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_18: i32 = int_value 2147483647 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_30: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %int.uadd.loc7: init i32 = call %Add.ref.loc7(%.loc7_18, %.loc7_30) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_32.1: i32 = value_of_initializer %int.uadd.loc7 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_32.2: i32 = converted %int.uadd.loc7, %.loc7_32.1 [template = constants.%.2]
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc7_32.2
 // CHECK:STDOUT:   %Add.ref.loc8: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %.loc8_18: i32 = int_literal 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_18: i32 = int_value 2147483647 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_30: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.uadd.loc8: init i32 = call %Add.ref.loc8(%.loc8_18, %.loc8_30) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8_32.1: i32 = value_of_initializer %int.uadd.loc8 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8_32.2: i32 = converted %int.uadd.loc8, %.loc8_32.1 [template = constants.%.5]

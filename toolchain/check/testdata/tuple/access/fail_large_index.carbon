@@ -28,10 +28,10 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 12 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2147483647 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 2147483647 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,7 +82,7 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 12 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_18: i32 = int_value 12 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_21.1: %.3 = tuple_literal (%.loc11_18)
 // CHECK:STDOUT:   %.loc11_21.2: init %.3 = tuple_init (%.loc11_18) to file.%a.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_22: init %.3 = converted %.loc11_21.1, %.loc11_21.2 [template = constants.%tuple]
@@ -94,10 +94,10 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %.loc12_18: init %.3 = converted %a.ref, %.loc12_17.3
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
 // CHECK:STDOUT:   %b.ref.loc17: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %b.ref.loc21: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 2147483647 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21: i32 = int_value 2147483647 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

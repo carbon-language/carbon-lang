@@ -250,7 +250,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %DeriveFromNonType: type = class_type @DeriveFromNonType [template]
-// CHECK:STDOUT:   %.1: i32 = int_literal 32 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 32 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -339,7 +339,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromNonType {
-// CHECK:STDOUT:   %.loc12_16.1: i32 = int_literal 32 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_16.1: i32 = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc12_16.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc12_16.2 [template = constants.%.6]

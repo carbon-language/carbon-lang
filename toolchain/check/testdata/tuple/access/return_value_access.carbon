@@ -24,7 +24,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
@@ -74,7 +74,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_28: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_28: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_30: %.3 = tuple_literal (%.loc11_28)
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc11_28) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_31: %.3 = converted %.loc11_30, %tuple [template = constants.%tuple]
@@ -85,7 +85,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %.3 = call %F.ref()
-// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_14: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_11.1: ref %.3 = temporary_storage
 // CHECK:STDOUT:   %.loc14_11.2: ref %.3 = temporary %.loc14_11.1, %F.call
 // CHECK:STDOUT:   %.loc14_13.1: ref i32 = tuple_access %.loc14_11.2, element0

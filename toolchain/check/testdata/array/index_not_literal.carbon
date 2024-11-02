@@ -17,13 +17,13 @@ var b: i32 = a[{.index = 2}.index];
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.3 = tuple_value (%.5, %.6, %.2) [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.index: i32} [template]
 // CHECK:STDOUT:   %struct: %.9 = struct_value (%.6) [template]
@@ -46,7 +46,7 @@ var b: i32 = a[{.index = 2}.index];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_14: i32 = int_value 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_9.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:   %.loc11_9.2: type = converted %int.make_type_32.loc11, %.loc11_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, i32 [template = constants.%.3]
@@ -63,24 +63,24 @@ var b: i32 = a[{.index = 2}.index];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_20: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_23: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_26: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_20: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_23: i32 = int_value 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_26: i32 = int_value 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_27.1: %.7 = tuple_literal (%.loc11_20, %.loc11_23, %.loc11_26)
-// CHECK:STDOUT:   %.loc11_27.2: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_27.2: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc11_27.3: ref i32 = array_index file.%a.var, %.loc11_27.2
 // CHECK:STDOUT:   %.loc11_27.4: init i32 = initialize_from %.loc11_20 to %.loc11_27.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_27.5: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_27.5: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_27.6: ref i32 = array_index file.%a.var, %.loc11_27.5
 // CHECK:STDOUT:   %.loc11_27.7: init i32 = initialize_from %.loc11_23 to %.loc11_27.6 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_27.8: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_27.8: i32 = int_value 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc11_27.9: ref i32 = array_index file.%a.var, %.loc11_27.8
 // CHECK:STDOUT:   %.loc11_27.10: init i32 = initialize_from %.loc11_26 to %.loc11_27.9 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_27.11: init %.3 = array_init (%.loc11_27.4, %.loc11_27.7, %.loc11_27.10) to file.%a.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc11_28: init %.3 = converted %.loc11_27.1, %.loc11_27.11 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12_26: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_26: i32 = int_value 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_27.1: %.9 = struct_literal (%.loc12_26)
 // CHECK:STDOUT:   %struct: %.9 = struct_value (%.loc12_26) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_27.2: %.9 = converted %.loc12_27.1, %struct [template = constants.%struct]

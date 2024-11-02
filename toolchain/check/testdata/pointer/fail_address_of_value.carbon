@@ -112,7 +112,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %AddressOfLiteral.type: type = fn_type @AddressOfLiteral [template]
 // CHECK:STDOUT:   %AddressOfLiteral: %AddressOfLiteral.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.5: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.6: type = ptr_type bool [template]
@@ -120,11 +120,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.8: type = ptr_type f64 [template]
 // CHECK:STDOUT:   %.9: type = ptr_type String [template]
 // CHECK:STDOUT:   %.10: String = string_literal "Hello" [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.12: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.12: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.13: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.13 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.16: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %AddressOfOperator.type: type = fn_type @AddressOfOperator [template]
 // CHECK:STDOUT:   %AddressOfOperator: %AddressOfOperator.type = struct_value () [template]
@@ -211,7 +211,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfLiteral() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20_4: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20_4: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc20_3: %.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %.loc25_4: bool = bool_literal true [template = constants.%.5]
 // CHECK:STDOUT:   %.loc25_3: %.6 = addr_of <error> [template = <error>]
@@ -219,11 +219,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc30_3: %.8 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %.loc35_4: String = string_literal "Hello" [template = constants.%.10]
 // CHECK:STDOUT:   %.loc35_3: %.9 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc40_5: i32 = int_literal 1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc40_5: i32 = int_value 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc40_8: i32 = int_value 2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc40_9: %.13 = tuple_literal (%.loc40_5, %.loc40_8)
 // CHECK:STDOUT:   %.loc40_3: %.14 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc45_10: i32 = int_literal 5 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc45_10: i32 = int_value 5 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc45_11: %.2 = struct_literal (%.loc45_10)
 // CHECK:STDOUT:   %.loc45_3: %.16 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -277,10 +277,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfTupleElementValue() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc92_6: i32 = int_literal 1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc92_9: i32 = int_literal 2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc92_6: i32 = int_value 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc92_9: i32 = int_value 2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc92_10.1: %.13 = tuple_literal (%.loc92_6, %.loc92_9)
-// CHECK:STDOUT:   %.loc92_12: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc92_12: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %tuple: %.13 = tuple_value (%.loc92_6, %.loc92_9) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_10.2: %.13 = converted %.loc92_10.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_11: i32 = tuple_access %.loc92_10.2, element0 [template = constants.%.11]

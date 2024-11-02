@@ -684,7 +684,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, imports.%import_ref.11 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -753,7 +753,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, imports.%import_ref.7 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc16_46.1: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc16_46.1: i32 = int_value 2 [template = constants.%.4]
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.2) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc16_46.2: %.7 = specific_constant imports.%import_ref.14, @ImplicitAs(constants.%.2) [template = constants.%.8]
 // CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc16_46.2 [template = constants.%.8]
@@ -852,7 +852,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -902,7 +902,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_32.1: i32 = int_literal 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_32.1: i32 = int_value 7 [template = constants.%.1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc11_32.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:     %Convert.ref: %.5 = name_ref Convert, %.loc11_32.2 [template = constants.%.6]
@@ -993,7 +993,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -1044,7 +1044,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_44.1: i32 = int_literal 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_44.1: i32 = int_value 7 [template = constants.%.1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc11_44.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:     %Convert.ref: %.5 = name_ref Convert, %.loc11_44.2 [template = constants.%.6]

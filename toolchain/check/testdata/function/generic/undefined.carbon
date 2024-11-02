@@ -62,7 +62,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %CallDefined.type: type = fn_type @CallDefined [template]
 // CHECK:STDOUT:   %CallDefined: %CallDefined.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.3: <specific function> = specific_function %Defined, @Defined(i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: fn @CallDefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl [template = constants.%Defined]
-// CHECK:STDOUT:   %.loc9_18: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_18: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %Defined.ref, @Defined(i32) [template = constants.%.3]
 // CHECK:STDOUT:   %Defined.call: init i32 = call %.loc9_10(%.loc9_18)
 // CHECK:STDOUT:   %.loc9_20.1: i32 = value_of_initializer %Defined.call
@@ -161,7 +161,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %CallDefined.type: type = fn_type @CallDefined [template]
 // CHECK:STDOUT:   %CallDefined: %CallDefined.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.3: <specific function> = specific_function %Defined, @Defined(i32) [template]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -246,7 +246,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: fn @CallDefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl.loc4 [template = constants.%Defined]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_18: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %Defined.ref, @Defined(i32) [template = constants.%.3]
 // CHECK:STDOUT:   %Defined.call: init i32 = call %.loc7_10(%.loc7_18)
 // CHECK:STDOUT:   %.loc7_20.1: i32 = value_of_initializer %Defined.call
@@ -278,7 +278,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %CallUndefined.type: type = fn_type @CallUndefined [template]
 // CHECK:STDOUT:   %CallUndefined: %CallUndefined.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.3: <specific function> = specific_function %Undefined, @Undefined(i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,7 +339,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: fn @CallUndefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Undefined.ref: %Undefined.type = name_ref Undefined, file.%Undefined.decl [template = constants.%Undefined]
-// CHECK:STDOUT:   %.loc13_20: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_20: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_10: <specific function> = specific_function %Undefined.ref, @Undefined(i32) [template = constants.%.3]
 // CHECK:STDOUT:   %Undefined.call: init i32 = call %.loc13_10(%.loc13_20)
 // CHECK:STDOUT:   %.loc13_22.1: i32 = value_of_initializer %Undefined.call

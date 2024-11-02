@@ -26,10 +26,10 @@ fn Main() {
 // CHECK:STDOUT:   %Print.1: %Print.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %Print.type.2: type = fn_type @Print.2 [template]
 // CHECK:STDOUT:   %Print.2: %Print.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,11 +70,11 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Print.ref.loc14: %Print.type.1 = name_ref Print, file.%Print.decl [template = constants.%Print.1]
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %print.int.loc14: init %.1 = call %Print.ref.loc14(%.loc14)
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:   %Print.ref.loc16: %Print.type.2 = name_ref Print, imports.%import_ref.2 [template = constants.%Print.2]
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %print.int.loc16: init %.1 = call %Print.ref.loc16(%.loc16)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

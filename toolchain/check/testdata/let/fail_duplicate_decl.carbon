@@ -27,8 +27,8 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,12 +54,12 @@ fn F() {
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %a.loc12: i32 = bind_name a, %.loc12_16
 // CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_10.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
 // CHECK:STDOUT:   %.loc19_10.2: type = converted %int.make_type_32.loc19, %.loc19_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_16: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19_16: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %a.loc19: i32 = bind_name a, %.loc19_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -104,8 +104,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %C [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
@@ -199,8 +199,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc13_27.1: %.3 = struct_literal (%.loc13_18, %.loc13_26)
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0
@@ -252,8 +252,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %C [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -404,8 +404,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc13_27.1: %.3 = struct_literal (%.loc13_18, %.loc13_26)
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0

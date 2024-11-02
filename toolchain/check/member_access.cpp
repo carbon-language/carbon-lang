@@ -349,11 +349,11 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Validates that the index (required to be an IntLiteral) is valid within the
+// Validates that the index (required to be an IntValue) is valid within the
 // tuple size. Returns the index on success, or nullptr on failure.
 static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId operand_inst_id,
-                               SemIR::IntLiteral index_inst, int size)
+                               SemIR::IntValue index_inst, int size)
     -> const llvm::APInt* {
   const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
@@ -517,7 +517,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  auto index_literal = context.insts().GetAs<SemIR::IntLiteral>(
+  auto index_literal = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(index_const_id));
   auto type_block = context.type_blocks().Get(tuple_type->elements_id);
   const auto* index_val = ValidateTupleIndex(context, loc_id, tuple_inst_id,

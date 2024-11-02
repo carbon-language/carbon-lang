@@ -21,8 +21,8 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic]
@@ -84,8 +84,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_3: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_5: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_3: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_5: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

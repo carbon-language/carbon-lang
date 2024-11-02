@@ -95,7 +95,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 64 [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -123,7 +123,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
-// CHECK:STDOUT:   %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_14: i32 = int_value 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc6_14) [template = f64]
 // CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1 [template = f64]
@@ -172,10 +172,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 32 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 32 [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 64 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 64 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -199,7 +199,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Float.ref.loc10: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 32 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_26: i32 = int_value 32 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type.loc10: init type = call %Float.ref.loc10(%.loc10_26) [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.1: type = value_of_initializer %float.make_type.loc10 [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.2: type = converted %float.make_type.loc10, %.loc10_28.1 [template = <error>]
@@ -226,7 +226,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 64 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: i32 = int_value 64 [template = constants.%.3]
 // CHECK:STDOUT:   assign file.%dyn_size.var, %.loc12
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

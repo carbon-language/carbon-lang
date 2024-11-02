@@ -21,7 +21,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,7 +57,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_value 3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_17: %.2 = struct_literal (%.loc12_16)
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc12_16) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_18: %.2 = converted %.loc12_17, %struct [template = constants.%struct]

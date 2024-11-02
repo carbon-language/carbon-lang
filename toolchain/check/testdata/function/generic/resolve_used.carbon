@@ -50,7 +50,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %.2: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -158,7 +158,7 @@ fn CallNegative() {
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
-// CHECK:STDOUT:   %.loc24_18: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc24_18: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(Core.IntLiteral) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc24_17.1: %.6 = specific_constant imports.%import_ref.5, @ImplicitAs(Core.IntLiteral) [template = constants.%.7]
 // CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc24_17.1 [template = constants.%.7]

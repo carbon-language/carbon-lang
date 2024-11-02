@@ -31,10 +31,10 @@ fn Main() {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,7 +70,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_24: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_24: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc11_24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +81,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_32, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc14_16: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_16: i32 = int_value 3 [template = constants.%.3]
 // CHECK:STDOUT:   assign %a.var, %.loc14_16
 // CHECK:STDOUT:   %a.ref.loc19_3: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref i32 = name_ref a, %a

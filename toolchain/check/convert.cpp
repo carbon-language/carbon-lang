@@ -152,7 +152,7 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.template AddInst<SemIR::IntLiteral>(
+    auto index_id = block.template AddInst<SemIR::IntValue>(
         loc_id,
         {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
          .int_id = context.ints().Add(llvm::APInt(32, i))});

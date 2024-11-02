@@ -532,7 +532,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -570,7 +570,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_14.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_14.2: type = converted %int.make_type_32.loc5, %.loc5_14.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_20: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_20: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0, %.loc5_20 [symbolic = constants.%Zero]
 // CHECK:STDOUT:   %Zero.ref: i32 = name_ref Zero, %Zero [symbolic = constants.%Zero]
 // CHECK:STDOUT:   return %Zero.ref
@@ -585,9 +585,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0 [symbolic]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -628,13 +628,13 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %int.make_type_32.loc6, %.loc6_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_22: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_22: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %Zero: i32 = bind_symbolic_name Zero, 0, %.loc6_22 [symbolic = constants.%Zero]
 // CHECK:STDOUT:   %Zero.ref: i32 = name_ref Zero, %Zero [symbolic = constants.%Zero]
 // CHECK:STDOUT:   return %Zero.ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -908,7 +908,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -948,7 +948,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
 // CHECK:STDOUT:   %.loc10_14.2: type = converted %int.make_type_32.loc10, %.loc10_14.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_20: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %Zero: i32 = bind_name Zero, %.loc10_20
 // CHECK:STDOUT:   %.loc6_19: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:

@@ -130,7 +130,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (step.index == 1) {
           out << ")";
         } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << "f";
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
@@ -167,7 +167,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (step.index == 1) {
           out << ")";
         } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
@@ -297,7 +297,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case IntLiteral::Kind:
+      case IntValue::Kind:
       case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:

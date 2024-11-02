@@ -55,7 +55,7 @@ enum class InstConstantKind : int8_t {
   // `TupleValue` can define a constant if its operands are constants.
   Conditional,
   // This instruction always has a constant value of the same kind. For example,
-  // `IntLiteral`.
+  // `IntValue`.
   Always,
 };
 

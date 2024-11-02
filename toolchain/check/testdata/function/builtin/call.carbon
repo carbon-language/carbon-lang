@@ -20,9 +20,9 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
@@ -69,8 +69,8 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %.loc13_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_23: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_20: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_23: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc13_20, %.loc13_23) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]

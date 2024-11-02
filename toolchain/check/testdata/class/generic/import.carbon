@@ -104,7 +104,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, @CompleteClass(i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
@@ -203,7 +203,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_26: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8_26: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:     return %.loc8_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -268,7 +268,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @CompleteClass(i32) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct: %CompleteClass.3 = struct_value (%.10) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -367,7 +367,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return: %CompleteClass.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc9_16: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc9_17.1: %.5 = struct_literal (%.loc9_16)
 // CHECK:STDOUT:   %.loc9_17.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc9_17.3: init i32 = initialize_from %.loc9_16 to %.loc9_17.2 [template = constants.%.10]

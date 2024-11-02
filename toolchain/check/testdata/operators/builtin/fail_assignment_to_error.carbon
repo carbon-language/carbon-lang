@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 42 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 42 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -48,11 +48,11 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: i32 = int_value 42 [template = constants.%.2]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc20_3: ref <error> = deref <error>
-// CHECK:STDOUT:   %.loc20_22: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc20_22: i32 = int_value 42 [template = constants.%.2]
 // CHECK:STDOUT:   assign %.loc20_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -204,7 +204,7 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   return nullptr;
 }
 
-static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
     -> llvm::Constant* {
   auto* type = context.GetType(inst.type_id);
 

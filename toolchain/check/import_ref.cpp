@@ -1217,7 +1217,7 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::IntLiteral inst): {
+      case CARBON_KIND(SemIR::IntValue inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::IntType inst): {
@@ -2093,13 +2093,13 @@ class ImportRefResolver {
          .elements_id = elements_id});
   }
 
-  auto TryResolveTypedInst(SemIR::IntLiteral inst) -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::IntValue inst) -> ResolveResult {
     auto type_id = GetLocalConstantId(inst.type_id);
     if (HasNewWork()) {
       return Retry();
     }
 
-    return ResolveAs<SemIR::IntLiteral>(
+    return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
   }

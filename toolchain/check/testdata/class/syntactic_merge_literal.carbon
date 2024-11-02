@@ -41,7 +41,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1000 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1000 [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.4) [template]
 // CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b, 0 [symbolic]
 // CHECK:STDOUT:   %b.patt.1: %C.3 = symbolic_binding_pattern b, 0 [symbolic]
@@ -82,7 +82,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param_patt: %C.3 = value_param_pattern %b.patt.loc4, runtime_param<invalid> [symbolic = constants.%b.patt.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3: i32 = int_literal 1000 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc3: i32 = int_value 1000 [template = constants.%.4]
 // CHECK:STDOUT:     %C.loc3: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %b.param.loc3: %C.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc3_9.1: %C.3 = bind_symbolic_name b, 0, %b.param.loc3 [symbolic = %b.loc3_9.2 (constants.%b)]
@@ -92,7 +92,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param_patt: %C.3 = value_param_pattern %b.patt.loc4, runtime_param<invalid> [symbolic = constants.%b.patt.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc4: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc4_15: i32 = int_literal 1000 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc4_15: i32 = int_value 1000 [template = constants.%.4]
 // CHECK:STDOUT:     %C.loc4: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %b.param.loc4: %C.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc4: %C.3 = bind_symbolic_name b, 0, %b.param.loc4 [symbolic = constants.%b]
@@ -157,7 +157,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1000 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1000 [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.4) [template]
 // CHECK:STDOUT:   %b: %C.3 = bind_symbolic_name b, 0 [symbolic]
 // CHECK:STDOUT:   %b.patt.1: %C.3 = symbolic_binding_pattern b, 0 [symbolic]
@@ -201,7 +201,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param_patt: %C.3 = value_param_pattern %b.patt.loc3_9.1, runtime_param<invalid> [symbolic = %b.patt.loc3_9.2 (constants.%b.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc3: i32 = int_literal 1000 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc3: i32 = int_value 1000 [template = constants.%.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %b.param: %C.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc3_9.1: %C.3 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc3_9.2 (constants.%b)]
@@ -211,7 +211,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param_patt: %C.3 = value_param_pattern %b.patt.loc10_9.1, runtime_param<invalid> [symbolic = %b.patt.loc10_9.2 (constants.%b.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc10_15: i32 = int_literal 1000 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_15: i32 = int_value 1000 [template = constants.%.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %b.param: %C.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc10_9.1: %C.3 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_9.2 (constants.%b)]

@@ -866,7 +866,7 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(IntLiteral inst) -> void {
+  auto FormatInstRHS(IntValue inst) -> void {
     out_ << " ";
     sem_ir_.ints()
         .Get(inst.int_id)

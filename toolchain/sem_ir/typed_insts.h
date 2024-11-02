@@ -777,10 +777,10 @@ struct InterfaceWitnessAccess {
 };
 
 // A literal integer value.
-struct IntLiteral {
+struct IntValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::IntLiteral.Define<Parse::NodeId>(
-      {.ir_name = "int_literal", .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(
+      {.ir_name = "int_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   IntId int_id;
