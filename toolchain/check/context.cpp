@@ -924,7 +924,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::Error:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
-      case SemIR::BuiltinInstKind::BigIntType:
+      case SemIR::BuiltinInstKind::IntLiteralType:
       case SemIR::BuiltinInstKind::IntType:
       case SemIR::BuiltinInstKind::FloatType:
       case SemIR::BuiltinInstKind::NamespaceType:

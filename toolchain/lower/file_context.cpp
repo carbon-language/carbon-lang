@@ -491,7 +491,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
       // TODO: Decide how we want to represent `StringType`.
       return llvm::PointerType::get(context.llvm_context(), 0);
     case SemIR::BuiltinInstKind::BoundMethodType:
-    case SemIR::BuiltinInstKind::BigIntType:
+    case SemIR::BuiltinInstKind::IntLiteralType:
     case SemIR::BuiltinInstKind::NamespaceType:
     case SemIR::BuiltinInstKind::WitnessType:
       // Return an empty struct as a placeholder.

@@ -208,7 +208,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
     -> llvm::Constant* {
   auto* type = context.GetType(inst.type_id);
 
-  // BigInt is represented as an empty struct. All other integer types are
+  // IntLiteral is represented as an empty struct. All other integer types are
   // represented as an LLVM integer type.
   if (!llvm::isa<llvm::IntegerType>(type)) {
     auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);

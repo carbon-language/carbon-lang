@@ -51,7 +51,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_literal 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
@@ -94,7 +94,7 @@ var or_: F(true or true);
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_20.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc13_29: Core.BigInt = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_29: Core.IntLiteral = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc13_29) [template = f64]
 // CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [template = f64]
@@ -107,5 +107,5 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:

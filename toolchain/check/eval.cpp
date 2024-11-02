@@ -928,8 +928,9 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
       return SemIR::ConstantId::NotConstant;
     }
 
-    case SemIR::BuiltinFunctionKind::BigIntMakeType: {
-      return context.constant_values().Get(SemIR::InstId::BuiltinBigIntType);
+    case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
+      return context.constant_values().Get(
+          SemIR::InstId::BuiltinIntLiteralType);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeType32: {
