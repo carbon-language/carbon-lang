@@ -13,6 +13,7 @@
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"
+#include "toolchain/driver/language_server_subcommand.h"
 #include "toolchain/driver/link_subcommand.h"
 
 namespace Carbon {
@@ -24,10 +25,12 @@ struct Options {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   bool verbose;
+  bool fuzzing;
 
   ClangSubcommand clang;
   CompileSubcommand compile;
   FormatSubcommand format;
+  LanguageServerSubcommand language_server;
   LinkSubcommand link;
 
   // On success, this is set to the subcommand to run.
@@ -63,6 +66,13 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
 
+  b.AddFlag(
+      {
+          .name = "fuzzing",
+          .help = "Configure the command line for fuzzing.",
+      },
+      [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&fuzzing); });
+
   b.AddSubcommand(ClangOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
     clang.BuildOptions(sub_b);
     sub_b.Do([&] { subcommand = &clang; });
@@ -79,6 +89,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
     sub_b.Do([&] { subcommand = &format; });
   });
 
+  b.AddSubcommand(LanguageServerSubcommand::Info,
+                  [&](CommandLine::CommandBuilder& sub_b) {
+                    sub_b.Do([&] { subcommand = &language_server; });
+                  });
+
   b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
     link.BuildOptions(sub_b);
     sub_b.Do([&] { subcommand = &link; });
@@ -88,6 +103,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
+  if (driver_env_.installation->error()) {
+    llvm::errs() << "error: " << *driver_env_.installation->error() << "\n";
+    return {.success = false};
+  }
+
   Options options;
 
   CommandLine::ParseResult result = CommandLine::Parse(
@@ -104,8 +124,14 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     // Note this implies streamed output in order to interleave.
     driver_env_.vlog_stream = &driver_env_.error_stream;
   }
+  if (options.fuzzing) {
+    SetFuzzing();
+  }
+
   CARBON_CHECK(options.subcommand != nullptr);
   return options.subcommand->Run(driver_env_);
 }
+
+auto Driver::SetFuzzing() -> void { driver_env_.fuzzing = true; }
 
 }  // namespace Carbon

@@ -14,13 +14,12 @@
 #include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
-namespace {
 
 // Returns a best-effort name for the given ParamPattern, suitable for use in
 // IR pretty-printing.
 // TODO: Resolve overlap with SemIR::Function::ParamPatternInfo::GetNameId
 template <typename ParamPattern>
-auto GetPrettyName(Context& context, ParamPattern param_pattern)
+static auto GetPrettyName(Context& context, ParamPattern param_pattern)
     -> SemIR::NameId {
   if (context.insts().Is<SemIR::ReturnSlotPattern>(
           param_pattern.subpattern_id)) {
@@ -32,6 +31,8 @@ auto GetPrettyName(Context& context, ParamPattern param_pattern)
   }
   return SemIR::NameId::Invalid;
 }
+
+namespace {
 
 // Selects between the different kinds of pattern matching.
 enum class MatchKind {
@@ -63,22 +64,22 @@ class MatchContext {
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
                                             SemIR::SpecificId::Invalid)
       : next_index_(0),
-        result_(SemIR::InstId::Invalid),
         kind_(kind),
         callee_specific_id_(callee_specific_id),
         return_slot_id_(SemIR::InstId::Invalid) {}
 
-  // Returns whether there are any work items to process.
-  auto HasWork() const -> bool {
-    return !stack_.empty() && !result_.is_valid();
-  }
-
-  // Adds a work item to the stack. Cannot be called after Finish().
+  // Adds a work item to the stack.
   auto AddWork(WorkItem work_item) -> void { stack_.push_back(work_item); }
 
-  // Returns the next work item to process.
-  auto NextWorkItem() -> WorkItem { return stack_.pop_back_val(); }
+  // Processes all work items on the stack. When performing caller pattern
+  // matching, returns an inst block with one inst reference for each
+  // calling-convention argument. When performing callee pattern matching,
+  // returns an inst block with references to all the emitted BindName insts.
+  auto DoWork(Context& context) -> SemIR::InstBlockId;
 
+  auto return_slot_id() const -> SemIR::InstId { return return_slot_id_; }
+
+ private:
   // Allocates the next unallocated RuntimeParamIndex, starting from 0.
   auto NextRuntimeIndex() -> SemIR::RuntimeParamIndex {
     auto result = next_index_;
@@ -86,95 +87,69 @@ class MatchContext {
     return result;
   }
 
-  // TODO: Eliminate the caller/callee API split below, by restructuring
-  // CallerPatternMatch to operate on the whole pattern.
+  // Emits the pattern-match insts necessary to match the pattern inst
+  // `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and
+  // adds to `stack_` any work necessary to traverse into its subpatterns. This
+  // behavior is contingent on the kind of match being performed, as indicated
+  // by kind_`. For example, when performing a callee pattern match, this does
+  // not emit insts for patterns on the caller side. However, it still traverses
+  // into subpatterns if any of their descendants might emit insts.
+  // TODO: Require that `entry.scrutinee_id` is valid if and only if insts
+  // should be emitted, once we start emitting `Param` insts in the
+  // `ParamPattern` case.
+  auto EmitPatternMatch(Context& context, MatchContext::WorkItem entry) -> void;
 
-  // Sets the result of this pattern matching operation. Must not be called when
-  // there is still pending work, except to report an error, or called more than
-  // once between calls to ConsumeResult. Valid only during caller matching.
-  auto Finish(SemIR::InstId result) -> void {
-    CARBON_CHECK(!HasWork() || result == SemIR::InstId::BuiltinError);
-    CARBON_CHECK(kind_ == MatchKind::Caller);
-    CARBON_CHECK(result_ == SemIR::InstId::Invalid);
-    result_ = result;
-  }
-
-  // Consumes and returns the result stored by Finish. Valid only during caller
-  // matching.
-  auto ConsumeResult() -> SemIR::InstId {
-    CARBON_CHECK(stack_.empty() || result_ == SemIR::InstId::BuiltinError);
-    CARBON_CHECK(kind_ == MatchKind::Caller);
-    return std::exchange(result_, SemIR::InstId::Invalid);
-  }
-
-  // Records that `bind_name_id` is the ID of an inst in the AnyBindName
-  // category, emitted as part of this pattern match. Valid only during callee
-  // pattern matching.
-  auto RecordBindName(SemIR::InstId bind_name_id) {
-    CARBON_CHECK(kind_ == MatchKind::Callee);
-    bind_name_ids_.push_back(bind_name_id);
-  }
-
-  // Allocates an InstBlock containing the IDs recorded by RecordBindName since
-  // the last call to this function (if any), and returns its ID. Valid only
-  // during callee pattern matching.
-  auto ConsumeBindNames(Context& context) -> SemIR::InstBlockId {
-    CARBON_CHECK(stack_.empty());
-    CARBON_CHECK(kind_ == MatchKind::Callee);
-    auto block_id = context.inst_blocks().Add(bind_name_ids_);
-    bind_name_ids_.clear();
-    return block_id;
-  }
-
-  auto kind() const -> MatchKind { return kind_; }
-
-  auto callee_specific_id() const -> SemIR::SpecificId {
-    return callee_specific_id_;
-  }
-
-  auto return_slot_id() const -> SemIR::InstId { return return_slot_id_; }
-
-  auto set_return_slot_id(SemIR::InstId return_slot_id) {
-    return_slot_id_ = return_slot_id;
-  }
-
- private:
+  // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
 
+  // The next index to be allocated by `NextRuntimeIndex`.
   SemIR::RuntimeParamIndex next_index_;
 
-  SemIR::InstId result_;
+  // The pending results that will be returned by the current `DoWork` call.
+  llvm::SmallVector<SemIR::InstId> results_;
 
-  llvm::SmallVector<SemIR::InstId> bind_name_ids_;
-
+  // The kind of pattern match being performed.
   MatchKind kind_;
 
+  // The SpecificId of the function being called (if any).
   SemIR::SpecificId callee_specific_id_;
 
+  // The return slot inst emitted by `DoWork`, if any.
+  // TODO: can this be added to the block returned by `DoWork`, instead?
   SemIR::InstId return_slot_id_;
 };
 
-// Emits the pattern-match insts necessary to match the pattern inst
-// `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`,
-// and adds to `match` any work necessary to traverse into its subpatterns.
-// This behavior is contingent on the kind of match being performed, as
-// indicated by `match.kind()`. For example, when performing a callee
-// pattern match, this does not emit insts for patterns on the caller side.
-// However, it still traverses into subpatterns if any of their descendants
-// might emit insts.
-// TODO: Require that `entry.scrutinee_id` is valid if and only if insts should
-// be emitted, once we start emitting `Param` insts in the `ParamPattern` case.
-auto EmitPatternMatch(Context& context, MatchContext& match,
-                      MatchContext::WorkItem entry) -> void {
+}  // namespace
+
+auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
+  results_.reserve(stack_.size());
+  while (!stack_.empty()) {
+    EmitPatternMatch(context, stack_.pop_back_val());
+  }
+  auto block_id = context.inst_blocks().AddOrEmpty(results_);
+  results_.clear();
+  return block_id;
+}
+
+auto MatchContext::EmitPatternMatch(Context& context,
+                                    MatchContext::WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::InstId::BuiltinError) {
-    match.RecordBindName(SemIR::InstId::BuiltinError);
+    results_.push_back(SemIR::InstId::BuiltinError);
     return;
   }
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        if (kind_ == MatchKind::Caller) {
+          CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
+                            "initializing function parameter");
+          builder.Note(entry.pattern_id, InCallToFunctionParam);
+        }
+      });
   auto pattern = context.insts().GetWithLocId(entry.pattern_id);
   CARBON_KIND_SWITCH(pattern.inst) {
     case SemIR::BindingPattern::Kind:
     case SemIR::SymbolicBindingPattern::Kind: {
-      CARBON_CHECK(match.kind() == MatchKind::Callee);
+      CARBON_CHECK(kind_ == MatchKind::Callee);
       auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(
           binding_pattern.bind_name_id);
@@ -183,16 +158,16 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
       context.ReplaceInstBeforeConstantUse(binding_pattern.bind_name_id,
                                            bind_name);
       context.inst_block_stack().AddInstId(binding_pattern.bind_name_id);
-      match.RecordBindName(binding_pattern.bind_name_id);
+      results_.push_back(binding_pattern.bind_name_id);
       break;
     }
     case CARBON_KIND(SemIR::AddrPattern addr_pattern): {
-      if (match.kind() == MatchKind::Callee) {
+      if (kind_ == MatchKind::Callee) {
         // We're emitting pattern-match IR for the callee, but we're still on
         // the caller side of the pattern, so we traverse without emitting any
         // insts.
-        match.AddWork({.pattern_id = addr_pattern.inner_id,
-                       .scrutinee_id = SemIR::InstId::Invalid});
+        AddWork({.pattern_id = addr_pattern.inner_id,
+                 .scrutinee_id = SemIR::InstId::Invalid});
         break;
       }
       CARBON_CHECK(entry.scrutinee_id.is_valid());
@@ -209,7 +184,7 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
           context.emitter().Emit(
               TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
               AddrSelfIsNonRef);
-          match.Finish(SemIR::InstId::BuiltinError);
+          results_.push_back(SemIR::InstId::BuiltinError);
           return;
       }
       auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
@@ -217,20 +192,28 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
           context.insts().GetLocId(scrutinee_ref_id),
           {.type_id = context.GetPointerType(scrutinee_ref.type_id()),
            .lvalue_id = scrutinee_ref_id});
-      match.AddWork(
+      AddWork(
           {.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
       break;
     }
     case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
-      switch (match.kind()) {
+      CARBON_CHECK(param_pattern.runtime_index.index < 0 ||
+                       static_cast<size_t>(param_pattern.runtime_index.index) ==
+                           results_.size(),
+                   "Parameters out of order; expecting {0} but got {1}",
+                   results_.size(), param_pattern.runtime_index.index);
+      switch (kind_) {
         case MatchKind::Caller: {
           CARBON_CHECK(entry.scrutinee_id.is_valid());
-          match.Finish(ConvertToValueOfType(
-              context, context.insts().GetLocId(entry.scrutinee_id),
-              entry.scrutinee_id,
-              SemIR::GetTypeInSpecific(context.sem_ir(),
-                                       match.callee_specific_id(),
-                                       param_pattern.type_id)));
+          if (entry.scrutinee_id == SemIR::InstId::BuiltinError) {
+            results_.push_back(SemIR::InstId::BuiltinError);
+          } else {
+            results_.push_back(ConvertToValueOfType(
+                context, context.insts().GetLocId(entry.scrutinee_id),
+                entry.scrutinee_id,
+                SemIR::GetTypeInSpecific(context.sem_ir(), callee_specific_id_,
+                                         param_pattern.type_id)));
+          }
           // Do not traverse farther, because the caller side of the pattern
           // ends here.
           break;
@@ -238,11 +221,11 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
         case MatchKind::Callee: {
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {
-            param_pattern.runtime_index = match.NextRuntimeIndex();
+            param_pattern.runtime_index = NextRuntimeIndex();
             context.ReplaceInstBeforeConstantUse(entry.pattern_id,
                                                  param_pattern);
           }
-          match.AddWork(
+          AddWork(
               {.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = context.AddInst<SemIR::ValueParam>(
                    pattern.loc_id,
@@ -255,14 +238,14 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
       break;
     }
     case CARBON_KIND(SemIR::OutParamPattern param_pattern): {
-      switch (match.kind()) {
+      switch (kind_) {
         case MatchKind::Caller: {
           CARBON_CHECK(entry.scrutinee_id.is_valid());
           CARBON_CHECK(context.insts().Get(entry.scrutinee_id).type_id() ==
                        SemIR::GetTypeInSpecific(context.sem_ir(),
-                                                match.callee_specific_id(),
+                                                callee_specific_id_,
                                                 param_pattern.type_id));
-          match.Finish(entry.scrutinee_id);
+          results_.push_back(entry.scrutinee_id);
           // Do not traverse farther, because the caller side of the pattern
           // ends here.
           break;
@@ -272,11 +255,11 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
           // ValueParamPattern case.
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {
-            param_pattern.runtime_index = match.NextRuntimeIndex();
+            param_pattern.runtime_index = NextRuntimeIndex();
             context.ReplaceInstBeforeConstantUse(entry.pattern_id,
                                                  param_pattern);
           }
-          match.AddWork(
+          AddWork(
               {.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = context.AddInst<SemIR::OutParam>(
                    pattern.loc_id,
@@ -289,11 +272,11 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
       break;
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
-      CARBON_CHECK(match.kind() == MatchKind::Callee);
-      match.set_return_slot_id(context.AddInst<SemIR::ReturnSlot>(
+      CARBON_CHECK(kind_ == MatchKind::Callee);
+      return_slot_id_ = context.AddInst<SemIR::ReturnSlot>(
           pattern.loc_id, {.type_id = return_slot_pattern.type_id,
                            .type_inst_id = return_slot_pattern.type_inst_id,
-                           .storage_id = entry.scrutinee_id}));
+                           .storage_id = entry.scrutinee_id});
       break;
     }
     default: {
@@ -301,8 +284,6 @@ auto EmitPatternMatch(Context& context, MatchContext& match,
     }
   }
 }
-
-}  // namespace
 
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
@@ -313,7 +294,6 @@ auto CalleePatternMatch(Context& context,
   auto implicit_params_id = SemIR::InstBlockId::Invalid;
 
   MatchContext match(MatchKind::Callee);
-  // TODO reserve space in bind_name_ids_
 
   if (implicit_param_patterns_id.is_valid()) {
     // We add work to the stack in reverse so that the results will be produced
@@ -323,10 +303,7 @@ auto CalleePatternMatch(Context& context,
       match.AddWork(
           {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
     }
-    while (match.HasWork()) {
-      EmitPatternMatch(context, match, match.NextWorkItem());
-    }
-    implicit_params_id = match.ConsumeBindNames(context);
+    implicit_params_id = match.DoWork(context);
   }
 
   if (param_patterns_id.is_valid()) {
@@ -335,18 +312,13 @@ auto CalleePatternMatch(Context& context,
       match.AddWork(
           {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
     }
-    while (match.HasWork()) {
-      EmitPatternMatch(context, match, match.NextWorkItem());
-    }
-    params_id = match.ConsumeBindNames(context);
+    params_id = match.DoWork(context);
   }
 
   if (return_slot_pattern_id.is_valid()) {
     match.AddWork({.pattern_id = return_slot_pattern_id,
                    .scrutinee_id = SemIR::InstId::Invalid});
-    while (match.HasWork()) {
-      EmitPatternMatch(context, match, match.NextWorkItem());
-    }
+    CARBON_CHECK(match.DoWork(context) == SemIR::InstBlockId::Empty);
   }
 
   return {.implicit_params_id = implicit_params_id,
@@ -355,14 +327,41 @@ auto CalleePatternMatch(Context& context,
 }
 
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId param, SemIR::InstId arg)
-    -> SemIR::InstId {
+                        SemIR::InstId self_pattern_id,
+                        SemIR::InstBlockId param_patterns_id,
+                        SemIR::InstId return_slot_pattern_id,
+                        SemIR::InstId self_arg_id,
+                        llvm::ArrayRef<SemIR::InstId> arg_refs,
+                        SemIR::InstId return_slot_arg_id)
+    -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
-  match.AddWork({.pattern_id = param, .scrutinee_id = arg});
-  while (match.HasWork()) {
-    EmitPatternMatch(context, match, match.NextWorkItem());
+
+  // Track the return storage, if present.
+  if (return_slot_arg_id.is_valid()) {
+    CARBON_CHECK(return_slot_pattern_id.is_valid());
+    match.AddWork({.pattern_id = return_slot_pattern_id,
+                   .scrutinee_id = return_slot_arg_id});
   }
-  return match.ConsumeResult();
+
+  // Check type conversions per-element.
+  for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
+           arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
+    auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
+                             context.sem_ir(), param_pattern_id)
+                             .inst.runtime_index;
+    if (!runtime_index.is_valid()) {
+      // Not a runtime parameter: we don't pass an argument.
+      continue;
+    }
+
+    match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
+  }
+
+  if (self_pattern_id.is_valid()) {
+    match.AddWork({.pattern_id = self_pattern_id, .scrutinee_id = self_arg_id});
+  }
+
+  return match.DoWork(context);
 }
 
 }  // namespace Carbon::Check

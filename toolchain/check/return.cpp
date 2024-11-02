@@ -36,7 +36,8 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
   diag.Note(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
 
-// Produces a note describing the return type of the given function.
+// Produces a note describing the return type of the given function, which
+// must be a function whose definition is currently being checked.
 static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   auto return_type_inst_id =
@@ -159,8 +160,9 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     // convert to it.
     expr_id = SemIR::InstId::BuiltinError;
   } else if (return_info.has_return_slot()) {
-    expr_id = Initialize(context, node_id, function.return_slot_id, expr_id);
     return_slot_id = function.return_slot_id;
+    // Note that this can import a function and invalidate `function`.
+    expr_id = Initialize(context, node_id, return_slot_id, expr_id);
   } else {
     expr_id =
         ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);

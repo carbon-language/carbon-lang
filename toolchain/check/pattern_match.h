@@ -45,15 +45,17 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstId return_slot_pattern_id)
     -> ParameterBlocks;
 
-// Emits the pattern-match IR for matching the given argument with the given
-// parameter pattern, and returns the inst representing the resulting
-// calling-convention argument. This IR performs the caller side of pattern
-// matching that argument.
-//
-// TODO: restructure to have this handle the entire signature.
+// Emits the pattern-match IR for matching the given arguments with the given
+// parameter patterns, and returns an inst block with one inst for each
+// calling convention argument. This IR performs the caller side of pattern
+// matching.
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId param, SemIR::InstId arg)
-    -> SemIR::InstId;
+                        SemIR::InstId self_pattern_id,
+                        SemIR::InstBlockId param_patterns_id,
+                        SemIR::InstId return_slot_pattern_id,
+                        SemIR::InstId self_arg_id,
+                        llvm::ArrayRef<SemIR::InstId> arg_refs,
+                        SemIR::InstId return_slot_arg_id) -> SemIR::InstBlockId;
 
 }  // namespace Carbon::Check
 

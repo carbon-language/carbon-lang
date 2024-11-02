@@ -29,7 +29,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %VarScope.type: type = fn_type @VarScope [template]
 // CHECK:STDOUT:   %VarScope: %VarScope.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -37,13 +37,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     .Bool = %import_ref.1
 // CHECK:STDOUT:     .Int32 = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %import_ref.2: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
@@ -89,7 +83,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32.loc13, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 2 [template = constants.%.2]
 // CHECK:STDOUT:   assign %n.var, %.loc13_18
 // CHECK:STDOUT:   %n.ref.loc14: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc14: i32 = bind_value %n.ref.loc14

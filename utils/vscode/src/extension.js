@@ -7,10 +7,11 @@
 const { LanguageClient } = require('vscode-languageclient/node');
 
 function activate(context) {
-  const command = './bazel-bin/language_server/language_server';
+  const command = './bazel-bin/toolchain/install/run_carbon';
+  const args = ['language-server'];
   const serverOptions = {
-    run: { command },
-    debug: { command },
+    run: { command: command, args: args },
+    debug: { command: command, args: args },
   };
 
   const clientOptions = {

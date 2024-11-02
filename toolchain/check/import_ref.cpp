@@ -888,6 +888,34 @@ class ImportRefResolver {
     return context_.inst_blocks().Add(new_patterns);
   }
 
+  // Returns a version of import_return_slot_pattern_id localized to the current
+  // IR.
+  auto GetLocalReturnSlotPatternId(SemIR::InstId import_return_slot_pattern_id)
+      -> SemIR::InstId {
+    if (!import_return_slot_pattern_id.is_valid()) {
+      return SemIR::InstId::Invalid;
+    }
+
+    auto param_pattern = import_ir_.insts().GetAs<SemIR::OutParamPattern>(
+        import_return_slot_pattern_id);
+    auto return_slot_pattern =
+        import_ir_.insts().GetAs<SemIR::ReturnSlotPattern>(
+            param_pattern.subpattern_id);
+    auto type_id = context_.GetTypeIdForTypeConstant(
+        GetLocalConstantIdChecked(return_slot_pattern.type_id));
+
+    auto new_return_slot_pattern_id = context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::ReturnSlotPattern>(
+            AddImportIRInst(param_pattern.subpattern_id),
+            {.type_id = type_id, .type_inst_id = SemIR::InstId::Invalid}));
+    return context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::OutParamPattern>(
+            AddImportIRInst(import_return_slot_pattern_id),
+            {.type_id = type_id,
+             .subpattern_id = new_return_slot_pattern_id,
+             .runtime_index = param_pattern.runtime_index}));
+  }
+
   // Translates a NameId from the import IR to a local NameId.
   auto GetLocalNameId(SemIR::NameId import_name_id) -> SemIR::NameId {
     if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.is_valid()) {
@@ -1189,10 +1217,16 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::IntLiteral inst): {
+      case CARBON_KIND(SemIR::IntValue inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::IntType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::PointerType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::SpecificFunction inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
@@ -1600,7 +1634,8 @@ class ImportRefResolver {
     // Start with an incomplete function.
     function_decl.function_id = context_.functions().Add(
         {GetIncompleteLocalEntityBase(function_decl_id, import_function),
-         {.return_slot_id = SemIR::InstId::Invalid,
+         {.return_slot_pattern_id = SemIR::InstId::Invalid,
+          .return_slot_id = SemIR::InstId::Invalid,
           .builtin_function_kind = import_function.builtin_function_kind}});
 
     function_decl.type_id =
@@ -1671,6 +1706,8 @@ class ImportRefResolver {
         GetLocalParamRefsId(import_function.param_refs_id);
     new_function.param_patterns_id =
         GetLocalParamPatternsId(import_function.param_patterns_id);
+    new_function.return_slot_pattern_id =
+        GetLocalReturnSlotPatternId(import_function.return_slot_pattern_id);
     SetGenericData(import_function.generic_id, new_function.generic_id,
                    generic_data);
 
@@ -2056,15 +2093,27 @@ class ImportRefResolver {
          .elements_id = elements_id});
   }
 
-  auto TryResolveTypedInst(SemIR::IntLiteral inst) -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::IntValue inst) -> ResolveResult {
     auto type_id = GetLocalConstantId(inst.type_id);
     if (HasNewWork()) {
       return Retry();
     }
 
-    return ResolveAs<SemIR::IntLiteral>(
+    return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
+  }
+
+  auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto bit_width_id = GetLocalConstantInstId(inst.bit_width_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    return ResolveAs<SemIR::IntType>({.type_id = SemIR::TypeId::TypeType,
+                                      .int_kind = inst.int_kind,
+                                      .bit_width_id = bit_width_id});
   }
 
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
@@ -2077,6 +2126,21 @@ class ImportRefResolver {
     auto pointee_type_id = context_.GetTypeIdForTypeConstant(pointee_const_id);
     return ResolveAs<SemIR::PointerType>(
         {.type_id = SemIR::TypeId::TypeType, .pointee_id = pointee_type_id});
+  }
+
+  auto TryResolveTypedInst(SemIR::SpecificFunction inst) -> ResolveResult {
+    auto type_const_id = GetLocalConstantId(inst.type_id);
+    auto callee_id = GetLocalConstantInstId(inst.callee_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    auto type_id = context_.GetTypeIdForTypeConstant(type_const_id);
+    auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
+    return ResolveAs<SemIR::SpecificFunction>({.type_id = type_id,
+                                               .callee_id = callee_id,
+                                               .specific_id = specific_id});
   }
 
   auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
@@ -2382,24 +2446,29 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   }
 }
 
-// TODO: This doesn't belong in this file. Consider moving the import resolver
-// and this file elsewhere.
-auto ImportImpls(Context& context) -> void {
-  for (auto [import_index, import_ir] :
-       llvm::enumerate(context.import_irs().array_ref())) {
-    if (!import_ir.sem_ir) {
-      continue;
-    }
-
-    SemIR::ImportIRId import_ir_id(import_index);
-    for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
-      SemIR::ImplId impl_id(impl_index);
-
-      // Resolve the imported impl to a local impl ID.
-      ImportRefResolver resolver(context, import_ir_id);
-      resolver.Resolve(import_ir.sem_ir->impls().Get(impl_id).first_decl_id());
-    }
+auto ImportImplsFromApiFile(Context& context) -> void {
+  SemIR::ImportIRId import_ir_id = SemIR::ImportIRId::ApiForImpl;
+  auto& import_ir = context.import_irs().Get(import_ir_id);
+  if (!import_ir.sem_ir) {
+    return;
   }
+
+  for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
+    SemIR::ImplId impl_id(impl_index);
+
+    // Resolve the imported impl to a local impl ID.
+    ImportImpl(context, import_ir_id, impl_id);
+  }
+}
+
+auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
+                SemIR::ImplId impl_id) -> void {
+  ImportRefResolver resolver(context, import_ir_id);
+  resolver.Resolve(context.import_irs()
+                       .Get(import_ir_id)
+                       .sem_ir->impls()
+                       .Get(impl_id)
+                       .first_decl_id());
 }
 
 }  // namespace Carbon::Check

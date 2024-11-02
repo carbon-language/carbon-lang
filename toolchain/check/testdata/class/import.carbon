@@ -75,13 +75,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -171,10 +165,10 @@ fn Run() {
 // CHECK:STDOUT:   %.5: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.2: %Field = struct_value (%.8) [template]
 // CHECK:STDOUT:   %.9: type = unbound_element_type %Field, i32 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %ForwardDeclared.1: type = class_type @ForwardDeclared.1 [template]
 // CHECK:STDOUT:   %struct.3: %ForwardDeclared.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -190,27 +184,21 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+8, loaded [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+26, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+49, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+28, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+51, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.9 = import_ref Main//a, inst+20, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+34, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+45, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.9 = import_ref Main//a, inst+22, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.9: %F.type = import_ref Main//a, inst+36, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.10: %G.type = import_ref Main//a, inst+47, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+29, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//a, inst+47, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,7 +254,7 @@ fn Run() {
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%import_ref.2 [template = constants.%Field]
 // CHECK:STDOUT:   %b.var: ref %Field = var b
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc9_24: i32 = int_literal 1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc9_24: i32 = int_value 1 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc9_25.1: %.5 = struct_literal (%.loc9_24)
 // CHECK:STDOUT:   %.loc9_25.2: ref i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.3: init i32 = initialize_from %.loc9_24 to %.loc9_25.2 [template = constants.%.8]
@@ -276,7 +264,7 @@ fn Run() {
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
 // CHECK:STDOUT:   %x.ref: %.9 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref i32 = class_element_access %b.ref, element0
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc10_9: i32 = int_value 2 [template = constants.%.10]
 // CHECK:STDOUT:   assign %.loc10_4, %.loc10_9
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.1]
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.1 = var c

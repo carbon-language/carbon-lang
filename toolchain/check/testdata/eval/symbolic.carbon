@@ -30,7 +30,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.6: type = tuple_type (%.2, %T) [symbolic]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %.9: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, %T [symbolic]
 // CHECK:STDOUT:   %.11: type = ptr_type %.10 [symbolic]
 // CHECK:STDOUT: }
@@ -38,13 +38,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,7 +83,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %v.var: ref @F.%.loc14_16.2 (%.8) = var v
 // CHECK:STDOUT:     %v: ref @F.%.loc14_16.2 (%.8) = bind_name v, %v.var
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc15_14: i32 = int_literal 5 [template = constants.%.9]
+// CHECK:STDOUT:     %.loc15_14: i32 = int_value 5 [template = constants.%.9]
 // CHECK:STDOUT:     %.loc15_15.1: type = array_type %.loc15_14, %T [symbolic = %.loc15_15.2 (constants.%.10)]
 // CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.10) = var w
 // CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.10) = bind_name w, %w.var

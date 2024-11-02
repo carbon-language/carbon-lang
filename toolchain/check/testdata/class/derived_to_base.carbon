@@ -80,10 +80,10 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %ConvertRef: %ConvertRef.type = struct_value () [template]
 // CHECK:STDOUT:   %ConvertInit.type: type = fn_type @ConvertInit [template]
 // CHECK:STDOUT:   %ConvertInit: %ConvertInit.type = struct_value () [template]
-// CHECK:STDOUT:   %.23: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.24: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.23: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.24: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.25: type = struct_type {.base: %.3, .b: i32} [template]
-// CHECK:STDOUT:   %.26: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.26: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.27: type = struct_type {.base: %.25, .c: i32} [template]
 // CHECK:STDOUT:   %struct.1: %A = struct_value (%.23) [template]
 // CHECK:STDOUT:   %struct.2: %B = struct_value (%struct.1, %.24) [template]
@@ -94,13 +94,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -297,11 +291,11 @@ fn ConvertInit() {
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc38_38: i32 = int_literal 1 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc38_38: i32 = int_value 1 [template = constants.%.23]
 // CHECK:STDOUT:   %.loc38_39.1: %.3 = struct_literal (%.loc38_38)
-// CHECK:STDOUT:   %.loc38_47: i32 = int_literal 2 [template = constants.%.24]
+// CHECK:STDOUT:   %.loc38_47: i32 = int_value 2 [template = constants.%.24]
 // CHECK:STDOUT:   %.loc38_48.1: %.25 = struct_literal (%.loc38_39.1, %.loc38_47)
-// CHECK:STDOUT:   %.loc38_56: i32 = int_literal 3 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc38_56: i32 = int_value 3 [template = constants.%.26]
 // CHECK:STDOUT:   %.loc38_57.1: %.27 = struct_literal (%.loc38_48.1, %.loc38_56)
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc38_57.2: ref %C = temporary_storage

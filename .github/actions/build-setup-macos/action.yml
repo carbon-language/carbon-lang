@@ -14,8 +14,13 @@ runs:
     - name: Free up disk space
       shell: bash
       run: |
+        # The xcrun occasionally fails (maybe a race condition?), so retry a few
+        # times. Example failure:
+        #   "data" couldn't be moved to "Deleting-<ID>"
         echo '*** Delete iOS simulators'
-        xcrun simctl delete all
+        xcrun simctl delete all || \
+          xcrun simctl delete all || \
+          xcrun simctl delete all
         sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
 
     # Install and cache LLVM 16 from Homebrew. Some runners may have LLVM 16,

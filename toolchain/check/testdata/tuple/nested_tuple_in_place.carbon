@@ -41,21 +41,15 @@ fn H() {
 // CHECK:STDOUT:   %.10: type = tuple_type (i32, %.3, i32) [template]
 // CHECK:STDOUT:   %.11: type = tuple_type (i32, %.6, i32) [template]
 // CHECK:STDOUT:   %.12: type = ptr_type %.11 [template]
-// CHECK:STDOUT:   %.13: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.13: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.14: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -158,11 +152,11 @@ fn H() {
 // CHECK:STDOUT:   %.loc18_36.13: type = converted %.loc18_36.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:   %v.var: ref %.10 = var v
 // CHECK:STDOUT:   %v: ref %.10 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc18_41: i32 = int_literal 1 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc18_41: i32 = int_value 1 [template = constants.%.13]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc18_50.1: ref %.3 = tuple_access %v.var, element1
 // CHECK:STDOUT:   %F.call: init %.3 = call %F.ref() to %.loc18_50.1
-// CHECK:STDOUT:   %.loc18_49: i32 = int_literal 2 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc18_49: i32 = int_value 2 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc18_50.2: %.10 = tuple_literal (%.loc18_41, %F.call, %.loc18_49)
 // CHECK:STDOUT:   %.loc18_50.3: ref i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc18_50.4: init i32 = initialize_from %.loc18_41 to %.loc18_50.3 [template = constants.%.13]

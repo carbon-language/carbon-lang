@@ -60,7 +60,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.11: type = assoc_entity_type %As.type.4, %Convert.type.5 [template]
 // CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.13: <witness> = interface_witness (%Convert.4) [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.14: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.15: %.5 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %.16: <bound method> = bound_method %.14, %Convert.2 [template]
 // CHECK:STDOUT: }
@@ -70,13 +70,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     .Int32 = %import_ref.1
 // CHECK:STDOUT:     .As = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %As.type.1 = import_ref Core//prelude/operators/as, inst+7, loaded [template = constants.%As]
@@ -228,7 +222,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_16: i32 = int_literal 4 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc23_16: i32 = int_value 4 [template = constants.%.14]
 // CHECK:STDOUT:   %int.make_type_32.loc23_21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_32.loc23_21 [template = i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_32.loc23_21, %.loc23_21.1 [template = i32]

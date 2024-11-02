@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "language_server/language_server.h"
+package Core library "prelude/operators/index";
 
-auto main(int /*argc*/, char** /*argv*/) -> int {
-  Carbon::LS::LanguageServer::Start();
-  return 0;
+interface IndexWith(SubscriptType:! type, ElementType:! type) {
+  fn At[self: Self](subscript: SubscriptType) -> ElementType;
 }

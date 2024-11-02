@@ -42,8 +42,8 @@ class Class {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.j: i32, .k: i32} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
@@ -52,13 +52,7 @@ class Class {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -84,12 +78,12 @@ class Class {
 // CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc29_24: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29_24: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_24
 // CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_16.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
 // CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc34_22: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc34_22: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
 // CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:

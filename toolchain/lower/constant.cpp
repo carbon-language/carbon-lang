@@ -204,10 +204,19 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   return nullptr;
 }
 
-static auto EmitAsConstant(ConstantContext& context, SemIR::IntLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
     -> llvm::Constant* {
-  return llvm::ConstantInt::get(context.GetType(inst.type_id),
-                                context.sem_ir().ints().Get(inst.int_id));
+  auto* type = context.GetType(inst.type_id);
+
+  // IntLiteral is represented as an empty struct. All other integer types are
+  // represented as an LLVM integer type.
+  if (!llvm::isa<llvm::IntegerType>(type)) {
+    auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
+    CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
+    return llvm::ConstantStruct::get(struct_type);
+  }
+
+  return llvm::ConstantInt::get(type, context.sem_ir().ints().Get(inst.int_id));
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
@@ -251,6 +260,12 @@ auto LowerConstants(FileContext& file_context,
     }
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
+    if (inst.type_id().is_valid() &&
+        !file_context.sem_ir().types().IsComplete(inst.type_id())) {
+      // If a constant doesn't have a complete type, that means we imported it
+      // but didn't actually use it.
+      continue;
+    }
     llvm::Constant* value = nullptr;
     CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND(Name)            \

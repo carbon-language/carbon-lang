@@ -152,7 +152,7 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.template AddInst<SemIR::IntLiteral>(
+    auto index_id = block.template AddInst<SemIR::IntValue>(
         loc_id,
         {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
          .int_id = context.ints().Add(llvm::APInt(32, i))});
@@ -975,8 +975,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
-  SemIR::Inst expr = sem_ir.insts().Get(expr_id);
-  if (expr.type_id() != target.type_id) {
+  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
     SemIR::InstId interface_args[] = {
         context.types().GetInstId(target.type_id)};
     Operator op = {
@@ -1019,7 +1018,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL("Unexpected expression {0} after builtin conversions", expr);
+      CARBON_FATAL("Unexpected expression {0} after builtin conversions",
+                   sem_ir.insts().Get(expr_id));
 
     case SemIR::ExprCategory::Error:
       return SemIR::InstId::BuiltinError;
@@ -1057,7 +1057,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // TODO: Support types with custom value representations.
       expr_id = context.AddInst<SemIR::BindValue>(
           context.insts().GetLocId(expr_id),
-          {.type_id = expr.type_id(), .value_id = expr_id});
+          {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
       [[fallthrough]];
 
@@ -1136,46 +1136,12 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                  {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
-CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
-
-// Convert the object argument in a method call to match the `self` parameter.
-static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
-                        SemIRLoc callee_loc,
-                        SemIR::SpecificId callee_specific_id,
-                        SemIR::InstId self_param_id, SemIR::InstId self_id)
-    -> SemIR::InstId {
-  if (!self_id.is_valid()) {
-    CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
-                      "missing object argument in method call");
-    context.emitter()
-        .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee_loc, InCallToFunction)
-        .Emit();
-    return SemIR::InstId::BuiltinError;
-  }
-
-  bool addr_pattern = context.insts().Is<SemIR::AddrPattern>(self_param_id);
-  DiagnosticAnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToFunctionSelf, Note,
-                          "initializing `{0:addr self|self}` parameter of "
-                          "method declared here",
-                          BoolAsSelect);
-        builder.Note(self_param_id, InCallToFunctionSelf, addr_pattern);
-      });
-
-  return CallerPatternMatch(context, callee_specific_id, self_param_id,
-                            self_id);
-}
-
 // TODO: consider moving this to pattern_match.h
-auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
-                     SemIR::InstId self_id,
-                     llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id,
-                     const CalleeParamsInfo& callee,
-                     SemIR::SpecificId callee_specific_id)
-    -> SemIR::InstBlockId {
+auto ConvertCallArgs(
+    Context& context, SemIR::LocId call_loc_id, SemIR::InstId self_id,
+    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id,
+    const CalleeParamsInfo& callee, SemIR::InstId return_slot_pattern_id,
+    SemIR::SpecificId callee_specific_id) -> SemIR::InstBlockId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
@@ -1184,68 +1150,31 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
 
-  // Start building a block to hold the converted arguments.
-  llvm::SmallVector<SemIR::InstId> args;
-  args.reserve(implicit_param_patterns.size() + param_patterns.size() +
-               return_slot_arg_id.is_valid());
-
-  // Check implicit parameters.
+  // Find self parameter pattern.
+  // TODO: Do this during initial traversal of implicit params.
+  auto self_param_id = SemIR::InstId::Invalid;
   for (auto implicit_param_id : implicit_param_patterns) {
-    if (implicit_param_id == SemIR::InstId::BuiltinError) {
-      return SemIR::InstBlockId::Invalid;
-    }
-    auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
-        context.sem_ir(), implicit_param_id);
-    if (param_pattern_info.GetNameId(context.sem_ir()) ==
-        SemIR::NameId::SelfValue) {
-      auto converted_self_id =
-          ConvertSelf(context, call_loc_id, callee.callee_loc,
-                      callee_specific_id, implicit_param_id, self_id);
-      if (converted_self_id == SemIR::InstId::BuiltinError) {
-        return SemIR::InstBlockId::Invalid;
-      }
-      args.push_back(converted_self_id);
-    } else {
-      CARBON_CHECK(!param_pattern_info.inst.runtime_index.is_valid(),
-                   "Unexpected implicit parameter passed at runtime");
+    if (SemIR::Function::GetNameFromPatternId(
+            context.sem_ir(), implicit_param_id) == SemIR::NameId::SelfValue) {
+      CARBON_CHECK(!self_param_id.is_valid());
+      self_param_id = implicit_param_id;
     }
   }
 
-  // Check type conversions per-element.
-  for (auto [i, arg_id, param_pattern_id] :
-       llvm::enumerate(arg_refs, param_patterns)) {
-    auto runtime_index = SemIR::Function::GetParamPatternInfoFromPatternId(
-                             context.sem_ir(), param_pattern_id)
-                             .inst.runtime_index;
-    if (!runtime_index.is_valid()) {
-      // Not a runtime parameter: we don't pass an argument.
-      continue;
-    }
-
-    DiagnosticAnnotationScope annotate_diagnostics(
-        &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
-                            "initializing function parameter");
-          builder.Note(param_pattern_id, InCallToFunctionParam);
-        });
-
-    auto converted_arg_id = CallerPatternMatch(context, callee_specific_id,
-                                               param_pattern_id, arg_id);
-    if (converted_arg_id == SemIR::InstId::BuiltinError) {
-      return SemIR::InstBlockId::Invalid;
-    }
-
-    CARBON_CHECK(static_cast<int32_t>(args.size()) == runtime_index.index,
-                 "Parameters not numbered in order.");
-    args.push_back(converted_arg_id);
+  if (self_param_id.is_valid() && !self_id.is_valid()) {
+    CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
+                      "missing object argument in method call");
+    CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
+    context.emitter()
+        .Build(call_loc_id, MissingObjectInMethodCall)
+        .Note(callee.callee_loc, InCallToFunction)
+        .Emit();
+    self_id = SemIR::InstId::BuiltinError;
   }
 
-  // Track the return storage, if present.
-  if (return_slot_arg_id.is_valid()) {
-    args.push_back(return_slot_arg_id);
-  }
-
-  return context.inst_blocks().AddOrEmpty(args);
+  return CallerPatternMatch(context, callee_specific_id, self_param_id,
+                            callee.param_patterns_id, return_slot_pattern_id,
+                            self_id, arg_refs, return_slot_arg_id);
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)

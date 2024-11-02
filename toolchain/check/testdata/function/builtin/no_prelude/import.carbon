@@ -81,13 +81,13 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [template]
 // CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.5 = tuple_value (%.2, %.3, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,8 +110,8 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:   %TestAdd.ref: %TestAdd.type = name_ref TestAdd, imports.%import_ref.2 [template = constants.%TestAdd]
-// CHECK:STDOUT:   %.loc4_29: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_32: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_29: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_32: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %TestAdd.ref(%.loc4_29, %.loc4_32) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
@@ -126,17 +126,17 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_39: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_42: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_45: i32 = int_literal 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_39: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_42: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_45: i32 = int_value 3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_46.1: %.7 = tuple_literal (%.loc4_39, %.loc4_42, %.loc4_45)
-// CHECK:STDOUT:   %.loc4_46.2: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc4_46.2: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc4_46.3: ref i32 = array_index file.%arr.var, %.loc4_46.2
 // CHECK:STDOUT:   %.loc4_46.4: init i32 = initialize_from %.loc4_39 to %.loc4_46.3 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_46.5: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_46.5: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_46.6: ref i32 = array_index file.%arr.var, %.loc4_46.5
 // CHECK:STDOUT:   %.loc4_46.7: init i32 = initialize_from %.loc4_42 to %.loc4_46.6 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_46.8: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_46.8: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_46.9: ref i32 = array_index file.%arr.var, %.loc4_46.8
 // CHECK:STDOUT:   %.loc4_46.10: init i32 = initialize_from %.loc4_45 to %.loc4_46.9 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_46.11: init %.5 = array_init (%.loc4_46.4, %.loc4_46.7, %.loc4_46.10) to file.%arr.var [template = constants.%array]

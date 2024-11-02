@@ -24,8 +24,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 15 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 35 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 15 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 35 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -33,13 +33,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -71,8 +65,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: %.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_11: i32 = int_literal 15 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_15: i32 = int_literal 35 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_11: i32 = int_value 15 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_15: i32 = int_value 35 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_17.1: %.3 = tuple_literal (%.loc13_11, %.loc13_15)
 // CHECK:STDOUT:   %.loc13_17.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc13_17.3: init i32 = initialize_from %.loc13_11 to %.loc13_17.2 [template = constants.%.5]

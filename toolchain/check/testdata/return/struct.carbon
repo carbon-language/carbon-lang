@@ -21,7 +21,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -29,13 +29,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -63,7 +57,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_value 3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_17: %.2 = struct_literal (%.loc12_16)
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc12_16) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_18: %.2 = converted %.loc12_17, %struct [template = constants.%struct]

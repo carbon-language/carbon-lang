@@ -18,7 +18,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,13 +26,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -62,7 +56,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_26: i32 = int_literal 4 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_26: i32 = int_value 4 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc11_27.1: %.2 = struct_literal (%.loc11_26)
 // CHECK:STDOUT:   %.loc11_27.2: init %.2 = struct_init (%.loc11_26) to file.%x.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc11_28: init %.2 = converted %.loc11_27.1, %.loc11_27.2 [template = constants.%struct]

@@ -36,8 +36,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %UnrelatedScopes.type: type = fn_type @UnrelatedScopes [template]
 // CHECK:STDOUT:   %UnrelatedScopes: %UnrelatedScopes.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %EnclosingButAfter.type: type = fn_type @EnclosingButAfter [template]
@@ -49,13 +49,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     .Int32 = %import_ref.1
 // CHECK:STDOUT:     .Bool = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
@@ -110,7 +104,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc13_27: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_27: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
 // CHECK:STDOUT:   br !if.else.loc12
 // CHECK:STDOUT:
@@ -124,12 +118,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc16_21.2: type = converted %int.make_type_32.loc16, %.loc16_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc16_27: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16_27: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc16_27
 // CHECK:STDOUT:   br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +140,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_32.loc23, %.loc23_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc23_27: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23_27: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, %.loc23_27
 // CHECK:STDOUT:   %.loc23_18: i32 = bind_value %v
 // CHECK:STDOUT:   return %.loc23_18
@@ -157,7 +151,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc26_19.2: type = converted %int.make_type_32.loc26, %.loc26_19.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc26_25: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc26_25: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %w.var, %.loc26_25
 // CHECK:STDOUT:   %.loc26_16: i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc26_16

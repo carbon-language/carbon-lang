@@ -7,13 +7,103 @@
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+static auto FindAssociatedImportIRs(Context& context,
+                                    SemIR::ConstantId type_const_id,
+                                    SemIR::ConstantId interface_const_id)
+    -> llvm::SmallVector<SemIR::ImportIRId> {
+  llvm::SmallVector<SemIR::ImportIRId> result;
+
+  // Add an entity to our result.
+  auto add_entity = [&](const SemIR::EntityWithParamsBase& entity) {
+    // We will look for impls in the import IR associated with the first owning
+    // declaration.
+    auto decl_id = entity.first_owning_decl_id;
+    if (!decl_id.is_valid()) {
+      return;
+    }
+    auto loc_id = context.insts().GetLocId(decl_id);
+    if (loc_id.is_import_ir_inst_id()) {
+      result.push_back(
+          context.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id);
+    }
+  };
+
+  llvm::SmallVector<SemIR::InstId> worklist;
+  worklist.push_back(context.constant_values().GetInstId(type_const_id));
+  worklist.push_back(context.constant_values().GetInstId(interface_const_id));
+
+  while (!worklist.empty()) {
+    auto inst_id = worklist.pop_back_val();
+
+    // Visit the operands of the constant.
+    auto inst = context.insts().Get(inst_id);
+    auto [arg0_kind, arg1_kind] = inst.ArgKinds();
+    for (auto [arg, kind] :
+         {std::pair{inst.arg0(), arg0_kind}, {inst.arg1(), arg1_kind}}) {
+      switch (kind) {
+        case SemIR::IdKind::For<SemIR::InstId>: {
+          if (auto id = SemIR::InstId(arg); id.is_valid()) {
+            worklist.push_back(id);
+          }
+          break;
+        }
+        case SemIR::IdKind::For<SemIR::InstBlockId>: {
+          if (auto id = SemIR::InstBlockId(arg); id.is_valid()) {
+            auto block = context.inst_blocks().Get(id);
+            worklist.append(block.begin(), block.end());
+          }
+          break;
+        }
+        case SemIR::IdKind::For<SemIR::ClassId>: {
+          add_entity(context.classes().Get(SemIR::ClassId(arg)));
+          break;
+        }
+        case SemIR::IdKind::For<SemIR::InterfaceId>: {
+          add_entity(context.interfaces().Get(SemIR::InterfaceId(arg)));
+          break;
+        }
+        case SemIR::IdKind::For<SemIR::FunctionId>: {
+          add_entity(context.functions().Get(SemIR::FunctionId(arg)));
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
+  }
+
+  // Deduplicate.
+  std::sort(result.begin(), result.end(),
+            [](SemIR::ImportIRId a, SemIR::ImportIRId b) {
+              return a.index < b.index;
+            });
+  result.erase(std::unique(result.begin(), result.end()), result.end());
+
+  return result;
+}
 
 auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId type_const_id,
                             SemIR::ConstantId interface_const_id)
     -> SemIR::InstId {
+  auto import_irs =
+      FindAssociatedImportIRs(context, type_const_id, interface_const_id);
+  for (auto import_ir : import_irs) {
+    // TODO: Instead of importing all impls, only import ones that are in some
+    // way connected to this query.
+    for (auto impl_index : llvm::seq(
+             context.import_irs().Get(import_ir).sem_ir->impls().size())) {
+      // TODO: Track the relevant impls and only consider those ones and any
+      // local impls, rather than looping over all impls below.
+      ImportImpl(context, import_ir, SemIR::ImplId(impl_index));
+    }
+  }
+
   // TODO: Add a better impl lookup system. At the very least, we should only be
   // considering impls that are for the same interface we're querying. We can
   // also skip impls that mention any types that aren't part of our impl query.

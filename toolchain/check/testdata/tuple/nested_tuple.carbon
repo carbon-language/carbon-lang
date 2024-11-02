@@ -23,9 +23,9 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (%.6, i32) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.7 [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 76 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 76 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 6 [template]
 // CHECK:STDOUT:   %tuple.1: %.4 = tuple_value (%.9, %.10) [template]
 // CHECK:STDOUT:   %tuple.2: %.5 = tuple_value (%tuple.1, %.11) [template]
 // CHECK:STDOUT: }
@@ -34,13 +34,7 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -72,10 +66,10 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_30: i32 = int_literal 12 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc11_34: i32 = int_literal 76 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc11_30: i32 = int_value 12 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc11_34: i32 = int_value 76 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc11_36.1: %.4 = tuple_literal (%.loc11_30, %.loc11_34)
-// CHECK:STDOUT:   %.loc11_39: i32 = int_literal 6 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc11_39: i32 = int_value 6 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc11_40.1: %.5 = tuple_literal (%.loc11_36.1, %.loc11_39)
 // CHECK:STDOUT:   %.loc11_40.2: ref %.4 = tuple_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc11_36.2: ref i32 = tuple_access %.loc11_40.2, element0

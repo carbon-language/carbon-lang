@@ -21,8 +21,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: %.3} [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.7) [template]
 // CHECK:STDOUT:   %struct: %.4 = struct_value (%.6, %tuple) [template]
 // CHECK:STDOUT: }
@@ -31,13 +31,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -77,8 +71,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_38: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_47: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_38: i32 = int_value 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_47: i32 = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc11_49.1: %.3 = tuple_literal (%.loc11_47)
 // CHECK:STDOUT:   %.loc11_50.1: %.4 = struct_literal (%.loc11_38, %.loc11_49.1)
 // CHECK:STDOUT:   %.loc11_50.2: ref i32 = struct_access file.%x.var, element0
