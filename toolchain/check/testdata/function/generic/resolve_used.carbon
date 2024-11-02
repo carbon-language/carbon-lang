@@ -45,7 +45,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %.2: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,7 +116,7 @@ fn CallNegative() {
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
-// CHECK:STDOUT:   %.loc19: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

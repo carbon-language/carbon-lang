@@ -277,7 +277,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.9: type = struct_type {.x: %Self.3, .y: i32} [symbolic]
 // CHECK:STDOUT:   %.10: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.11: type = tuple_type (%.8, %.9) [symbolic]
-// CHECK:STDOUT:   %.12: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.12: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.13: type = array_type %.12, %Self.3 [symbolic]
 // CHECK:STDOUT:   %F.type.13: type = fn_type @F.13 [template]
 // CHECK:STDOUT:   %F.14: %F.type.13 = struct_value () [template]
@@ -424,7 +424,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_38.2: %.10 = tuple_literal (%.loc188_16.4, %.loc188_37.2)
 // CHECK:STDOUT:     %.loc188_38.3: type = converted %.loc188_38.2, constants.%.11 [symbolic = %.loc188_38.1 (constants.%.11)]
 // CHECK:STDOUT:     %Self.ref.loc188_45: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_51: i32 = int_literal 4 [template = constants.%.12]
+// CHECK:STDOUT:     %.loc188_51: i32 = int_value 4 [template = constants.%.12]
 // CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52.2: type = array_type %.loc188_51, %Self.3 [symbolic = %.loc188_52.1 (constants.%.13)]
@@ -735,7 +735,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc200_53.1: %.10 = tuple_literal (%.loc200_32, %.loc200_52)
 // CHECK:STDOUT:     %.loc200_53.2: type = converted %.loc200_53.1, constants.%.18 [template = constants.%.18]
 // CHECK:STDOUT:     %SelfNestedBadParam.ref.loc200_60: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
-// CHECK:STDOUT:     %.loc200_80: i32 = int_literal 4 [template = constants.%.12]
+// CHECK:STDOUT:     %.loc200_80: i32 = int_value 4 [template = constants.%.12]
 // CHECK:STDOUT:     %.loc200_81: type = array_type %.loc200_80, %SelfNestedBadParam [template = constants.%.19]
 // CHECK:STDOUT:     %x.param: %.18 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.18 = bind_name x, %x.param
@@ -766,7 +766,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc212_78.1: %.10 = tuple_literal (%.loc212_37, %.loc212_77)
 // CHECK:STDOUT:     %.loc212_78.2: type = converted %.loc212_78.1, constants.%.24 [template = constants.%.24]
 // CHECK:STDOUT:     %SelfNestedBadParam.ref: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [template = constants.%SelfNestedBadParam]
-// CHECK:STDOUT:     %.loc212_105: i32 = int_literal 4 [template = constants.%.12]
+// CHECK:STDOUT:     %.loc212_105: i32 = int_value 4 [template = constants.%.12]
 // CHECK:STDOUT:     %.loc212_106: type = array_type %.loc212_105, %SelfNestedBadParam [template = constants.%.19]
 // CHECK:STDOUT:     %x.param: %.24 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.24 = bind_name x, %x.param

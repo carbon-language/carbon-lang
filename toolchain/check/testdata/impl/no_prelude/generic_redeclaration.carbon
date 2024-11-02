@@ -456,7 +456,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%C, %C) [template]
 // CHECK:STDOUT: }
@@ -476,7 +476,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc14_11.1: %.3 = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
-// CHECK:STDOUT:     %.loc14_13: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc14_13: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:     %tuple: %.3 = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_11.2: %.3 = converted %.loc14_11.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_12: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]

@@ -186,7 +186,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct: %D = struct_value (%.8, %.8) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.8) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
@@ -209,37 +209,37 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.13: <witness> = interface_witness (%Convert.2) [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%.15) [template]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.16: <witness> = interface_witness (%Convert.4) [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %C.5: type = class_type @C, @C(%.17) [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4 [template]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %.18: <witness> = interface_witness (%Convert.5) [template]
-// CHECK:STDOUT:   %.19: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.19: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %C.6: type = class_type @C, @C(%.19) [template]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.5 [template]
 // CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
 // CHECK:STDOUT:   %.20: <witness> = interface_witness (%Convert.6) [template]
-// CHECK:STDOUT:   %.21: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.21: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %C.7: type = class_type @C, @C(%.21) [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.6 [template]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [template]
 // CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.7) [template]
-// CHECK:STDOUT:   %.23: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.23: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %C.8: type = class_type @C, @C(%.23) [template]
 // CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.7 [template]
 // CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
 // CHECK:STDOUT:   %.24: <witness> = interface_witness (%Convert.8) [template]
-// CHECK:STDOUT:   %.25: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.25: i32 = int_value 6 [template]
 // CHECK:STDOUT:   %C.9: type = class_type @C, @C(%.25) [template]
 // CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.8 [template]
 // CHECK:STDOUT:   %Convert.9: %Convert.type.9 = struct_value () [template]
 // CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.9) [template]
-// CHECK:STDOUT:   %.27: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.27: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %C.10: type = class_type @C, @C(%.27) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.9 [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
@@ -289,7 +289,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc10_8: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc10_8: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.8) [template = constants.%C.3]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -298,7 +298,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc11_8: i32 = int_literal 1 [template = constants.%.15]
+// CHECK:STDOUT:     %.loc11_8: i32 = int_value 1 [template = constants.%.15]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.15) [template = constants.%C.4]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -307,7 +307,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc12_8: i32 = int_literal 2 [template = constants.%.17]
+// CHECK:STDOUT:     %.loc12_8: i32 = int_value 2 [template = constants.%.17]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.17) [template = constants.%C.5]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -316,7 +316,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc13_8: i32 = int_literal 3 [template = constants.%.19]
+// CHECK:STDOUT:     %.loc13_8: i32 = int_value 3 [template = constants.%.19]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.19) [template = constants.%C.6]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -325,7 +325,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc14_8: i32 = int_literal 4 [template = constants.%.21]
+// CHECK:STDOUT:     %.loc14_8: i32 = int_value 4 [template = constants.%.21]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.21) [template = constants.%C.7]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -334,7 +334,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc15_8: i32 = int_literal 5 [template = constants.%.23]
+// CHECK:STDOUT:     %.loc15_8: i32 = int_value 5 [template = constants.%.23]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.23) [template = constants.%C.8]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -343,7 +343,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc16_8: i32 = int_literal 6 [template = constants.%.25]
+// CHECK:STDOUT:     %.loc16_8: i32 = int_value 6 [template = constants.%.25]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.25) [template = constants.%C.9]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -352,7 +352,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc17_8: i32 = int_literal 7 [template = constants.%.27]
+// CHECK:STDOUT:     %.loc17_8: i32 = int_value 7 [template = constants.%.27]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.27) [template = constants.%C.10]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
@@ -584,8 +584,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %D {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_31: i32 = int_literal 0 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc8_39: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc8_31: i32 = int_value 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc8_39: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc8_40.1: %.5 = struct_literal (%.loc8_31, %.loc8_39)
 // CHECK:STDOUT:   %.loc8_40.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc8_40.3: init i32 = initialize_from %.loc8_31 to %.loc8_40.2 [template = constants.%.8]
@@ -831,7 +831,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%N) [symbolic]
 // CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.8) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %struct.1: %C.3 = struct_value () [template]
@@ -852,19 +852,19 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.12: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, imports.%import_ref.12 [template]
 // CHECK:STDOUT:   %.14: %.10 = assoc_entity element0, imports.%import_ref.13 [symbolic]
-// CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%.15) [template]
-// CHECK:STDOUT:   %.16: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.16: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %C.5: type = class_type @C, @C(%.16) [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %C.6: type = class_type @C, @C(%.17) [template]
-// CHECK:STDOUT:   %.18: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.18: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %C.7: type = class_type @C, @C(%.18) [template]
-// CHECK:STDOUT:   %.19: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.19: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %C.8: type = class_type @C, @C(%.19) [template]
-// CHECK:STDOUT:   %.20: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.20: i32 = int_value 6 [template]
 // CHECK:STDOUT:   %C.9: type = class_type @C, @C(%.20) [template]
-// CHECK:STDOUT:   %.21: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.21: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %C.10: type = class_type @C, @C(%.21) [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
@@ -1069,7 +1069,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc8: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc8_33: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc8_33: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   %C.loc8: type = class_type @C, @C(constants.%.8) [template = constants.%C.3]
 // CHECK:STDOUT:   %.loc8_24.2: ref %C.3 = temporary_storage
 // CHECK:STDOUT:   %.loc8_24.3: init %C.3 = class_init (), %.loc8_24.2 [template = constants.%struct.1]
@@ -1094,7 +1094,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc9: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc9_33: i32 = int_literal 1 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc9_33: i32 = int_value 1 [template = constants.%.15]
 // CHECK:STDOUT:   %C.loc9: type = class_type @C, @C(constants.%.15) [template = constants.%C.4]
 // CHECK:STDOUT:   %.loc9_24.2: ref %C.4 = temporary_storage
 // CHECK:STDOUT:   %.loc9_24.3: init %C.4 = class_init (), %.loc9_24.2 [template = constants.%struct.2]
@@ -1119,7 +1119,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc10: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc10_33: i32 = int_literal 2 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc10_33: i32 = int_value 2 [template = constants.%.16]
 // CHECK:STDOUT:   %C.loc10: type = class_type @C, @C(constants.%.16) [template = constants.%C.5]
 // CHECK:STDOUT:   %.loc10_24.2: ref %C.5 = temporary_storage
 // CHECK:STDOUT:   %.loc10_24.3: init %C.5 = class_init (), %.loc10_24.2 [template = constants.%struct.3]
@@ -1144,7 +1144,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc11: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc11_33: i32 = int_literal 3 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc11_33: i32 = int_value 3 [template = constants.%.17]
 // CHECK:STDOUT:   %C.loc11: type = class_type @C, @C(constants.%.17) [template = constants.%C.6]
 // CHECK:STDOUT:   %.loc11_24.2: ref %C.6 = temporary_storage
 // CHECK:STDOUT:   %.loc11_24.3: init %C.6 = class_init (), %.loc11_24.2 [template = constants.%struct.4]
@@ -1169,7 +1169,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc12: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc12_33: i32 = int_literal 4 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc12_33: i32 = int_value 4 [template = constants.%.18]
 // CHECK:STDOUT:   %C.loc12: type = class_type @C, @C(constants.%.18) [template = constants.%C.7]
 // CHECK:STDOUT:   %.loc12_24.2: ref %C.7 = temporary_storage
 // CHECK:STDOUT:   %.loc12_24.3: init %C.7 = class_init (), %.loc12_24.2 [template = constants.%struct.5]
@@ -1194,7 +1194,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc13: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc13_33: i32 = int_literal 5 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc13_33: i32 = int_value 5 [template = constants.%.19]
 // CHECK:STDOUT:   %C.loc13: type = class_type @C, @C(constants.%.19) [template = constants.%C.8]
 // CHECK:STDOUT:   %.loc13_24.2: ref %C.8 = temporary_storage
 // CHECK:STDOUT:   %.loc13_24.3: init %C.8 = class_init (), %.loc13_24.2 [template = constants.%struct.6]
@@ -1219,7 +1219,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc14: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc14_33: i32 = int_literal 6 [template = constants.%.20]
+// CHECK:STDOUT:   %.loc14_33: i32 = int_value 6 [template = constants.%.20]
 // CHECK:STDOUT:   %C.loc14: type = class_type @C, @C(constants.%.20) [template = constants.%C.9]
 // CHECK:STDOUT:   %.loc14_24.2: ref %C.9 = temporary_storage
 // CHECK:STDOUT:   %.loc14_24.3: init %C.9 = class_init (), %.loc14_24.2 [template = constants.%struct.7]
@@ -1244,7 +1244,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc15_24.1: %.6 = struct_literal ()
 // CHECK:STDOUT:   %P.ref.loc15: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc15: %C.type = name_ref C, imports.%import_ref.6 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc15_33: i32 = int_literal 7 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc15_33: i32 = int_value 7 [template = constants.%.21]
 // CHECK:STDOUT:   %C.loc15: type = class_type @C, @C(constants.%.21) [template = constants.%C.10]
 // CHECK:STDOUT:   %.loc15_24.2: ref %C.10 = temporary_storage
 // CHECK:STDOUT:   %.loc15_24.3: init %C.10 = class_init (), %.loc15_24.2 [template = constants.%struct.8]

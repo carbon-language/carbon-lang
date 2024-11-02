@@ -43,7 +43,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -158,7 +158,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc26_18: i32 = int_literal 4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc26_18: i32 = int_value 4 [template = constants.%.6]
 // CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc26_18)
 // CHECK:STDOUT:   %.loc26_20.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc26_20.2: i32 = converted %F.call, %.loc26_20.1

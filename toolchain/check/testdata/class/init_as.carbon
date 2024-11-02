@@ -29,8 +29,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %struct: %Class = struct_value (%.5, %.6) [template]
 // CHECK:STDOUT: }
@@ -85,8 +85,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_17: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc17_25: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_17: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_25: i32 = int_value 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_26.1: %.3 = struct_literal (%.loc17_17, %.loc17_25)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc17_26.2: ref %Class = temporary_storage

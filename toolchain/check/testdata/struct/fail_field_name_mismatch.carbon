@@ -26,7 +26,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,7 +64,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_26: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc15_27: %.4 = struct_literal (%.loc15_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   %x.ref: ref %.2 = name_ref x, file.%x

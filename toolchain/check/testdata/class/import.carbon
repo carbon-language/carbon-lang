@@ -165,10 +165,10 @@ fn Run() {
 // CHECK:STDOUT:   %.5: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.2: %Field = struct_value (%.8) [template]
 // CHECK:STDOUT:   %.9: type = unbound_element_type %Field, i32 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %ForwardDeclared.1: type = class_type @ForwardDeclared.1 [template]
 // CHECK:STDOUT:   %struct.3: %ForwardDeclared.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -254,7 +254,7 @@ fn Run() {
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%import_ref.2 [template = constants.%Field]
 // CHECK:STDOUT:   %b.var: ref %Field = var b
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc9_24: i32 = int_literal 1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc9_24: i32 = int_value 1 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc9_25.1: %.5 = struct_literal (%.loc9_24)
 // CHECK:STDOUT:   %.loc9_25.2: ref i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.3: init i32 = initialize_from %.loc9_24 to %.loc9_25.2 [template = constants.%.8]
@@ -264,7 +264,7 @@ fn Run() {
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
 // CHECK:STDOUT:   %x.ref: %.9 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref i32 = class_element_access %b.ref, element0
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc10_9: i32 = int_value 2 [template = constants.%.10]
 // CHECK:STDOUT:   assign %.loc10_4, %.loc10_9
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.1]
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.1 = var c

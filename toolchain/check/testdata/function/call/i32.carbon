@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,7 +81,7 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
-// CHECK:STDOUT:   %.loc16_21: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16_21: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Echo.call: init i32 = call %Echo.ref(%.loc16_21)
 // CHECK:STDOUT:   assign %b.var, %Echo.call
 // CHECK:STDOUT:   return

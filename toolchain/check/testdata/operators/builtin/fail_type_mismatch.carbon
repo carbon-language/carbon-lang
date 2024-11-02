@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 12 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -98,7 +98,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %bool.make_type, %.loc18_10.1 [template = bool]
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc18_21: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_21: i32 = int_value 12 [template = constants.%.2]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(bool) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc18_17.1: %.5 = specific_constant imports.%import_ref.4, @ImplicitAs(bool) [template = constants.%.6]
 // CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc18_17.1 [template = constants.%.6]

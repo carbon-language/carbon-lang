@@ -19,7 +19,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -59,7 +59,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_18: i32 = int_value 4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_20.1: %.3 = tuple_literal (%.loc11_18)
 // CHECK:STDOUT:   %.loc11_20.2: init %.3 = tuple_init (%.loc11_18) to file.%x.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_21: init %.3 = converted %.loc11_20.1, %.loc11_20.2 [template = constants.%tuple]

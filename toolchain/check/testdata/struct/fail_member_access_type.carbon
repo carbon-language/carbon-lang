@@ -17,7 +17,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: --- fail_member_access_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -46,7 +46,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11_13.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_13.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
 // CHECK:STDOUT:   %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]

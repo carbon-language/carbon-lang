@@ -130,14 +130,14 @@ var test_f128: f128;
 // CHECK:STDOUT: --- iN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 8 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 8 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.BigInt = int_literal 16 [template]
+// CHECK:STDOUT:   %.4: Core.BigInt = int_value 16 [template]
 // CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.6: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %.7: type = int_type signed, %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,19 +158,19 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_i64 = %test_i64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc3_14.1: Core.BigInt = int_literal 8 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc3_14.1: Core.BigInt = int_value 8 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc3: init type = call constants.%Int(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_signed.loc3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_signed.loc3, %.loc3_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_i8.var: ref %.3 = var test_i8
 // CHECK:STDOUT:   %test_i8: ref %.3 = bind_name test_i8, %test_i8.var
-// CHECK:STDOUT:   %.loc4_15.1: Core.BigInt = int_literal 16 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.1: Core.BigInt = int_value 16 [template = constants.%.4]
 // CHECK:STDOUT:   %int.make_type_signed.loc4: init type = call constants.%Int(%.loc4_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_signed.loc4, %.loc4_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_i16.var: ref %.5 = var test_i16
 // CHECK:STDOUT:   %test_i16: ref %.5 = bind_name test_i16, %test_i16.var
-// CHECK:STDOUT:   %.loc5_15.1: Core.BigInt = int_literal 64 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.1: Core.BigInt = int_value 64 [template = constants.%.6]
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%.loc5_15.1) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_signed.loc5, %.loc5_15.2 [template = constants.%.7]
@@ -183,14 +183,14 @@ var test_f128: f128;
 // CHECK:STDOUT: --- fail_iN_bad_width.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 1 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.BigInt = int_literal 15 [template]
+// CHECK:STDOUT:   %.4: Core.BigInt = int_value 15 [template]
 // CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.BigInt = int_literal 1000000000 [template]
+// CHECK:STDOUT:   %.6: Core.BigInt = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
@@ -200,14 +200,14 @@ var test_f128: f128;
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 8 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 8 [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = int_type unsigned, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.BigInt = int_literal 16 [template]
+// CHECK:STDOUT:   %.4: Core.BigInt = int_value 16 [template]
 // CHECK:STDOUT:   %.5: type = int_type unsigned, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.6: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %.7: type = int_type unsigned, %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,19 +228,19 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_u64 = %test_u64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc3_14.1: Core.BigInt = int_literal 8 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc3_14.1: Core.BigInt = int_value 8 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc3: init type = call constants.%UInt(%.loc3_14.1) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_unsigned.loc3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_unsigned.loc3, %.loc3_14.2 [template = constants.%.3]
 // CHECK:STDOUT:   %test_u8.var: ref %.3 = var test_u8
 // CHECK:STDOUT:   %test_u8: ref %.3 = bind_name test_u8, %test_u8.var
-// CHECK:STDOUT:   %.loc4_15.1: Core.BigInt = int_literal 16 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.1: Core.BigInt = int_value 16 [template = constants.%.4]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc4: init type = call constants.%UInt(%.loc4_15.1) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_unsigned.loc4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_unsigned.loc4, %.loc4_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %test_u16.var: ref %.5 = var test_u16
 // CHECK:STDOUT:   %test_u16: ref %.5 = bind_name test_u16, %test_u16.var
-// CHECK:STDOUT:   %.loc5_15.1: Core.BigInt = int_literal 64 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.1: Core.BigInt = int_value 64 [template = constants.%.6]
 // CHECK:STDOUT:   %int.make_type_unsigned.loc5: init type = call constants.%UInt(%.loc5_15.1) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_unsigned.loc5 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_unsigned.loc5, %.loc5_15.2 [template = constants.%.7]
@@ -253,14 +253,14 @@ var test_f128: f128;
 // CHECK:STDOUT: --- fail_uN_bad_width.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 1 [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = int_type unsigned, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.BigInt = int_literal 15 [template]
+// CHECK:STDOUT:   %.4: Core.BigInt = int_value 15 [template]
 // CHECK:STDOUT:   %.5: type = int_type unsigned, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.BigInt = int_literal 1000000000 [template]
+// CHECK:STDOUT:   %.6: Core.BigInt = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

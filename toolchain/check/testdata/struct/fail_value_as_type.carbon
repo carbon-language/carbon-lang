@@ -19,7 +19,7 @@ var x: {.a = 1};
 // CHECK:STDOUT: --- fail_value_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
@@ -62,7 +62,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_14: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_14: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc17_15.1: %.2 = struct_literal (%.loc17_14)
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc17_15.2: %.6 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.7]

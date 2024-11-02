@@ -29,8 +29,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %.2 = struct_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,8 +95,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc14_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
 // CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc14_37: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_45: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_37: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_45: i32 = int_value 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_46.1: %.2 = struct_literal (%.loc14_37, %.loc14_45)
 // CHECK:STDOUT:   %.loc14_46.2: ref i32 = struct_access %a.var, element0
 // CHECK:STDOUT:   %.loc14_46.3: init i32 = initialize_from %.loc14_37 to %.loc14_46.2 [template = constants.%.4]

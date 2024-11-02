@@ -40,7 +40,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %.8: type = unbound_element_type %Derived, %Base [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.base: %Base} [template]
@@ -134,7 +134,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_10: ref i32 = class_element_access %.loc18_4, element0
-// CHECK:STDOUT:   %.loc18_15: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_15: i32 = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:   assign %.loc18_10, %.loc18_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

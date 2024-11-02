@@ -49,7 +49,7 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:   %.2: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.3: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -111,7 +111,7 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:     %return.patt: Core.BigInt = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.BigInt = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_9.1: Core.BigInt = int_literal 64 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc8_9.1: Core.BigInt = int_value 64 [template = constants.%.3]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_9.1) [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8_9.3: type = converted %int.make_type_signed, %.loc8_9.2 [template = constants.%.4]
@@ -182,7 +182,7 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.2: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -242,7 +242,7 @@ fn G(a: f64) -> Core.BigInt() {
 // CHECK:STDOUT:     %return.patt: Core.BigInt = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.BigInt = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_9.1: Core.BigInt = int_literal 64 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc12_9.1: Core.BigInt = int_value 64 [template = constants.%.2]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_9.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc12_9.3: type = converted %float.make_type, %.loc12_9.2 [template = f64]

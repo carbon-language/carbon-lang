@@ -61,7 +61,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.1: %.3 = tuple_value (%.4) [template]
 // CHECK:STDOUT:   %.5: type = tuple_type (%.2, type) [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (type, type) [template]
@@ -73,9 +73,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.12: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %.13: type = tuple_type (%.12, %.11) [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.13 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.16: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.16: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %tuple.2: %.8 = tuple_value (%tuple.1, %.15) [template]
 // CHECK:STDOUT:   %tuple.3: %.9 = tuple_value (%.16, %.17) [template]
 // CHECK:STDOUT:   %tuple.4: %.10 = tuple_value (%tuple.2, %tuple.3) [template]
@@ -159,8 +159,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %return.param_patt: %C.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc9_14: i32 = int_literal 1 [template = constants.%.15]
-// CHECK:STDOUT:     %.loc9_17: i32 = int_literal 2 [template = constants.%.16]
+// CHECK:STDOUT:     %.loc9_14: i32 = int_value 1 [template = constants.%.15]
+// CHECK:STDOUT:     %.loc9_17: i32 = int_value 2 [template = constants.%.16]
 // CHECK:STDOUT:     %.loc9_18: %.9 = tuple_literal (%.loc9_14, %.loc9_17)
 // CHECK:STDOUT:     %tuple: %.9 = tuple_value (%.loc9_14, %.loc9_17) [template = constants.%tuple.5]
 // CHECK:STDOUT:     %.loc9_12: %.9 = converted %.loc9_18, %tuple [template = constants.%tuple.5]
@@ -190,17 +190,17 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_22: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_22: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_24.1: %.3 = tuple_literal (%.loc4_22)
 // CHECK:STDOUT:   %.loc4_24.2: init %.3 = tuple_init (%.loc4_22) to file.%a_ref.var [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc4_25: init %.3 = converted %.loc4_24.1, %.loc4_24.2 [template = constants.%tuple.1]
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc4_25
-// CHECK:STDOUT:   %.loc5_45: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_45: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc5_47.1: %.3 = tuple_literal (%.loc5_45)
-// CHECK:STDOUT:   %.loc5_50: i32 = int_literal 1 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc5_50: i32 = int_value 1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc5_51.1: %.8 = tuple_literal (%.loc5_47.1, %.loc5_50)
-// CHECK:STDOUT:   %.loc5_55: i32 = int_literal 2 [template = constants.%.16]
-// CHECK:STDOUT:   %.loc5_58: i32 = int_literal 3 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc5_55: i32 = int_value 2 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc5_58: i32 = int_value 3 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc5_59.1: %.9 = tuple_literal (%.loc5_55, %.loc5_58)
 // CHECK:STDOUT:   %.loc5_60.1: %.10 = tuple_literal (%.loc5_51.1, %.loc5_59.1)
 // CHECK:STDOUT:   %.loc5_60.2: ref %.8 = tuple_access file.%b_ref.var, element0
@@ -260,8 +260,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X: %.8 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %X.patt: %.8 = symbolic_binding_pattern X, 0 [symbolic]
-// CHECK:STDOUT:   %.16: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.16: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple: %.8 = tuple_value (%.16, %.17) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple) [template]
 // CHECK:STDOUT:   %.18: type = ptr_type %.14 [template]
@@ -327,8 +327,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %b.var: ref %.9 = var b
 // CHECK:STDOUT:   %b: ref %.9 = bind_name b, %b.var
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc6_11: i32 = int_literal 1 [template = constants.%.16]
-// CHECK:STDOUT:   %.loc6_14: i32 = int_literal 2 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc6_11: i32 = int_value 1 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc6_14: i32 = int_value 2 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc6_15: %.8 = tuple_literal (%.loc6_11, %.loc6_14)
 // CHECK:STDOUT:   %tuple: %.8 = tuple_value (%.loc6_11, %.loc6_14) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc6_9: %.8 = converted %.loc6_15, %tuple [template = constants.%tuple]
@@ -423,9 +423,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -460,9 +460,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc12_15: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_18: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_15: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_18: i32 = int_value 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_21: i32 = int_value 3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc12_22: %.8 = tuple_literal (%.loc12_15, %.loc12_18, %.loc12_21)
 // CHECK:STDOUT:   %c_bad.var: ref <error> = var c_bad
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
@@ -515,16 +515,16 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X: %.4 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %X.patt: %.4 = symbolic_binding_pattern X, 0 [symbolic]
-// CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %tuple.1: %.4 = tuple_value (%.5, %.6) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple.1) [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %tuple.2: %.4 = tuple_value (%.10, %.9) [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%tuple.2) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
@@ -578,8 +578,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc10_15: i32 = int_literal 3 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_18: i32 = int_literal 4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_15: i32 = int_value 3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_18: i32 = int_value 4 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc10_19: %.4 = tuple_literal (%.loc10_15, %.loc10_18)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc10_15, %.loc10_18) [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc10_13: %.4 = converted %.loc10_19, %tuple [template = constants.%tuple.1]

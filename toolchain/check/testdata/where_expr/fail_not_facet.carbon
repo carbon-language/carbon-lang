@@ -173,7 +173,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -192,7 +192,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %e.ref: <error> = name_ref e, <error> [template = <error>]
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_21: i32 = int_value 3 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_10: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:     requirement_rewrite <error>, <error>
 // CHECK:STDOUT:   }

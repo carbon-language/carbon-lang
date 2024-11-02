@@ -25,7 +25,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.6: f64 = float_literal 65.890000000000001 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, f64) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
@@ -113,7 +113,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_22: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_22: i32 = int_value 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_25: f64 = float_literal 65.890000000000001 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_30.1: %.7 = tuple_literal (%.loc17_22, %.loc17_25)
 // CHECK:STDOUT:   %.loc17_30.2: ref i32 = tuple_access file.%x.var, element0

@@ -74,7 +74,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- float_negate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -109,11 +109,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc2_14.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc2_14.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_14: init type = call constants.%Float(%.loc2_14.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_14.2: type = value_of_initializer %float.make_type.loc2_14 [template = f64]
 // CHECK:STDOUT:     %.loc2_14.3: type = converted %float.make_type.loc2_14, %.loc2_14.2 [template = f64]
-// CHECK:STDOUT:     %.loc2_22.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc2_22.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_22: init type = call constants.%Float(%.loc2_22.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_22.2: type = value_of_initializer %float.make_type.loc2_22 [template = f64]
 // CHECK:STDOUT:     %.loc2_22.3: type = converted %float.make_type.loc2_22, %.loc2_22.2 [template = f64]
@@ -130,15 +130,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_19.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc4_19.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_19: init type = call constants.%Float(%.loc4_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc4_19.2: type = value_of_initializer %float.make_type.loc4_19 [template = f64]
 // CHECK:STDOUT:     %.loc4_19.3: type = converted %float.make_type.loc4_19, %.loc4_19.2 [template = f64]
-// CHECK:STDOUT:     %.loc4_27.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc4_27.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_27: init type = call constants.%Float(%.loc4_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc4_27.2: type = value_of_initializer %float.make_type.loc4_27 [template = f64]
 // CHECK:STDOUT:     %.loc4_27.3: type = converted %float.make_type.loc4_27, %.loc4_27.2 [template = f64]
-// CHECK:STDOUT:     %.loc4_35.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc4_35.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_35: init type = call constants.%Float(%.loc4_35.1) [template = f64]
 // CHECK:STDOUT:     %.loc4_35.2: type = value_of_initializer %float.make_type.loc4_35 [template = f64]
 // CHECK:STDOUT:     %.loc4_35.3: type = converted %float.make_type.loc4_35, %.loc4_35.2 [template = f64]
@@ -149,7 +149,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_8.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_8.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc8_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc8_8.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc8_8.3: type = converted %float.make_type, %.loc8_8.2 [template = f64]
@@ -183,7 +183,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- fail_bad_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -232,7 +232,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_16.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc8_16.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc8_16.1) [template = f64]
 // CHECK:STDOUT:     %.loc8_16.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc8_16.3: type = converted %float.make_type, %.loc8_16.2 [template = f64]
@@ -247,15 +247,15 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_15.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc13_15.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_15: init type = call constants.%Float(%.loc13_15.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_15.2: type = value_of_initializer %float.make_type.loc13_15 [template = f64]
 // CHECK:STDOUT:     %.loc13_15.3: type = converted %float.make_type.loc13_15, %.loc13_15.2 [template = f64]
-// CHECK:STDOUT:     %.loc13_23.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc13_23.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_23: init type = call constants.%Float(%.loc13_23.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_23.2: type = value_of_initializer %float.make_type.loc13_23 [template = f64]
 // CHECK:STDOUT:     %.loc13_23.3: type = converted %float.make_type.loc13_23, %.loc13_23.2 [template = f64]
-// CHECK:STDOUT:     %.loc13_31.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc13_31.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_31: init type = call constants.%Float(%.loc13_31.1) [template = f64]
 // CHECK:STDOUT:     %.loc13_31.2: type = value_of_initializer %float.make_type.loc13_31 [template = f64]
 // CHECK:STDOUT:     %.loc13_31.3: type = converted %float.make_type.loc13_31, %.loc13_31.2 [template = f64]
@@ -272,7 +272,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18_21.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc18_21.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc18_21.1) [template = f64]
 // CHECK:STDOUT:     %.loc18_21.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc18_21.3: type = converted %float.make_type, %.loc18_21.2 [template = f64]
@@ -290,11 +290,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19_17.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc19_17.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc19_17: init type = call constants.%Float(%.loc19_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc19_17.2: type = value_of_initializer %float.make_type.loc19_17 [template = f64]
 // CHECK:STDOUT:     %.loc19_17.3: type = converted %float.make_type.loc19_17, %.loc19_17.2 [template = f64]
-// CHECK:STDOUT:     %.loc19_25.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc19_25.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc19_25: init type = call constants.%Float(%.loc19_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc19_25.2: type = value_of_initializer %float.make_type.loc19_25 [template = f64]
 // CHECK:STDOUT:     %.loc19_25.3: type = converted %float.make_type.loc19_25, %.loc19_25.2 [template = f64]
@@ -309,11 +309,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc21_25.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc21_25.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc21_25: init type = call constants.%Float(%.loc21_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc21_25.2: type = value_of_initializer %float.make_type.loc21_25 [template = f64]
 // CHECK:STDOUT:     %.loc21_25.3: type = converted %float.make_type.loc21_25, %.loc21_25.2 [template = f64]
-// CHECK:STDOUT:     %.loc21_33.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc21_33.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc21_33: init type = call constants.%Float(%.loc21_33.1) [template = f64]
 // CHECK:STDOUT:     %.loc21_33.2: type = value_of_initializer %float.make_type.loc21_33 [template = f64]
 // CHECK:STDOUT:     %.loc21_33.3: type = converted %float.make_type.loc21_33, %.loc21_33.2 [template = f64]
@@ -332,19 +332,19 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param3
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc32_26.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc32_26.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc32_26: init type = call constants.%Float(%.loc32_26.1) [template = f64]
 // CHECK:STDOUT:     %.loc32_26.2: type = value_of_initializer %float.make_type.loc32_26 [template = f64]
 // CHECK:STDOUT:     %.loc32_26.3: type = converted %float.make_type.loc32_26, %.loc32_26.2 [template = f64]
-// CHECK:STDOUT:     %.loc32_34.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc32_34.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc32_34: init type = call constants.%Float(%.loc32_34.1) [template = f64]
 // CHECK:STDOUT:     %.loc32_34.2: type = value_of_initializer %float.make_type.loc32_34 [template = f64]
 // CHECK:STDOUT:     %.loc32_34.3: type = converted %float.make_type.loc32_34, %.loc32_34.2 [template = f64]
-// CHECK:STDOUT:     %.loc32_42.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc32_42.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc32_42: init type = call constants.%Float(%.loc32_42.1) [template = f64]
 // CHECK:STDOUT:     %.loc32_42.2: type = value_of_initializer %float.make_type.loc32_42 [template = f64]
 // CHECK:STDOUT:     %.loc32_42.3: type = converted %float.make_type.loc32_42, %.loc32_42.2 [template = f64]
-// CHECK:STDOUT:     %.loc32_50.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc32_50.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc32_50: init type = call constants.%Float(%.loc32_50.1) [template = f64]
 // CHECK:STDOUT:     %.loc32_50.2: type = value_of_initializer %float.make_type.loc32_50 [template = f64]
 // CHECK:STDOUT:     %.loc32_50.3: type = converted %float.make_type.loc32_50, %.loc32_50.2 [template = f64]
@@ -365,11 +365,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc43_32.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc43_32.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc43_32: init type = call constants.%Float(%.loc43_32.1) [template = f64]
 // CHECK:STDOUT:     %.loc43_32.2: type = value_of_initializer %float.make_type.loc43_32 [template = f64]
 // CHECK:STDOUT:     %.loc43_32.3: type = converted %float.make_type.loc43_32, %.loc43_32.2 [template = f64]
-// CHECK:STDOUT:     %.loc43_40.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc43_40.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc43_40: init type = call constants.%Float(%.loc43_40.1) [template = f64]
 // CHECK:STDOUT:     %.loc43_40.2: type = value_of_initializer %float.make_type.loc43_40 [template = f64]
 // CHECK:STDOUT:     %.loc43_40.3: type = converted %float.make_type.loc43_40, %.loc43_40.2 [template = f64]

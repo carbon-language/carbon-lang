@@ -23,10 +23,10 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %array: %.3 = tuple_value (%.5) [template]
 // CHECK:STDOUT: }
@@ -88,15 +88,15 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: fn @F(%b.param_patt: bool, %n.param_patt: i32, %m.param_patt: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc12_11.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %int.make_type_32.loc12, %.loc12_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc12_17: type = array_type %.loc12_16, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
 // CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc12_22: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_22: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_24.1: %.6 = tuple_literal (%.loc12_22)
-// CHECK:STDOUT:   %.loc12_24.2: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_24.2: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_24.3: ref i32 = array_index %x.var, %.loc12_24.2
 // CHECK:STDOUT:   %.loc12_24.4: init i32 = initialize_from %.loc12_22 to %.loc12_24.3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_24.5: init %.3 = array_init (%.loc12_24.4) to %x.var [template = constants.%array]

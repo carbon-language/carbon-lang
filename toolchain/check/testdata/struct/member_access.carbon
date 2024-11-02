@@ -15,7 +15,7 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -24,7 +24,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.3: type = struct_type {.a: f64, .b: i32} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.5: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct: %.3 = struct_value (%.5, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,7 +47,7 @@ var z: i32 = y;
 // CHECK:STDOUT:     .z = %z
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11_13.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_13.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
 // CHECK:STDOUT:   %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
@@ -76,7 +76,7 @@ var z: i32 = y;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_35: f64 = float_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_45: i32 = int_literal 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_45: i32 = int_value 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc11_46.1: %.3 = struct_literal (%.loc11_35, %.loc11_45)
 // CHECK:STDOUT:   %.loc11_46.2: ref f64 = struct_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc11_46.3: init f64 = initialize_from %.loc11_35 to %.loc11_46.2 [template = constants.%.5]

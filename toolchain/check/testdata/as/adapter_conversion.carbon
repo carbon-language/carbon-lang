@@ -118,8 +118,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32, .y: i32} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %A = struct_value (%.6, %.7) [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %A [template]
@@ -200,8 +200,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %A {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_26: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_18: i32 = int_value 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_26: i32 = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc9_27.1: %.3 = struct_literal (%.loc9_18, %.loc9_26)
 // CHECK:STDOUT:   %.loc9_27.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc9_27.3: init i32 = initialize_from %.loc9_18 to %.loc9_27.2 [template = constants.%.6]
@@ -214,8 +214,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_22: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_30: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_22: i32 = int_value 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_30: i32 = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc17_31.1: %.3 = struct_literal (%.loc17_22, %.loc17_30)
 // CHECK:STDOUT:   %.loc17_31.2: ref i32 = class_element_access file.%a_ref.var, element0
 // CHECK:STDOUT:   %.loc17_31.3: init i32 = initialize_from %.loc17_22 to %.loc17_31.2 [template = constants.%.6]
@@ -257,7 +257,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness i32 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -299,7 +299,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_13: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_13: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_18.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_18.2: type = converted %int.make_type_32.loc8, %.loc8_18.1 [template = i32]
@@ -412,8 +412,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %A [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %A = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -473,8 +473,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_25: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_33: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_25: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_33: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc13_34.1: %.3 = struct_literal (%.loc13_25, %.loc13_33)
 // CHECK:STDOUT:   %A.ref.loc13: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc13_34.2: ref %A = temporary_storage
@@ -490,8 +490,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc13_42.2: ref %B = converted %.loc13_36, %.loc13_42.1
 // CHECK:STDOUT:   %.loc13_42.3: %B = bind_value %.loc13_42.2
 // CHECK:STDOUT:   %b_value: %B = bind_name b_value, %.loc13_42.3
-// CHECK:STDOUT:   %.loc24_24: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc24_32: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc24_24: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc24_32: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc24_33.1: %.3 = struct_literal (%.loc24_24, %.loc24_32)
 // CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc24_33.2: ref %A = temporary_storage
@@ -523,7 +523,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %A [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
 // CHECK:STDOUT:   %As: %As.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -628,7 +628,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_18: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21_18: i32 = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc21_19.1: %.3 = struct_literal (%.loc21_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %As.type: type = interface_type @As, @As(constants.%B) [template = constants.%As.type.3]

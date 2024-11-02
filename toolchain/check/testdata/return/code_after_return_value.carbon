@@ -30,9 +30,9 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.5: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.6: bool = bool_literal true [template]
 // CHECK:STDOUT: }
@@ -79,7 +79,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

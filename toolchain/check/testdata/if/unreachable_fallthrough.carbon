@@ -27,8 +27,8 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [template]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,11 +77,11 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

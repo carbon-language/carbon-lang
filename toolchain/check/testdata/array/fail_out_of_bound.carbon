@@ -19,11 +19,11 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.7: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -43,7 +43,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_14: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_14: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_32, %.loc14_9.1 [template = i32]
 // CHECK:STDOUT:   %.loc14_15: type = array_type %.loc14_14, i32 [template = constants.%.3]
@@ -55,9 +55,9 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_23: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_26: i32 = int_literal 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_20: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_23: i32 = int_value 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_26: i32 = int_value 3 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_27: %.7 = tuple_literal (%.loc14_20, %.loc14_23, %.loc14_26)
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return

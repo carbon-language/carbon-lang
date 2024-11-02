@@ -28,7 +28,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
-// Forms an IntLiteral instruction with type `i32` for a given literal integer
+// Forms an IntValue instruction with type `i32` for a given literal integer
 // value, which is assumed to be unsigned.
 static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
@@ -43,20 +43,20 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
   }
   // Literals are always represented as unsigned, so zero-extend if needed.
   auto i32_val = val.zextOrTrunc(32);
-  return context.AddInst<SemIR::IntLiteral>(
+  return context.AddInst<SemIR::IntValue>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
        .int_id = context.ints().Add(i32_val)});
 }
 
-// Forms an IntLiteral instruction with type `BigInt` for a given literal
+// Forms an IntValue instruction with type `BigInt` for a given literal
 // integer value, which is assumed to be unsigned.
 static auto MakeBigIntLiteral(Context& context, Parse::NodeId node_id,
                               IntId int_id) -> SemIR::InstId {
   // TODO: `IntId`s with different bit-widths are considered different values
   // here. Decide how we want to canonicalize these. For now this is only used
   // by type literals, so we rely on the lexer picking some consistent rule.
-  return context.AddInst<SemIR::IntLiteral>(
+  return context.AddInst<SemIR::IntValue>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BigIntType),
        .int_id = int_id});

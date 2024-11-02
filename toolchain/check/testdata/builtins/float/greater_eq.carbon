@@ -31,7 +31,7 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- float_greater_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.BigInt = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -88,11 +88,11 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc2_17.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc2_17.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_17: init type = call constants.%Float(%.loc2_17.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_17.2: type = value_of_initializer %float.make_type.loc2_17 [template = f64]
 // CHECK:STDOUT:     %.loc2_17.3: type = converted %float.make_type.loc2_17, %.loc2_17.2 [template = f64]
-// CHECK:STDOUT:     %.loc2_25.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc2_25.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_25: init type = call constants.%Float(%.loc2_25.1) [template = f64]
 // CHECK:STDOUT:     %.loc2_25.2: type = value_of_initializer %float.make_type.loc2_25 [template = f64]
 // CHECK:STDOUT:     %.loc2_25.3: type = converted %float.make_type.loc2_25, %.loc2_25.2 [template = f64]
@@ -112,11 +112,11 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc3_14.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc3_14.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%Float(%.loc3_14.1) [template = f64]
 // CHECK:STDOUT:     %.loc3_14.2: type = value_of_initializer %float.make_type.loc3_14 [template = f64]
 // CHECK:STDOUT:     %.loc3_14.3: type = converted %float.make_type.loc3_14, %.loc3_14.2 [template = f64]
-// CHECK:STDOUT:     %.loc3_22.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc3_22.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc3_22: init type = call constants.%Float(%.loc3_22.1) [template = f64]
 // CHECK:STDOUT:     %.loc3_22.2: type = value_of_initializer %float.make_type.loc3_22 [template = f64]
 // CHECK:STDOUT:     %.loc3_22.3: type = converted %float.make_type.loc3_22, %.loc3_22.2 [template = f64]
@@ -148,11 +148,11 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_19.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc16_19.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%Float(%.loc16_19.1) [template = f64]
 // CHECK:STDOUT:     %.loc16_19.2: type = value_of_initializer %float.make_type.loc16_19 [template = f64]
 // CHECK:STDOUT:     %.loc16_19.3: type = converted %float.make_type.loc16_19, %.loc16_19.2 [template = f64]
-// CHECK:STDOUT:     %.loc16_27.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc16_27.1: Core.BigInt = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc16_27: init type = call constants.%Float(%.loc16_27.1) [template = f64]
 // CHECK:STDOUT:     %.loc16_27.2: type = value_of_initializer %float.make_type.loc16_27 [template = f64]
 // CHECK:STDOUT:     %.loc16_27.3: type = converted %float.make_type.loc16_27, %.loc16_27.2 [template = f64]

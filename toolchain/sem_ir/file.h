@@ -60,9 +60,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return ints()
-        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
-        .getZExtValue();
+    return ints().Get(insts().GetAs<IntValue>(bound_id).int_id).getZExtValue();
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.

@@ -20,10 +20,10 @@ var b: i32 = a.({.index = 1}.index);
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 34 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 34 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6) [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.index: i32} [template]
 // CHECK:STDOUT:   %struct: %.8 = struct_value (%.7) [template]
 // CHECK:STDOUT: }
@@ -65,8 +65,8 @@ var b: i32 = a.({.index = 1}.index);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_22: i32 = int_literal 12 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11_26: i32 = int_literal 34 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_22: i32 = int_value 12 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_26: i32 = int_value 34 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc11_28.1: %.3 = tuple_literal (%.loc11_22, %.loc11_26)
 // CHECK:STDOUT:   %.loc11_28.2: ref i32 = tuple_access file.%a.var, element0
 // CHECK:STDOUT:   %.loc11_28.3: init i32 = initialize_from %.loc11_22 to %.loc11_28.2 [template = constants.%.5]
@@ -76,7 +76,7 @@ var b: i32 = a.({.index = 1}.index);
 // CHECK:STDOUT:   %.loc11_29: init %.3 = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12_27: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_27: i32 = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc12_28.1: %.8 = struct_literal (%.loc12_27)
 // CHECK:STDOUT:   %struct: %.8 = struct_value (%.loc12_27) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_28.2: %.8 = converted %.loc12_28.1, %struct [template = constants.%struct]

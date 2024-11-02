@@ -20,9 +20,9 @@ var c: i32 = b.0;
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 12 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,7 +67,7 @@ var c: i32 = b.0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 12 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_18: i32 = int_value 12 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_21.1: %.3 = tuple_literal (%.loc11_18)
 // CHECK:STDOUT:   %.loc11_21.2: init %.3 = tuple_init (%.loc11_18) to file.%a.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_22: init %.3 = converted %.loc11_21.1, %.loc11_21.2 [template = constants.%tuple]
@@ -79,7 +79,7 @@ var c: i32 = b.0;
 // CHECK:STDOUT:   %.loc12_18: init %.3 = converted %a.ref, %.loc12_17.3
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
 // CHECK:STDOUT:   %b.ref: ref %.3 = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_16: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_15.1: ref i32 = tuple_access %b.ref, element0
 // CHECK:STDOUT:   %.loc13_15.2: i32 = bind_value %.loc13_15.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc13_15.2

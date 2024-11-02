@@ -32,7 +32,7 @@ interface I {
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @I.%T [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 42 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 42 [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %I.type, i32 [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
@@ -70,7 +70,7 @@ interface I {
 // CHECK:STDOUT:   %int.make_type_32.loc20: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc20_19.1: type = value_of_initializer %int.make_type_32.loc20 [template = i32]
 // CHECK:STDOUT:   %.loc20_19.2: type = converted %int.make_type_32.loc20, %.loc20_19.1 [template = i32]
-// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 42 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc20_25: i32 = int_value 42 [template = constants.%.6]
 // CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
 // CHECK:STDOUT:   %.loc20_27: %.7 = assoc_entity element1, %N [template = constants.%.8]
 // CHECK:STDOUT:

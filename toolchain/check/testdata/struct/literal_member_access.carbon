@@ -25,9 +25,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: i32, .b: %.2, .c: i32} [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.a: i32, .b: %.4, .c: i32} [template]
 // CHECK:STDOUT:   %.8: type = ptr_type %.7 [template]
@@ -84,11 +84,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_16: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_16: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc14_25.1: ref %.2 = temporary_storage
 // CHECK:STDOUT:   %G.call: init %.2 = call %G.ref() to %.loc14_25.1
-// CHECK:STDOUT:   %.loc14_34: i32 = int_literal 3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_34: i32 = int_value 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_35.1: %.6 = struct_literal (%.loc14_16, %G.call, %.loc14_34)
 // CHECK:STDOUT:   %.loc14_25.2: ref %.2 = temporary %.loc14_25.1, %G.call
 // CHECK:STDOUT:   %.loc14_25.3: ref i32 = struct_access %.loc14_25.2, element0

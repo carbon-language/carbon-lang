@@ -80,7 +80,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %CallAlias: %CallAlias.type = struct_value () [template]
 // CHECK:STDOUT:   %CallOnConstBoundMethod.type: type = fn_type @CallOnConstBoundMethod [template]
 // CHECK:STDOUT:   %CallOnConstBoundMethod: %CallOnConstBoundMethod.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct: %Class = struct_value (%.7) [template]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [template]
 // CHECK:STDOUT:   %CallWithAddr: %CallWithAddr.type = struct_value () [template]
@@ -334,7 +334,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc35_17: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc35_17: i32 = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc35_18.1: %.4 = struct_literal (%.loc35_17)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc35_18.2: ref %Class = temporary_storage

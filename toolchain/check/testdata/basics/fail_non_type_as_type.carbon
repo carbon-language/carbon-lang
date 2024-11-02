@@ -19,7 +19,7 @@ var x: type = 42;
 // CHECK:STDOUT: --- fail_non_type_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 42 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 42 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -94,7 +94,7 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_15: i32 = int_literal 42 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_15: i32 = int_value 42 [template = constants.%.1]
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc17_17.1: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
 // CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc17_17.1 [template = constants.%.6]

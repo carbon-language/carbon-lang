@@ -243,7 +243,7 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                           llvm::APInt value) -> SemIR::ConstantId {
   auto result = context.ints().Add(std::move(value));
   return MakeConstantResult(
-      context, SemIR::IntLiteral{.type_id = type_id, .int_id = result},
+      context, SemIR::IntValue{.type_id = type_id, .int_id = result},
       Phase::Template);
 }
 
@@ -489,7 +489,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   if (!index_id.is_valid()) {
     return MakeNonConstantResult(phase);
   }
-  auto index = eval_context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
+  auto index = eval_context.insts().TryGetAs<SemIR::IntValue>(index_id);
   if (!index) {
     CARBON_CHECK(phase != Phase::Template,
                  "Template constant integer should be a literal");
@@ -503,7 +503,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
       eval_context.insts().Get(inst.array_id).type_id());
   if (auto array_type =
           eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
-    if (auto bound = eval_context.insts().TryGetAs<SemIR::IntLiteral>(
+    if (auto bound = eval_context.insts().TryGetAs<SemIR::IntValue>(
             array_type->bound_id)) {
       // This awkward call to `getZExtValue` is a workaround for APInt not
       // supporting comparisons between integers of different bit widths.
@@ -542,7 +542,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
 static auto ValidateIntType(Context& context, SemIRLoc loc,
                             SemIR::IntType result) -> bool {
   auto bit_width =
-      context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
+      context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
     // Symbolic bit width.
     return true;
@@ -592,7 +592,7 @@ static auto MakeIntTypeResult(Context& context, SemIRLoc loc,
 // Enforces that the bit width is 64 for a float.
 static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
                                   SemIR::InstId inst_id) -> bool {
-  auto inst = context.insts().GetAs<SemIR::IntLiteral>(inst_id);
+  auto inst = context.insts().GetAs<SemIR::IntValue>(inst_id);
   if (context.ints().Get(inst.int_id) == 64) {
     return true;
   }
@@ -606,7 +606,7 @@ static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
 static auto ValidateFloatType(Context& context, SemIRLoc loc,
                               SemIR::FloatType result) -> bool {
   auto bit_width =
-      context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
+      context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
     // Symbolic bit width.
     return true;
@@ -625,7 +625,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
+  auto op = context.insts().GetAs<SemIR::IntValue>(arg_id);
   auto op_val = context.ints().Get(op.int_id);
 
   switch (builtin_kind) {
@@ -658,8 +658,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                                       SemIR::InstId lhs_id,
                                       SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::IntLiteral>(rhs_id);
+  auto lhs = context.insts().GetAs<SemIR::IntValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::IntValue>(rhs_id);
   const auto& lhs_val = context.ints().Get(lhs.int_id);
   const auto& rhs_val = context.ints().Get(rhs.int_id);
 
@@ -791,10 +791,10 @@ static auto PerformBuiltinIntComparison(Context& context,
                                         SemIR::InstId rhs_id,
                                         SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
+  auto lhs = context.insts().GetAs<SemIR::IntValue>(lhs_id);
   const auto& lhs_val = context.ints().Get(lhs.int_id);
-  const auto& rhs_val = context.ints().Get(
-      context.insts().GetAs<SemIR::IntLiteral>(rhs_id).int_id);
+  const auto& rhs_val =
+      context.ints().Get(context.insts().GetAs<SemIR::IntValue>(rhs_id).int_id);
   bool is_signed = context.types().IsSignedInt(lhs.type_id);
 
   bool result;
@@ -1122,8 +1122,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           [&](SemIR::ArrayType result) {
             auto bound_id = array_type.bound_id;
-            auto int_bound = eval_context.insts().TryGetAs<SemIR::IntLiteral>(
-                result.bound_id);
+            auto int_bound =
+                eval_context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
             if (!int_bound) {
               // TODO: Permit symbolic array bounds. This will require fixing
               // callers of `GetArrayBoundValue`.
@@ -1330,13 +1330,13 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     case SemIR::BoolLiteral::Kind:
     case SemIR::FloatLiteral::Kind:
-    case SemIR::IntLiteral::Kind:
+    case SemIR::IntValue::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
       // TODO: Convert literals into a canonical form. Currently we can form two
       // different `i32` constants with the same value if they are represented
       // by `APInt`s with different bit widths.
-      // TODO: Can the type of an IntLiteral or FloatLiteral be symbolic? If so,
+      // TODO: Can the type of an IntValue or FloatLiteral be symbolic? If so,
       // we may need to rebuild.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 

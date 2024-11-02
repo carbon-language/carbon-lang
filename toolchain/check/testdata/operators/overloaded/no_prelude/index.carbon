@@ -59,8 +59,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,8 +84,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_10: i32 = int_literal 0 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_10: i32 = int_value 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_12: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,8 +95,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -108,8 +108,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_10: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_12: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

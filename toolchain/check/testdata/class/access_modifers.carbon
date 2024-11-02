@@ -153,14 +153,14 @@ class A {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Circle, i32 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %SomeInternalFunction.type: type = fn_type @SomeInternalFunction [template]
 // CHECK:STDOUT:   %SomeInternalFunction: %SomeInternalFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.radius: i32} [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %struct: %Circle = struct_value (%.3) [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
@@ -195,7 +195,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_39.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_39.2: type = converted %int.make_type_32.loc6, %.loc6_39.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_45: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_45: i32 = int_value 5 [template = constants.%.3]
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT: i32 = bind_name SOME_INTERNAL_CONSTANT, %.loc6_45
 // CHECK:STDOUT:   %SomeInternalFunction.decl: %SomeInternalFunction.type = fn_decl @SomeInternalFunction [template = constants.%SomeInternalFunction] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
@@ -229,13 +229,13 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9: i32 = int_value 0 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Circle {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_23: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_23: i32 = int_value 5 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_24.1: %.4 = struct_literal (%.loc13_23)
 // CHECK:STDOUT:   %.loc13_24.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc13_24.3: init i32 = initialize_from %.loc13_23 to %.loc13_24.2 [template = constants.%.3]
@@ -262,7 +262,7 @@ class A {
 // CHECK:STDOUT:   %radius: i32 = bind_name radius, <error>
 // CHECK:STDOUT:   %circle.ref.loc34: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %radius.ref.loc34: <error> = name_ref radius, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc34: i32 = int_literal 5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc34: i32 = int_value 5 [template = constants.%.3]
 // CHECK:STDOUT:   assign %radius.ref.loc34, <error>
 // CHECK:STDOUT:   %circle.ref.loc42: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [template = <error>]
@@ -348,7 +348,7 @@ class A {
 // CHECK:STDOUT:   %.3: type = struct_type {.radius: i32} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -437,7 +437,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12: i32 = int_value 0 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,7 +458,7 @@ class A {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
@@ -490,7 +490,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_32, %.loc5_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_16: i32 = int_literal 5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_16: i32 = int_value 5 [template = constants.%.2]
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc5_16
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
@@ -516,7 +516,7 @@ class A {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
@@ -552,12 +552,12 @@ class A {
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_32.loc5, %.loc5_20.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_26: i32 = int_literal 5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_26: i32 = int_value 5 [template = constants.%.2]
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc5_26
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_18.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_18.2: type = converted %int.make_type_32.loc6, %.loc6_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_24: i32 = int_literal 5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_24: i32 = int_value 5 [template = constants.%.2]
 // CHECK:STDOUT:   %y: i32 = bind_name y, %.loc6_24
 // CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:

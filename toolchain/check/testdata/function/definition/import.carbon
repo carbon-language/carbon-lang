@@ -124,7 +124,7 @@ fn D() {}
 // CHECK:STDOUT:   %.4: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -204,7 +204,7 @@ fn D() {}
 // CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %.3 = name_ref c, %c
-// CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc6_47: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc6_46: i32 = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc6_48: %.4 = struct_literal (%.loc6_46)
 // CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc6_46)
@@ -250,7 +250,7 @@ fn D() {}
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
@@ -315,11 +315,11 @@ fn D() {}
 // CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc7)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_23: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_25.1: %.4 = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc8_23) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc8_25.2: %.4 = converted %.loc8_25.1, %tuple [template = constants.%tuple]

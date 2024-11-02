@@ -534,7 +534,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
 static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
     -> llvm::Type* {
   auto width =
-      context.sem_ir().insts().TryGetAs<SemIR::IntLiteral>(inst.bit_width_id);
+      context.sem_ir().insts().TryGetAs<SemIR::IntValue>(inst.bit_width_id);
   CARBON_CHECK(width, "Can't lower int type with symbolic width");
   return llvm::IntegerType::get(
       context.llvm_context(),

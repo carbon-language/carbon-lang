@@ -25,8 +25,8 @@ fn Main() {
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,12 +75,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref.loc14: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
-// CHECK:STDOUT:   %.loc14_7: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_7: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_10: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %Foo.call.loc14: init %.1 = call %Foo.ref.loc14(%.loc14_7, %.loc14_10)
 // CHECK:STDOUT:   %Foo.ref.loc15: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
-// CHECK:STDOUT:   %.loc15_7: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_7: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_10: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %Foo.call.loc15: init %.1 = call %Foo.ref.loc15(%.loc15_7, %.loc15_10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
