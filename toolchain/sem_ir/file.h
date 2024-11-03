@@ -10,6 +10,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/class.h"
@@ -73,29 +74,33 @@ class File : public Printable<File> {
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
+  auto identifiers() -> SharedValueStores::IdentifierStore& {
     return value_stores_->identifiers();
   }
-  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
+  auto identifiers() const -> const SharedValueStores::IdentifierStore& {
     return value_stores_->identifiers();
   }
-  auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
-  auto ints() const -> const CanonicalValueStore<IntId>& {
+  auto ints() -> SharedValueStores::IntStore& { return value_stores_->ints(); }
+  auto ints() const -> const SharedValueStores::IntStore& {
     return value_stores_->ints();
   }
-  auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
-  auto reals() const -> const ValueStore<RealId>& {
+  auto reals() -> SharedValueStores::RealStore& {
     return value_stores_->reals();
   }
-  auto floats() -> FloatValueStore& { return value_stores_->floats(); }
-  auto floats() const -> const FloatValueStore& {
+  auto reals() const -> const SharedValueStores::RealStore& {
+    return value_stores_->reals();
+  }
+  auto floats() -> SharedValueStores::FloatStore& {
     return value_stores_->floats();
   }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
+  auto floats() const -> const SharedValueStores::FloatStore& {
+    return value_stores_->floats();
+  }
+  auto string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return value_stores_->string_literal_values();
   }
   auto string_literal_values() const
-      -> const CanonicalValueStore<StringLiteralValueId>& {
+      -> const SharedValueStores::StringLiteralStore& {
     return value_stores_->string_literal_values();
   }
 

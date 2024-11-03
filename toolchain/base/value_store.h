@@ -8,115 +8,17 @@
 #include <type_traits>
 
 #include "common/check.h"
+#include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/YAMLParser.h"
-#include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/yaml.h"
 
 namespace Carbon {
-
-// The value of a real literal token.
-//
-// This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
-// fraction (mantissa * 10^exponent).
-//
-// These values are not canonicalized, because we don't expect them to repeat
-// and don't use them in SemIR values.
-class Real : public Printable<Real> {
- public:
-  auto Print(llvm::raw_ostream& output_stream) const -> void {
-    mantissa.print(output_stream, /*isSigned=*/false);
-    output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
-  }
-
-  // The mantissa, represented as an unsigned integer.
-  llvm::APInt mantissa;
-
-  // The exponent, represented as a signed integer.
-  llvm::APInt exponent;
-
-  // If false, the value is mantissa * 2^exponent.
-  // If true, the value is mantissa * 10^exponent.
-  // TODO: This field increases Real from 32 bytes to 40 bytes. Consider
-  // changing how it's tracked for space savings.
-  bool is_decimal;
-};
-
-// Corresponds to an integer value represented by an APInt. This is used both
-// for integer literal tokens, which are unsigned and have an unspecified
-// bit-width, and integer values in SemIR, which have a signedness and bit-width
-// matching their type.
-struct IntId : public IdBase, public Printable<IntId> {
-  using ValueType = llvm::APInt;
-  static const IntId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "int";
-    IdBase::Print(out);
-  }
-};
-constexpr IntId IntId::Invalid(IntId::InvalidIndex);
-
-// Corresponds to a float value represented by an APFloat. This is used for
-// floating-point values in SemIR.
-struct FloatId : public IdBase, public Printable<FloatId> {
-  using ValueType = llvm::APFloat;
-  static const FloatId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "float";
-    IdBase::Print(out);
-  }
-};
-constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
-
-// Corresponds to a Real value.
-struct RealId : public IdBase, public Printable<RealId> {
-  using ValueType = Real;
-  static const RealId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "real";
-    IdBase::Print(out);
-  }
-};
-constexpr RealId RealId::Invalid(RealId::InvalidIndex);
-
-// Corresponds to StringRefs for identifiers.
-//
-// `NameId` relies on the values of this type other than `Invalid` all being
-// non-negative.
-struct IdentifierId : public IdBase, public Printable<IdentifierId> {
-  using ValueType = llvm::StringRef;
-  static const IdentifierId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "identifier";
-    IdBase::Print(out);
-  }
-};
-constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
-
-// Corresponds to StringRefs for string literals.
-struct StringLiteralValueId : public IdBase,
-                              public Printable<StringLiteralValueId> {
-  using ValueType = llvm::StringRef;
-  static const StringLiteralValueId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "string";
-    IdBase::Print(out);
-  }
-};
-constexpr StringLiteralValueId StringLiteralValueId::Invalid(
-    StringLiteralValueId::InvalidIndex);
 
 namespace Internal {
 
@@ -296,75 +198,6 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
   }
   values_.Reserve(size);
 }
-
-using FloatValueStore = CanonicalValueStore<FloatId>;
-
-// Stores that will be used across compiler phases for a given compilation unit.
-// This is provided mainly so that they don't need to be passed separately.
-class SharedValueStores : public Yaml::Printable<SharedValueStores> {
- public:
-  explicit SharedValueStores() = default;
-
-  // Not copyable or movable.
-  SharedValueStores(const SharedValueStores&) = delete;
-  auto operator=(const SharedValueStores&) -> SharedValueStores& = delete;
-
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
-    return identifiers_;
-  }
-  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
-    return identifiers_;
-  }
-  auto ints() -> CanonicalValueStore<IntId>& { return ints_; }
-  auto ints() const -> const CanonicalValueStore<IntId>& { return ints_; }
-  auto reals() -> ValueStore<RealId>& { return reals_; }
-  auto reals() const -> const ValueStore<RealId>& { return reals_; }
-  auto floats() -> FloatValueStore& { return floats_; }
-  auto floats() const -> const FloatValueStore& { return floats_; }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
-    return string_literals_;
-  }
-  auto string_literal_values() const
-      -> const CanonicalValueStore<StringLiteralValueId>& {
-    return string_literals_;
-  }
-
-  auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
-      -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&, filename](Yaml::OutputMapping::Map map) {
-      if (filename) {
-        map.Add("filename", *filename);
-      }
-      map.Add("shared_values",
-              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                map.Add("ints", ints_.OutputYaml());
-                map.Add("reals", reals_.OutputYaml());
-                map.Add("identifiers", identifiers_.OutputYaml());
-                map.Add("strings", string_literals_.OutputYaml());
-              }));
-    });
-  }
-
-  // Collects memory usage for the various shared stores.
-  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "ints_"), ints_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "reals_"), reals_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "floats_"), floats_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "identifiers_"),
-                      identifiers_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "string_literals_"),
-                      string_literals_);
-  }
-
- private:
-  CanonicalValueStore<IntId> ints_;
-  ValueStore<RealId> reals_;
-  FloatValueStore floats_;
-
-  CanonicalValueStore<IdentifierId> identifiers_;
-  CanonicalValueStore<StringLiteralValueId> string_literals_;
-};
 
 }  // namespace Carbon
 

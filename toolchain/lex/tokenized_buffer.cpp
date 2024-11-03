@@ -12,7 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"

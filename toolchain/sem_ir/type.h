@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"

@@ -7,29 +7,25 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "testing/base/test_raw_ostream.h"
-#include "toolchain/testing/yaml_test_helpers.h"
+#include "toolchain/base/value_ids.h"
 
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::IsEmpty;
 using ::testing::Not;
-using ::testing::Pair;
 
 TEST(ValueStore, Int) {
-  SharedValueStores value_stores;
-  IntId id1 = value_stores.ints().Add(llvm::APInt(64, 1));
-  IntId id2 = value_stores.ints().Add(llvm::APInt(64, 2));
+  CanonicalValueStore<IntId> ints;
+  IntId id1 = ints.Add(llvm::APInt(64, 1));
+  IntId id2 = ints.Add(llvm::APInt(64, 2));
 
   ASSERT_TRUE(id1.is_valid());
   ASSERT_TRUE(id2.is_valid());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
-  EXPECT_THAT(value_stores.ints().Get(id1), Eq(1));
-  EXPECT_THAT(value_stores.ints().Get(id2), Eq(2));
+  EXPECT_THAT(ints.Get(id1), Eq(1));
+  EXPECT_THAT(ints.Get(id2), Eq(2));
 }
 
 TEST(ValueStore, Real) {
@@ -40,20 +36,20 @@ TEST(ValueStore, Real) {
              .exponent = llvm::APInt(64, 22),
              .is_decimal = false};
 
-  SharedValueStores value_stores;
-  RealId id1 = value_stores.reals().Add(real1);
-  RealId id2 = value_stores.reals().Add(real2);
+  ValueStore<RealId> reals;
+  RealId id1 = reals.Add(real1);
+  RealId id2 = reals.Add(real2);
 
   ASSERT_TRUE(id1.is_valid());
   ASSERT_TRUE(id2.is_valid());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
-  const auto& real1_copy = value_stores.reals().Get(id1);
+  const auto& real1_copy = reals.Get(id1);
   EXPECT_THAT(real1.mantissa, Eq(real1_copy.mantissa));
   EXPECT_THAT(real1.exponent, Eq(real1_copy.exponent));
   EXPECT_THAT(real1.is_decimal, Eq(real1_copy.is_decimal));
 
-  const auto& real2_copy = value_stores.reals().Get(id2);
+  const auto& real2_copy = reals.Get(id2);
   EXPECT_THAT(real2.mantissa, Eq(real2_copy.mantissa));
   EXPECT_THAT(real2.exponent, Eq(real2_copy.exponent));
   EXPECT_THAT(real2.is_decimal, Eq(real2_copy.is_decimal));
@@ -63,100 +59,57 @@ TEST(ValueStore, Float) {
   llvm::APFloat float1(1.0);
   llvm::APFloat float2(2.0);
 
-  SharedValueStores value_stores;
-  FloatId id1 = value_stores.floats().Add(float1);
-  FloatId id2 = value_stores.floats().Add(float2);
+  CanonicalValueStore<FloatId> floats;
+  FloatId id1 = floats.Add(float1);
+  FloatId id2 = floats.Add(float2);
 
   ASSERT_TRUE(id1.is_valid());
   ASSERT_TRUE(id2.is_valid());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
-  EXPECT_THAT(value_stores.floats().Get(id1).compare(float1),
-              Eq(llvm::APFloatBase::cmpEqual));
-  EXPECT_THAT(value_stores.floats().Get(id2).compare(float2),
-              Eq(llvm::APFloatBase::cmpEqual));
+  EXPECT_THAT(floats.Get(id1).compare(float1), Eq(llvm::APFloatBase::cmpEqual));
+  EXPECT_THAT(floats.Get(id2).compare(float2), Eq(llvm::APFloatBase::cmpEqual));
 }
 
 TEST(ValueStore, Identifiers) {
   std::string a = "a";
   std::string b = "b";
-  SharedValueStores value_stores;
+  CanonicalValueStore<IdentifierId> identifiers;
 
   // Make sure reserve works, we use it with identifiers.
-  value_stores.identifiers().Reserve(100);
+  identifiers.Reserve(100);
 
-  auto a_id = value_stores.identifiers().Add(a);
-  auto b_id = value_stores.identifiers().Add(b);
+  auto a_id = identifiers.Add(a);
+  auto b_id = identifiers.Add(b);
 
   ASSERT_TRUE(a_id.is_valid());
   ASSERT_TRUE(b_id.is_valid());
   EXPECT_THAT(a_id, Not(Eq(b_id)));
 
-  EXPECT_THAT(value_stores.identifiers().Get(a_id), Eq(a));
-  EXPECT_THAT(value_stores.identifiers().Get(b_id), Eq(b));
+  EXPECT_THAT(identifiers.Get(a_id), Eq(a));
+  EXPECT_THAT(identifiers.Get(b_id), Eq(b));
 
-  EXPECT_THAT(value_stores.identifiers().Lookup(a), Eq(a_id));
-  EXPECT_THAT(value_stores.identifiers().Lookup("c"),
-              Eq(IdentifierId::Invalid));
+  EXPECT_THAT(identifiers.Lookup(a), Eq(a_id));
+  EXPECT_THAT(identifiers.Lookup("c"), Eq(IdentifierId::Invalid));
 }
 
 TEST(ValueStore, StringLiterals) {
   std::string a = "a";
   std::string b = "b";
-  SharedValueStores value_stores;
+  CanonicalValueStore<StringLiteralValueId> string_literals;
 
-  auto a_id = value_stores.string_literal_values().Add(a);
-  auto b_id = value_stores.string_literal_values().Add(b);
+  auto a_id = string_literals.Add(a);
+  auto b_id = string_literals.Add(b);
 
   ASSERT_TRUE(a_id.is_valid());
   ASSERT_TRUE(b_id.is_valid());
   EXPECT_THAT(a_id, Not(Eq(b_id)));
 
-  EXPECT_THAT(value_stores.string_literal_values().Get(a_id), Eq(a));
-  EXPECT_THAT(value_stores.string_literal_values().Get(b_id), Eq(b));
+  EXPECT_THAT(string_literals.Get(a_id), Eq(a));
+  EXPECT_THAT(string_literals.Get(b_id), Eq(b));
 
-  EXPECT_THAT(value_stores.string_literal_values().Lookup(a), Eq(a_id));
-  EXPECT_THAT(value_stores.string_literal_values().Lookup("c"),
-              Eq(StringLiteralValueId::Invalid));
-}
-
-auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> ints,
-                       testing::Matcher<Yaml::MappingValue> reals,
-                       testing::Matcher<Yaml::MappingValue> identifiers,
-                       testing::Matcher<Yaml::MappingValue> strings) -> auto {
-  return Yaml::IsYaml(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(Pair(
-      "shared_values",
-      Yaml::Mapping(ElementsAre(Pair("ints", Yaml::Mapping(ints)),
-                                Pair("reals", Yaml::Mapping(reals)),
-                                Pair("identifiers", Yaml::Mapping(identifiers)),
-                                Pair("strings", Yaml::Mapping(strings))))))))));
-}
-
-TEST(ValueStore, PrintEmpty) {
-  SharedValueStores value_stores;
-  TestRawOstream out;
-  value_stores.Print(out);
-  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
-              MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty()));
-}
-
-TEST(ValueStore, PrintVals) {
-  SharedValueStores value_stores;
-  llvm::APInt apint(64, 8, /*isSigned=*/true);
-  value_stores.ints().Add(apint);
-  value_stores.reals().Add(
-      Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
-  value_stores.identifiers().Add("a");
-  value_stores.string_literal_values().Add("foo'\"baz");
-  TestRawOstream out;
-  value_stores.Print(out);
-
-  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
-              MatchSharedValues(
-                  ElementsAre(Pair("int0", Yaml::Scalar("8"))),
-                  ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
-                  ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
-                  ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));
+  EXPECT_THAT(string_literals.Lookup(a), Eq(a_id));
+  EXPECT_THAT(string_literals.Lookup("c"), Eq(StringLiteralValueId::Invalid));
 }
 
 }  // namespace

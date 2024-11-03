@@ -9,7 +9,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"

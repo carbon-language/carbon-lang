@@ -19,7 +19,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
-        "//toolchain/base:value_store",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",

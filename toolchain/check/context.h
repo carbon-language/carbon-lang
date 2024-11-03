@@ -484,13 +484,13 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
+  auto identifiers() -> SharedValueStores::IdentifierStore& {
     return sem_ir().identifiers();
   }
-  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
-  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
+  auto ints() -> SharedValueStores::IntStore& { return sem_ir().ints(); }
+  auto reals() -> SharedValueStores::RealStore& { return sem_ir().reals(); }
+  auto floats() -> SharedValueStores::FloatStore& { return sem_ir().floats(); }
+  auto string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return sem_ir().string_literal_values();
   }
   auto entity_names() -> SemIR::EntityNameStore& {

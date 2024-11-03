@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CHECK_H_
 
 #include "common/ostream.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"

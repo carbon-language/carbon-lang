@@ -112,8 +112,8 @@ class EvalContext {
         context().constant_values().GetInstId(GetConstantValue(id)));
   }
 
-  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
-  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
+  auto ints() -> SharedValueStores::IntStore& { return sem_ir().ints(); }
+  auto floats() -> SharedValueStores::FloatStore& { return sem_ir().floats(); }
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }

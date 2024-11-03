@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"

@@ -8,7 +8,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"

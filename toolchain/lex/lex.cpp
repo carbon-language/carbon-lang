@@ -12,7 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"

@@ -111,7 +111,7 @@ cc_library(
         "//common:version",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
-        "//toolchain/base:value_store",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",

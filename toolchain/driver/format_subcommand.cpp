@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/format/format.h"
 #include "toolchain/lex/lex.h"

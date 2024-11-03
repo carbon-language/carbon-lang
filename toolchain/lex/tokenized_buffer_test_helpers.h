@@ -8,7 +8,7 @@
 #include <gmock/gmock.h>
 
 #include "common/check.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {

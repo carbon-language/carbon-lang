@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
 #include "common/map.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 

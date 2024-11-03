@@ -4,7 +4,7 @@
 
 #include "toolchain/language_server/server.h"
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
