@@ -151,7 +151,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
