@@ -1160,15 +1160,21 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 }
 
 // TODO: consider moving this to pattern_match.h
-auto ConvertCallArgs(
-    Context& context, SemIR::LocId call_loc_id, SemIR::InstId self_id,
-    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id,
-    const CalleeParamsInfo& callee, SemIR::InstId return_slot_pattern_id,
-    SemIR::SpecificId callee_specific_id) -> SemIR::InstBlockId {
+auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
+                     SemIR::InstId self_id,
+                     llvm::ArrayRef<SemIR::InstId> arg_refs,
+                     SemIR::InstId return_slot_arg_id,
+                     const SemIR::Function& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId {
+  // The callee reference can be invalidated by conversions, so ensure all reads
+  // from it are done before conversion calls.
+  auto callee_decl_id = callee.latest_decl_id();
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
+  auto return_slot_pattern_id = callee.return_slot_pattern_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -1190,7 +1196,7 @@ auto ConvertCallArgs(
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee.callee_loc, InCallToFunction)
+        .Note(callee_decl_id, InCallToFunction)
         .Emit();
     self_id = SemIR::InstId::BuiltinError;
   }

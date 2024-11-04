@@ -1122,9 +1122,14 @@ using StructLiteralStart =
 using StructTypeLiteralStart =
     LeafNode<NodeKind::StructTypeLiteralStart, Lex::OpenCurlyBraceTokenIndex>;
 // `,`
-using StructComma = LeafNode<NodeKind::StructComma, Lex::CommaTokenIndex>;
+using StructLiteralComma =
+    LeafNode<NodeKind::StructLiteralComma, Lex::CommaTokenIndex>;
+using StructTypeLiteralComma =
+    LeafNode<NodeKind::StructTypeLiteralComma, Lex::CommaTokenIndex>;
 
 // `.a`
+// This is shared for struct literals and type literals in order to reduce
+// lookahead for parse (the `=` versus `:` would require lookahead of 2).
 struct StructFieldDesignator {
   static constexpr auto Kind =
       NodeKind::StructFieldDesignator.Define({.child_count = 1});
@@ -1134,8 +1139,8 @@ struct StructFieldDesignator {
 };
 
 // `.a = 0`
-struct StructField {
-  static constexpr auto Kind = NodeKind::StructField.Define(
+struct StructLiteralField {
+  static constexpr auto Kind = NodeKind::StructLiteralField.Define(
       {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
 
   StructFieldDesignatorId designator;
@@ -1144,8 +1149,8 @@ struct StructField {
 };
 
 // `.a: i32`
-struct StructTypeField {
-  static constexpr auto Kind = NodeKind::StructTypeField.Define(
+struct StructTypeLiteralField {
+  static constexpr auto Kind = NodeKind::StructTypeLiteralField.Define(
       {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
 
   StructFieldDesignatorId designator;
@@ -1160,7 +1165,7 @@ struct StructLiteral {
        .bracketed_by = StructLiteralStart::Kind});
 
   StructLiteralStartId start;
-  CommaSeparatedList<StructFieldId, StructCommaId> fields;
+  CommaSeparatedList<StructLiteralFieldId, StructLiteralCommaId> fields;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
@@ -1171,7 +1176,7 @@ struct StructTypeLiteral {
        .bracketed_by = StructTypeLiteralStart::Kind});
 
   StructTypeLiteralStartId start;
-  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
+  CommaSeparatedList<StructTypeLiteralFieldId, StructTypeLiteralCommaId> fields;
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
