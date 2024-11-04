@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_MEM_USAGE_H_
 #define CARBON_TOOLCHAIN_BASE_MEM_USAGE_H_
 
+#include <concepts>
 #include <cstdint>
 
 #include "common/map.h"
@@ -47,12 +48,9 @@ class MemUsage {
                           .reserved_bytes = reserved_bytes});
   }
 
-  // Adds memory usage for an allocator, typically `llvm::BumpPtrAllocator`.
-  template <class Allocator>
-    requires requires(const Allocator& allocator) {
-      { allocator.getBytesAllocated() };
-      { allocator.getTotalMemory() };
-    }
+  // Adds memory usage for a `llvm::BumpPtrAllocator`.
+  template <typename Allocator>
+    requires std::same_as<Allocator, llvm::BumpPtrAllocator>
   auto Collect(std::string label, const Allocator& allocator) -> void {
     Add(std::move(label), allocator.getBytesAllocated(),
         allocator.getTotalMemory());
