@@ -30,8 +30,8 @@ class DriverSubcommand {
 
   // Adds the subcommand to the main command, assigning `selected_command` when
   // the subcommand is in use.
-  auto AddSubcommand(CommandLine::CommandBuilder& b,
-                     DriverSubcommand** selected_subcommand) -> void {
+  auto AddTo(CommandLine::CommandBuilder& b,
+             DriverSubcommand** selected_subcommand) -> void {
     b.AddSubcommand(info_, [this, selected_subcommand](
                                CommandLine::CommandBuilder& sub_b) {
       BuildOptions(sub_b);

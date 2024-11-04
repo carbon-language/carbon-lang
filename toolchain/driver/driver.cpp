@@ -73,11 +73,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&fuzzing); });
 
-  clang.AddSubcommand(b, &selected_subcommand);
-  compile.AddSubcommand(b, &selected_subcommand);
-  format.AddSubcommand(b, &selected_subcommand);
-  language_server.AddSubcommand(b, &selected_subcommand);
-  link.AddSubcommand(b, &selected_subcommand);
+  clang.AddTo(b, &selected_subcommand);
+  compile.AddTo(b, &selected_subcommand);
+  format.AddTo(b, &selected_subcommand);
+  language_server.AddTo(b, &selected_subcommand);
+  link.AddTo(b, &selected_subcommand);
 
   b.RequiresSubcommand();
 }
