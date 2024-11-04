@@ -29,6 +29,25 @@ static auto GetAggregateElement(FunctionContext& context,
   auto aggr_inst = context.sem_ir().insts().Get(aggr_inst_id);
   auto* aggr_value = context.GetValue(aggr_inst_id);
 
+  auto has_vptr = [&](SemIR::TypeId type_id) {
+    if (auto class_type_info =
+            context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id)) {
+      auto class_info =
+          context.sem_ir().classes().Get(class_type_info->class_id);
+      auto object_repr_id = class_info.GetObjectRepr(
+          context.sem_ir(), class_type_info->specific_id);
+      auto object_repr_type =
+          context.sem_ir().types().GetAs<SemIR::StructType>(object_repr_id);
+      auto elem_fields =
+          context.sem_ir().struct_type_fields().Get(object_repr_type.fields_id);
+      if (elem_fields.empty()) {
+        return false;
+      }
+      return elem_fields.front().name_id == SemIR::NameId::Vptr;
+    }
+    return false;
+  };
+
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
@@ -56,8 +75,10 @@ static auto GetAggregateElement(FunctionContext& context,
           auto pointee_type_id =
               context.sem_ir().GetPointeeType(value_rep.type_id);
           auto* value_type = context.GetType(pointee_type_id);
+
           auto* elem_ptr = context.builder().CreateStructGEP(
-              value_type, aggr_value, idx.index, name);
+              value_type, aggr_value, idx.index + has_vptr(pointee_type_id),
+              name);
 
           if (!value_rep.elements_are_values()) {
             // `elem_ptr` points to an object representation, which is our
@@ -82,8 +103,9 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::EphemeralRef: {
       // Just locate the aggregate element.
       auto* aggr_type = context.GetType(aggr_inst.type_id());
-      return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,
-                                               name);
+      return context.builder().CreateStructGEP(
+          aggr_type, aggr_value, idx.index + has_vptr(aggr_inst.type_id()),
+          name);
     }
   }
 }
