@@ -39,13 +39,14 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
                                      Lex::TokenIndex token, bool has_error)
     -> void {
+  CARBON_CHECK(
+      kind != NodeKind::InvalidParse && kind != NodeKind::InvalidParseSubtree,
+      "{0} shouldn't occur in Placeholder use-cases", kind);
   CARBON_CHECK(position >= 0 && position < tree_->size(),
                "position: {0} size: {1}", position, tree_->size());
   auto* node_impl = &tree_->node_impls_[position];
   CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
-  node_impl->kind = kind;
-  node_impl->has_error = has_error;
-  node_impl->token = token;
+  *node_impl = {.kind = kind, .has_error = has_error, .token = token};
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,

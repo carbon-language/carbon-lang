@@ -190,11 +190,9 @@ auto HandleExprInPostfix(Context& context) -> void {
           context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
                               /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
-          context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
-                              /*has_error=*/true);
+          context.AddInvalidParse(context.Consume());
         } else {
-          context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                              /*has_error=*/true);
+          context.AddInvalidParse(*context.position());
           // Indicate the error to the parent state so that it can avoid
           // producing more errors. We only do this on this path where we don't
           // consume the token after the period, where we expect further errors
@@ -215,8 +213,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       }
 
       // Add a node to keep the parse tree balanced.
-      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                          /*has_error=*/true);
+      context.AddInvalidParse(*context.position());
       context.ReturnErrorOnState();
       break;
     }
