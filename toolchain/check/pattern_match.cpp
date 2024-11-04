@@ -297,6 +297,12 @@ auto CalleePatternMatch(Context& context,
     -> ParameterBlocks {
   MatchContext match(MatchKind::Callee);
 
+  if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
+      !implicit_param_patterns_id.is_valid()) {
+    return {.calling_convention_params_id = SemIR::InstBlockId::Invalid,
+            .return_slot_id = SemIR::InstId::Invalid};
+  }
+
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
   if (return_slot_pattern_id.is_valid()) {
@@ -318,12 +324,6 @@ auto CalleePatternMatch(Context& context,
       match.AddWork(
           {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
     }
-  }
-
-  if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
-      !implicit_param_patterns_id.is_valid()) {
-    return {.calling_convention_params_id = SemIR::InstBlockId::Invalid,
-            .return_slot_id = SemIR::InstId::Invalid};
   }
 
   return {.calling_convention_params_id = match.DoWork(context),

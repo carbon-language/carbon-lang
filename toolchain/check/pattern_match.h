@@ -10,8 +10,8 @@
 
 namespace Carbon::Check {
 
-// The pattern-match counterparts of the patterns passed to CalleePatternMatch.
-// FIXME rename, recomment.
+// The outputs of CalleePatternMatch.
+// TODO: rename or remove this struct.
 struct ParameterBlocks {
   // The calling convention parameters of the function.
   SemIR::InstBlockId calling_convention_params_id;

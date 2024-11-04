@@ -101,11 +101,13 @@ struct EntityWithParamsBase {
   // instruction in the entity's pattern block that depends on all other
   // pattern insts pertaining to that parameter.
   InstBlockId param_patterns_id;
-  // A block containing, for each calling convention parameter (including the
-  // return slot), a reference to the instruction in the function's declaration
-  // block that represents that parameter. These instructions will be in the
-  // `AnyParam` category. This is not populated on imported entities, because it
-  // is relevant only for the function definition.
+  // A block containing, for each calling convention parameter, a reference to
+  // the instruction in the function's declaration block that represents that
+  // parameter. These parameters appear in declaration order: `self` (if
+  // present), then the explicit runtime parameters, then the return slot (which
+  // is "declared" by the function's return type declaration). These
+  // instructions will be in the `AnyParam` category. This is not populated on
+  // imported entities, because it is relevant only for the function definition.
   // TODO: can this be moved to `Function`, since it is not applicable to other
   // kinds of entities?
   InstBlockId calling_convention_params_id;

@@ -348,21 +348,21 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of calling_convention_param_id that is in sequential order.
+  // The subset of calling_convention_param_ids that is in sequential order.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids =
       calling_convention_param_ids;
   if (function.return_slot_id.is_valid()) {
     sequential_param_ids = sequential_param_ids.drop_back();
+    // The LLVM calling convention has the return slot first rather than last.
+    // Note that this queries whether there is a return slot at the LLVM level,
+    // whereas `function.return_slot_id.is_valid()` queries whether there is a
+    // return slot at the SemIR level.
+    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+            .has_return_slot()) {
+      lower_param(calling_convention_param_ids.back());
+    }
   }
 
-  // The LLVM calling convention has the return slot first rather than last.
-  // Note that this queries whether there is a return slot at the LLVM level,
-  // whereas `function.return_slot_id.is_valid()` queries whether there is a
-  // return slot at the return slot at the SemIR level.
-  if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
-          .has_return_slot()) {
-    lower_param(calling_convention_param_ids.back());
-  }
   for (auto param_id : sequential_param_ids) {
     lower_param(param_id);
   }

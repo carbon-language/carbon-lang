@@ -210,11 +210,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
     CARBON_CHECK(parameter_blocks.calling_convention_params_id ==
-                     SemIR::InstBlockId::Empty,
-                 "{0} {1}", parameter_blocks.calling_convention_params_id,
-                 context.inst_blocks()
-                     .Get(parameter_blocks.calling_convention_params_id)
-                     .size());
+                 SemIR::InstBlockId::Empty);
     CARBON_CHECK(parameter_blocks.return_slot_id == SemIR::InstId::Invalid);
   }
 

@@ -92,17 +92,6 @@ struct Function : public EntityWithParamsBase,
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
 
-  // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns a `ParamInfo` value with the
-  // corresponding instruction, its ID, and the name binding, if present.
-  struct ParamInfo {
-    InstId inst_id;
-    AnyParam inst;
-    std::optional<AnyBindName> bind_name;
-  };
-  static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-      -> ParamInfo;
-
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `Invalid` if no return type was specified, in which
