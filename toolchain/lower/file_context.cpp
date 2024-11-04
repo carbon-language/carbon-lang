@@ -349,10 +349,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   };
 
   // The subset of calling_convention_param_ids that is in sequential order.
-  llvm::ArrayRef<SemIR::InstId> sequential_param_ids =
-      calling_convention_param_ids;
+  llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
   if (function.return_slot_id.is_valid()) {
-    sequential_param_ids = sequential_param_ids.drop_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
     // whereas `function.return_slot_id.is_valid()` queries whether there is a
@@ -361,6 +359,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
             .has_return_slot()) {
       lower_param(calling_convention_param_ids.back());
     }
+    sequential_param_ids = calling_convention_param_ids.drop_back();
+  } else {
+    sequential_param_ids = calling_convention_param_ids;
   }
 
   for (auto param_id : sequential_param_ids) {
