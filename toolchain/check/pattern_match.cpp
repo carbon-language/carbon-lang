@@ -295,13 +295,13 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
     -> ParameterBlocks {
-  MatchContext match(MatchKind::Callee);
-
   if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
       !implicit_param_patterns_id.is_valid()) {
     return {.calling_convention_params_id = SemIR::InstBlockId::Invalid,
             .return_slot_id = SemIR::InstId::Invalid};
   }
+
+  MatchContext match(MatchKind::Callee);
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
