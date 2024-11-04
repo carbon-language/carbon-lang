@@ -631,7 +631,6 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.patt.2: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.4: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

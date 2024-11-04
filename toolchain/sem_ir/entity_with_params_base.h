@@ -45,10 +45,9 @@ struct EntityWithParamsBase {
     first_param_node_id = definition.first_param_node_id;
     last_param_node_id = definition.last_param_node_id;
     pattern_block_id = definition.pattern_block_id;
-    implicit_param_refs_id = definition.implicit_param_refs_id;
     implicit_param_patterns_id = definition.implicit_param_patterns_id;
-    param_refs_id = definition.param_refs_id;
     param_patterns_id = definition.param_patterns_id;
+    calling_convention_params_id = definition.calling_convention_params_id;
     definition_id = definition.definition_id;
   }
 
@@ -95,21 +94,21 @@ struct EntityWithParamsBase {
   // A block containing the pattern insts for the parameter lists.
   InstBlockId pattern_block_id;
   // A block containing, for each implicit parameter, a reference to the
-  // instruction in the entity's declaration block that depends on all other
-  // pattern-match insts pertaining to that parameter.
-  InstBlockId implicit_param_refs_id;
-  // A block containing, for each implicit parameter, a reference to the
   // instruction in the entity's pattern block that depends on all other
   // pattern insts pertaining to that parameter.
   InstBlockId implicit_param_patterns_id;
   // A block containing, for each explicit parameter, a reference to the
-  // instruction in the entity's declaration block that depends on all other
-  // pattern-match insts pertaining to that parameter.
-  InstBlockId param_refs_id;
-  // A block containing, for each explicit parameter, a reference to the
   // instruction in the entity's pattern block that depends on all other
   // pattern insts pertaining to that parameter.
   InstBlockId param_patterns_id;
+  // A block containing, for each calling convention parameter (including the
+  // return slot), a reference to the instruction in the function's declaration
+  // block that represents that parameter. These instructions will be in the
+  // `AnyParam` category. This is not populated on imported entities, because it
+  // is relevant only for the function definition.
+  // TODO: can this be moved to `Function`, since it is not applicable to other
+  // kinds of entities?
+  InstBlockId calling_convention_params_id;
   // True if declarations are `extern`.
   bool is_extern;
   // For an `extern library` declaration, the library name.

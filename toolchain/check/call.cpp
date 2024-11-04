@@ -49,7 +49,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   CalleeParamsInfo callee_info(entity);
 
   // Check that the arity matches.
-  auto params = context.inst_blocks().GetOrEmpty(callee_info.param_refs_id);
+  auto params = context.inst_blocks().GetOrEmpty(callee_info.param_patterns_id);
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "

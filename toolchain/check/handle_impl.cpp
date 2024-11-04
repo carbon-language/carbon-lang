@@ -205,14 +205,17 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
 
-  ParameterBlocks parameter_blocks{
-      .implicit_params_id = SemIR::InstBlockId::Invalid,
-      .params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_id = SemIR::InstId::Invalid};
   if (implicit_param_patterns_id) {
-    parameter_blocks =
+    auto parameter_blocks =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
+    CARBON_CHECK(parameter_blocks.calling_convention_params_id ==
+                     SemIR::InstBlockId::Empty,
+                 "{0} {1}", parameter_blocks.calling_convention_params_id,
+                 context.inst_blocks()
+                     .Get(parameter_blocks.calling_convention_params_id)
+                     .size());
+    CARBON_CHECK(parameter_blocks.return_slot_id == SemIR::InstId::Invalid);
   }
 
   Parse::NodeId first_param_node_id =
@@ -225,12 +228,11 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id = parameter_blocks.implicit_params_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
-      .params_id = SemIR::InstBlockId::Invalid,
       .param_patterns_id = SemIR::InstBlockId::Invalid,
+      .calling_convention_params_id = SemIR::InstBlockId::Invalid,
       .return_slot_pattern_id = SemIR::InstId::Invalid,
       .return_slot_id = SemIR::InstId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),

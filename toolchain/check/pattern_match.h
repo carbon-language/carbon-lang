@@ -11,14 +11,13 @@
 namespace Carbon::Check {
 
 // The pattern-match counterparts of the patterns passed to CalleePatternMatch.
+// FIXME rename, recomment.
 struct ParameterBlocks {
-  // The implicit parameter list.
-  SemIR::InstBlockId implicit_params_id;
-
-  // The explicit parameter list.
-  SemIR::InstBlockId params_id;
+  // The calling convention parameters of the function.
+  SemIR::InstBlockId calling_convention_params_id;
 
   // The return slot.
+  // TODO: drop this and just use the last element of above?
   SemIR::InstId return_slot_id;
 };
 
