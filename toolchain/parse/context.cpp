@@ -336,7 +336,8 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   if (PositionIs(close_kind)) {
     return ListTokenKind::Close;
   } else {
-    AddLeafNode(comma_kind, Consume());
+    AddLeafNode(comma_kind, Consume(),
+                /*has_error=*/comma_kind == NodeKind::InvalidParse);
     return PositionIs(close_kind) ? ListTokenKind::CommaClose
                                   : ListTokenKind::Comma;
   }

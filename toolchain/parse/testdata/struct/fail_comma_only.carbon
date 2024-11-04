@@ -20,7 +20,7 @@ var x: {,} = {};
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ','},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
