@@ -107,8 +107,8 @@ def _compute_bsd_sysroot(repository_ctx):
 # File content used when computing search paths. This additionally verifies that
 # libc++ is installed.
 _CLANG_INCLUDE_FILE_CONTENT = """
-#if __has_include(<utility>)
-#include <utility>
+#if __has_include(<version>)
+#include <version>
 #endif
 #ifndef _LIBCPP_STD_VER
 #error "No libc++ install found!"
