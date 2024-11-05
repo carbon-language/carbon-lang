@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_BASE_MEM_USAGE_H_
 #define CARBON_TOOLCHAIN_BASE_MEM_USAGE_H_
 
-#include <concepts>
 #include <cstdint>
 
 #include "common/map.h"
@@ -49,9 +48,8 @@ class MemUsage {
   }
 
   // Adds memory usage for a `llvm::BumpPtrAllocator`.
-  template <typename Allocator>
-    requires std::same_as<Allocator, llvm::BumpPtrAllocator>
-  auto Collect(std::string label, const Allocator& allocator) -> void {
+  auto Collect(std::string label, const llvm::BumpPtrAllocator& allocator)
+      -> void {
     Add(std::move(label), allocator.getBytesAllocated(),
         allocator.getTotalMemory());
   }
@@ -98,7 +96,7 @@ class MemUsage {
                       const T& arg) {
       { arg.CollectMemUsage(mem_usage, label) };
     }
-  auto Collect(llvm::StringRef label, const T& arg) -> void {
+  auto Collect(std::string label, const T& arg) -> void {
     arg.CollectMemUsage(*this, label);
   }
 

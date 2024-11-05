@@ -169,7 +169,7 @@ class NameScopeStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Collect(label, values_);
+    mem_usage.Collect(std::string(label), values_);
   }
 
  private:
