@@ -1176,7 +1176,18 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
     return false;
   }
 
-  if (auto interface = types().TryGetAs<SemIR::InterfaceType>(type_id)) {
+  if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
+    const auto& facet_type_info =
+        sem_ir().facet_types().Get(facet_type->facet_type_id);
+    auto interface = facet_type_info.TryAsSingleInterface();
+    if (!interface) {
+      auto builder = diagnoser();
+      CARBON_DIAGNOSTIC(SingleInterfaceFacetTypeOnly, Note,
+                        "only single interface facet types supported so far");
+      builder.Note(SemIR::LocId::Invalid, SingleInterfaceFacetTypeOnly);
+      builder.Emit();
+      return false;
+    }
     auto interface_id = interface->interface_id;
     if (!interfaces().Get(interface_id).is_defined()) {
       auto builder = diagnoser();
