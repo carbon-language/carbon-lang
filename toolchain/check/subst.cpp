@@ -139,9 +139,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       auto size = context.type_blocks().Get(old_type_block_id).size();
       SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
                                                  old_type_block_id);
-      for (auto i : llvm::index_range(0, size)) {
-        new_type_block.Set(size - i - 1,
-                           context.GetTypeIdForTypeInst(worklist.Pop()));
+      for (auto i : llvm::reverse(llvm::seq(size))) {
+        new_type_block.Set(i, context.GetTypeIdForTypeInst(worklist.Pop()));
       }
       return new_type_block.GetCanonical().index;
     }
