@@ -1345,13 +1345,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             },
             &SemIR::InterfaceDecl::type_id);
       }
-      // A non-generic interface declaration evaluates to the interface type.
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::InterfaceType{.type_id = SemIR::TypeId::TypeType,
-                               .interface_id = interface_decl.interface_id,
-                               .specific_id = SemIR::SpecificId::Invalid},
-          Phase::Template);
+      // A non-generic interface declaration evaluates to the facet type.
+      llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
+      impls.emplace_back(interface_decl.interface_id,
+                         SemIR::SpecificId::Invalid);
+      return MakeFacetTypeResult(eval_context.context(), impls,
+                                 SemIR::InstBlockId::Invalid, Phase::Template);
     }
 
     case CARBON_KIND(SemIR::SpecificConstant specific): {

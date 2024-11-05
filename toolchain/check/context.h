@@ -350,8 +350,14 @@ class Context {
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
     return type_id == SemIR::TypeId::TypeType ||
-           types().Is<SemIR::InterfaceType>(type_id);
+           types().Is<SemIR::FacetType>(type_id);
   }
+
+  // Create a FacetType typed instruction object consisting of a single
+  // interface.
+  auto FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                              SemIR::SpecificId specific_id)
+      -> SemIR::FacetType;
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 

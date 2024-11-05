@@ -1207,6 +1207,17 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   return SemIR::TypeId::ForTypeConstant(constant_id);
 }
 
+auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                                     SemIR::SpecificId specific_id)
+    -> SemIR::FacetType {
+  llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
+  impls.emplace_back(interface_id, specific_id);
+  SemIR::FacetTypeId facet_type_id =
+      sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
+          .impls = impls, .requirement_block_id = SemIR::InstBlockId::Invalid});
+  return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
+}
+
 // Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
