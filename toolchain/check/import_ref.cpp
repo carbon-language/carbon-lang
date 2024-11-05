@@ -2464,11 +2464,15 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void {
   ImportRefResolver resolver(context, import_ir_id);
+  context.generic_region_stack().Push();
+
   resolver.Resolve(context.import_irs()
                        .Get(import_ir_id)
                        .sem_ir->impls()
                        .Get(impl_id)
                        .first_decl_id());
+
+  context.generic_region_stack().Pop();
 }
 
 }  // namespace Carbon::Check
