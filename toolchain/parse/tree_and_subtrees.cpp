@@ -235,7 +235,8 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
 
 auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "subtree_sizes_"), subtree_sizes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "subtree_sizes_"),
+                    subtree_sizes_);
 }
 
 auto TreeAndSubtrees::SiblingIterator::Print(llvm::raw_ostream& output) const

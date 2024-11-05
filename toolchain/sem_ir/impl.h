@@ -176,7 +176,7 @@ class ImplStore {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
   auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }

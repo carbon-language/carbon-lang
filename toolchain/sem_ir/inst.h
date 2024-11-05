@@ -423,7 +423,7 @@ class InstStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 

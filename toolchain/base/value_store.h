@@ -96,7 +96,7 @@ class ValueStore
   // Collects memory usage of the values.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(label.str(), values_);
+    mem_usage.Collect(label.str(), values_);
   }
 
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }

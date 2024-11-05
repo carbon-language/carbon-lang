@@ -47,27 +47,28 @@ class MemUsage {
                           .reserved_bytes = reserved_bytes});
   }
 
-  // Adds usage tracking for an allocator.
-  auto Add(std::string label, const llvm::BumpPtrAllocator& allocator) -> void {
+  // Adds memory usage for a `llvm::BumpPtrAllocator`.
+  auto Collect(std::string label, const llvm::BumpPtrAllocator& allocator)
+      -> void {
     Add(std::move(label), allocator.getBytesAllocated(),
         allocator.getTotalMemory());
   }
 
-  // Adds usage tracking for a map.
+  // Adds memory usage for a `Map`.
   template <typename KeyT, typename ValueT, ssize_t SmallSize,
             typename KeyContextT>
-  auto Add(std::string label, Map<KeyT, ValueT, SmallSize, KeyContextT> map,
-           KeyContextT key_context = KeyContextT()) -> void {
+  auto Collect(std::string label, Map<KeyT, ValueT, SmallSize, KeyContextT> map,
+               KeyContextT key_context = KeyContextT()) -> void {
     // These don't track used bytes, so we set the same value for used and
     // reserved bytes.
     auto bytes = map.ComputeMetrics(key_context).storage_bytes;
     Add(std::move(label), bytes, bytes);
   }
 
-  // Adds usage tracking for a set.
+  // Adds memory usage for a `Set`.
   template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
-  auto Add(std::string label, Set<KeyT, SmallSize, KeyContextT> set,
-           KeyContextT key_context = KeyContextT()) -> void {
+  auto Collect(std::string label, Set<KeyT, SmallSize, KeyContextT> set,
+               KeyContextT key_context = KeyContextT()) -> void {
     // These don't track used bytes, so we set the same value for used and
     // reserved bytes.
     auto bytes = set.ComputeMetrics(key_context).storage_bytes;
@@ -81,7 +82,8 @@ class MemUsage {
   // This uses SmallVector in order to get proper inference for T, which
   // ArrayRef misses.
   template <typename T, unsigned N>
-  auto Add(std::string label, const llvm::SmallVector<T, N>& array) -> void {
+  auto Collect(std::string label, const llvm::SmallVector<T, N>& array)
+      -> void {
     Add(std::move(label), array.size_in_bytes(), array.capacity_in_bytes());
   }
 
@@ -90,7 +92,11 @@ class MemUsage {
   // The expected signature of `CollectMemUsage` is above, in MemUsage class
   // comments.
   template <typename T>
-  auto Collect(llvm::StringRef label, const T& arg) -> void {
+    requires requires(MemUsage& mem_usage, llvm::StringRef label,
+                      const T& arg) {
+      { arg.CollectMemUsage(mem_usage, label) };
+    }
+  auto Collect(std::string label, const T& arg) -> void {
     arg.CollectMemUsage(*this, label);
   }
 
