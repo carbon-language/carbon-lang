@@ -392,11 +392,11 @@ static auto ConvertStructToStructOrClass(Context& context,
   auto& sem_ir = context.sem_ir();
   auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
   auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
-  bool dest_has_vptr = llvm::any_of(dest_elem_fields, [&](auto dest_field_id) {
-    auto dest_field =
-        sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
-    return dest_field.name_id == SemIR::NameId::Vptr;
-  });
+  bool dest_has_vptr =
+      !dest_elem_fields.empty() &&
+      sem_ir.insts()
+              .GetAs<SemIR::StructTypeField>(dest_elem_fields.front())
+              .name_id == SemIR::NameId::Vptr;
   auto dest_elem_fields_size = dest_elem_fields.size() - dest_has_vptr;
 
   auto value = sem_ir.insts().Get(value_id);
