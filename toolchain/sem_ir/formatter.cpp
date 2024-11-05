@@ -78,34 +78,6 @@ class FormatterImpl {
     out_ << "\n";
   }
 
-  // Prints a code block.
-  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
-      -> void {
-    out_ << ' ';
-    OpenBrace();
-    constexpr int NumPrintedOnSkip = 9;
-    // Avoid only skipping one item.
-    if (block.size() > NumPrintedOnSkip + 1) {
-      Indent();
-      out_ << "... skipping " << (block.size() - NumPrintedOnSkip)
-           << " insts ...\n";
-      block = block.take_back(NumPrintedOnSkip);
-    }
-    FormatCodeBlock(block);
-    CloseBrace();
-  }
-
-  // Prints a single instruction.
-  auto FormatInst(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
-  }
-
  private:
   enum class AddSpace : bool { Before, After };
 
@@ -566,6 +538,17 @@ class FormatterImpl {
       Indent();
       out_ << "has_error\n";
     }
+  }
+
+  // Prints a single instruction.
+  auto FormatInst(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInst(InstId inst_id, Inst inst) -> void {
@@ -1190,19 +1173,6 @@ Formatter::~Formatter() = default;
 auto Formatter::Print(llvm::raw_ostream& out) -> void {
   FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
   formatter.Format();
-}
-
-auto Formatter::PrintPartialTrailingCodeBlock(
-    llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
-    -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatPartialTrailingCodeBlock(block);
-}
-
-auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
-                          llvm::raw_ostream& out) -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatInst(inst_id);
 }
 
 }  // namespace Carbon::SemIR

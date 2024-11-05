@@ -22,14 +22,6 @@ class Formatter {
 
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) -> void;
-  // Prints a single code block. Only prints the last several instructions of
-  // large blocks.
-  auto PrintPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block,
-                                     int indent, llvm::raw_ostream& out)
-      -> void;
-  // Prints a single instruction.
-  auto PrintInst(SemIR::InstId inst_id, int indent, llvm::raw_ostream& out)
-      -> void;
 
  private:
   const File& sem_ir_;

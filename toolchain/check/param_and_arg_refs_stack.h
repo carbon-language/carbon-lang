@@ -72,9 +72,8 @@ class ParamAndArgRefsStack {
   auto VerifyOnFinish() -> void { stack_.VerifyOnFinish(); }
 
   // Prints the stack for a stack dump.
-  auto PrintForStackDump(SemIR::Formatter& formatter, int indent,
-                         llvm::raw_ostream& output) const -> void {
-    return stack_.PrintForStackDump(formatter, indent, output);
+  auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void {
+    return stack_.PrintForStackDump(indent, output);
   }
 
  private:

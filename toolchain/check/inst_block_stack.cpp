@@ -61,17 +61,19 @@ auto InstBlockStack::PopAndDiscard() -> void {
   CARBON_VLOG("{0} PopAndDiscard {1}\n", name_, id_stack_.size());
 }
 
-auto InstBlockStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
+auto InstBlockStack::PrintForStackDump(int indent,
                                        llvm::raw_ostream& output) const
     -> void {
   output.indent(indent);
   output << name_ << ":\n";
   for (const auto& [i, id] : llvm::enumerate(id_stack_)) {
     output.indent(indent + 2);
-    output << i << ". " << id;
-    formatter.PrintPartialTrailingCodeBlock(insts_stack_.PeekArrayAt(i),
-                                            indent + 4, output);
-    output << "\n";
+    output << i << ".\t" << id << "\t{";
+    llvm::ListSeparator sep;
+    for (auto id : insts_stack_.PeekArrayAt(i)) {
+      output << sep << id;
+    }
+    output << "}\n";
   }
 }
 
