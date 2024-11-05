@@ -7,110 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_init_as_inplace.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_init_as_inplace.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Inc {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAndAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitComplement {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOrAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXorAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as DivAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Eq {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as ModAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as MulAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Ordered {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Dec {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 class Class {
   var a: i32;
@@ -146,8 +42,8 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %Class = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,14 +51,7 @@ fn F() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -181,7 +70,7 @@ fn F() {
 // CHECK:STDOUT:     %p.param_patt: %.5 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc120: type = ptr_type %Class [template = constants.%.5]
+// CHECK:STDOUT:     %.loc16: type = ptr_type %Class [template = constants.%.5]
 // CHECK:STDOUT:     %p.param: %.5 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -189,20 +78,20 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int.make_type_32.loc116: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc116_10.1: type = value_of_initializer %int.make_type_32.loc116 [template = i32]
-// CHECK:STDOUT:   %.loc116_10.2: type = converted %int.make_type_32.loc116, %.loc116_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc116_8: %.2 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc117: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc117_10.1: type = value_of_initializer %int.make_type_32.loc117 [template = i32]
-// CHECK:STDOUT:   %.loc117_10.2: type = converted %int.make_type_32.loc117, %.loc117_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc117_8: %.2 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %.loc118: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_32.loc12: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc12_8: %.2 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_32.loc13, %.loc13_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc116_8
-// CHECK:STDOUT:   .b = %.loc117_8
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -211,27 +100,27 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc129_10: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc25_10: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc129_24: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc129_32: i32 = int_literal 2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc129_33.1: %.3 = struct_literal (%.loc129_24, %.loc129_32)
-// CHECK:STDOUT:   %Class.ref.loc129_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc129_33.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc129_33.3: ref i32 = class_element_access %.loc129_33.2, element0
-// CHECK:STDOUT:   %.loc129_33.4: init i32 = initialize_from %.loc129_24 to %.loc129_33.3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc129_33.5: ref i32 = class_element_access %.loc129_33.2, element1
-// CHECK:STDOUT:   %.loc129_33.6: init i32 = initialize_from %.loc129_32 to %.loc129_33.5 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc129_33.7: init %Class = class_init (%.loc129_33.4, %.loc129_33.6), %.loc129_33.2 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc129_33.8: ref %Class = temporary %.loc129_33.2, %.loc129_33.7
-// CHECK:STDOUT:   %.loc129_35.1: ref %Class = converted %.loc129_33.1, %.loc129_33.8
-// CHECK:STDOUT:   %.loc129_35.2: %Class = bind_value %.loc129_35.1
+// CHECK:STDOUT:   %.loc25_24: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_32: i32 = int_value 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc25_33.1: %.3 = struct_literal (%.loc25_24, %.loc25_32)
+// CHECK:STDOUT:   %Class.ref.loc25_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %.loc25_33.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc25_33.3: ref i32 = class_element_access %.loc25_33.2, element0
+// CHECK:STDOUT:   %.loc25_33.4: init i32 = initialize_from %.loc25_24 to %.loc25_33.3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc25_33.5: ref i32 = class_element_access %.loc25_33.2, element1
+// CHECK:STDOUT:   %.loc25_33.6: init i32 = initialize_from %.loc25_32 to %.loc25_33.5 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc25_33.7: init %Class = class_init (%.loc25_33.4, %.loc25_33.6), %.loc25_33.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_33.8: ref %Class = temporary %.loc25_33.2, %.loc25_33.7
+// CHECK:STDOUT:   %.loc25_35.1: ref %Class = converted %.loc25_33.1, %.loc25_33.8
+// CHECK:STDOUT:   %.loc25_35.2: %Class = bind_value %.loc25_35.1
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc130: %.5 = addr_of %c.ref
-// CHECK:STDOUT:   %G.call: init %.1 = call %G.ref(%.loc130)
+// CHECK:STDOUT:   %.loc26: %.5 = addr_of %c.ref
+// CHECK:STDOUT:   %G.call: init %.1 = call %G.ref(%.loc26)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

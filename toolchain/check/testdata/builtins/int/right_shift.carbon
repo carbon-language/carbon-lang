@@ -7,110 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int/right_shift.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/int/right_shift.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Inc {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAndAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitComplement {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOrAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXorAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as DivAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Eq {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as ModAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as MulAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Ordered {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Dec {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 // --- int_right_shift.carbon
 
@@ -176,9 +72,9 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [template]
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 22 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 22 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
@@ -189,14 +85,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -236,8 +125,8 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, %RightShift.decl [template = constants.%RightShift]
-// CHECK:STDOUT:   %.loc4_27: i32 = int_literal 22 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_31: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_27: i32 = int_value 22 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_31: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.right_shift: init i32 = call %RightShift.ref(%.loc4_27, %.loc4_31) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
@@ -245,7 +134,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %arr.var: ref %.5 = var arr
 // CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_literal 5 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_18: i32 = int_value 5 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
@@ -309,15 +198,15 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal -1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value -1 [template]
 // CHECK:STDOUT:   %.4: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 10 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal -10 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal -3 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 10 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value -10 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value -3 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.11: type = array_type %.10, i32 [template]
 // CHECK:STDOUT:   %.12: type = ptr_type %.11 [template]
 // CHECK:STDOUT: }
@@ -326,14 +215,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -394,9 +276,9 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Negate.ref.loc10_17: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %RightShift.ref.loc10: %RightShift.type = name_ref RightShift, %RightShift.decl [template = constants.%RightShift]
 // CHECK:STDOUT:   %Negate.ref.loc10_35: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc10_42: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_42: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate.loc10_41: init i32 = call %Negate.ref.loc10_35(%.loc10_42) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_46: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_46: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_41.1: i32 = value_of_initializer %int.snegate.loc10_41 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_41.2: i32 = converted %int.snegate.loc10_41, %.loc10_41.1 [template = constants.%.3]
 // CHECK:STDOUT:   %int.right_shift.loc10: init i32 = call %RightShift.ref.loc10(%.loc10_41.2, %.loc10_46) [template = constants.%.3]
@@ -409,7 +291,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %arr1.var: ref %.4 = var arr1
 // CHECK:STDOUT:   %arr1: ref %.4 = bind_name arr1, %arr1.var
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_19: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_19: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %int.make_type_32.loc11, %.loc11_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc11_20: type = array_type %.loc11_19, i32 [template = constants.%.4]
@@ -418,9 +300,9 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Negate.ref.loc14_17: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %RightShift.ref.loc14: %RightShift.type = name_ref RightShift, %RightShift.decl [template = constants.%RightShift]
 // CHECK:STDOUT:   %Negate.ref.loc14_35: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc14_42: i32 = int_literal 10 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_42: i32 = int_value 10 [template = constants.%.6]
 // CHECK:STDOUT:   %int.snegate.loc14_41: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_47: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_47: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc14_41.1: i32 = value_of_initializer %int.snegate.loc14_41 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc14_41.2: i32 = converted %int.snegate.loc14_41, %.loc14_41.1 [template = constants.%.7]
 // CHECK:STDOUT:   %int.right_shift.loc14: init i32 = call %RightShift.ref.loc14(%.loc14_41.2, %.loc14_47) [template = constants.%.9]
@@ -433,7 +315,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %arr2.var: ref %.11 = var arr2
 // CHECK:STDOUT:   %arr2: ref %.11 = bind_name arr2, %arr2.var
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_19: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_19: i32 = int_value 3 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc15_14.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_14.2: type = converted %int.make_type_32.loc15, %.loc15_14.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_20: type = array_type %.loc15_19, i32 [template = constants.%.11]
@@ -467,26 +349,19 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 31 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 32 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 33 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal -1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 31 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 32 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 33 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value -1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
@@ -566,30 +441,30 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %RightShift.ref.loc8: %RightShift.type = name_ref RightShift, file.%RightShift.decl [template = constants.%RightShift]
-// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_33: i32 = int_literal 31 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_30: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_33: i32 = int_value 31 [template = constants.%.3]
 // CHECK:STDOUT:   %int.right_shift.loc8: init i32 = call %RightShift.ref.loc8(%.loc8_30, %.loc8_33) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_36.1: i32 = value_of_initializer %int.right_shift.loc8 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_36.2: i32 = converted %int.right_shift.loc8, %.loc8_36.1 [template = constants.%.4]
 // CHECK:STDOUT:   %size_1: i32 = bind_name size_1, %.loc8_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc13: %RightShift.type = name_ref RightShift, file.%RightShift.decl [template = constants.%RightShift]
-// CHECK:STDOUT:   %.loc13_30: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_33: i32 = int_literal 32 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_30: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_33: i32 = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.right_shift.loc13: init i32 = call %RightShift.ref.loc13(%.loc13_30, %.loc13_33) [template = <error>]
 // CHECK:STDOUT:   %.loc13_36.1: i32 = value_of_initializer %int.right_shift.loc13 [template = <error>]
 // CHECK:STDOUT:   %.loc13_36.2: i32 = converted %int.right_shift.loc13, %.loc13_36.1 [template = <error>]
 // CHECK:STDOUT:   %size_2: i32 = bind_name size_2, %.loc13_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc18: %RightShift.type = name_ref RightShift, file.%RightShift.decl [template = constants.%RightShift]
-// CHECK:STDOUT:   %.loc18_30: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_33: i32 = int_literal 33 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18_30: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_33: i32 = int_value 33 [template = constants.%.6]
 // CHECK:STDOUT:   %int.right_shift.loc18: init i32 = call %RightShift.ref.loc18(%.loc18_30, %.loc18_33) [template = <error>]
 // CHECK:STDOUT:   %.loc18_36.1: i32 = value_of_initializer %int.right_shift.loc18 [template = <error>]
 // CHECK:STDOUT:   %.loc18_36.2: i32 = converted %int.right_shift.loc18, %.loc18_36.1 [template = <error>]
 // CHECK:STDOUT:   %size_3: i32 = bind_name size_3, %.loc18_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc24: %RightShift.type = name_ref RightShift, file.%RightShift.decl [template = constants.%RightShift]
-// CHECK:STDOUT:   %.loc24_32: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc24_32: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc24_42: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc24_42: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc24_42) [template = constants.%.7]
 // CHECK:STDOUT:   %.loc24_41.1: i32 = value_of_initializer %int.snegate [template = constants.%.7]
 // CHECK:STDOUT:   %.loc24_41.2: i32 = converted %int.snegate, %.loc24_41.1 [template = constants.%.7]

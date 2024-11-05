@@ -23,9 +23,6 @@ import library "a";
 
 class C {}
 
-// CHECK:STDERR: b.carbon:[[@LINE+3]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl C as AddWith(C) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 impl C as AddWith(C) {
   fn F() {}
 }
@@ -121,13 +118,18 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type.3: type = interface_type @AddWith, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @AddWith(%C) [template]
+// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %AddWith.type.1 = import_ref Main//a, inst+7, loaded [template = constants.%AddWith]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, inst+16, loaded [symbolic = @AddWith.%F (constants.%F.1)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+16, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,9 +141,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %C.ref.loc10_6: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type.1 = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith]
-// CHECK:STDOUT:     %C.ref.loc10_19: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = interface_type @AddWith, @AddWith(constants.%C) [template = constants.%AddWith.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -166,12 +168,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref.loc10_6 as %AddWith.type {
+// CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
+// CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -206,5 +209,15 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: specific @AddWith(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %T.patt => constants.%C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.3
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %F.type => constants.%F.type.3
+// CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %.1 => constants.%.6
+// CHECK:STDOUT:   %.2 => constants.%.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%C, constants.%C) {}
 // CHECK:STDOUT:

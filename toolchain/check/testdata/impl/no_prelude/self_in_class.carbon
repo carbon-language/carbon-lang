@@ -15,9 +15,6 @@ interface DefaultConstructible {
 class C {}
 
 class A {
-  // CHECK:STDERR: self_in_class.carbon:[[@LINE+3]]:3: error: impl as non-facet-type [ImplAsNonFacetType]
-  // CHECK:STDERR:   impl C as DefaultConstructible {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   impl C as DefaultConstructible {
     // `Self` here refers to `i32`, not `A`.
     // TODO: Revisit this once #3714 is resolved.
@@ -41,7 +38,8 @@ class A {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Make.2) [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,10 +83,11 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -103,7 +102,7 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [template = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc26: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -117,13 +116,17 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_33.1: %.4 = struct_literal ()
-// CHECK:STDOUT:   %.loc24_33.2: init %C = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc24_34: init %C = converted %.loc24_33.1, %.loc24_33.2 [template = constants.%struct]
-// CHECK:STDOUT:   return %.loc24_34 to %return
+// CHECK:STDOUT:   %.loc21_33.1: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]
+// CHECK:STDOUT:   return %.loc21_34 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Make.1(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

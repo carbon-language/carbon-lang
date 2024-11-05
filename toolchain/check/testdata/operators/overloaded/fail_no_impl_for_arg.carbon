@@ -7,136 +7,44 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/fail_no_impl_for_arg.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/fail_no_impl_for_arg.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Inc {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAndAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitComplement {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOrAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXorAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as DivAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Eq {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as ModAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as MulAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Ordered {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Dec {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 package User;
 
 class C {};
 class D {};
 
-// CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl C as Core.Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as Core.Add {
   fn Op[self: C](other: C) -> C;
 }
-// CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+3]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl C as Core.AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 impl C as Core.AddAssign {
   fn Op[addr self: C*](other: C);
 }
 
 fn Test(a: C, b: D) -> C {
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+10]]:14: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   return a + b;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:14: note: type `D` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return a + b;
+  // CHECK:STDERR:              ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-13]]:18: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
+  // CHECK:STDERR:                  ^~~~~~~~
+  // CHECK:STDERR:
   return a + b;
 }
 
 fn TestAssign(b: D) {
   var a: C = {};
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `D` to `C` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   a += b;
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:8: note: type `D` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   a += b;
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-25]]:24: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn Op[addr self: C*](other: C);
+  // CHECK:STDERR:                        ^~~~~~~~
   a += b;
 }
 
@@ -152,52 +60,71 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %AddAssign.type: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
-// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%Op.1) [template]
+// CHECK:STDOUT:   %AddAssign.type: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %Add.type, %Op.type.3 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
+// CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type %Add.type, %Op.type.2 [template]
+// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Self.4: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.14 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%C) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%C) [template]
+// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
+// CHECK:STDOUT:   %.14: %.13 = assoc_entity element0, imports.%import_ref.14 [template]
+// CHECK:STDOUT:   %.15: %.11 = assoc_entity element0, imports.%import_ref.15 [symbolic]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
-// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
-// CHECK:STDOUT:   %.9: type = assoc_entity_type %AddAssign.type, %Op.type.4 [template]
-// CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.10 [template]
+// CHECK:STDOUT:   %.16: type = assoc_entity_type %AddAssign.type, %Op.type.4 [template]
+// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, imports.%import_ref.16 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Add = %import_ref.1
 // CHECK:STDOUT:     .AddAssign = %import_ref.5
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.10
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+1, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Core//prelude/operators/arithmetic, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.6 = import_ref Core//prelude/operators/arithmetic, inst+32, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/arithmetic, inst+26, unloaded
+// CHECK:STDOUT:   %import_ref.3: %.9 = import_ref Core//prelude/operators/arithmetic, inst+32, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Core//prelude/operators/arithmetic, inst+26, loaded [template = constants.%Op.2]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+34, loaded [template = constants.%AddAssign.type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/arithmetic, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.9 = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.16 = import_ref Core//prelude/operators/arithmetic, inst+61, loaded [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.8: %Op.type.4 = import_ref Core//prelude/operators/arithmetic, inst+55, loaded [template = constants.%Op.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/arithmetic, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.10: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Core//prelude/operators/as, inst+55, unloaded
+// CHECK:STDOUT:   %import_ref.12: @ImplicitAs.%.1 (%.11) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.15)]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/arithmetic, inst+55, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -229,9 +156,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc134_12: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23_12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %C.ref.loc134_24: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23_24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %D = value_param runtime_param1
@@ -263,6 +190,26 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   witness = (imports.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.11)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.11) = assoc_entity element0, imports.%import_ref.14 [symbolic = %.2 (constants.%.12)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%import_ref.11
+// CHECK:STDOUT:     .Convert = imports.%import_ref.12
+// CHECK:STDOUT:     witness = (imports.%import_ref.13)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
@@ -272,9 +219,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc125_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc125_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc125_31: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc17_15: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc17_25: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc17_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
@@ -282,43 +229,45 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%Op.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C.ref as %AddAssign.ref {
-// CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {
-// CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.4 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc131_9: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
+// CHECK:STDOUT:     %self.patt: %.5 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.5 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc20_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc131_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc131_21: type = ptr_type %C [template = constants.%.4]
-// CHECK:STDOUT:     %C.ref.loc131_31: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.4 = bind_name self, %self.param
+// CHECK:STDOUT:     %C.ref.loc20_20: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc20_21: type = ptr_type %C [template = constants.%.5]
+// CHECK:STDOUT:     %C.ref.loc20_31: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %self.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.5 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc117: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc118: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -326,22 +275,43 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[%self.param_patt: %C](%other.param_patt: %C) -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[addr %self.param_patt: %.4](%other.param_patt: %C);
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.1: %Add.type) {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self (%Self.1)](%other.param_patt: @Op.2.%Self (%Self.1)) -> @Op.2.%Self (%Self.1);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %.5](%other.param_patt: %C);
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %AddAssign.type) {
+// CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+92: @Op.4.%.2 (%.6)](%other.param_patt: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test(%a.param_patt: %C, %b.param_patt: %D) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc135_12.1: %Op.type.3 = interface_witness_access <error>, element0 [template = <error>]
-// CHECK:STDOUT:   %.loc135_12.2: <bound method> = bound_method %a.ref, %.loc135_12.1
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc34_12.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc34_12.2: <bound method> = bound_method %a.ref, %.loc34_12.1
+// CHECK:STDOUT:   %.loc23_21.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %.loc34_14.1: %.13 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.14]
+// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc34_14.1 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc34_14.2: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %C = call %.loc34_12.2(%a.ref, <error>) to %.loc23_21.2
+// CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.3(constants.%Self.1: %Add.type) {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.3.%Self (%Self.1)](%other.param_patt: @Op.3.%Self (%Self.1)) -> @Op.3.%Self (%Self.1);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.4)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b.param_patt: %D) {
@@ -349,31 +319,73 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc139_15.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc139_15.2: init %C = class_init (), %a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc139_16: init %C = converted %.loc139_15.1, %.loc139_15.2 [template = constants.%struct]
-// CHECK:STDOUT:   assign %a.var, %.loc139_16
+// CHECK:STDOUT:   %.loc38_15.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc38_15.2: init %C = class_init (), %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc38_16: init %C = converted %.loc38_15.1, %.loc38_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   assign %a.var, %.loc38_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.7 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc140_5.1: %Op.type.4 = interface_witness_access <error>, element0 [template = <error>]
-// CHECK:STDOUT:   %.loc140_5.2: <bound method> = bound_method %a.ref, %.loc140_5.1
+// CHECK:STDOUT:   %Op.ref: %.16 = name_ref Op, imports.%import_ref.7 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc48_5.1: %Op.type.4 = interface_witness_access constants.%.7, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc48_5.2: <bound method> = bound_method %a.ref, %.loc48_5.1
+// CHECK:STDOUT:   %.loc48_3: %.5 = addr_of %a.ref
+// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %.loc48_8.1: %.13 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.14]
+// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc48_8.1 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc48_8.2: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %Op.call: init %.3 = call %.loc48_5.2(%.loc48_3, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.4(constants.%Self.2: %AddAssign.type) {
-// CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.2) [symbolic = %.2 (constants.%.8)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+136: @Op.4.%.2 (%.8)](%other.param_patt: @Op.4.%Self (%Self.2));
+// CHECK:STDOUT: specific @Op.2(constants.%Self.1) {
+// CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.3(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT: specific @Op.2(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.4(constants.%Self.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %.2 => constants.%.8
+// CHECK:STDOUT:   %.2 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.4(constants.%C) {
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %.2 => constants.%.5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.3) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
+// CHECK:STDOUT:   %Self => constants.%Self.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%C) {
+// CHECK:STDOUT:   %Dest => constants.%C
+// CHECK:STDOUT:   %Dest.patt => constants.%C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
+// CHECK:STDOUT:   %Self => constants.%Self.4
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
+// CHECK:STDOUT:   %Convert => constants.%Convert.2
+// CHECK:STDOUT:   %.1 => constants.%.13
+// CHECK:STDOUT:   %.2 => constants.%.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

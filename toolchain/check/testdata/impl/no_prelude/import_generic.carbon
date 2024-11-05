@@ -16,20 +16,12 @@ class C {}
 interface I(T:! type) {}
 
 impl forall [T:! type] C as I(T);
-// CHECK:STDERR: import_generic.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] C as I(T*) {}
 
 // --- import_generic.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_generic.impl.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] C as I(T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] C as I(T) {}
 
 // --- fail_import_generic.impl.carbon
@@ -40,7 +32,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6: in import [InImport]
-// CHECK:STDERR: import_generic.carbon:12:1: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR: import_generic.carbon:8:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! type] C as I(T*) {}
@@ -62,6 +54,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt.3: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = interface_type @I, @I(%.4) [symbolic]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,16 +82,16 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:     %T.loc7_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.3)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<invalid> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc12_32.1: type = ptr_type %T [symbolic = %.loc12_32.2 (constants.%.4)]
-// CHECK:STDOUT:     %I.type.loc12_30.1: type = interface_type @I, @I(constants.%.4) [symbolic = %I.type.loc12_30.2 (constants.%I.type.3)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc8_32.1: type = ptr_type %T [symbolic = %.loc8_32.2 (constants.%.4)]
+// CHECK:STDOUT:     %I.type.loc8_30.1: type = interface_type @I, @I(constants.%.4) [symbolic = %I.type.loc8_30.2 (constants.%I.type.3)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,17 +120,19 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc7_30.1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(%T.loc12_14.1: type) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.3)]
-// CHECK:STDOUT:   %.loc12_32.2: type = ptr_type @impl.2.%T.loc12_14.2 (%T) [symbolic = %.loc12_32.2 (constants.%.4)]
-// CHECK:STDOUT:   %I.type.loc12_30.2: type = interface_type @I, @I(%.loc12_32.2) [symbolic = %I.type.loc12_30.2 (constants.%I.type.3)]
+// CHECK:STDOUT: generic impl @impl.2(%T.loc8_14.1: type) {
+// CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.3)]
+// CHECK:STDOUT:   %.loc8_32.2: type = ptr_type @impl.2.%T.loc8_14.2 (%T) [symbolic = %.loc8_32.2 (constants.%.4)]
+// CHECK:STDOUT:   %I.type.loc8_30.2: type = interface_type @I, @I(%.loc8_32.2) [symbolic = %I.type.loc8_30.2 (constants.%I.type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C.ref as %I.type.loc12_30.1 {
+// CHECK:STDOUT:   impl: %C.ref as %I.type.loc8_30.1 {
+// CHECK:STDOUT:     %.loc8_35: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc8_35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,18 +167,22 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT: specific @I(constants.%.4) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%.4
 // CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %I.type => constants.%I.type.3
+// CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.2.%.loc12_32.2) {
+// CHECK:STDOUT: specific @I(@impl.2.%.loc8_32.2) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%.4
 // CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %.loc12_32.2 => constants.%.4
-// CHECK:STDOUT:   %I.type.loc12_30.2 => constants.%I.type.3
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %.loc8_32.2 => constants.%.4
+// CHECK:STDOUT:   %I.type.loc8_30.2 => constants.%I.type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_generic.impl.carbon
@@ -203,6 +202,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %.4: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = interface_type @I, @I(%.4) [symbolic]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -214,7 +214,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+30, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
 // CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+40, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+45, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, instError, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -227,10 +227,10 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, imports.%import_ref.2 [template = constants.%I]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8 [symbolic = constants.%T]
-// CHECK:STDOUT:     %I.type.loc8: type = interface_type @I, @I(constants.%T) [symbolic = constants.%I.type.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = constants.%T]
+// CHECK:STDOUT:     %I.type.loc4: type = interface_type @I, @I(constants.%T) [symbolic = constants.%I.type.2]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc4: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -257,8 +257,10 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6 {
+// CHECK:STDOUT:     %.loc4: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,6 +286,10 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %I.type => constants.%I.type.2
+// CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@I.%T) {
@@ -347,7 +353,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+30, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
 // CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+40, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+45, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, instError, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+53, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -7,110 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/generic.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/generic.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Inc {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAndAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitComplement {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOrAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXorAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as DivAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Eq {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as ModAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as MulAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Ordered {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Dec {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 // --- deduced_type.carbon
 
@@ -120,10 +16,6 @@ interface HasF {
   fn F();
 }
 
-// CHECK:STDERR: deduced_type.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] T as HasF {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] T as HasF {
   fn F() {}
 }
@@ -140,10 +32,6 @@ interface HasF {
   fn F[self: Self]() -> Self;
 }
 
-// CHECK:STDERR: deduced_type_subst.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] T as HasF {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] T as HasF {
   fn F[self: Self]() -> T { return self; }
 }
@@ -162,10 +50,6 @@ interface HasF {
 
 class C(T:! type) {}
 
-// CHECK:STDERR: deduced_type_argument.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] C(T) as HasF {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] C(T) as HasF {
   fn F() {}
 }
@@ -182,10 +66,6 @@ interface HasF(T:! type) {
   fn F();
 }
 
-// CHECK:STDERR: deduced_interface_argument.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] {} as HasF(T) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] {} as HasF(T) {
   fn F() {}
 }
@@ -203,10 +83,6 @@ interface HasF {
 }
 
 // TODO: Reject this declaration because U cannot be deduced.
-// CHECK:STDERR: fail_incomplete_deduction.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type, U:! type] T as HasF {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type, U:! type] T as HasF {
   fn F() {}
 }
@@ -229,10 +105,6 @@ interface HasF(T:! type) {
   fn F();
 }
 
-// CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl forall [T:! type] T as HasF(T) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! type] T as HasF(T) {
   fn F() {}
 }
@@ -263,24 +135,20 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.4) [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.5) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %F.3, @F.2(%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,22 +161,22 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<invalid> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %x.patt: %.4 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.4 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_10.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc16_10.2: type = converted %.loc16_10.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
+// CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,20 +191,22 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc12_14.1: type) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
+// CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc12_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc8_34.2: <witness> = interface_witness (%F) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc8_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +215,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc12_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc8_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -354,40 +224,50 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %.4) {
+// CHECK:STDOUT: fn @G(%x.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17: %F.type.1 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc13_4.1: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.5) [template = constants.%.7]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc12_14.2) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
+// CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc8_14.2) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%.4) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%.4
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%.4
+// CHECK:STDOUT: specific @impl(constants.%.5) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%.5
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%.5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.5) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_type_subst.carbon
@@ -404,24 +284,20 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.4) [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.5) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %struct: %.5 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -434,28 +310,28 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<invalid> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %x.patt: %.4 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.4 = value_param_pattern %x.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.4 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_10.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc16_10.2: type = converted %.loc16_10.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc16_17.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc16_17.2: type = converted %.loc16_17.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
+// CHECK:STDOUT:     %.loc12_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12_17.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -486,13 +362,14 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc12_14.1: type) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
+// CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc12_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc8_34.2: <witness> = interface_witness (%F) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
@@ -502,16 +379,17 @@ fn G(x: A) {
 // CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc12_14.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @F.2.%T (%T) = value_param runtime_param0
 // CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc8_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,7 +399,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self (%Self)]() -> @F.1.%Self (%Self);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc12_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc8_14.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -533,14 +411,20 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %.4) -> %.4 {
+// CHECK:STDOUT: fn @G(%x.param_patt: %.5) -> %.5 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_11.1: %F.type.1 = interface_witness_access <error>, element0 [template = <error>]
-// CHECK:STDOUT:   %.loc17_11.2: <bound method> = bound_method %x.ref, %.loc17_11.1
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.loc13_11.1: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc13_11.2: <bound method> = bound_method %x.ref, %.loc13_11.1
+// CHECK:STDOUT:   %.loc13_11.3: <specific function> = specific_function %.loc13_11.2, @F.2(constants.%.5)
+// CHECK:STDOUT:   %F.call: init %.5 = call %.loc13_11.3(%x.ref)
+// CHECK:STDOUT:   %.loc13_20.1: ref %.5 = temporary_storage
+// CHECK:STDOUT:   %.loc13_20.2: ref %.5 = temporary %.loc13_20.1, %F.call
+// CHECK:STDOUT:   %struct: %.5 = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_22: %.5 = converted %F.call, %struct [template = constants.%struct]
+// CHECK:STDOUT:   return %.loc13_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
@@ -548,30 +432,42 @@ fn G(x: A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc12_14.2) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
+// CHECK:STDOUT: specific @F.1(constants.%T) {
+// CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%.4) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%.4
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%.4
+// CHECK:STDOUT: specific @impl(@impl.%T.loc8_14.2) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%.5) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%.5
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%.5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.5) {
+// CHECK:STDOUT:   %T => constants.%.5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_type_argument.carbon
@@ -594,25 +490,21 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.4) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.4) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %F.3, @F.2(%.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -633,23 +525,23 @@ fn G(x: A) {
 // CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc14_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc14_14.1, runtime_param<invalid> [symbolic = %T.patt.loc14_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc10_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc10_14.1, runtime_param<invalid> [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc14_14.1 [symbolic = %T.loc14_14.2 (constants.%T)]
-// CHECK:STDOUT:     %C.loc14_25.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc14_25.2 (constants.%C.2)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:     %C.loc10_25.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc10_25.2 (constants.%C.2)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc14_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %C.3 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C.3 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:     %.loc18_12: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc18_10: type = converted %.loc18_12, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc14_12: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc14_10: type = converted %.loc14_12, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %x.param: %C.3 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %C.3 = bind_name x, %x.param
@@ -667,21 +559,23 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc14_14.1: type) {
-// CHECK:STDOUT:   %T.loc14_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc14_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:   %C.loc14_25.2: type = class_type @C, @C(%T.loc14_14.2) [symbolic = %C.loc14_25.2 (constants.%C.2)]
+// CHECK:STDOUT: generic impl @impl(%T.loc10_14.1: type) {
+// CHECK:STDOUT:   %T.loc10_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc10_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:   %C.loc10_25.2: type = class_type @C, @C(%T.loc10_14.2) [symbolic = %C.loc10_25.2 (constants.%C.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc14_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc10_37.2: <witness> = interface_witness (%F) [symbolic = %.loc10_37.2 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C.loc14_25.1 as %HasF.ref {
+// CHECK:STDOUT:   impl: %C.loc10_25.1 as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc10_37.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_37.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc10_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -704,7 +598,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc14_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc10_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -718,7 +612,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %C.3 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19: %F.type.1 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc15_4.1: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc15_4.2: <specific function> = specific_function %.loc15_4.1, @F.2(constants.%.4) [template = constants.%.9]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc15_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -729,27 +625,30 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc14_14.2) {
+// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc14_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc14_14.2 => constants.%T
-// CHECK:STDOUT:   %C.loc14_25.2 => constants.%C.2
+// CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %C.loc10_25.2 => constants.%C.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc10_37.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc14_14.2) {
-// CHECK:STDOUT:   %T.loc14_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc14_14.2 => constants.%T
-// CHECK:STDOUT:   %C.loc14_25.2 => constants.%C.2
+// CHECK:STDOUT: specific @F.1(constants.%C.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc10_14.2) {
+// CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
+// CHECK:STDOUT:   %C.loc10_25.2 => constants.%C.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%.4) {
@@ -760,13 +659,18 @@ fn G(x: A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%.4) {
-// CHECK:STDOUT:   %T.loc14_14.2 => constants.%.4
-// CHECK:STDOUT:   %T.patt.loc14_14.2 => constants.%.4
-// CHECK:STDOUT:   %C.loc14_25.2 => constants.%C.3
+// CHECK:STDOUT:   %T.loc10_14.2 => constants.%.4
+// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%.4
+// CHECK:STDOUT:   %C.loc10_25.2 => constants.%C.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %.loc10_37.2 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.4) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_interface_argument.carbon
@@ -787,28 +691,24 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %HasF.type.3: type = interface_type @HasF, @HasF(%.4) [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @HasF(%.4) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.2, @impl(%.4) [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.4) [template]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %F.4, @F.2(%.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -827,23 +727,23 @@ fn G(x: A) {
 // CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_16.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<invalid> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_25.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc12_25.2: type = converted %.loc12_25.1, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc8_25.1: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc8_25.2: type = converted %.loc8_25.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:     %HasF.type.loc12_34.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc12_34.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:     %HasF.type.loc8_34.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %.4 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %.4 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_10.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc16_10.2: type = converted %.loc16_10.1, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12_10.1: %.4 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -873,21 +773,23 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc12_14.1: type) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:   %HasF.type.loc12_34.2: type = interface_type @HasF, @HasF(%T.loc12_14.2) [symbolic = %HasF.type.loc12_34.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
+// CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:   %HasF.type.loc8_34.2: type = interface_type @HasF, @HasF(%T.loc8_14.2) [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc12_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc8_38.2: <witness> = interface_witness (%F) [symbolic = %.loc8_38.2 (constants.%.5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %.loc12_25.2 as %HasF.type.loc12_34.1 {
+// CHECK:STDOUT:   impl: %.loc8_25.2 as %HasF.type.loc8_34.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc8_38.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_38.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc8_38.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -896,7 +798,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc12_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc8_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -909,18 +811,28 @@ fn G(x: A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
-// CHECK:STDOUT:   %.loc17_12: %.4 = struct_literal ()
-// CHECK:STDOUT:   %.loc17_10: type = converted %.loc17_12, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_12: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc13_10: type = converted %.loc13_12, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%.4) [template = constants.%HasF.type.3]
-// CHECK:STDOUT:   %.loc17_14: %.5 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%.4) [template = constants.%.6]
-// CHECK:STDOUT:   %F.ref: %.5 = name_ref F, %.loc17_14 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_4: %F.type.3 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc13_14: %.6 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%.4) [template = constants.%.7]
+// CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc13_14 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_4.1: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
+// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.4) [template = constants.%.9]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %HasF.type => constants.%HasF.type.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
+// CHECK:STDOUT:   %.loc5_9.2 => constants.%.2
+// CHECK:STDOUT:   %.loc5_9.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {}
@@ -930,27 +842,30 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc12_14.2) {
+// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %HasF.type.loc12_34.2 => constants.%HasF.type.2
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %HasF.type.loc8_34.2 => constants.%HasF.type.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc8_38.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc12_14.2) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %HasF.type.loc12_34.2 => constants.%HasF.type.2
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.4) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc8_14.2) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %HasF.type.loc8_34.2 => constants.%HasF.type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%.4) {
@@ -962,18 +877,23 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.loc5_9.2 => constants.%.5
-// CHECK:STDOUT:   %.loc5_9.3 => constants.%.6
+// CHECK:STDOUT:   %.loc5_9.2 => constants.%.6
+// CHECK:STDOUT:   %.loc5_9.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%.4) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%.4
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%.4
-// CHECK:STDOUT:   %HasF.type.loc12_34.2 => constants.%HasF.type.3
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%.4
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%.4
+// CHECK:STDOUT:   %HasF.type.loc8_34.2 => constants.%HasF.type.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.4
 // CHECK:STDOUT:   %F => constants.%F.4
+// CHECK:STDOUT:   %.loc8_38.2 => constants.%.8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%.4) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_deduction.carbon
@@ -992,7 +912,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T, %U) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -1000,14 +921,7 @@ fn G(x: A) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1020,26 +934,26 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc13_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc13_14.1, runtime_param<invalid> [symbolic = %T.patt.loc13_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt.loc13_24.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc13_24.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc13_24.1, runtime_param<invalid> [symbolic = %U.patt.loc13_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt.loc9_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc9_14.1, runtime_param<invalid> [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc9_24.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc9_24.1, runtime_param<invalid> [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_14.1 [symbolic = %T.loc13_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc9_14.1 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc13_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc13_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc13_24.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc13_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc9_24.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc9_24.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %x.patt: %.4 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.4 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt: %.5 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %.5 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc17_10.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc17_10.2: type = converted %.loc17_10.1, constants.%.4 [template = constants.%.4]
-// CHECK:STDOUT:     %x.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %x: %.4 = bind_name x, %x.param
+// CHECK:STDOUT:     %.loc13_10.1: %.5 = struct_literal ()
+// CHECK:STDOUT:     %.loc13_10.2: type = converted %.loc13_10.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %x.param: %.5 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %.5 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1054,22 +968,24 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc13_14.1: type, %U.loc13_24.1: type) {
-// CHECK:STDOUT:   %T.loc13_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc13_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %U.loc13_24.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_24.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc13_24.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc13_24.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic impl @impl(%T.loc9_14.1: type, %U.loc9_24.1: type) {
+// CHECK:STDOUT:   %T.loc9_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc9_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %U.loc9_24.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc9_24.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc9_24.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc9_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc13_14.2, %U.loc13_24.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc9_14.2, %U.loc9_24.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc9_44.2: <witness> = interface_witness (%F) [symbolic = %.loc9_44.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc9_44.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc9_44.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc9_44.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1078,7 +994,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc13_14.1: type, @impl.%U.loc13_24.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc9_14.1: type, @impl.%U.loc9_24.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -1087,9 +1003,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %.4) {
+// CHECK:STDOUT: fn @G(%x.param_patt: %.5) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %.4 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
 // CHECK:STDOUT:   return
@@ -1098,23 +1014,26 @@ fn G(x: A) {
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.loc13_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc13_14.2 => constants.%T
-// CHECK:STDOUT:   %U.loc13_24.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc13_24.2 => constants.%U
+// CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T
+// CHECK:STDOUT:   %U.loc9_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc9_24.2 => constants.%U
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc9_44.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc13_14.2, @impl.%U.loc13_24.2) {
-// CHECK:STDOUT:   %T.loc13_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc13_14.2 => constants.%T
-// CHECK:STDOUT:   %U.loc13_24.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc13_24.2 => constants.%U
+// CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc9_14.2, @impl.%U.loc9_24.2) {
+// CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T
+// CHECK:STDOUT:   %U.loc9_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc9_24.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inconsistent_deduction.carbon
@@ -1134,31 +1053,25 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %HasF.type.3: type = interface_type @HasF, @HasF(%B) [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @HasF(%B) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %.9: %.8 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1179,15 +1092,15 @@ fn G(x: A) {
 // CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_16.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc12_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_14.1, runtime_param<invalid> [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc12_24: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc8_24: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
-// CHECK:STDOUT:     %T.ref.loc12_34: type = name_ref T, %T.loc12_14.1 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:     %HasF.type.loc12_33.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc12_33.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:     %T.ref.loc8_34: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:     %HasF.type.loc8_33.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc12_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_14.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
@@ -1225,33 +1138,35 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc12_14.1: type) {
-// CHECK:STDOUT:   %T.loc12_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt.2)]
-// CHECK:STDOUT:   %HasF.type.loc12_33.2: type = interface_type @HasF, @HasF(%T.loc12_14.2) [symbolic = %HasF.type.loc12_33.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
+// CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:   %HasF.type.loc8_33.2: type = interface_type @HasF, @HasF(%T.loc8_14.2) [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc12_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %.loc8_37.2: <witness> = interface_witness (%F) [symbolic = %.loc8_37.2 (constants.%.4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.ref.loc12_24 as %HasF.type.loc12_33.1 {
+// CHECK:STDOUT:   impl: %T.ref.loc8_24 as %HasF.type.loc8_33.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
+// CHECK:STDOUT:     %.loc8_37.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_37.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = %.loc8_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -1262,7 +1177,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc12_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc8_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -1277,14 +1192,22 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%B) [template = constants.%HasF.type.3]
-// CHECK:STDOUT:   %.loc25: %.7 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%B) [template = constants.%.8]
-// CHECK:STDOUT:   %F.ref: %.7 = name_ref F, %.loc25 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc21: %.8 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%B) [template = constants.%.9]
+// CHECK:STDOUT:   %F.ref: %.8 = name_ref F, %.loc21 [template = constants.%.9]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %HasF.type => constants.%HasF.type.2
+// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %F.type => constants.%F.type.1
+// CHECK:STDOUT:   %F => constants.%F.1
+// CHECK:STDOUT:   %.loc5_9.2 => constants.%.2
+// CHECK:STDOUT:   %.loc5_9.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {}
@@ -1294,27 +1217,30 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc12_14.2) {
+// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %HasF.type.loc12_33.2 => constants.%HasF.type.2
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %HasF.type.loc8_33.2 => constants.%HasF.type.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %.loc8_37.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc12_14.2) {
-// CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T
-// CHECK:STDOUT:   %HasF.type.loc12_33.2 => constants.%HasF.type.2
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@impl.%T.loc8_14.2) {
+// CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
+// CHECK:STDOUT:   %HasF.type.loc8_33.2 => constants.%HasF.type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%B) {
@@ -1326,7 +1252,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.loc5_9.2 => constants.%.7
-// CHECK:STDOUT:   %.loc5_9.3 => constants.%.8
+// CHECK:STDOUT:   %.loc5_9.2 => constants.%.8
+// CHECK:STDOUT:   %.loc5_9.3 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

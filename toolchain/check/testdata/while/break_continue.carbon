@@ -7,109 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/while/break_continue.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/break_continue.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:11:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:14:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:21:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Inc {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:28:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:31:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitAndAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:38:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitComplement {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:42:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:45:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitOrAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:52:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:55:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as BitXorAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:62:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:65:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as DivAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:72:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Eq {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:77:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:80:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as LeftShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:87:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:90:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as ModAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:97:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:100:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as MulAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:107:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:111:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Ordered {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:119:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:122:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as RightShiftAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:129:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:132:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/d45151c2a6e33b065e794da6da9cf423/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/i32.carbon:138:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl i32 as Dec {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 
 fn A() -> bool;
 fn B() -> bool;
@@ -163,14 +60,7 @@ fn While() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/index
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
@@ -194,8 +84,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc114_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc114_11.2: type = converted %bool.make_type, %.loc114_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type, %.loc11_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -204,8 +94,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc115_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc115_11.2: type = converted %bool.make_type, %.loc115_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type, %.loc12_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -214,8 +104,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc116_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc116_11.2: type = converted %bool.make_type, %.loc116_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc13_11.2: type = converted %bool.make_type, %.loc13_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -224,8 +114,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc117_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc117_11.2: type = converted %bool.make_type, %.loc117_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc14_11.2: type = converted %bool.make_type, %.loc14_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -234,8 +124,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc118_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc118_11.2: type = converted %bool.make_type, %.loc118_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc15_11.2: type = converted %bool.make_type, %.loc15_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -244,8 +134,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc119_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc119_11.2: type = converted %bool.make_type, %.loc119_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc16_11.2: type = converted %bool.make_type, %.loc16_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -254,8 +144,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc120_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc120_11.2: type = converted %bool.make_type, %.loc120_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc17_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc17_11.2: type = converted %bool.make_type, %.loc17_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -264,8 +154,8 @@ fn While() {
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc121_11.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc121_11.2: type = converted %bool.make_type, %.loc121_11.1 [template = bool]
+// CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc18_11.2: type = converted %bool.make_type, %.loc18_11.1 [template = bool]
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -292,92 +182,92 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   br !while.cond.loc124
+// CHECK:STDOUT:   br !while.cond.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.cond.loc124:
+// CHECK:STDOUT: !while.cond.loc21:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init bool = call %A.ref()
-// CHECK:STDOUT:   %.loc124_13.1: bool = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc124_13.2: bool = converted %A.call, %.loc124_13.1
-// CHECK:STDOUT:   if %.loc124_13.2 br !while.body.loc124 else br !while.done.loc124
+// CHECK:STDOUT:   %.loc21_13.1: bool = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc21_13.2: bool = converted %A.call, %.loc21_13.1
+// CHECK:STDOUT:   if %.loc21_13.2 br !while.body.loc21 else br !while.done.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.body.loc124:
+// CHECK:STDOUT: !while.body.loc21:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %B.call: init bool = call %B.ref()
-// CHECK:STDOUT:   %.loc125_12.1: bool = value_of_initializer %B.call
-// CHECK:STDOUT:   %.loc125_12.2: bool = converted %B.call, %.loc125_12.1
-// CHECK:STDOUT:   if %.loc125_12.2 br !if.then.loc125 else br !if.else.loc125
+// CHECK:STDOUT:   %.loc22_12.1: bool = value_of_initializer %B.call
+// CHECK:STDOUT:   %.loc22_12.2: bool = converted %B.call, %.loc22_12.1
+// CHECK:STDOUT:   if %.loc22_12.2 br !if.then.loc22 else br !if.else.loc22
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc125:
-// CHECK:STDOUT:   br !while.cond.loc124
+// CHECK:STDOUT: !if.then.loc22:
+// CHECK:STDOUT:   br !while.cond.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc125:
+// CHECK:STDOUT: !if.else.loc22:
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %C.call: init bool = call %C.ref()
-// CHECK:STDOUT:   %.loc126_12.1: bool = value_of_initializer %C.call
-// CHECK:STDOUT:   %.loc126_12.2: bool = converted %C.call, %.loc126_12.1
-// CHECK:STDOUT:   if %.loc126_12.2 br !if.then.loc126 else br !if.else.loc126
+// CHECK:STDOUT:   %.loc23_12.1: bool = value_of_initializer %C.call
+// CHECK:STDOUT:   %.loc23_12.2: bool = converted %C.call, %.loc23_12.1
+// CHECK:STDOUT:   if %.loc23_12.2 br !if.then.loc23 else br !if.else.loc23
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc126:
-// CHECK:STDOUT:   br !while.done.loc124
+// CHECK:STDOUT: !if.then.loc23:
+// CHECK:STDOUT:   br !while.done.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc126:
-// CHECK:STDOUT:   br !while.cond.loc127
+// CHECK:STDOUT: !if.else.loc23:
+// CHECK:STDOUT:   br !while.cond.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.cond.loc127:
+// CHECK:STDOUT: !while.cond.loc24:
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init bool = call %D.ref()
-// CHECK:STDOUT:   %.loc127_15.1: bool = value_of_initializer %D.call
-// CHECK:STDOUT:   %.loc127_15.2: bool = converted %D.call, %.loc127_15.1
-// CHECK:STDOUT:   if %.loc127_15.2 br !while.body.loc127 else br !while.done.loc127
+// CHECK:STDOUT:   %.loc24_15.1: bool = value_of_initializer %D.call
+// CHECK:STDOUT:   %.loc24_15.2: bool = converted %D.call, %.loc24_15.1
+// CHECK:STDOUT:   if %.loc24_15.2 br !while.body.loc24 else br !while.done.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.body.loc127:
+// CHECK:STDOUT: !while.body.loc24:
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %E.call: init bool = call %E.ref()
-// CHECK:STDOUT:   %.loc128_14.1: bool = value_of_initializer %E.call
-// CHECK:STDOUT:   %.loc128_14.2: bool = converted %E.call, %.loc128_14.1
-// CHECK:STDOUT:   if %.loc128_14.2 br !if.then.loc128 else br !if.else.loc128
+// CHECK:STDOUT:   %.loc25_14.1: bool = value_of_initializer %E.call
+// CHECK:STDOUT:   %.loc25_14.2: bool = converted %E.call, %.loc25_14.1
+// CHECK:STDOUT:   if %.loc25_14.2 br !if.then.loc25 else br !if.else.loc25
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc128:
-// CHECK:STDOUT:   br !while.cond.loc127
+// CHECK:STDOUT: !if.then.loc25:
+// CHECK:STDOUT:   br !while.cond.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc128:
+// CHECK:STDOUT: !if.else.loc25:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc129_14.1: bool = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc129_14.2: bool = converted %F.call, %.loc129_14.1
-// CHECK:STDOUT:   if %.loc129_14.2 br !if.then.loc129 else br !if.else.loc129
+// CHECK:STDOUT:   %.loc26_14.1: bool = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc26_14.2: bool = converted %F.call, %.loc26_14.1
+// CHECK:STDOUT:   if %.loc26_14.2 br !if.then.loc26 else br !if.else.loc26
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc129:
-// CHECK:STDOUT:   br !while.done.loc127
+// CHECK:STDOUT: !if.then.loc26:
+// CHECK:STDOUT:   br !while.done.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc129:
-// CHECK:STDOUT:   br !while.cond.loc127
+// CHECK:STDOUT: !if.else.loc26:
+// CHECK:STDOUT:   br !while.cond.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.done.loc127:
+// CHECK:STDOUT: !while.done.loc24:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.call: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc131_12.1: bool = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc131_12.2: bool = converted %G.call, %.loc131_12.1
-// CHECK:STDOUT:   if %.loc131_12.2 br !if.then.loc131 else br !if.else.loc131
+// CHECK:STDOUT:   %.loc28_12.1: bool = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc28_12.2: bool = converted %G.call, %.loc28_12.1
+// CHECK:STDOUT:   if %.loc28_12.2 br !if.then.loc28 else br !if.else.loc28
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc131:
-// CHECK:STDOUT:   br !while.cond.loc124
+// CHECK:STDOUT: !if.then.loc28:
+// CHECK:STDOUT:   br !while.cond.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc131:
+// CHECK:STDOUT: !if.else.loc28:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
 // CHECK:STDOUT:   %H.call: init bool = call %H.ref()
-// CHECK:STDOUT:   %.loc132_12.1: bool = value_of_initializer %H.call
-// CHECK:STDOUT:   %.loc132_12.2: bool = converted %H.call, %.loc132_12.1
-// CHECK:STDOUT:   if %.loc132_12.2 br !if.then.loc132 else br !if.else.loc132
+// CHECK:STDOUT:   %.loc29_12.1: bool = value_of_initializer %H.call
+// CHECK:STDOUT:   %.loc29_12.2: bool = converted %H.call, %.loc29_12.1
+// CHECK:STDOUT:   if %.loc29_12.2 br !if.then.loc29 else br !if.else.loc29
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then.loc132:
-// CHECK:STDOUT:   br !while.done.loc124
+// CHECK:STDOUT: !if.then.loc29:
+// CHECK:STDOUT:   br !while.done.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else.loc132:
-// CHECK:STDOUT:   br !while.cond.loc124
+// CHECK:STDOUT: !if.else.loc29:
+// CHECK:STDOUT:   br !while.cond.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: !while.done.loc124:
+// CHECK:STDOUT: !while.done.loc21:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

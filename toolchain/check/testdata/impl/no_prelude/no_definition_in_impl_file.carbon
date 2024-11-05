@@ -22,10 +22,6 @@ impl library "[[@TEST_NAME]]";
 
 impl () as A;
 
-// CHECK:STDERR: decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
-// CHECK:STDERR: impl () as A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl () as A {}
 
 // --- use_decl_in_api.carbon
@@ -119,6 +115,7 @@ impl () as D;
 // CHECK:STDOUT:   %A.type: type = interface_type @A [template]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -140,9 +137,9 @@ impl () as D;
 // CHECK:STDOUT:     %A.ref.loc4: type = name_ref A, imports.%import_ref.1 [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc10_7.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %A.ref.loc10: type = name_ref A, imports.%import_ref.1 [template = constants.%A.type]
+// CHECK:STDOUT:     %.loc6_7.1: %.1 = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %A.ref.loc6: type = name_ref A, imports.%import_ref.1 [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,8 +150,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 {
+// CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = %.loc6_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
