@@ -220,15 +220,15 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   const SemIR::FacetTypeInfo& facet_type_info =
       context.sem_ir().facet_types().Get(facet_type->facet_type_id);
 
-  auto impls = facet_type_info.TryAsSingleInterface();
-  if (!impls) {
+  auto interface = facet_type_info.TryAsSingleInterface();
+  if (!interface) {
     context.TODO(impl.definition_id, "impl as not 1 interface");
     return SemIR::InstId::BuiltinError;
   }
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
-  auto witness_id = BuildInterfaceWitness(context, impl, facet_type_id, *impls,
-                                          used_decl_ids);
+  auto witness_id = BuildInterfaceWitness(context, impl, facet_type_id,
+                                          *interface, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 

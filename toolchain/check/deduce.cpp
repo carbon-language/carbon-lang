@@ -374,6 +374,7 @@ auto DeductionContext::Deduce() -> bool {
       case SemIR::ArrayType::Kind:
       case SemIR::ClassType::Kind:
       case SemIR::ConstType::Kind:
+      case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::InterfaceType::Kind:
       case SemIR::IntType::Kind:
