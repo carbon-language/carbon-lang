@@ -217,7 +217,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
     context.emitter().Emit(impl.definition_id, ImplAsNonFacetType);
     return SemIR::InstId::BuiltinError;
   }
-  auto facet_type_info =
+  const SemIR::FacetTypeInfo& facet_type_info =
       context.sem_ir().facet_types().Get(facet_type->facet_type_id);
 
   auto impls = facet_type_info.TryAsSingleInterface();

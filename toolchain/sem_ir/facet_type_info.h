@@ -54,7 +54,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   // TODO: Update callers to be able to deal with facet types that aren't a
   // single interface and then remove this function.
-  auto TryAsSingleInterface() -> std::optional<Impls> {
+  auto TryAsSingleInterface() const -> std::optional<Impls> {
     // We are ignoring requirement_block_id for the moment since nothing uses it
     // yet.
     if (impls.size() == 1) {

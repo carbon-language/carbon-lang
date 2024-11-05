@@ -1305,7 +1305,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     case CARBON_KIND(SemIR::FacetType facet_type): {
-      SemIR::FacetTypeInfo info =
+      const SemIR::FacetTypeInfo& info =
           eval_context.facet_types().Get(facet_type.facet_type_id);
       Phase phase = Phase::Template;
 

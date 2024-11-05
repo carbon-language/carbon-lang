@@ -121,7 +121,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(FacetType inst): {
-        FacetTypeInfo facet_type_info =
+        const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
         if (step.index == 0) {
           out << "<facet type ";
