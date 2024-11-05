@@ -6,20 +6,13 @@
 
 #include <string>
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/format/format.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
-
-constexpr CommandLine::CommandInfo FormatOptions::Info = {
-    .name = "format",
-    .help = R"""(
-Format Carbon source code.
-)""",
-};
 
 auto FormatOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
@@ -48,6 +41,15 @@ Not valid when multiple files are passed for formatting.
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
 }
+
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
+    .name = "format",
+    .help = R"""(
+Format Carbon source code.
+)""",
+};
+
+FormatSubcommand::FormatSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   DriverResult result = {.success = true};

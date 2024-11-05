@@ -15,8 +15,6 @@ namespace Carbon {
 //
 // See the implementation of `Build` for documentation on members.
 struct FormatOptions {
-  static const CommandLine::CommandInfo Info;
-
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   llvm::StringRef output_filename;
@@ -26,7 +24,11 @@ struct FormatOptions {
 // Implements the format subcommand of the driver.
 class FormatSubcommand : public DriverSubcommand {
  public:
-  auto BuildOptions(CommandLine::CommandBuilder& b) { options_.Build(b); }
+  explicit FormatSubcommand();
+
+  auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
+    options_.Build(b);
+  }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 

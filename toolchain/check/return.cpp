@@ -160,8 +160,9 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     // convert to it.
     expr_id = SemIR::InstId::BuiltinError;
   } else if (return_info.has_return_slot()) {
-    expr_id = Initialize(context, node_id, function.return_slot_id, expr_id);
     return_slot_id = function.return_slot_id;
+    // Note that this can import a function and invalidate `function`.
+    expr_id = Initialize(context, node_id, return_slot_id, expr_id);
   } else {
     expr_id =
         ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);

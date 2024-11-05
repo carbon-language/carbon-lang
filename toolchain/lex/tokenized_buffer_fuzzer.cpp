@@ -7,7 +7,7 @@
 #include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "testing/fuzzing/libfuzzer.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
 

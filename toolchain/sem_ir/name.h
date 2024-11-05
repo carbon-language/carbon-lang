@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_H_
 
+#include "toolchain/base/value_ids.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {

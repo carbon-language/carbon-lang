@@ -13,6 +13,7 @@
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"

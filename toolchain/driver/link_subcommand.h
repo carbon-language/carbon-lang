@@ -18,8 +18,6 @@ namespace Carbon {
 //
 // See the implementation of `Build` for documentation on members.
 struct LinkOptions {
-  static const CommandLine::CommandInfo Info;
-
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   CodegenOptions codegen_options;
@@ -30,7 +28,11 @@ struct LinkOptions {
 // Implements the link subcommand of the driver.
 class LinkSubcommand : public DriverSubcommand {
  public:
-  auto BuildOptions(CommandLine::CommandBuilder& b) { options_.Build(b); }
+  explicit LinkSubcommand();
+
+  auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
+    options_.Build(b);
+  }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 

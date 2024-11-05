@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_GENERIC_H_
 
 #include "common/set.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {

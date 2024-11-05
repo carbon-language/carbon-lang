@@ -10,7 +10,7 @@
 #include <forward_list>
 
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"

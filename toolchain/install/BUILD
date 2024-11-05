@@ -4,6 +4,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/manifest:defs.bzl", "manifest")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("run_tool.bzl", "run_tool")
@@ -145,6 +146,11 @@ make_install_filegroups(
     prefix = "prefix_root",
 )
 
+manifest(
+    name = "install_data_manifest.txt",
+    srcs = [":install_data"],
+)
+
 pkg_naming_variables(
     name = "packaging_variables",
 )
@@ -157,18 +163,12 @@ pkg_naming_variables(
 # `carbon_toolchain_tar_gz_rule`.
 pkg_tar_and_test(
     srcs = [":pkg_data"],
+    install_data_manifest = ":install_data_manifest.txt",
     name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-    test_data = [
-        ":install_data",
-    ],
-    # TODO: This is used to make sure that tar files are in install_data (one
-    # direction). Replace with a check that the files in install_data and tar
-    # match (bidirectional).
-    test_install_marker = "prefix_root/lib/carbon/carbon_install.txt",
 )
 
 # Support `bazel run` on specific binaries.

@@ -1217,10 +1217,16 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::IntLiteral inst): {
+      case CARBON_KIND(SemIR::IntValue inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::IntType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::PointerType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::SpecificFunction inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
@@ -2087,15 +2093,27 @@ class ImportRefResolver {
          .elements_id = elements_id});
   }
 
-  auto TryResolveTypedInst(SemIR::IntLiteral inst) -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::IntValue inst) -> ResolveResult {
     auto type_id = GetLocalConstantId(inst.type_id);
     if (HasNewWork()) {
       return Retry();
     }
 
-    return ResolveAs<SemIR::IntLiteral>(
+    return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
          .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
+  }
+
+  auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto bit_width_id = GetLocalConstantInstId(inst.bit_width_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    return ResolveAs<SemIR::IntType>({.type_id = SemIR::TypeId::TypeType,
+                                      .int_kind = inst.int_kind,
+                                      .bit_width_id = bit_width_id});
   }
 
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
@@ -2108,6 +2126,21 @@ class ImportRefResolver {
     auto pointee_type_id = context_.GetTypeIdForTypeConstant(pointee_const_id);
     return ResolveAs<SemIR::PointerType>(
         {.type_id = SemIR::TypeId::TypeType, .pointee_id = pointee_type_id});
+  }
+
+  auto TryResolveTypedInst(SemIR::SpecificFunction inst) -> ResolveResult {
+    auto type_const_id = GetLocalConstantId(inst.type_id);
+    auto callee_id = GetLocalConstantInstId(inst.callee_id);
+    auto specific_data = GetLocalSpecificData(inst.specific_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    auto type_id = context_.GetTypeIdForTypeConstant(type_const_id);
+    auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
+    return ResolveAs<SemIR::SpecificFunction>({.type_id = type_id,
+                                               .callee_id = callee_id,
+                                               .specific_id = specific_id});
   }
 
   auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
@@ -2431,11 +2464,15 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void {
   ImportRefResolver resolver(context, import_ir_id);
+  context.generic_region_stack().Push();
+
   resolver.Resolve(context.import_irs()
                        .Get(import_ir_id)
                        .sem_ir->impls()
                        .Get(impl_id)
                        .first_decl_id());
+
+  context.generic_region_stack().Pop();
 }
 
 }  // namespace Carbon::Check

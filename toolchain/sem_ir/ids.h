@@ -8,7 +8,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"

@@ -79,7 +79,8 @@ using Bool = BuiltinType<InstId::BuiltinBoolType>;
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<InstId::BuiltinBigIntType>::Check(sem_ir, state, type_id)) {
+    if (BuiltinType<InstId::BuiltinIntLiteralType>::Check(sem_ir, state,
+                                                          type_id)) {
       return true;
     }
     if (BuiltinType<InstId::BuiltinIntType>::Check(sem_ir, state, type_id)) {
@@ -175,9 +176,9 @@ constexpr BuiltinInfo None = {"", nullptr};
 constexpr BuiltinInfo PrintInt = {"print.int",
                                   ValidateSignature<auto(AnyInt)->NoReturn>};
 
-// Returns the `Core.BigInt` type.
-constexpr BuiltinInfo BigIntMakeType = {"big_int.make_type",
-                                        ValidateSignature<auto()->Type>};
+// Returns the `Core.IntLiteral` type.
+constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
+                                            ValidateSignature<auto()->Type>};
 
 // Returns the `i32` type. Doesn't take a bit size because we need an integer
 // type as a basis for that.
