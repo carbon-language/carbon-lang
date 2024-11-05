@@ -608,7 +608,8 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
-  // The stack of StructTypeFields for in-progress structs.
+  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
+  // object representations.
   ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
 
   // The stack used for qualified declaration name construction.
