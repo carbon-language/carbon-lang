@@ -968,8 +968,10 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FacetType inst): {
         const SemIR::FacetTypeInfo& facet_type_info =
             context_.sem_ir().facet_types().Get(inst.facet_type_id);
-        // TODO: Not sure what to do with facet types that aren't a single
-        // interface.
+        // This is specifically the facet type produce by an interface
+        // declaration, and so should consist of a single interface.
+        // TODO: Will also have to handle named constraints here, once those are
+        // implemented.
         auto interface = facet_type_info.TryAsSingleInterface();
         CARBON_CHECK(interface);
         return context_.interfaces().Get(interface->interface_id).scope_id;
