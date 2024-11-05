@@ -16,21 +16,55 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // type equality as defined by
   // https://github.com/carbon-language/carbon-lang/issues/2409.
 
+  // TODO: Replace these vectors with an array allocated in an
+  // `llvm::BumpPtrAllocator`.
+
   // The interfaces this facet type requires, sorted in numerical id order.
-  llvm::SmallVector<TypeId> interface_type_ids;
+  struct Impls {
+    // TODO: extend this so it can represent named constraint requirements
+    // and requirements on members, not just `.Self`.
+    InterfaceId interface_id;
+    SpecificId specific_id;
+    auto operator==(const Impls& rhs) const -> bool {
+      return interface_id == rhs.interface_id && specific_id == rhs.specific_id;
+    }
+    auto operator<=>(const Impls& rhs) const -> std::strong_ordering {
+      return std::tie(interface_id.index, specific_id.index) <=>
+             std::tie(rhs.interface_id.index, rhs.specific_id.index);
+    }
+  };
+  llvm::SmallVector<Impls> impls;
+  // TODO: Lookup contexts
+  // TODO: Rewrite constraints
+  // TODO: Same-type constraints
   InstBlockId requirement_block_id;
+  // TODO: Optional resolved facet type
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{interfaces: ";
+    out << "{impls interface: ";
     llvm::ListSeparator sep;
-    for (TypeId type_id : interface_type_ids) {
-      out << sep << type_id;
+    for (Impls req : impls) {
+      out << sep << req.interface_id;
+      if (req.specific_id.is_valid()) {
+        out << "(" << req.specific_id << ")";
+      }
     }
     out << "; requirements: " << requirement_block_id << "}";
   }
 
+  // TODO: Update callers to be able to deal with facet types that aren't a
+  // single interface and then remove this function.
+  auto TryAsSingleInterface() -> std::optional<Impls> {
+    // We are ignoring requirement_block_id for the moment since nothing uses it
+    // yet.
+    if (impls.size() == 1) {
+      return impls.front();
+    }
+    return std::nullopt;
+  }
+
   auto operator==(const FacetTypeInfo& rhs) const -> bool {
-    return interface_type_ids == rhs.interface_type_ids &&
+    return impls == rhs.impls &&
            requirement_block_id == rhs.requirement_block_id;
   }
 };
@@ -39,7 +73,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.HashSizedBytes(llvm::ArrayRef(value.interface_type_ids));
+  hasher.HashSizedBytes(llvm::ArrayRef(value.impls));
   hasher.HashRaw(value.requirement_block_id);
   return static_cast<HashCode>(hasher);
 }

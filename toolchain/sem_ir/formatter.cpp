@@ -948,9 +948,9 @@ class FormatterImpl {
     out_ << "<facet-type ";
 
     llvm::ListSeparator sep;
-    for (auto type_id : info.interface_type_ids) {
+    for (auto impls : info.impls) {
       out_ << sep;
-      FormatType(type_id);
+      FormatInterface(impls.interface_id);
     }
 
     if (info.requirement_block_id.is_valid()) {

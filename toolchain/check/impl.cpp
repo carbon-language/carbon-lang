@@ -125,7 +125,7 @@ static auto CheckAssociatedFunctionImplementation(
 // Builds a witness that the specified impl implements the given interface.
 static auto BuildInterfaceWitness(
     Context& context, const SemIR::Impl& impl, SemIR::TypeId interface_type_id,
-    SemIR::InterfaceType interface_type,
+    SemIR::FacetTypeInfo::Impls interface_type,
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
   if (!context.TryToDefineType(interface_type_id, [&] {
@@ -219,21 +219,16 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   }
   auto facet_type_info =
       context.sem_ir().facet_types().Get(facet_type->facet_type_id);
-  // TODO: handle requirements
 
-  if (facet_type_info.interface_type_ids.size() != 1) {
+  auto impls = facet_type_info.TryAsSingleInterface();
+  if (!impls) {
     context.TODO(impl.definition_id, "impl as not 1 interface");
     return SemIR::InstId::BuiltinError;
   }
 
-  auto interface_type_id = facet_type_info.interface_type_ids.front();
-  auto interface_type =
-      context.types().GetAs<SemIR::InterfaceType>(interface_type_id);
-
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
-
-  auto witness_id = BuildInterfaceWitness(context, impl, interface_type_id,
-                                          interface_type, used_decl_ids);
+  auto witness_id = BuildInterfaceWitness(context, impl, facet_type_id, *impls,
+                                          used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 

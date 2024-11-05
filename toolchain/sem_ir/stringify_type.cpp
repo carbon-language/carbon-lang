@@ -123,25 +123,24 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetType inst): {
         FacetTypeInfo facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
-        if (facet_type_info.interface_type_ids.empty()) {
-          out << "<facet type `type`>";
-          break;
-        } else if (step.index == 0) {
+        if (step.index == 0) {
           out << "<facet type ";
-        } else if (step.index <
-                   static_cast<int>(
-                       facet_type_info.interface_type_ids.size())) {
-          out << ", ";
-        } else {
-          out << ">";
-          break;
         }
-        // TODO: also output restrictions from
-        // facet_type_info.requirement_block_id.
-
-        steps.push_back(step.Next());
-        push_inst_id(sem_ir.types().GetInstId(
-            facet_type_info.interface_type_ids[step.index]));
+        if (facet_type_info.impls.empty()) {
+          out << "`type`>";
+        } else {
+          auto interface_id = facet_type_info.impls[step.index].interface_id;
+          auto interface_name_id =
+              sem_ir.interfaces().Get(interface_id).name_id;
+          out << sem_ir.names().GetFormatted(interface_name_id);
+          if (step.index + 1 < static_cast<int>(facet_type_info.impls.size())) {
+            out << ", ";
+            steps.push_back(step.Next());
+          } else {
+            out << ">";
+          }
+        }
+        // TODO: also output other restrictions from facet_type_info.
         break;
       }
       case CARBON_KIND(FacetTypeAccess inst): {
