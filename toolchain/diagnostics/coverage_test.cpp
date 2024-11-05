@@ -43,7 +43,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::ExternLibraryInImporter,
     DiagnosticKind::ExternLibraryOnDefinition,
     DiagnosticKind::HexadecimalEscapeMissingDigits,
-    DiagnosticKind::ImplOfUndefinedInterface,
     DiagnosticKind::IncompleteTypeInFunctionParam,
     DiagnosticKind::InvalidDigit,
     DiagnosticKind::InvalidDigitSeparator,
