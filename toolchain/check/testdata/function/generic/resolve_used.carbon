@@ -80,12 +80,12 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types, inst+7, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, inst+30, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+55, unloaded
-// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%.1 (%.4) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.8)]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.3: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+48, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Core//prelude/operators/as, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.5: @ImplicitAs.%.1 (%.4) = import_ref Core//prelude/operators/as, inst+76, loaded [symbolic = @ImplicitAs.%.2 (constants.%.8)]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Core//prelude/operators/as, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Core//prelude/operators/as, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Core//prelude/operators/as, inst+69, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

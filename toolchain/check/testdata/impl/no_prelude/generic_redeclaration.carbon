@@ -84,12 +84,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T.patt.3: %K.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.4: %L.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.4: %L.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.5: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %T.patt.6: %J.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.7: %K.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.8: %L.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -154,8 +150,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.loc14_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_14.2 (constants.%T.4)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {
-// CHECK:STDOUT:     %T.patt.loc18_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.5)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc18_14.1, runtime_param<invalid> [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.5)]
+// CHECK:STDOUT:     %T.patt.loc18_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc18_14.1, runtime_param<invalid> [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc18_14.1 [symbolic = %T.loc18_14.2 (constants.%T.1)]
@@ -166,8 +162,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.loc18_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {
-// CHECK:STDOUT:     %T.patt.loc19_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.6)]
-// CHECK:STDOUT:     %T.param_patt: %J.type = value_param_pattern %T.patt.loc19_14.1, runtime_param<invalid> [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.6)]
+// CHECK:STDOUT:     %T.patt.loc19_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.2)]
+// CHECK:STDOUT:     %T.param_patt: %J.type = value_param_pattern %T.patt.loc19_14.1, runtime_param<invalid> [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %T.ref: %J.type = name_ref T, %T.loc19_14.1 [symbolic = %T.loc19_14.2 (constants.%T.2)]
@@ -178,8 +174,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.loc19_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {
-// CHECK:STDOUT:     %T.patt.loc20_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.7)]
-// CHECK:STDOUT:     %T.param_patt: %K.type = value_param_pattern %T.patt.loc20_14.1, runtime_param<invalid> [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.7)]
+// CHECK:STDOUT:     %T.patt.loc20_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.3)]
+// CHECK:STDOUT:     %T.param_patt: %K.type = value_param_pattern %T.patt.loc20_14.1, runtime_param<invalid> [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:     %T.ref: %K.type = name_ref T, %T.loc20_14.1 [symbolic = %T.loc20_14.2 (constants.%T.3)]
@@ -190,8 +186,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.loc20_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {
-// CHECK:STDOUT:     %T.patt.loc21_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.8)]
-// CHECK:STDOUT:     %T.param_patt: %L.type = value_param_pattern %T.patt.loc21_14.1, runtime_param<invalid> [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.8)]
+// CHECK:STDOUT:     %T.patt.loc21_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.4)]
+// CHECK:STDOUT:     %T.param_patt: %L.type = value_param_pattern %T.patt.loc21_14.1, runtime_param<invalid> [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.4)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [template = constants.%L.type]
 // CHECK:STDOUT:     %T.ref: %L.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T.4)]
@@ -273,7 +269,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.5(%T.loc18_14.1: %I.type) {
 // CHECK:STDOUT:   %T.loc18_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc18_14.2 (constants.%T.1)]
-// CHECK:STDOUT:   %T.patt.loc18_14.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.5)]
+// CHECK:STDOUT:   %T.patt.loc18_14.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_14.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -287,7 +283,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.6(%T.loc19_14.1: %J.type) {
 // CHECK:STDOUT:   %T.loc19_14.2: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_14.2 (constants.%T.2)]
-// CHECK:STDOUT:   %T.patt.loc19_14.2: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.6)]
+// CHECK:STDOUT:   %T.patt.loc19_14.2: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -301,7 +297,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.7(%T.loc20_14.1: %K.type) {
 // CHECK:STDOUT:   %T.loc20_14.2: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc20_14.2 (constants.%T.3)]
-// CHECK:STDOUT:   %T.patt.loc20_14.2: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.7)]
+// CHECK:STDOUT:   %T.patt.loc20_14.2: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -315,7 +311,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.8(%T.loc21_14.1: %L.type) {
 // CHECK:STDOUT:   %T.loc21_14.2: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc21_14.2 (constants.%T.4)]
-// CHECK:STDOUT:   %T.patt.loc21_14.2: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.8)]
+// CHECK:STDOUT:   %T.patt.loc21_14.2: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -375,10 +371,9 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %J.type: type = interface_type @J [template]
 // CHECK:STDOUT:   %Self.2: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.1: %I.type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %T.patt.2: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -389,8 +384,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.ref.loc7: %I.type = name_ref T, %T.loc7_14.1 [symbolic = %T.loc7_14.2 (constants.%T)]
@@ -401,8 +396,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0, %T.param.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {
-// CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
-// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref.loc14: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.ref.loc14: %I.type = name_ref T, %T.loc14 [symbolic = constants.%T]
@@ -432,7 +427,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(%T.loc7_14.1: %I.type) {
 // CHECK:STDOUT:   %T.loc7_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc7_14.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt.1)]
+// CHECK:STDOUT:   %T.patt.loc7_14.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
