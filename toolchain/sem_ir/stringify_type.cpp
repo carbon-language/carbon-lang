@@ -126,7 +126,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
           steps.push_back(step.Next());
           FacetTypeInfo facet_type_info =
               sem_ir.facet_types().Get(inst.facet_type_id);
-          // TODO: also output restrictions from
+          // TODO: Also output restrictions from
           // facet_type_info.requirement_block_id.
           TypeId type_id = facet_type_info.base_facet_type_id;
           push_inst_id(sem_ir.types().GetInstId(type_id));
@@ -266,8 +266,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
           steps.push_back(step.Next());
           TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
           push_inst_id(sem_ir.types().GetInstId(type_id));
-          // TODO: also output restrictions from the inst block
-          // inst.requirements_id
+          // TODO: Also output restrictions from the inst block
+          // inst.requirements_id.
         } else {
           out << ">";
         }

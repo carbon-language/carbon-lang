@@ -1310,7 +1310,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       Phase phase = Phase::Template;
       SemIR::TypeId base_facet_type_id =
           GetConstantValue(eval_context, info.base_facet_type_id, &phase);
-      // TODO: process & canonicalize requirements
+      // TODO: Process & canonicalize requirements.
       SemIR::InstBlockId requirement_block_id = info.requirement_block_id;
       // If nothing changed, can reuse this instruction.
       if (base_facet_type_id == info.base_facet_type_id &&
@@ -1401,7 +1401,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       break;
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-      // TODO: disable constant evaluation of SymbolicBindingPattern once
+      // TODO: Disable constant evaluation of SymbolicBindingPattern once
       // DeduceGenericCallArguments no longer needs implicit params to have
       // constant values.
       const auto& bind_name =
@@ -1457,7 +1457,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
     case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
-      // TODO: treat this as a non-expression (here and in GetExprCategory)
+      // TODO: Treat this as a non-expression (here and in GetExprCategory)
       // once generic deduction doesn't need patterns to have constant values.
       return eval_context.GetConstantValue(param_pattern.subpattern_id);
     }
@@ -1485,7 +1485,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       base_facet_type_id =
           GetConstantValue(eval_context, base_facet_type_id, &phase);
       SemIR::InstBlockId requirement_block_id = typed_inst.requirements_id;
-      // TODO: process & canonicalize requirements
+      // TODO: Process & canonicalize requirements.
       return MakeFacetTypeResult(eval_context.context(), base_facet_type_id,
                                  requirement_block_id, phase);
     }

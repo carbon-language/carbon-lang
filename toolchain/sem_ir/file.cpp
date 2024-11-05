@@ -294,7 +294,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(BindName inst): {
-        // TODO: don't rely on value_id for expression category, since it may
+        // TODO: Don't rely on value_id for expression category, since it may
         // not be valid yet. This workaround only works because we don't support
         // `var` in function signatures yet.
         if (!inst.value_id.is_valid()) {
@@ -356,7 +356,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return ExprCategory::EphemeralRef;
 
       case OutParam::Kind:
-        // TODO: consider introducing a separate category for OutParam:
+        // TODO: Consider introducing a separate category for OutParam:
         // unlike other DurableRefs, it permits initialization.
         return ExprCategory::DurableRef;
     }

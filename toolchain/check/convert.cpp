@@ -1159,7 +1159,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                  {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
-// TODO: consider moving this to pattern_match.h
+// TODO: Consider moving this to pattern_match.h.
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,

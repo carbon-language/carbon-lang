@@ -526,7 +526,7 @@ class CompilationUnit {
     }
 
     if (options_.output_filename == "-") {
-      // TODO: the output file name, forcing object output, and requesting
+      // TODO: The output file name, forcing object output, and requesting
       // textual assembly output are all somewhat linked flags. We should add
       // some validation that they are used correctly.
       if (options_.force_obj_output) {

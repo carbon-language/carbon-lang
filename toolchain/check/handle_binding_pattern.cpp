@@ -243,7 +243,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       }
       context.node_stack().Push(node_id, param_pattern_id);
 
-      // TODO: use the pattern insts to generate the pattern-match insts
+      // TODO: Use the pattern insts to generate the pattern-match insts
       // at the end of the full pattern, instead of eagerly generating them
       // here.
       break;
@@ -285,7 +285,7 @@ auto HandleParseNode(Context& context,
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
-    // TODO: find a less brittle way of doing this. An invalid scope_inst_id
+    // TODO: Find a less brittle way of doing this. An invalid scope_inst_id
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of an interface or function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();

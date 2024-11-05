@@ -355,7 +355,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     calling_convention_param_ids.push_back(return_slot.storage_id);
   }
 
-  // TODO: find a way to ensure this code and the function-call lowering use
+  // TODO: Find a way to ensure this code and the function-call lowering use
   // the same parameter ordering.
 
   // Lowers the given parameter. Must be called in LLVM calling convention
