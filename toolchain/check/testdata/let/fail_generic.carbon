@@ -22,7 +22,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `<error>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
   return x;

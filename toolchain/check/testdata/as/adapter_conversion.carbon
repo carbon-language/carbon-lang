@@ -541,7 +541,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.10: type = assoc_entity_type %As.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.12: %.8 = assoc_entity element0, imports.%import_ref.7 [symbolic]
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.7) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -629,14 +628,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_18: i32 = int_value 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_19.1: %.3 = struct_literal (%.loc21_18)
+// CHECK:STDOUT:   %.loc21_19: %.3 = struct_literal (%.loc21_18)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %As.type: type = interface_type @As, @As(constants.%B) [template = constants.%As.type.3]
 // CHECK:STDOUT:   %.loc21_21.1: %.10 = specific_constant imports.%import_ref.4, @As(constants.%B) [template = constants.%.11]
 // CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc21_21.1 [template = constants.%.11]
-// CHECK:STDOUT:   %struct: %.3 = struct_value (%.loc21_18) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc21_19.2: %.3 = converted %.loc21_19.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc21_21.2: %B = converted %.loc21_19.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_21.2: %B = converted %.loc21_19, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

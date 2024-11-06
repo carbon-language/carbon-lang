@@ -32,17 +32,10 @@ fn Class.G[addr self: Self*]() -> i32 {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+13]]:25: error: invalid use of incomplete type `Class` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   fn F[self: Self]() -> self;
-  // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]
-  // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+6]]:25: error: cannot implicitly convert from `Class` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note: type `<error>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note: type `Class` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
   fn F[self: Self]() -> self;
@@ -264,15 +257,15 @@ class Class {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc18_25.1: %.4 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.5]
-// CHECK:STDOUT:     %Convert.ref: %.4 = name_ref Convert, %.loc18_25.1 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc18_25.2: type = converted %self.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc11_25.1: %.4 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.5]
+// CHECK:STDOUT:     %Convert.ref: %.4 = name_ref Convert, %.loc11_25.1 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %self.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

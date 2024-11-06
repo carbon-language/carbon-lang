@@ -448,8 +448,6 @@ auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
     Context::BuildDiagnosticFn missing_impl_diagnoser) -> SemIR::InstId {
-  // Materialize a temporary for the base expression if necessary.
-  base_id = ConvertToValueOrRefExpr(context, base_id);
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 

@@ -241,9 +241,9 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %As.type.loc23_32: type = interface_type @As, @As(i32) [template = constants.%As.type.4]
 // CHECK:STDOUT:   %.loc23_32.1: %.11 = specific_constant imports.%import_ref.4, @As(i32) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc23_32: %.11 = name_ref Convert, %.loc23_32.1 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc23_26.6: ref %X = temporary %.loc23_26.4, %.loc23_26.5
 // CHECK:STDOUT:   %.loc23_32.2: %Convert.type.5 = interface_witness_access constants.%.13, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %.loc23_32.3: <bound method> = bound_method %.loc23_26.6, %.loc23_32.2
+// CHECK:STDOUT:   %.loc23_32.3: <bound method> = bound_method %.loc23_26.5, %.loc23_32.2
+// CHECK:STDOUT:   %.loc23_26.6: ref %X = temporary %.loc23_26.4, %.loc23_26.5
 // CHECK:STDOUT:   %.loc23_26.7: %X = bind_value %.loc23_26.6
 // CHECK:STDOUT:   %Convert.call.loc23_32: init i32 = call %.loc23_32.3(%.loc23_26.7)
 // CHECK:STDOUT:   %.loc23_32.4: i32 = value_of_initializer %Convert.call.loc23_32

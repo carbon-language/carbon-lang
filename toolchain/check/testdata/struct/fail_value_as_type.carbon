@@ -39,7 +39,6 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %.8: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %struct: %.2 = struct_value (%.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,9 +66,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc17_15.2: %.6 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.7]
 // CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc17_15.2 [template = constants.%.7]
-// CHECK:STDOUT:   %struct: %.2 = struct_value (%.loc17_14) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc17_15.3: %.2 = converted %.loc17_15.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc17_15.4: type = converted %.loc17_15.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_15.3: type = converted %.loc17_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }

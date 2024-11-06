@@ -355,7 +355,6 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %.9: %.5 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %struct: %.4 = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = facet_type <facet-type %N.type+requirements> [template]
 // CHECK:STDOUT:   %T: %.10 = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %.10 = symbolic_binding_pattern T, 0 [symbolic]
@@ -397,9 +396,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.1) [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc15_28.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.1) [template = constants.%.8]
 // CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc15_28.2 [template = constants.%.8]
-// CHECK:STDOUT:     %struct: %.4 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc15_28.3: %.4 = converted %.loc15_28.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:     %.loc15_28.4: %.1 = converted %.loc15_28.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc15_28.3: %.1 = converted %.loc15_28.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc15_16: type = where_expr %.Self [template = constants.%.10] {
 // CHECK:STDOUT:       requirement_rewrite %P.ref, <error>
 // CHECK:STDOUT:     }
