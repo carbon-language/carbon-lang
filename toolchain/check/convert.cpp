@@ -464,6 +464,7 @@ static auto ConvertStructToStructOrClass(Context& context,
     auto dest_field =
         sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
     if (dest_field.name_id == SemIR::NameId::Vptr) {
+      // TODO: Initialize the vptr to point to a vtable.
       new_block.Set(i, SemIR::InstId::BuiltinError);
       continue;
     }
