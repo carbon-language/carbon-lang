@@ -57,7 +57,8 @@ class MemUsage {
   // Adds memory usage for a `Map`.
   template <typename KeyT, typename ValueT, ssize_t SmallSize,
             typename KeyContextT>
-  auto Collect(std::string label, Map<KeyT, ValueT, SmallSize, KeyContextT> map,
+  auto Collect(std::string label,
+               const Map<KeyT, ValueT, SmallSize, KeyContextT>& map,
                KeyContextT key_context = KeyContextT()) -> void {
     // These don't track used bytes, so we set the same value for used and
     // reserved bytes.
@@ -67,7 +68,7 @@ class MemUsage {
 
   // Adds memory usage for a `Set`.
   template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
-  auto Collect(std::string label, Set<KeyT, SmallSize, KeyContextT> set,
+  auto Collect(std::string label, const Set<KeyT, SmallSize, KeyContextT>& set,
                KeyContextT key_context = KeyContextT()) -> void {
     // These don't track used bytes, so we set the same value for used and
     // reserved bytes.
@@ -81,8 +82,8 @@ class MemUsage {
   //
   // This uses SmallVector in order to get proper inference for T, which
   // ArrayRef misses.
-  template <typename T, unsigned N>
-  auto Collect(std::string label, const llvm::SmallVector<T, N>& array)
+  template <typename T>
+  auto Collect(std::string label, const llvm::SmallVectorImpl<T>& array)
       -> void {
     Add(std::move(label), array.size_in_bytes(), array.capacity_in_bytes());
   }

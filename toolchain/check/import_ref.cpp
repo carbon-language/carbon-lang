@@ -1803,23 +1803,27 @@ class ImportRefResolver {
 
     new_impl.witness_id = witness_id;
 
-    // Import the definition scope, if we might need it. Name lookup is never
-    // performed into this scope by a user of the impl, so this is only
-    // necessary in the same library that defined the impl, in order to support
-    // defining members of the impl out of line in the impl file when the impl
-    // is defined in the API file.
-    if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+    if (import_impl.scope_id.is_valid()) {
       new_impl.scope_id = context_.name_scopes().Add(
           new_impl.first_owning_decl_id, SemIR::NameId::Invalid,
           new_impl.parent_scope_id);
-      auto& new_scope = context_.name_scopes().Get(new_impl.scope_id);
-      const auto& import_scope =
-          import_ir_.name_scopes().Get(import_impl.scope_id);
+      // Import the contents of the definition scope, if we might need it. Name
+      // lookup is never performed into this scope by a user of the impl, so
+      // this is only necessary in the same library that defined the impl, in
+      // order to support defining members of the impl out of line in the impl
+      // file when the impl is defined in the API file.
+      // TODO: Check to see if this impl is owned by the API file, rather than
+      // merely being imported into it.
+      if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+        auto& new_scope = context_.name_scopes().Get(new_impl.scope_id);
+        const auto& import_scope =
+            import_ir_.name_scopes().Get(import_impl.scope_id);
 
-      // Push a block so that we can add scoped instructions to it.
-      context_.inst_block_stack().Push();
-      AddNameScopeImportRefs(import_scope, new_scope);
-      new_impl.body_block_id = context_.inst_block_stack().Pop();
+        // Push a block so that we can add scoped instructions to it.
+        context_.inst_block_stack().Push();
+        AddNameScopeImportRefs(import_scope, new_scope);
+        new_impl.body_block_id = context_.inst_block_stack().Pop();
+      }
     }
   }
 
