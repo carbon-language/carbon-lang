@@ -89,9 +89,9 @@ static auto DiagnoseDuplicateNames(
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "field with the same name here");
       context.emitter()
-          .Build(field_name_node, StructNameDuplicate, is_struct_type_literal,
+          .Build(result.value(), StructNameDuplicate, is_struct_type_literal,
                  field.name_id)
-          .Note(result.value(), StructNamePrevious)
+          .Note(field_name_node, StructNamePrevious)
           .Emit();
       return true;
     }
