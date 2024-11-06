@@ -140,6 +140,25 @@ fn CallReturnIncomplete() {
   ReturnIncomplete();
 }
 
+class IncompleteAddrSelf {
+  fn F[addr self: Class*]();
+}
+
+fn CallIncompleteAddrSelf(p: Class*) {
+  // TODO: Should this be valid?
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:3: error: invalid use of incomplete type `Class` [IncompleteTypeInConversion]
+  // CHECK:STDERR:   p->(IncompleteAddrSelf.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-137]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class Class;
+  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-11]]:8: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn F[addr self: Class*]();
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  p->(IncompleteAddrSelf.F)();
+}
+
 // --- fail_in_definition.carbon
 
 library "[[@TEST_NAME]]";
@@ -185,6 +204,13 @@ class C {
 // CHECK:STDOUT:   %CallTakeIncomplete: %CallTakeIncomplete.type = struct_value () [template]
 // CHECK:STDOUT:   %CallReturnIncomplete.type: type = fn_type @CallReturnIncomplete [template]
 // CHECK:STDOUT:   %CallReturnIncomplete: %CallReturnIncomplete.type = struct_value () [template]
+// CHECK:STDOUT:   %IncompleteAddrSelf: type = class_type @IncompleteAddrSelf [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %CallIncompleteAddrSelf.type: type = fn_type @CallIncompleteAddrSelf [template]
+// CHECK:STDOUT:   %CallIncompleteAddrSelf: %CallIncompleteAddrSelf.type = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -211,6 +237,8 @@ class C {
 // CHECK:STDOUT:     .ReturnIncomplete = %ReturnIncomplete.decl
 // CHECK:STDOUT:     .CallTakeIncomplete = %CallTakeIncomplete.decl
 // CHECK:STDOUT:     .CallReturnIncomplete = %CallReturnIncomplete.decl
+// CHECK:STDOUT:     .IncompleteAddrSelf = %IncompleteAddrSelf.decl
+// CHECK:STDOUT:     .CallIncompleteAddrSelf = %CallIncompleteAddrSelf.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
@@ -308,9 +336,37 @@ class C {
 // CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallReturnIncomplete.decl: %CallReturnIncomplete.type = fn_decl @CallReturnIncomplete [template = constants.%CallReturnIncomplete] {} {}
+// CHECK:STDOUT:   %IncompleteAddrSelf.decl: type = class_decl @IncompleteAddrSelf [template = constants.%IncompleteAddrSelf] {} {}
+// CHECK:STDOUT:   %CallIncompleteAddrSelf.decl: %CallIncompleteAddrSelf.type = fn_decl @CallIncompleteAddrSelf [template = constants.%CallIncompleteAddrSelf] {
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.4 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc136: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @IncompleteAddrSelf {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %self.patt: %.4 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %.4 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc133_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc133_24: type = ptr_type %Class [template = constants.%.4]
+// CHECK:STDOUT:     %self.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %.4 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc134: <witness> = complete_type_witness %.3 [template = constants.%.5]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%IncompleteAddrSelf
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
@@ -382,6 +438,20 @@ class C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnIncomplete.ref: %ReturnIncomplete.type = name_ref ReturnIncomplete, file.%ReturnIncomplete.decl [template = constants.%ReturnIncomplete]
 // CHECK:STDOUT:   %ReturnIncomplete.call: init <error> = call %ReturnIncomplete.ref()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F[addr %self.param_patt: %.4]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallIncompleteAddrSelf(%p.param_patt: %.4) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
+// CHECK:STDOUT:   %IncompleteAddrSelf.ref: type = name_ref IncompleteAddrSelf, file.%IncompleteAddrSelf.decl [template = constants.%IncompleteAddrSelf]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @IncompleteAddrSelf.%F.decl [template = constants.%F]
+// CHECK:STDOUT:   %.loc148_4.1: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %.loc148_4.2: <bound method> = bound_method %.loc148_4.1, %F.ref
+// CHECK:STDOUT:   %.1: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %.1 = call %.loc148_4.2(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
