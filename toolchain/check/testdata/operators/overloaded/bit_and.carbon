@@ -238,7 +238,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc27_12.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc27_12.2: <bound method> = bound_method %a.ref, %.loc27_12.1
 // CHECK:STDOUT:   %.loc26_23.2: ref %C = splice_block %return {}
@@ -251,7 +250,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %.6 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.11 = name_ref Op, imports.%import_ref.7 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc31_6.1: %Op.type.4 = interface_witness_access constants.%.8, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc31_6.2: <bound method> = bound_method %.loc31_3.1, %.loc31_6.1
 // CHECK:STDOUT:   %.loc31_3.2: %.6 = addr_of %.loc31_3.1

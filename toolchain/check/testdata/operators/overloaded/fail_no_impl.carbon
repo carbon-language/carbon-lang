@@ -204,7 +204,6 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestUnary(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %Op.ref: %.5 = name_ref Op, imports.%import_ref.3 [template = constants.%.6]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +217,6 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.7 = name_ref Op, imports.%import_ref.8 [template = constants.%.8]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,9 +237,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref.loc37: %.10 = name_ref Op, imports.%import_ref.13 [template = constants.%.11]
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %Op.ref.loc41: %.13 = name_ref Op, imports.%import_ref.18 [template = constants.%.14]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,14 +245,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.3.%Self (%Self.3) [symbolic = %.2 (constants.%.9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+126: @Op.3.%.2 (%.9)](%other.param_patt: @Op.3.%Self (%Self.3));
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+124: @Op.3.%.2 (%.9)](%other.param_patt: @Op.3.%Self (%Self.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %Inc.type) {
 // CHECK:STDOUT:   %Self: %Inc.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:   %.2: type = ptr_type @Op.4.%Self (%Self.4) [symbolic = %.2 (constants.%.12)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst+153: @Op.4.%.2 (%.12)]();
+// CHECK:STDOUT:   fn[addr <unexpected>.inst+150: @Op.4.%.2 (%.12)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.1) {

@@ -81,7 +81,7 @@ auto Server::onCall(llvm::StringRef method, llvm::json::Value params,
                     llvm::json::Value id) -> bool {
   if (auto handler = handlers_.MethodHandlers.find(method);
       handler != handlers_.MethodHandlers.end()) {
-    // TODO: improve this if add threads
+    // TODO: Improve this if add threads.
     handler->second(std::move(params),
                     [&](llvm::Expected<llvm::json::Value> reply) {
                       transport_->reply(id, std::move(reply));

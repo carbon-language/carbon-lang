@@ -135,7 +135,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
             steps.push_back(step.Next());
           }
         }
-        // TODO: also output other restrictions from facet_type_info.
+        // TODO: Also output other restrictions from facet_type_info.
         if (step.index + 1 >= static_cast<int>(facet_type_info.impls.size()) &&
             facet_type_info.requirement_block_id.is_valid()) {
           out << " where...";
@@ -267,8 +267,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
           steps.push_back(step.Next());
           TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
           push_inst_id(sem_ir.types().GetInstId(type_id));
-          // TODO: also output restrictions from the inst block
-          // inst.requirements_id
+          // TODO: Also output restrictions from the inst block
+          // inst.requirements_id.
         } else {
           out << ">";
         }

@@ -1400,7 +1400,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       break;
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {
-      // TODO: disable constant evaluation of SymbolicBindingPattern once
+      // TODO: Disable constant evaluation of SymbolicBindingPattern once
       // DeduceGenericCallArguments no longer needs implicit params to have
       // constant values.
       const auto& bind_name =
@@ -1456,7 +1456,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.value_id);
     }
     case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
-      // TODO: treat this as a non-expression (here and in GetExprCategory)
+      // TODO: Treat this as a non-expression (here and in GetExprCategory)
       // once generic deduction doesn't need patterns to have constant values.
       return eval_context.GetConstantValue(param_pattern.subpattern_id);
     }
@@ -1479,7 +1479,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       Phase phase = Phase::Template;
-
       SemIR::TypeId base_facet_type_id =
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
       SemIR::Inst base_facet_inst =

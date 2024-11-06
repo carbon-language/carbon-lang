@@ -46,7 +46,7 @@ class Server : public clang::clangd::Transport::MessageHandler,
   auto callMethod(llvm::StringRef method, llvm::json::Value params,
                   clang::clangd::Callback<llvm::json::Value> reply)
       -> void override {
-    // TODO: implement when needed
+    // TODO: Implement when needed.
   }
 
   // Send notification to client

@@ -126,10 +126,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_type_info_"),
-                  complete_type_info_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_types_"),
-                  complete_types_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_type_info_"),
+                      complete_type_info_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_types_"),
+                      complete_types_);
   }
 
  private:

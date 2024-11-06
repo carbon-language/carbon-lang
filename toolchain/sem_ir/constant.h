@@ -105,9 +105,9 @@ class ConstantValueStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "symbolic_constants_"),
-                  symbolic_constants_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "symbolic_constants_"),
+                      symbolic_constants_);
   }
 
   // Returns the constant values mapping as an ArrayRef whose keys are
@@ -155,8 +155,8 @@ class ConstantStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "map_"), map_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "constants_"), constants_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "map_"), map_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
   }
 
   // Returns a copy of the constant IDs as a vector, in an arbitrary but

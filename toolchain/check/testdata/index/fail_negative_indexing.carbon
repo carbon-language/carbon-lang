@@ -105,7 +105,6 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   %c.ref: ref %.3 = name_ref c, file.%c
 // CHECK:STDOUT:   %.loc15_17: i32 = int_value 10 [template = constants.%.9]
-// CHECK:STDOUT:   %Op.ref: %.10 = name_ref Op, imports.%import_ref.4 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc15_19.1: ref i32 = array_index %c.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15_19.2: i32 = bind_value %.loc15_19.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_19.2

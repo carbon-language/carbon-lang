@@ -967,7 +967,7 @@ class FormatterImpl {
     }
 
     if (info.requirement_block_id.is_valid()) {
-      // TODO: include specifics
+      // TODO: Include specifics.
       out_ << "+requirements";
     }
     out_ << ">";

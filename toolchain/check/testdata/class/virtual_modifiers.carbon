@@ -37,17 +37,13 @@ base class Derived {
   extend base: Modifiers.Base;
 }
 
-// --- fail_todo_init.carbon
+// --- init.carbon
 
 package Init;
 
 import Modifiers;
 
 fn F() {
-  // TODO: The vptr shouldn't be counted for programmer-facing behavior.
-  // CHECK:STDERR: fail_todo_init.carbon:[[@LINE+3]]:27: error: cannot initialize class with 1 field from struct with 0 fields [StructInitElementCountMismatch]
-  // CHECK:STDERR:   var v: Modifiers.Base = {};
-  // CHECK:STDERR:                           ^~
   var v: Modifiers.Base = {};
 }
 
@@ -190,7 +186,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_init.carbon
+// CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -243,8 +239,10 @@ fn F() {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc11: %.6 = struct_literal ()
-// CHECK:STDOUT:   assign %v.var, <error>
+// CHECK:STDOUT:   %.loc7_28.1: %.6 = struct_literal ()
+// CHECK:STDOUT:   %.loc7_28.2: init %Base = class_init (<error>), %v.var [template = <error>]
+// CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.2 [template = <error>]
+// CHECK:STDOUT:   assign %v.var, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -88,6 +88,20 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
+auto Context::GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  if (loc_id_and_inst.loc_id.is_implicit()) {
+    auto const_id =
+        TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
+    if (const_id.is_valid()) {
+      CARBON_VLOG("GetOrAddInst: constant: {0}\n", loc_id_and_inst.inst);
+      return constant_values().GetInstId(const_id);
+    }
+  }
+  // TODO: For an implicit instruction, this reattempts evaluation.
+  return AddInst(loc_id_and_inst);
+}
+
 // Finish producing an instruction. Set its constant value, and register it in
 // any applicable instruction lists.
 auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {

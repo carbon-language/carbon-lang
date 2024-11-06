@@ -373,10 +373,10 @@ auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end)
 
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "comments_"), comments_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "comments_"), comments_);
 }
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(

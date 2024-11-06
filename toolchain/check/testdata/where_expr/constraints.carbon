@@ -402,12 +402,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self.ref: %N.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %P.ref: %.1 = name_ref P, @N.%.loc5 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_28.1: %.4 = struct_literal ()
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc15_28.2: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.1) [template = constants.%.8]
-// CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc15_28.2 [template = constants.%.8]
 // CHECK:STDOUT:     %struct: %.4 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc15_28.3: %.4 = converted %.loc15_28.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:     %.loc15_28.4: %.1 = converted %.loc15_28.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc15_28.2: %.4 = converted %.loc15_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc15_28.3: %.1 = converted %.loc15_28.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc15_16: type = where_expr %.Self [template = constants.%N.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %P.ref, <error>
 // CHECK:STDOUT:     }
@@ -573,10 +570,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self.ref: %K.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Associated.ref: %.2 = name_ref Associated, @K.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [template = constants.%M.type]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc18_36.1: %.6 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:     %Convert.ref: %.6 = name_ref Convert, %.loc18_36.1 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc18_36.2: type = converted %Associated.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc18_36: type = converted %Associated.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc18_30: type = where_expr %.Self [template = constants.%K.type.2] {
 // CHECK:STDOUT:       requirement_impls <error>, %M.ref
 // CHECK:STDOUT:     }
@@ -767,10 +761,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.2 = name_ref Member, imports.%import_ref.7 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc16_46.1: i32 = int_value 2 [template = constants.%.4]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc16_46.2: %.7 = specific_constant imports.%import_ref.14, @ImplicitAs(constants.%.2) [template = constants.%.8]
-// CHECK:STDOUT:     %Convert.ref: %.7 = name_ref Convert, %.loc16_46.2 [template = constants.%.8]
-// CHECK:STDOUT:     %.loc16_46.3: %.2 = converted %.loc16_46.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc16_46.2: %.2 = converted %.loc16_46.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
 // CHECK:STDOUT:     }
@@ -884,9 +875,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %.7: %.3 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   <unexpected>.inst+61: type = facet_type <facet-type +requirements> [template]
-// CHECK:STDOUT:   %U: <unexpected>.inst+61 = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: <unexpected>.inst+61 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+58: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %U: <unexpected>.inst+58 = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: <unexpected>.inst+58 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %NonTypeImpls.type: type = fn_type @NonTypeImpls [template]
 // CHECK:STDOUT:   %NonTypeImpls: %NonTypeImpls.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -912,20 +903,17 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonTypeImpls.decl: %NonTypeImpls.type = fn_decl @NonTypeImpls [template = constants.%NonTypeImpls] {
-// CHECK:STDOUT:     %U.patt.loc11_17.1: <unexpected>.inst+61 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <unexpected>.inst+61 = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc11_17.1: <unexpected>.inst+58 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <unexpected>.inst+58 = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.loc11_32.1: i32 = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc11_32.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:     %Convert.ref: %.5 = name_ref Convert, %.loc11_32.2 [template = constants.%.6]
-// CHECK:STDOUT:     %.loc11_32.3: type = converted %.loc11_32.1, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = <unexpected>.inst+61] {
+// CHECK:STDOUT:     %.loc11_32.2: type = converted %.loc11_32.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = <unexpected>.inst+58] {
 // CHECK:STDOUT:       requirement_impls <error>, type
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.param: <unexpected>.inst+61 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_17.1: <unexpected>.inst+61 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: <unexpected>.inst+58 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_17.1: <unexpected>.inst+58 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -957,11 +945,11 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NonTypeImpls(%U.loc11_17.1: <unexpected>.inst+61) {
-// CHECK:STDOUT:   %U.loc11_17.2: <unexpected>.inst+61 = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc11_17.2: <unexpected>.inst+61 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @NonTypeImpls(%U.loc11_17.1: <unexpected>.inst+58) {
+// CHECK:STDOUT:   %U.loc11_17.2: <unexpected>.inst+58 = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc11_17.2: <unexpected>.inst+58 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: <unexpected>.inst+61);
+// CHECK:STDOUT:   fn(%U.param_patt: <unexpected>.inst+58);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -1026,9 +1014,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %.7: %.3 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   <unexpected>.inst+62: type = facet_type <facet-type +requirements> [template]
-// CHECK:STDOUT:   %U: <unexpected>.inst+62 = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: <unexpected>.inst+62 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+59: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %U: <unexpected>.inst+59 = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: <unexpected>.inst+59 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %ImplsNonType.type: type = fn_type @ImplsNonType [template]
 // CHECK:STDOUT:   %ImplsNonType: %ImplsNonType.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -1054,21 +1042,18 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplsNonType.decl: %ImplsNonType.type = fn_decl @ImplsNonType [template = constants.%ImplsNonType] {
-// CHECK:STDOUT:     %U.patt.loc11_17.1: <unexpected>.inst+62 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <unexpected>.inst+62 = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc11_17.1: <unexpected>.inst+59 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <unexpected>.inst+59 = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.loc11_44.1: i32 = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc11_44.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:     %Convert.ref: %.5 = name_ref Convert, %.loc11_44.2 [template = constants.%.6]
-// CHECK:STDOUT:     %.loc11_44.3: type = converted %.loc11_44.1, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = <unexpected>.inst+62] {
+// CHECK:STDOUT:     %.loc11_44.2: type = converted %.loc11_44.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = <unexpected>.inst+59] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.param: <unexpected>.inst+62 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc11_17.1: <unexpected>.inst+62 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: <unexpected>.inst+59 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc11_17.1: <unexpected>.inst+59 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc11_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1100,11 +1085,11 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11_17.1: <unexpected>.inst+62) {
-// CHECK:STDOUT:   %U.loc11_17.2: <unexpected>.inst+62 = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc11_17.2: <unexpected>.inst+62 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11_17.1: <unexpected>.inst+59) {
+// CHECK:STDOUT:   %U.loc11_17.2: <unexpected>.inst+59 = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc11_17.2: <unexpected>.inst+59 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: <unexpected>.inst+62);
+// CHECK:STDOUT:   fn(%U.param_patt: <unexpected>.inst+59);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -1356,10 +1341,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.4 [template = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc23_8.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type.1) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_8.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc23_8.2: %J.type.1 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23: %J.type.1 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1389,10 +1371,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [template = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc40_14.1: %.10 = specific_constant imports.%import_ref.9, @ImplicitAs(constants.%J.type.2) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc40_14.1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc40_14.2: %J.type.2 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc40: %J.type.2 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1573,10 +1552,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc14_36.1: %.7 = specific_constant imports.%import_ref.3, @ImplicitAs(<unexpected>.inst+24) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc14_36.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_36.2: <unexpected>.inst+24 = converted %D.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14: <unexpected>.inst+24 = converted %D.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %B: <unexpected>.inst+24 = bind_name B, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
