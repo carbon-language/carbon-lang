@@ -20,7 +20,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %A.type: type = facet_type <facet-type @A> [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -43,7 +43,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %A.type: type = facet_type <facet-type @A> [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

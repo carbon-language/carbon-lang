@@ -89,7 +89,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType.2: type = bind_symbolic_name ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.2: type = bind_symbolic_name SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.2: type = facet_type <facet-type @IndexWith> [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
@@ -98,7 +98,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %IndexWith.type.2, %At.type.1 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <facet-type @IndexWith> [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
@@ -147,7 +147,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.1 = name_ref IndexWith, imports.%import_ref.1 [template = constants.%IndexWith]
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:     %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
@@ -161,7 +161,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
@@ -226,7 +226,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: generic fn @At.1(constants.%SubscriptType.2: type, constants.%ElementType.2: type, constants.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType.2)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType.2)]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
@@ -258,7 +258,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %c: %C = bind_name c, %.loc15_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %s.ref: %SubscriptType.1 = name_ref s, %s
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   %.loc16_25.1: %.6 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
 // CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc16_25.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc16_25.2: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
@@ -333,7 +333,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.2: type = facet_type <facet-type @IndexWith> [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
@@ -342,7 +342,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %IndexWith.type.2, %At.type.1 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(i32, i32) [template]
+// CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <facet-type @IndexWith> [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(i32, i32) [template]
@@ -398,7 +398,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc4_34.2: type = converted %int.make_type_32.loc4_35, %.loc4_34.1 [template = i32]
 // CHECK:STDOUT:     %.loc4_34.3: type = value_of_initializer %int.make_type_32.loc4_40 [template = i32]
 // CHECK:STDOUT:     %.loc4_34.4: type = converted %int.make_type_32.loc4_40, %.loc4_34.3 [template = i32]
-// CHECK:STDOUT:     %IndexWith.type: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:     %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc10_9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc10_14: init type = call constants.%Int32() [template = i32]
@@ -420,7 +420,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
@@ -470,7 +470,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: generic fn @At.1(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType)) -> @At.1.%ElementType (%ElementType);
@@ -494,7 +494,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %s: %.3 = bind_name s, %.loc10_27
 // CHECK:STDOUT:   %s.ref: %.3 = name_ref s, %s
 // CHECK:STDOUT:   %.loc11_16: i32 = int_value 0 [template = constants.%.10]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(i32, i32) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   %.loc11_17.1: %.6 = specific_constant imports.%import_ref.4, @IndexWith(i32, i32) [template = constants.%.7]
 // CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc11_17.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc11_17.2: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
@@ -569,7 +569,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType.2: type = bind_symbolic_name ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.2: type = bind_symbolic_name SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType.2, %ElementType.2) [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.2: type = facet_type <facet-type @IndexWith> [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
@@ -578,7 +578,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %IndexWith.type.2, %At.type.1 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.3: type = interface_type @IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <facet-type @IndexWith> [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
@@ -593,7 +593,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <facet-type @ImplicitAs> [symbolic]
 // CHECK:STDOUT:   %Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.4: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -601,7 +601,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.10 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%SubscriptType.1) [template]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <facet-type @ImplicitAs> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%SubscriptType.1) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
@@ -650,7 +650,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.1 = name_ref IndexWith, imports.%import_ref.1 [template = constants.%IndexWith]
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
-// CHECK:STDOUT:     %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:     %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
@@ -663,7 +663,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
@@ -683,7 +683,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
@@ -748,7 +748,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: generic fn @At.1(constants.%SubscriptType.2: type, constants.%ElementType.2: type, constants.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType.2)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType.2)]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self (%Self.2)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType.2)) -> @At.1.%ElementType (%ElementType.2);
@@ -764,7 +764,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.3: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.4)]() -> @Convert.%Dest (%Dest);
@@ -781,11 +781,11 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %c: %C = bind_name c, %.loc14_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_24: i32 = int_value 0 [template = constants.%.10]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc22_25.1: %.13 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%SubscriptType.1) [template = constants.%.14]
 // CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc22_25.1 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc22_25.2: %SubscriptType.1 = converted %.loc22_24, <error> [template = <error>]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%IndexWith.type.3]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   %.loc22_25.3: %.6 = specific_constant imports.%import_ref.3, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1) [template = constants.%.7]
 // CHECK:STDOUT:   %At.ref: %.6 = name_ref At, %.loc22_25.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc22_25.4: %At.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%At.2]
@@ -898,7 +898,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.2: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.2: type = facet_type <facet-type @IndexWith> [symbolic]
 // CHECK:STDOUT:   %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
@@ -946,7 +946,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ElementType.patt: type = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt (constants.%ElementType.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type) = struct_value () [symbolic = %At (constants.%At)]
@@ -973,7 +973,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: generic fn @At(constants.%SubscriptType: type, constants.%ElementType: type, constants.%Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2)) {
 // CHECK:STDOUT:   %SubscriptType: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <facet-type @IndexWith> [symbolic = %IndexWith.type (constants.%IndexWith.type.2)]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @At.%Self (%Self.2)](%subscript.param_patt: @At.%SubscriptType (%SubscriptType)) -> @At.%ElementType (%ElementType);

@@ -258,7 +258,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <facet-type @ImplicitAs> [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -266,13 +266,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %.10: %.9 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%AdaptC) [template]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <facet-type @ImplicitAs> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%AdaptC) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.12: %.11 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.13: %.9 = assoc_entity element0, imports.%import_ref.7 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.4: type = interface_type @ImplicitAs, @ImplicitAs(%C) [template]
+// CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <facet-type @ImplicitAs> [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert, @ImplicitAs(%C) [template]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.3 [template]
@@ -347,7 +347,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
@@ -392,7 +392,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
@@ -418,13 +418,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %ImplicitAs.type.loc24: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %ImplicitAs.type.loc24: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc24_18.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc24: %.11 = name_ref Convert, %.loc24_18.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc24_18.2: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %ImplicitAs.type.loc33: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %ImplicitAs.type.loc33: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   %.loc33_13.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
 // CHECK:STDOUT:   %Convert.ref.loc33: %.14 = name_ref Convert, %.loc33_13.1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc33_13.2: %C = converted %b.ref, <error> [template = <error>]
@@ -432,7 +432,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
 // CHECK:STDOUT:   %.loc46_22.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_22.1
-// CHECK:STDOUT:   %ImplicitAs.type.loc46: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %ImplicitAs.type.loc46: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %.loc46_24.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
 // CHECK:STDOUT:   %Convert.ref.loc46: %.11 = name_ref Convert, %.loc46_24.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc46_22.2: ref %C = temporary %.loc46_22.1, %MakeC.call
@@ -441,7 +441,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc54_22.1: ref %AdaptC = temporary_storage
 // CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc54_22.1
-// CHECK:STDOUT:   %ImplicitAs.type.loc54: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %ImplicitAs.type.loc54: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   %.loc54_24.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
 // CHECK:STDOUT:   %Convert.ref.loc54: %.14 = name_ref Convert, %.loc54_24.1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc54_22.2: ref %AdaptC = temporary %.loc54_22.1, %MakeAdaptC.call

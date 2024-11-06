@@ -89,26 +89,26 @@ class D {
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <facet-type @I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.Self.1: %I.type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = facet_type <facet-type %I.type+requirements> [template]
-// CHECK:STDOUT:   %T: %.4 = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %.4 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+19: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %T: <unexpected>.inst+19 = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: <unexpected>.inst+19 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = facet_type <facet-type %I.type+requirements> [template]
-// CHECK:STDOUT:   %U: %.5 = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: %.5 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+38: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %U: <unexpected>.inst+38 = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: <unexpected>.inst+38 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self.2: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.6: type = facet_type <facet-type type+requirements> [template]
-// CHECK:STDOUT:   %V: %.6 = bind_symbolic_name V, 0 [symbolic]
-// CHECK:STDOUT:   %V.patt: %.6 = symbolic_binding_pattern V, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+56: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %V: <unexpected>.inst+56 = bind_symbolic_name V, 0 [symbolic]
+// CHECK:STDOUT:   %V.patt: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %TypeSelfImpls.type: type = fn_type @TypeSelfImpls [template]
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -131,46 +131,46 @@ class D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [template = constants.%PeriodSelf] {
-// CHECK:STDOUT:     %T.patt.loc8_15.1: %.4 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %.4 = value_param_pattern %T.patt.loc8_15.1, runtime_param<invalid> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_15.1: <unexpected>.inst+19 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: <unexpected>.inst+19 = value_param_pattern %T.patt.loc8_15.1, runtime_param<invalid> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.loc8_37: %.3 = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%.4] {
+// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = <unexpected>.inst+19] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.param: %.4 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_15.1: %.4 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: <unexpected>.inst+19 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_15.1: <unexpected>.inst+19 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt.loc10_17.1: %.5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %.5 = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc10_17.1: <unexpected>.inst+38 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <unexpected>.inst+38 = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc10_41: %.3 = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%.5] {
+// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = <unexpected>.inst+38] {
 // CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc10_41
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.param: %.5 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc10_17.1: %.5 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: <unexpected>.inst+38 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc10_17.1: <unexpected>.inst+38 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
-// CHECK:STDOUT:     %V.patt.loc12_18.1: %.6 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %.6 = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc12_18.1: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: <unexpected>.inst+56 = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = constants.%.6] {
+// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = <unexpected>.inst+56] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.param: %.6 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc12_18.1: %.6 = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.param: <unexpected>.inst+56 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %V.loc12_18.1: <unexpected>.inst+56 = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -185,25 +185,25 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: %.4) {
-// CHECK:STDOUT:   %T.loc8_15.2: %.4 = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_15.2: %.4 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: <unexpected>.inst+19) {
+// CHECK:STDOUT:   %T.loc8_15.2: <unexpected>.inst+19 = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_15.2: <unexpected>.inst+19 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %.4);
+// CHECK:STDOUT:   fn(%T.param_patt: <unexpected>.inst+19);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %.5) {
-// CHECK:STDOUT:   %U.loc10_17.2: %.5 = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc10_17.2: %.5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: <unexpected>.inst+38) {
+// CHECK:STDOUT:   %U.loc10_17.2: <unexpected>.inst+38 = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc10_17.2: <unexpected>.inst+38 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %.5);
+// CHECK:STDOUT:   fn(%U.param_patt: <unexpected>.inst+38);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: %.6) {
-// CHECK:STDOUT:   %V.loc12_18.2: %.6 = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc12_18.2: %.6 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: <unexpected>.inst+56) {
+// CHECK:STDOUT:   %V.loc12_18.2: <unexpected>.inst+56 = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:   %V.patt.loc12_18.2: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: %.6);
+// CHECK:STDOUT:   fn(%V.param_patt: <unexpected>.inst+56);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
@@ -224,16 +224,16 @@ class D {
 // CHECK:STDOUT: --- fail_wrong_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %J.type: type = interface_type @J [template]
+// CHECK:STDOUT:   %J.type: type = facet_type <facet-type @J> [template]
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @J.%Member [template]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: type = facet_type <facet-type %J.type+requirements> [template]
-// CHECK:STDOUT:   %W: %.5 = bind_symbolic_name W, 0 [symbolic]
-// CHECK:STDOUT:   %W.patt: %.5 = symbolic_binding_pattern W, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+21: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   %W: <unexpected>.inst+21 = bind_symbolic_name W, 0 [symbolic]
+// CHECK:STDOUT:   %W.patt: <unexpected>.inst+21 = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMismatch.type: type = fn_type @PeriodMismatch [template]
 // CHECK:STDOUT:   %PeriodMismatch: %PeriodMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -254,19 +254,19 @@ class D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [template = constants.%PeriodMismatch] {
-// CHECK:STDOUT:     %W.patt.loc12_19.1: %.5 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %.5 = value_param_pattern %W.patt.loc12_19.1, runtime_param<invalid> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt.loc12_19.1: <unexpected>.inst+21 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: <unexpected>.inst+21 = value_param_pattern %W.patt.loc12_19.1, runtime_param<invalid> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12_44: %.4 = struct_literal ()
-// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%.5] {
+// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = <unexpected>.inst+21] {
 // CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.param: %.5 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc12_19.1: %.5 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
+// CHECK:STDOUT:     %W.param: <unexpected>.inst+21 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc12_19.1: <unexpected>.inst+21 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,11 +281,11 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12_19.1: %.5) {
-// CHECK:STDOUT:   %W.loc12_19.2: %.5 = bind_symbolic_name W, 0 [symbolic = %W.loc12_19.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc12_19.2: %.5 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12_19.1: <unexpected>.inst+21) {
+// CHECK:STDOUT:   %W.loc12_19.2: <unexpected>.inst+21 = bind_symbolic_name W, 0 [symbolic = %W.loc12_19.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc12_19.2: <unexpected>.inst+21 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.param_patt: %.5);
+// CHECK:STDOUT:   fn(%W.param_patt: <unexpected>.inst+21);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMismatch(constants.%W) {

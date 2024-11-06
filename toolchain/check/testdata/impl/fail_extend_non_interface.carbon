@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_non_interface.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: semantics TODO: `extending non-interface constraint` [SemanticsTodo]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: semantics TODO: `extending non-facet-type constraint` [SemanticsTodo]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   extend impl as i32;

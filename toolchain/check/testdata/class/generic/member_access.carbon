@@ -406,7 +406,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <facet-type @ImplicitAs> [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -414,7 +414,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%Class.2) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <facet-type @ImplicitAs> [symbolic]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%Class.2) [symbolic]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
@@ -471,7 +471,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
@@ -538,7 +538,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
 // CHECK:STDOUT:   %.loc15_18.3: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %.loc15_18.3 (constants.%.5)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc15_25.2: type = interface_type @ImplicitAs, @ImplicitAs(%Class.loc8_47.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc15_25.2: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Class.loc8_47.2) [symbolic = %Convert.type (constants.%Convert.type.2)]
 // CHECK:STDOUT:   %.loc15_25.3: type = assoc_entity_type @StaticMemberFunctionCall.%ImplicitAs.type.loc15_25.2 (%ImplicitAs.type.3), @StaticMemberFunctionCall.%Convert.type (%Convert.type.2) [symbolic = %.loc15_25.3 (constants.%.8)]
 // CHECK:STDOUT:   %.loc15_25.4: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.loc15_25.4 (constants.%.9)]
@@ -553,7 +553,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %.loc15_18.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc15_18.3 (constants.%.5)]
 // CHECK:STDOUT:     %.loc15_23.1: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary_storage
 // CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = call %.loc15_18.2() to %.loc15_23.1
-// CHECK:STDOUT:     %ImplicitAs.type.loc15_25.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
+// CHECK:STDOUT:     %ImplicitAs.type.loc15_25.1: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
 // CHECK:STDOUT:     %.loc15_25.1: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class.2) [symbolic = %.loc15_25.4 (constants.%.9)]
 // CHECK:STDOUT:     %Convert.ref: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = name_ref Convert, %.loc15_25.1 [symbolic = %.loc15_25.4 (constants.%.9)]
 // CHECK:STDOUT:     %.loc15_23.2: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary %.loc15_23.1, %Make.call
@@ -564,7 +564,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);

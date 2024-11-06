@@ -23,7 +23,7 @@ interface Modifiers {
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Modifiers.type: type = interface_type @Modifiers [template]
+// CHECK:STDOUT:   %Modifiers.type: type = facet_type <facet-type @Modifiers> [template]
 // CHECK:STDOUT:   %Self: %Modifiers.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]

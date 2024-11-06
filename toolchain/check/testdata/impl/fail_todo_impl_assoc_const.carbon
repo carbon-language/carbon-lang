@@ -10,11 +10,11 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+10]]:1: error: semantics TODO: `impl as non-interface` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+10]]:1: error: semantics TODO: `impl as not 1 interface` [SemanticsTodo]
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+6]]:27: error: cannot implicitly convert from `type` to `<associated type in I>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+6]]:27: error: cannot implicitly convert from `type` to `<associated type in <facet type I>>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR:                           ^~~~
 // CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:27: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
@@ -25,7 +25,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: --- fail_todo_impl_assoc_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <facet-type @I> [template]
 // CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
@@ -36,7 +36,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <facet-type @ImplicitAs> [symbolic]
 // CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.3: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -44,13 +44,13 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%.1) [template]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <facet-type @ImplicitAs> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%.1) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.8: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
-// CHECK:STDOUT:   %.9: type = facet_type <facet-type %I.type+requirements> [template]
+// CHECK:STDOUT:   <unexpected>.inst+83: type = facet_type <facet-type +requirements> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,13 +85,13 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %bool.make_type.loc23_27: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.1) [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:     %.loc23_27.1: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.1) [template = constants.%.7]
 // CHECK:STDOUT:     %Convert.ref: %.6 = name_ref Convert, %.loc23_27.1 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc23_27.2: ref type = temporary_storage
 // CHECK:STDOUT:     %.loc23_27.3: ref type = temporary %.loc23_27.2, %bool.make_type.loc23_27
 // CHECK:STDOUT:     %.loc23_27.4: %.1 = converted %bool.make_type.loc23_27, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc23_16: type = where_expr %.Self [template = constants.%.9] {
+// CHECK:STDOUT:     %.loc23_16: type = where_expr %.Self [template = <unexpected>.inst+83] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -113,7 +113,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
@@ -137,7 +137,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);

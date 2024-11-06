@@ -10,7 +10,7 @@
 
 interface Undefined;
 
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined` [QualifiedDeclInUndefinedInterfaceScope]
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `<facet type Undefined>` [QualifiedDeclInUndefinedInterfaceScope]
 // CHECK:STDERR: fn Undefined.F();
 // CHECK:STDERR:    ^~~~~~~~~
 // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -20,7 +20,7 @@ interface Undefined;
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `<facet type Undefined>` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   Undefined.G();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -31,7 +31,7 @@ fn Test() {
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `<facet type BeingDefined>` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
@@ -52,13 +52,13 @@ interface BeingDefined {
 // CHECK:STDOUT: --- fail_lookup_undefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Undefined.type: type = interface_type @Undefined [template]
+// CHECK:STDOUT:   %Undefined.type: type = facet_type <facet-type @Undefined> [template]
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %BeingDefined.type: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %BeingDefined.type: type = facet_type <facet-type @BeingDefined> [template]
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
