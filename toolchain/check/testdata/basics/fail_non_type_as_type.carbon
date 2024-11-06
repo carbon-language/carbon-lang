@@ -95,10 +95,7 @@ var x: type = 42;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15: i32 = int_value 42 [template = constants.%.1]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc17_17.1: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc17_17.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_17.2: type = converted %.loc17_15, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_17: type = converted %.loc17_15, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

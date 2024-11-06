@@ -340,10 +340,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromNonType {
 // CHECK:STDOUT:   %.loc12_16.1: i32 = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc12_16.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc12_16.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_16.3: type = converted %.loc12_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12_16.2: type = converted %.loc12_16.1, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc12_18: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
@@ -535,10 +532,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBasei32(%p.param_patt: %.2) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc21_61.1: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.3) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc21_61.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_61.2: %.3 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_61: %.3 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -736,10 +730,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseTuple(%p.param_patt: %.8) -> %.9 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.8 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.9) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc21_69.1: %.12 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.9) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc21_69.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc21_69.2: %.9 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_69: %.9 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -934,10 +925,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseStruct(%p.param_patt: %.4) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.3) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc21_82.1: %.7 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.3) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc21_82.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc21_82.2: %.3 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_82: %.3 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1120,10 +1108,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseIncomplete(%p.param_patt: %.1) -> %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.2) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc28_82.1: %.6 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.2) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc28_82.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc28_82.2: %.2 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc28_82: %.2 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

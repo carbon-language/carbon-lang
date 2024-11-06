@@ -120,15 +120,18 @@ static auto PopFieldNameNodes(Context& context, size_t field_count)
 }
 
 auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
-  // Remove the last parameter from the node stack before collecting names.
-  context.param_and_arg_refs_stack().EndNoPop(
-      Parse::NodeKind::StructLiteralStart);
+  if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
+    // Remove the last parameter from the node stack before collecting names.
+    context.param_and_arg_refs_stack().EndNoPop(
+        Parse::NodeKind::StructLiteralStart);
+  }
 
   auto fields = context.struct_type_fields_stack().PeekArray();
   llvm::SmallVector<Parse::NodeId> field_name_nodes =
       PopFieldNameNodes(context, fields.size());
 
-  auto elements_id = context.param_and_arg_refs_stack().Pop();
+  auto elements_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::StructLiteralStart);
 
   context.scope_stack().Pop();
   context.node_stack()

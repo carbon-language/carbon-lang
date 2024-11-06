@@ -38,8 +38,7 @@ auto HandleImplAfterIntroducer(Context& context) -> void {
       // If we aren't producing a node from the PatternListAsImplicit state,
       // we still need to create a node to be the child of the `ImplForall`
       // token created in the `ImplAfterForall` state.
-      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                          /*has_error=*/true);
+      context.AddInvalidParse(*context.position());
     }
   } else {
     // One of:

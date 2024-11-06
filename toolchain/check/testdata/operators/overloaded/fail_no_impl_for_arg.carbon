@@ -294,14 +294,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.9 = name_ref Op, imports.%import_ref.3 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc34_12.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc34_12.2: <bound method> = bound_method %a.ref, %.loc34_12.1
 // CHECK:STDOUT:   %.loc23_21.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc34_14.1: %.13 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc34_14.1 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc34_14.2: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc34_14: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %C = call %.loc34_12.2(%a.ref, <error>) to %.loc23_21.2
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
@@ -325,14 +321,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   assign %a.var, %.loc38_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %Op.ref: %.16 = name_ref Op, imports.%import_ref.7 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc48_5.1: %Op.type.4 = interface_witness_access constants.%.7, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc48_5.2: <bound method> = bound_method %a.ref, %.loc48_5.1
 // CHECK:STDOUT:   %.loc48_3: %.5 = addr_of %a.ref
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc48_8.1: %.13 = specific_constant imports.%import_ref.12, @ImplicitAs(constants.%C) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc48_8.1 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc48_8.2: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc48_8: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %.3 = call %.loc48_5.2(%.loc48_3, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -1075,16 +1075,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_24.3: init %C.3 = class_init (), %.loc8_24.2 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc8_24.4: ref %C.3 = temporary %.loc8_24.2, %.loc8_24.3
 // CHECK:STDOUT:   %.loc8_26.1: ref %C.3 = converted %.loc8_24.1, %.loc8_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc8: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc8_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc8: %.12 = name_ref Convert, %.loc8_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc8_35.2: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %.loc8_35.3: <bound method> = bound_method %.loc8_26.1, %.loc8_35.2
-// CHECK:STDOUT:   %.loc8_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc8_35.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:   %.loc8_35.2: <bound method> = bound_method %.loc8_26.1, %.loc8_35.1
+// CHECK:STDOUT:   %.loc8_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc8_26.2: %C.3 = bind_value %.loc8_26.1
-// CHECK:STDOUT:   %Convert.call.loc8: init %D = call %.loc8_35.3(%.loc8_26.2) to %.loc8_35.4
-// CHECK:STDOUT:   %.loc8_35.5: init %D = converted %.loc8_26.1, %Convert.call.loc8
-// CHECK:STDOUT:   return %.loc8_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc8: init %D = call %.loc8_35.2(%.loc8_26.2) to %.loc8_35.3
+// CHECK:STDOUT:   %.loc8_35.4: init %D = converted %.loc8_26.1, %Convert.call.loc8
+// CHECK:STDOUT:   return %.loc8_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
 // CHECK:STDOUT:   %.loc9_7: bool = bool_literal false [template = constants.%.5]
@@ -1100,16 +1097,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_24.3: init %C.4 = class_init (), %.loc9_24.2 [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc9_24.4: ref %C.4 = temporary %.loc9_24.2, %.loc9_24.3
 // CHECK:STDOUT:   %.loc9_26.1: ref %C.4 = converted %.loc9_24.1, %.loc9_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc9: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc9_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc9: %.12 = name_ref Convert, %.loc9_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc9_35.2: %Convert.type.2 = interface_witness_access constants.%.23, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %.loc9_35.3: <bound method> = bound_method %.loc9_26.1, %.loc9_35.2
-// CHECK:STDOUT:   %.loc9_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc9_35.1: %Convert.type.2 = interface_witness_access constants.%.23, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc9_35.2: <bound method> = bound_method %.loc9_26.1, %.loc9_35.1
+// CHECK:STDOUT:   %.loc9_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc9_26.2: %C.4 = bind_value %.loc9_26.1
-// CHECK:STDOUT:   %Convert.call.loc9: init %D = call %.loc9_35.3(%.loc9_26.2) to %.loc9_35.4
-// CHECK:STDOUT:   %.loc9_35.5: init %D = converted %.loc9_26.1, %Convert.call.loc9
-// CHECK:STDOUT:   return %.loc9_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc9: init %D = call %.loc9_35.2(%.loc9_26.2) to %.loc9_35.3
+// CHECK:STDOUT:   %.loc9_35.4: init %D = converted %.loc9_26.1, %Convert.call.loc9
+// CHECK:STDOUT:   return %.loc9_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc9:
 // CHECK:STDOUT:   %.loc10_7: bool = bool_literal false [template = constants.%.5]
@@ -1125,16 +1119,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_24.3: init %C.5 = class_init (), %.loc10_24.2 [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc10_24.4: ref %C.5 = temporary %.loc10_24.2, %.loc10_24.3
 // CHECK:STDOUT:   %.loc10_26.1: ref %C.5 = converted %.loc10_24.1, %.loc10_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc10: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc10_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc10: %.12 = name_ref Convert, %.loc10_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc10_35.2: %Convert.type.2 = interface_witness_access constants.%.24, element0 [template = constants.%Convert.5]
-// CHECK:STDOUT:   %.loc10_35.3: <bound method> = bound_method %.loc10_26.1, %.loc10_35.2
-// CHECK:STDOUT:   %.loc10_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc10_35.1: %Convert.type.2 = interface_witness_access constants.%.24, element0 [template = constants.%Convert.5]
+// CHECK:STDOUT:   %.loc10_35.2: <bound method> = bound_method %.loc10_26.1, %.loc10_35.1
+// CHECK:STDOUT:   %.loc10_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc10_26.2: %C.5 = bind_value %.loc10_26.1
-// CHECK:STDOUT:   %Convert.call.loc10: init %D = call %.loc10_35.3(%.loc10_26.2) to %.loc10_35.4
-// CHECK:STDOUT:   %.loc10_35.5: init %D = converted %.loc10_26.1, %Convert.call.loc10
-// CHECK:STDOUT:   return %.loc10_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc10: init %D = call %.loc10_35.2(%.loc10_26.2) to %.loc10_35.3
+// CHECK:STDOUT:   %.loc10_35.4: init %D = converted %.loc10_26.1, %Convert.call.loc10
+// CHECK:STDOUT:   return %.loc10_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc10:
 // CHECK:STDOUT:   %.loc11_7: bool = bool_literal false [template = constants.%.5]
@@ -1150,16 +1141,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_24.3: init %C.6 = class_init (), %.loc11_24.2 [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc11_24.4: ref %C.6 = temporary %.loc11_24.2, %.loc11_24.3
 // CHECK:STDOUT:   %.loc11_26.1: ref %C.6 = converted %.loc11_24.1, %.loc11_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc11: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc11_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc11: %.12 = name_ref Convert, %.loc11_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc11_35.2: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.6]
-// CHECK:STDOUT:   %.loc11_35.3: <bound method> = bound_method %.loc11_26.1, %.loc11_35.2
-// CHECK:STDOUT:   %.loc11_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc11_35.1: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.6]
+// CHECK:STDOUT:   %.loc11_35.2: <bound method> = bound_method %.loc11_26.1, %.loc11_35.1
+// CHECK:STDOUT:   %.loc11_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc11_26.2: %C.6 = bind_value %.loc11_26.1
-// CHECK:STDOUT:   %Convert.call.loc11: init %D = call %.loc11_35.3(%.loc11_26.2) to %.loc11_35.4
-// CHECK:STDOUT:   %.loc11_35.5: init %D = converted %.loc11_26.1, %Convert.call.loc11
-// CHECK:STDOUT:   return %.loc11_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc11: init %D = call %.loc11_35.2(%.loc11_26.2) to %.loc11_35.3
+// CHECK:STDOUT:   %.loc11_35.4: init %D = converted %.loc11_26.1, %Convert.call.loc11
+// CHECK:STDOUT:   return %.loc11_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
 // CHECK:STDOUT:   %.loc12_7: bool = bool_literal false [template = constants.%.5]
@@ -1175,16 +1163,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_24.3: init %C.7 = class_init (), %.loc12_24.2 [template = constants.%struct.5]
 // CHECK:STDOUT:   %.loc12_24.4: ref %C.7 = temporary %.loc12_24.2, %.loc12_24.3
 // CHECK:STDOUT:   %.loc12_26.1: ref %C.7 = converted %.loc12_24.1, %.loc12_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc12: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc12_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc12: %.12 = name_ref Convert, %.loc12_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc12_35.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.7]
-// CHECK:STDOUT:   %.loc12_35.3: <bound method> = bound_method %.loc12_26.1, %.loc12_35.2
-// CHECK:STDOUT:   %.loc12_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc12_35.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.7]
+// CHECK:STDOUT:   %.loc12_35.2: <bound method> = bound_method %.loc12_26.1, %.loc12_35.1
+// CHECK:STDOUT:   %.loc12_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc12_26.2: %C.7 = bind_value %.loc12_26.1
-// CHECK:STDOUT:   %Convert.call.loc12: init %D = call %.loc12_35.3(%.loc12_26.2) to %.loc12_35.4
-// CHECK:STDOUT:   %.loc12_35.5: init %D = converted %.loc12_26.1, %Convert.call.loc12
-// CHECK:STDOUT:   return %.loc12_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc12: init %D = call %.loc12_35.2(%.loc12_26.2) to %.loc12_35.3
+// CHECK:STDOUT:   %.loc12_35.4: init %D = converted %.loc12_26.1, %Convert.call.loc12
+// CHECK:STDOUT:   return %.loc12_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
 // CHECK:STDOUT:   %.loc13_7: bool = bool_literal false [template = constants.%.5]
@@ -1200,16 +1185,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_24.3: init %C.8 = class_init (), %.loc13_24.2 [template = constants.%struct.6]
 // CHECK:STDOUT:   %.loc13_24.4: ref %C.8 = temporary %.loc13_24.2, %.loc13_24.3
 // CHECK:STDOUT:   %.loc13_26.1: ref %C.8 = converted %.loc13_24.1, %.loc13_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc13: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc13_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc13: %.12 = name_ref Convert, %.loc13_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc13_35.2: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.8]
-// CHECK:STDOUT:   %.loc13_35.3: <bound method> = bound_method %.loc13_26.1, %.loc13_35.2
-// CHECK:STDOUT:   %.loc13_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc13_35.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.8]
+// CHECK:STDOUT:   %.loc13_35.2: <bound method> = bound_method %.loc13_26.1, %.loc13_35.1
+// CHECK:STDOUT:   %.loc13_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc13_26.2: %C.8 = bind_value %.loc13_26.1
-// CHECK:STDOUT:   %Convert.call.loc13: init %D = call %.loc13_35.3(%.loc13_26.2) to %.loc13_35.4
-// CHECK:STDOUT:   %.loc13_35.5: init %D = converted %.loc13_26.1, %Convert.call.loc13
-// CHECK:STDOUT:   return %.loc13_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc13: init %D = call %.loc13_35.2(%.loc13_26.2) to %.loc13_35.3
+// CHECK:STDOUT:   %.loc13_35.4: init %D = converted %.loc13_26.1, %Convert.call.loc13
+// CHECK:STDOUT:   return %.loc13_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc13:
 // CHECK:STDOUT:   %.loc14_7: bool = bool_literal false [template = constants.%.5]
@@ -1225,16 +1207,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_24.3: init %C.9 = class_init (), %.loc14_24.2 [template = constants.%struct.7]
 // CHECK:STDOUT:   %.loc14_24.4: ref %C.9 = temporary %.loc14_24.2, %.loc14_24.3
 // CHECK:STDOUT:   %.loc14_26.1: ref %C.9 = converted %.loc14_24.1, %.loc14_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc14: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc14_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc14: %.12 = name_ref Convert, %.loc14_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc14_35.2: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.9]
-// CHECK:STDOUT:   %.loc14_35.3: <bound method> = bound_method %.loc14_26.1, %.loc14_35.2
-// CHECK:STDOUT:   %.loc14_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc14_35.1: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.9]
+// CHECK:STDOUT:   %.loc14_35.2: <bound method> = bound_method %.loc14_26.1, %.loc14_35.1
+// CHECK:STDOUT:   %.loc14_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc14_26.2: %C.9 = bind_value %.loc14_26.1
-// CHECK:STDOUT:   %Convert.call.loc14: init %D = call %.loc14_35.3(%.loc14_26.2) to %.loc14_35.4
-// CHECK:STDOUT:   %.loc14_35.5: init %D = converted %.loc14_26.1, %Convert.call.loc14
-// CHECK:STDOUT:   return %.loc14_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc14: init %D = call %.loc14_35.2(%.loc14_26.2) to %.loc14_35.3
+// CHECK:STDOUT:   %.loc14_35.4: init %D = converted %.loc14_26.1, %Convert.call.loc14
+// CHECK:STDOUT:   return %.loc14_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc14:
 // CHECK:STDOUT:   %.loc15_7: bool = bool_literal false [template = constants.%.5]
@@ -1250,16 +1229,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc15_24.3: init %C.10 = class_init (), %.loc15_24.2 [template = constants.%struct.8]
 // CHECK:STDOUT:   %.loc15_24.4: ref %C.10 = temporary %.loc15_24.2, %.loc15_24.3
 // CHECK:STDOUT:   %.loc15_26.1: ref %C.10 = converted %.loc15_24.1, %.loc15_24.4
-// CHECK:STDOUT:   %ImplicitAs.type.loc15: type = interface_type @ImplicitAs, @ImplicitAs(constants.%D) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc15_35.1: %.12 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%D) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref.loc15: %.12 = name_ref Convert, %.loc15_35.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc15_35.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %.loc15_35.3: <bound method> = bound_method %.loc15_26.1, %.loc15_35.2
-// CHECK:STDOUT:   %.loc15_35.4: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc15_35.1: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %.loc15_35.2: <bound method> = bound_method %.loc15_26.1, %.loc15_35.1
+// CHECK:STDOUT:   %.loc15_35.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc15_26.2: %C.10 = bind_value %.loc15_26.1
-// CHECK:STDOUT:   %Convert.call.loc15: init %D = call %.loc15_35.3(%.loc15_26.2) to %.loc15_35.4
-// CHECK:STDOUT:   %.loc15_35.5: init %D = converted %.loc15_26.1, %Convert.call.loc15
-// CHECK:STDOUT:   return %.loc15_35.5 to %return
+// CHECK:STDOUT:   %Convert.call.loc15: init %D = call %.loc15_35.2(%.loc15_26.2) to %.loc15_35.3
+// CHECK:STDOUT:   %.loc15_35.4: init %D = converted %.loc15_26.1, %Convert.call.loc15
+// CHECK:STDOUT:   return %.loc15_35.4 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
 // CHECK:STDOUT:   %P.ref.loc16: <namespace> = name_ref P, imports.%P [template = imports.%P]

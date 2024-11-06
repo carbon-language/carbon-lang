@@ -72,16 +72,13 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %.loc18_18: i32 = int_value 42 [template = constants.%.1]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc18_20.1: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc18_20.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_20.2: type = converted %.loc18_18, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_20.1: type = converted %.loc18_18, <error> [template = <error>]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc18_20.3: %.8 = assoc_entity element0, %T [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18_20.2: %.8 = assoc_entity element0, %T [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc18_20.3
+// CHECK:STDOUT:   .T = %.loc18_20.2
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

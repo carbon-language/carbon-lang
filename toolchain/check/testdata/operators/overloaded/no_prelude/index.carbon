@@ -265,12 +265,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc15_11.2: %.1 = converted %.loc15_11.1, %tuple.loc15_11 [template = constants.%tuple]
 // CHECK:STDOUT:   %tuple.loc15_14: %.1 = tuple_value () [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc15_15.1: %.1 = converted %.loc15_14, %tuple.loc15_14 [template = constants.%tuple]
-// CHECK:STDOUT:   %IndexWith.type: type = interface_type @IndexWith, @IndexWith(constants.%.1) [template = constants.%IndexWith.type.3]
-// CHECK:STDOUT:   %.loc15_15.2: %.4 = specific_constant @IndexWith.%.loc6_52.1, @IndexWith(constants.%.1) [template = constants.%.5]
-// CHECK:STDOUT:   %At.ref: %.4 = name_ref At, %.loc15_15.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_15.3: %At.type.3 = interface_witness_access constants.%.6, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc15_15.4: <bound method> = bound_method %.loc15_11.2, %.loc15_15.3 [template = constants.%.7]
-// CHECK:STDOUT:   %At.call: init %.1 = call %.loc15_15.4(%.loc15_11.2, %.loc15_15.1)
+// CHECK:STDOUT:   %.loc15_15.2: %At.type.3 = interface_witness_access constants.%.6, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %.loc15_15.3: <bound method> = bound_method %.loc15_11.2, %.loc15_15.2 [template = constants.%.7]
+// CHECK:STDOUT:   %At.call: init %.1 = call %.loc15_15.3(%.loc15_11.2, %.loc15_15.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

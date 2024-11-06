@@ -224,10 +224,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertUnrelated(%p.param_patt: %.11) -> %.12 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.11 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.12) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc31_46.1: %.18 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.12) [template = constants.%.19]
-// CHECK:STDOUT:   %Convert.ref: %.18 = name_ref Convert, %.loc31_46.1 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc31_46.2: %.12 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc31_46: %.12 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,10 +239,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %.21) -> %.22 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.21 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.22) [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc41_55.1: %.23 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.22) [template = constants.%.24]
-// CHECK:STDOUT:   %Convert.ref: %.23 = name_ref Convert, %.loc41_55.1 [template = constants.%.24]
-// CHECK:STDOUT:   %.loc41_55.2: %.22 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc41_55: %.22 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

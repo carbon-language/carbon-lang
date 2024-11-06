@@ -28,15 +28,15 @@ class CopyOnWriteBlock {
 
   // Constructs the block. `source_id` is used as the initial value of the
   // block.
-  CopyOnWriteBlock(SemIR::File& file, BlockIdType source_id)
+  explicit CopyOnWriteBlock(SemIR::File& file, BlockIdType source_id)
       : file_(file), source_id_(source_id) {}
 
   // Constructs the block, treating the original block as an uninitialized block
   // with `size` elements.
-  CopyOnWriteBlock(SemIR::File& file, UninitializedBlock uninit)
+  explicit CopyOnWriteBlock(SemIR::File& file, UninitializedBlock uninit)
       : file_(file),
         source_id_(BlockIdType::Invalid),
-        id_(file_.inst_blocks().AddUninitialized(uninit.size)) {}
+        id_((file_.*ValueStore)().AddUninitialized(uninit.size)) {}
 
   // Gets a block ID containing the resulting elements. Note that further
   // modifications may or may not allocate a new ID, so this should only be

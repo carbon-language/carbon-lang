@@ -732,11 +732,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.ref: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc14_33.1: ref %CompleteClass.4 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc14_33.1
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%CompleteClass.3) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc14_35.1: %.11 = specific_constant imports.%import_ref.10, @ImplicitAs(constants.%CompleteClass.3) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref: %.11 = name_ref Convert, %.loc14_35.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc14_33.2: ref %CompleteClass.4 = temporary %.loc14_33.1, %F.call
-// CHECK:STDOUT:   %.loc14_35.2: %CompleteClass.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14_35: %CompleteClass.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

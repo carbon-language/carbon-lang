@@ -147,7 +147,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
     -> std::optional<DeclInfo> {
   std::optional<DeclInfo> decl_info = DeclInfo();
 
-  // TODO: update binding-pattern handling to use the pattern block even in
+  // TODO: Update binding-pattern handling to use the pattern block even in
   // a let/var context, and then consume it here.
   context.pattern_block_stack().PopAndDiscard();
 

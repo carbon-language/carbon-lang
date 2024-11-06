@@ -635,11 +635,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %.loc10_25.1: ref %C.4 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc10_25.1
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C.3) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc10_27.1: %.13 = specific_constant imports.%import_ref.8, @ImplicitAs(constants.%C.3) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref: %.13 = name_ref Convert, %.loc10_27.1 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc10_25.2: ref %C.4 = temporary %.loc10_25.1, %F.call
-// CHECK:STDOUT:   %.loc10_27.2: %C.3 = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc10_27: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

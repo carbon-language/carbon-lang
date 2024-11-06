@@ -129,12 +129,9 @@ fn Run() {
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc20_21.1: %.6 = specific_constant imports.%import_ref.5, @ImplicitAs(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc20_21.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc20_19.1: ref f64 = temporary_storage
 // CHECK:STDOUT:   %.loc20_19.2: ref f64 = temporary %.loc20_19.1, %Foo.call
-// CHECK:STDOUT:   %.loc20_21.2: i32 = converted %Foo.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_21: i32 = converted %Foo.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

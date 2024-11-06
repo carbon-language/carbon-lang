@@ -62,10 +62,7 @@ var a: [1; 1];
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc17_9.1: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc17_12: i32 = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc17_9.2: %.5 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc17_9.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_9.3: type = converted %.loc17_9.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_9.2: type = converted %.loc17_9.1, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc17_13: type = array_type %.loc17_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var

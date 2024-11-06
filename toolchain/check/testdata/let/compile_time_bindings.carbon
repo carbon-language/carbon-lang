@@ -708,10 +708,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %.2 = name_ref T, @I.%.loc5_21.3 [template = constants.%.3]
-// CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc13_13.1: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:     %Convert.ref: %.6 = name_ref Convert, %.loc13_13.1 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc13_13.2: type = converted %T.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc13: type = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

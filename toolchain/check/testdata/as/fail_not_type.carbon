@@ -104,10 +104,7 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_14: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_19.1: i32 = int_value 2 [template = constants.%.3]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc17_19.2: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc17_19.2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc17_19.3: type = converted %.loc17_19.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_19.2: type = converted %.loc17_19.1, <error> [template = <error>]
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

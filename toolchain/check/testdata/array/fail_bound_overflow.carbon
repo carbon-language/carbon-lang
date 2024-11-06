@@ -85,10 +85,7 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc30_9.1: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc30_9.2: %.5 = specific_constant imports.%import_ref.4, @ImplicitAs(type) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc30_9.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc30_9.3: type = converted %.loc30_9.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc30_9.2: type = converted %.loc30_9.1, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc30_32: type = array_type <error>, <error> [template = <error>]
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var

@@ -124,6 +124,17 @@ class Context {
     return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
   }
 
+  // If the instruction has an implicit location and a constant value, returns
+  // the constant value's instruction ID. Otherwise, same as AddInst.
+  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for GetOrAddInst with typed nodes.
+  template <typename InstT, typename LocT>
+  auto GetOrAddInst(LocT loc, InstT inst)
+      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
+  }
+
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.

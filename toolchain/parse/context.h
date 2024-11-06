@@ -98,12 +98,22 @@ class Context {
   // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error = false)
       -> void {
-    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+    AddNode(kind, token, has_error);
   }
 
   // Adds a node to the parse tree that has children.
   auto AddNode(NodeKind kind, Lex::TokenIndex token, bool has_error) -> void {
-    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
+    CARBON_CHECK(has_error || (kind != NodeKind::InvalidParse &&
+                               kind != NodeKind::InvalidParseStart &&
+                               kind != NodeKind::InvalidParseSubtree),
+                 "{0} nodes must always have an error", kind);
+    tree_->node_impls_.push_back(
+        {.kind = kind, .has_error = has_error, .token = token});
+  }
+
+  // Adds an invalid parse node.
+  auto AddInvalidParse(Lex::TokenIndex token) -> void {
+    AddNode(NodeKind::InvalidParse, token, /*has_error=*/true);
   }
 
   // Replaces the placeholder node at the indicated position with a leaf node.
