@@ -123,21 +123,16 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
-        if (step.index == 0) {
-          out << "<facet type ";
-        }
         if (facet_type_info.impls.empty()) {
-          out << "`type`>";
+          out << "`type`";
         } else {
           auto interface_id = facet_type_info.impls[step.index].interface_id;
           auto interface_name_id =
               sem_ir.interfaces().Get(interface_id).name_id;
           out << sem_ir.names().GetFormatted(interface_name_id);
           if (step.index + 1 < static_cast<int>(facet_type_info.impls.size())) {
-            out << ", ";
+            out << " & ";
             steps.push_back(step.Next());
-          } else {
-            out << ">";
           }
         }
         // TODO: also output other restrictions from facet_type_info.

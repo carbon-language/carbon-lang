@@ -1297,18 +1297,18 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [template = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %Y.patt.loc18_16.1: <unexpected>.inst+100 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc18_16.2 (constants.%Y.patt)]
-// CHECK:STDOUT:     %Y.param_patt: <unexpected>.inst+100 = value_param_pattern %Y.patt.loc18_16.1, runtime_param<invalid> [symbolic = %Y.patt.loc18_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.patt.loc26_16.1: <unexpected>.inst+100 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.param_patt: <unexpected>.inst+100 = value_param_pattern %Y.patt.loc26_16.1, runtime_param<invalid> [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc18_38: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc18_22: type = where_expr %.Self [template = <unexpected>.inst+100] {
-// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc18_38
+// CHECK:STDOUT:     %.loc26_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = <unexpected>.inst+100] {
+// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Y.param: <unexpected>.inst+100 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %Y.loc18_16.1: <unexpected>.inst+100 = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.loc18_16.2 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc26_16.1: <unexpected>.inst+100 = bind_symbolic_name Y, 0, %Y.param [symbolic = %Y.loc26_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -1340,14 +1340,14 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
-// CHECK:STDOUT:   %.loc11: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc11
+// CHECK:STDOUT:   witness = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -1358,9 +1358,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.4 [template = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc15_8.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(<unexpected>.inst+30) [template = constants.%.8]
-// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc15_8.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_8.2: <unexpected>.inst+30 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_8.1: %.7 = specific_constant imports.%import_ref.9, @ImplicitAs(<unexpected>.inst+30) [template = constants.%.8]
+// CHECK:STDOUT:   %Convert.ref: %.7 = name_ref Convert, %.loc23_8.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc23_8.2: <unexpected>.inst+30 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1379,9 +1379,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc18_16.1: <unexpected>.inst+100) {
-// CHECK:STDOUT:   %Y.loc18_16.2: <unexpected>.inst+100 = bind_symbolic_name Y, 0 [symbolic = %Y.loc18_16.2 (constants.%Y)]
-// CHECK:STDOUT:   %Y.patt.loc18_16.2: <unexpected>.inst+100 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc18_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26_16.1: <unexpected>.inst+100) {
+// CHECK:STDOUT:   %Y.loc26_16.2: <unexpected>.inst+100 = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
+// CHECK:STDOUT:   %Y.patt.loc26_16.2: <unexpected>.inst+100 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%Y.param_patt: <unexpected>.inst+100);
 // CHECK:STDOUT: }
@@ -1391,9 +1391,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [template = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <facet-type @ImplicitAs> [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc32_14.1: %.10 = specific_constant imports.%import_ref.9, @ImplicitAs(<unexpected>.inst+100) [template = constants.%.11]
-// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc32_14.1 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc32_14.2: <unexpected>.inst+100 = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc40_14.1: %.10 = specific_constant imports.%import_ref.9, @ImplicitAs(<unexpected>.inst+100) [template = constants.%.11]
+// CHECK:STDOUT:   %Convert.ref: %.10 = name_ref Convert, %.loc40_14.1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc40_14.2: <unexpected>.inst+100 = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1437,8 +1437,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %Y.loc18_16.2 => constants.%Y
-// CHECK:STDOUT:   %Y.patt.loc18_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.loc26_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.patt.loc26_16.2 => constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(<unexpected>.inst+100) {
