@@ -37,12 +37,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     // lex/tokenized_buffer_test.cpp.
     DiagnosticKind::TooManyTokens,
 
-    // This diagnostic is currently unreachable, but will be if
-    // Context::TryToDefineType is not updated before we add the ability to
-    // create facet types that require multiple interfaces (using `&` or
-    // `where`).
-    DiagnosticKind::SingleInterfaceFacetTypeOnly,
-
     // TODO: Should look closer at these, but adding tests is a high risk of
     // loss in merge conflicts due to the amount of tests being changed right
     // now.

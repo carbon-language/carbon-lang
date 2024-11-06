@@ -211,6 +211,9 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   CARBON_CHECK(impl.is_being_defined());
 
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  if (facet_type_id == SemIR::TypeId::Error) {
+    return SemIR::InstId::BuiltinError;
+  }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");

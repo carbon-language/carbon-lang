@@ -8,19 +8,39 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_interface.carbon
 
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+10]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// --- fail_impl_as_false.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+7]]:13: error: cannot implicitly convert from `bool` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: impl i32 as false {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+4]]:13: note: type `bool` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: impl i32 as false {}
+// CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+6]]:13: error: cannot implicitly convert from `bool` to `type` [ImplicitAsConversionFailure]
-// CHECK:STDERR: impl i32 as false {}
-// CHECK:STDERR:             ^~~~~
-// CHECK:STDERR: fail_impl_bad_interface.carbon:[[@LINE+3]]:13: note: type `bool` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: impl i32 as false {}
-// CHECK:STDERR:             ^~~~~
 impl i32 as false {}
 
-// CHECK:STDOUT: --- fail_impl_bad_interface.carbon
+// --- fail_impl_as_type.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_impl_as_type.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: impl bool as type {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl bool as type {}
+
+// --- fail_impl_as_type_where.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_impl_as_type_where.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl as not 1 interface` [SemanticsTodo]
+// CHECK:STDERR: impl f64 as type where .Self impls type {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+impl f64 as type where .Self impls type {}
+
+// CHECK:STDOUT: --- fail_impl_as_false.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -67,12 +87,12 @@ impl i32 as false {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc21: type = converted @impl.%.loc21_13, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc11: type = converted @impl.%.loc11_13, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc21_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc21_6.2: type = converted %int.make_type_32, %.loc21_6.1 [template = i32]
-// CHECK:STDOUT:     %.loc21_13: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_32, %.loc11_6.1 [template = i32]
+// CHECK:STDOUT:     %.loc11_13: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,7 +116,7 @@ impl i32 as false {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc21_6.2 as <error> {
+// CHECK:STDOUT: impl @impl: %.loc11_6.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -144,4 +164,85 @@ impl i32 as false {}
 // CHECK:STDOUT:   %.1 => constants.%.5
 // CHECK:STDOUT:   %.2 => constants.%.6
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_impl_as_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc8_6.2: type = converted %bool.make_type, %.loc8_6.1 [template = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc8_6.2 as type {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_impl_as_type_where.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   <unexpected>.inst+25: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Float = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc7_6.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc7_6.1) [template = f64]
+// CHECK:STDOUT:     %.loc7_6.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc7_6.3: type = converted %float.make_type, %.loc7_6.2 [template = f64]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.loc7_18: type = where_expr %.Self [template = <unexpected>.inst+25] {
+// CHECK:STDOUT:       requirement_impls %.Self.ref, type
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc7_6.3 as %.loc7_18 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:
