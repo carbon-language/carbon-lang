@@ -55,7 +55,8 @@ class FileContext {
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     // InvalidType should not be passed in.
     CARBON_CHECK(type_id.index >= 0, "{0}", type_id);
-    CARBON_CHECK(types_[type_id.index], "Missing type {0}", type_id);
+    CARBON_CHECK(types_[type_id.index], "Missing type {0}: {1}", type_id,
+                 sem_ir().types().GetAsInst(type_id));
     return types_[type_id.index];
   }
 

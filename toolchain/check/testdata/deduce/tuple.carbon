@@ -240,8 +240,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.2: %.3 = tuple_value (%.8, %.9) [template]
 // CHECK:STDOUT:   %HasPair.4: type = class_type @HasPair, @HasPair(%tuple.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -323,8 +323,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [template = constants.%HasPair.1]
-// CHECK:STDOUT:     %.loc8_18: i32 = int_literal 1 [template = constants.%.8]
-// CHECK:STDOUT:     %.loc8_21: i32 = int_literal 2 [template = constants.%.9]
+// CHECK:STDOUT:     %.loc8_18: i32 = int_value 1 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc8_21: i32 = int_value 2 [template = constants.%.9]
 // CHECK:STDOUT:     %.loc8_22: %.3 = tuple_literal (%.loc8_18, %.loc8_21)
 // CHECK:STDOUT:     %tuple: %.3 = tuple_value (%.loc8_18, %.loc8_21) [template = constants.%tuple.2]
 // CHECK:STDOUT:     %.loc8_16: %.3 = converted %.loc8_22, %tuple [template = constants.%tuple.2]

@@ -145,13 +145,13 @@ fn Run() {
 // CHECK:STDOUT:   %.7: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.base: %.7} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.base: %.2} [template]
 // CHECK:STDOUT:   %struct.1: %Base = struct_value (%.10, %.11) [template]
 // CHECK:STDOUT:   %struct.2: %Child = struct_value (%struct.1) [template]
 // CHECK:STDOUT:   %.13: type = unbound_element_type %Base, i32 [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.14: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -205,8 +205,8 @@ fn Run() {
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref %Child = var a
 // CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_33: i32 = int_literal 0 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc7_46: i32 = int_literal 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc7_33: i32 = int_value 0 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc7_46: i32 = int_value 1 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc7_47.1: %.2 = struct_literal (%.loc7_33, %.loc7_46)
 // CHECK:STDOUT:   %.loc7_48.1: %.12 = struct_literal (%.loc7_47.1)
 // CHECK:STDOUT:   %.loc7_48.2: ref %Base = class_element_access %a.var, element0
@@ -224,7 +224,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref i32 = class_element_access %.loc8_4.2, element0
-// CHECK:STDOUT:   %.loc8_9: i32 = int_literal 2 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc8_9: i32 = int_value 2 [template = constants.%.14]
 // CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_9
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]

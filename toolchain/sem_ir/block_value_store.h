@@ -85,8 +85,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "canonical_blocks_"),
-                  canonical_blocks_, KeyContext(this));
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "canonical_blocks_"),
+                      canonical_blocks_, KeyContext(this));
   }
 
   auto size() const -> int { return values_.size(); }

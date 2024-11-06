@@ -51,17 +51,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var x:! () = ();
 
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+3]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR: fn A {
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
 fn A {
-  // CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+6]]:3: error: cannot deduce value for generic parameter `x` [DeductionIncomplete]
-  // CHECK:STDERR:   A();
-  // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE-4]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn A {
-  // CHECK:STDERR: ^~~~~~
   A();
 }
 
@@ -123,7 +116,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, 0 [symbolic]
+// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x [symbolic]
 // CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
@@ -137,18 +130,15 @@ fn A {
 // CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, 0, %x.var [symbolic = constants.%x]
+// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, %x.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @A(file.%x: %.1) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn() {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     return
-// CHECK:STDOUT:   }
+// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -159,6 +149,4 @@ fn A {
 // CHECK:STDOUT:   assign file.%x.var, %.loc8_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%x) {}
 // CHECK:STDOUT:

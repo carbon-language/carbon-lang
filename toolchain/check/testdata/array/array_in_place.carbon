@@ -26,13 +26,13 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, %.3 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (%.3, %.3) [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,7 +82,7 @@ fn G() {
 // CHECK:STDOUT:   %int.make_type_32.loc14_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_25.1: %.2 = tuple_literal (%int.make_type_32.loc14_12, %int.make_type_32.loc14_17, %int.make_type_32.loc14_22)
-// CHECK:STDOUT:   %.loc14_28: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_28: i32 = int_value 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_25.2: type = value_of_initializer %int.make_type_32.loc14_12 [template = i32]
 // CHECK:STDOUT:   %.loc14_25.3: type = converted %int.make_type_32.loc14_12, %.loc14_25.2 [template = i32]
 // CHECK:STDOUT:   %.loc14_25.4: type = value_of_initializer %int.make_type_32.loc14_17 [template = i32]
@@ -95,13 +95,13 @@ fn G() {
 // CHECK:STDOUT:   %v: ref %.5 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_42.3: ref %.3 = splice_block %.loc14_42.2 {
-// CHECK:STDOUT:     %.loc14_42.1: i32 = int_literal 0 [template = constants.%.9]
+// CHECK:STDOUT:     %.loc14_42.1: i32 = int_value 0 [template = constants.%.9]
 // CHECK:STDOUT:     %.loc14_42.2: ref %.3 = array_index %v.var, %.loc14_42.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.call.loc14_35: init %.3 = call %F.ref.loc14_34() to %.loc14_42.3
 // CHECK:STDOUT:   %F.ref.loc14_39: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_42.6: ref %.3 = splice_block %.loc14_42.5 {
-// CHECK:STDOUT:     %.loc14_42.4: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:     %.loc14_42.4: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:     %.loc14_42.5: ref %.3 = array_index %v.var, %.loc14_42.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.call.loc14_40: init %.3 = call %F.ref.loc14_39() to %.loc14_42.6

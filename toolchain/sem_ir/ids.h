@@ -8,7 +8,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
@@ -20,13 +20,14 @@ class File;
 class Inst;
 struct EntityName;
 struct Class;
+struct FacetTypeInfo;
 struct Function;
 struct Generic;
 struct Specific;
 struct ImportIR;
 struct ImportIRInst;
-struct Interface;
 struct Impl;
+struct Interface;
 struct NameScope;
 struct TypeInfo;
 
@@ -359,6 +360,22 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
 };
 
 constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
+
+// The ID of an faceet type value.
+struct FacetTypeId : public IdBase, public Printable<FacetTypeId> {
+  using ValueType = FacetTypeInfo;
+
+  // An explicitly invalid ID.
+  static const FacetTypeId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "facet type";
+    IdBase::Print(out);
+  }
+};
+
+constexpr FacetTypeId FacetTypeId::Invalid = FacetTypeId(InvalidIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase, public Printable<ImplId> {
@@ -853,13 +870,17 @@ struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {
 
 constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
 
-// A SemIR location used exclusively for diagnostic locations.
+// A SemIR location used as the location of instructions.
 //
 // Contents:
 // - index > Invalid: A Parse::NodeId in the current IR.
 // - index < Invalid: An ImportIRInstId.
 // - index == Invalid: Can be used for either.
 struct LocId : public IdBase, public Printable<LocId> {
+  // This bit, if set for a node ID location, indicates a location for
+  // operations performed implicitly.
+  static const int32_t ImplicitBit = 1 << 30;
+
   // An explicitly invalid ID.
   static const LocId Invalid;
 
@@ -871,22 +892,37 @@ struct LocId : public IdBase, public Printable<LocId> {
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
     CARBON_CHECK(node_id.is_valid() == is_valid());
+    CARBON_CHECK(!is_implicit());
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(ImportIRInstId inst_id)
       : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
     CARBON_CHECK(inst_id.is_valid() == is_valid());
+    CARBON_CHECK(index & ImplicitBit);
+  }
+
+  // Forms an equivalent LocId for an implicit location.
+  auto ToImplicit() const -> LocId {
+    // For import IR locations and the invalid location, the implicit bit is
+    // always set, so this is a no-op.
+    return LocId(index | ImplicitBit);
   }
 
   auto is_node_id() const -> bool { return index > InvalidIndex; }
   auto is_import_ir_inst_id() const -> bool { return index < InvalidIndex; }
+  auto is_implicit() const -> bool {
+    return is_node_id() && (index & ImplicitBit) != 0;
+  }
 
   // This is allowed to return an invalid NodeId, but should never be used for a
   // valid InstId.
   auto node_id() const -> Parse::NodeId {
-    CARBON_CHECK(is_node_id() || !is_valid());
-    return Parse::NodeId(index);
+    if (!is_valid()) {
+      return Parse::NodeId::Invalid;
+    }
+    CARBON_CHECK(is_node_id());
+    return Parse::NodeId(index & ~ImplicitBit);
   }
 
   // This is allowed to return an invalid InstId, but should never be used for a

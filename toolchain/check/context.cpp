@@ -88,6 +88,20 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
+auto Context::GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  if (loc_id_and_inst.loc_id.is_implicit()) {
+    auto const_id =
+        TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
+    if (const_id.is_valid()) {
+      CARBON_VLOG("GetOrAddInst: constant: {0}\n", loc_id_and_inst.inst);
+      return constant_values().GetInstId(const_id);
+    }
+  }
+  // TODO: For an implicit instruction, this reattempts evaluation.
+  return AddInst(loc_id_and_inst);
+}
+
 // Finish producing an instruction. Set its constant value, and register it in
 // any applicable instruction lists.
 auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
@@ -924,7 +938,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::Error:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
-      case SemIR::BuiltinInstKind::BigIntType:
+      case SemIR::BuiltinInstKind::IntLiteralType:
       case SemIR::BuiltinInstKind::IntType:
       case SemIR::BuiltinInstKind::FloatType:
       case SemIR::BuiltinInstKind::NamespaceType:
@@ -1060,8 +1074,8 @@ class TypeCompleter {
   template <typename InstT>
     requires(
         InstT::Kind
-            .template IsAnyOf<SemIR::AssociatedEntityType, SemIR::FunctionType,
-                              SemIR::GenericClassType,
+            .template IsAnyOf<SemIR::AssociatedEntityType, SemIR::FacetType,
+                              SemIR::FunctionType, SemIR::GenericClassType,
                               SemIR::GenericInterfaceType, SemIR::InterfaceType,
                               SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const

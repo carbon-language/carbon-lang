@@ -24,6 +24,7 @@ contributions.
     -   [Optional tools](#optional-tools)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
+    -   [`bazel clean`](#bazel-clean)
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
@@ -167,10 +168,8 @@ These tools are essential for work on Carbon.
             outdated, and not be upgraded.
 -   Main tools
     -   [Bazel](https://www.bazel.build/)
-        -   NOTE: See [the bazelisk config](/.bazeliskrc) for a supported
-            version.
-    -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html)
-        (for macOS): Handles Bazel versions.
+        -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
+            Downloads and runs the [configured Bazel version](/.bazeliskrc).
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
         -   NOTE: Most LLVM 14+ installs should build Carbon. If you're having
             issues, see
@@ -255,6 +254,12 @@ work reliably include:
 
 ## Troubleshooting build issues
 
+### `bazel clean`
+
+Changes to packages installed on your system may not be noticed by `bazel`. This
+includes things such as changing LLVM versions, or installing libc++. Running
+`bazel clean` should force cached state to be rebuilt.
+
 ### Old LLVM versions
 
 Many build issues result from the particular options `clang` and `llvm` have
@@ -266,8 +271,7 @@ System installs of macOS typically won't work, for example being an old LLVM
 version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
 Homebrew for this reason.
 
-It may be necessary to run `bazel clean` after updating versions in order to
-clean up cached state.
+Run [`bazel clean`](#bazel-clean) when changing the installed LLVM version.
 
 ### Asking for help
 
@@ -280,7 +284,7 @@ echo $CC
 which clang
 which clang-16
 clang --version
-grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolchain/clang_detected_variables.bzl
+grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/_main\~clang_toolchain_extension\~bazel_cc_toolchain/clang_detected_variables.bzl
 
 # If on macOS:
 brew --prefix llvm

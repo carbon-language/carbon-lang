@@ -13,6 +13,7 @@
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
@@ -422,7 +423,7 @@ class InstStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 

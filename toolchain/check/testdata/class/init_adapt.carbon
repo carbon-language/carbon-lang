@@ -104,8 +104,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %C [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
@@ -199,8 +199,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc13_27.1: %.3 = struct_literal (%.loc13_18, %.loc13_26)
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0
@@ -252,8 +252,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %C [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -404,8 +404,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc13_27.1: %.3 = struct_literal (%.loc13_18, %.loc13_26)
 // CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0
@@ -418,34 +418,22 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
 // CHECK:STDOUT:   %a: %C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %ImplicitAs.type.loc24: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc24_18.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref.loc24: %.11 = name_ref Convert, %.loc24_18.1 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc24_18.2: %AdaptC = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24: %AdaptC = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, %b
-// CHECK:STDOUT:   %ImplicitAs.type.loc33: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc33_13.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
-// CHECK:STDOUT:   %Convert.ref.loc33: %.14 = name_ref Convert, %.loc33_13.1 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc33_13.2: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc33: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c: %C = bind_name c, <error>
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [template = constants.%MakeC]
 // CHECK:STDOUT:   %.loc46_22.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_22.1
-// CHECK:STDOUT:   %ImplicitAs.type.loc46: type = interface_type @ImplicitAs, @ImplicitAs(constants.%AdaptC) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc46_24.1: %.11 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%AdaptC) [template = constants.%.12]
-// CHECK:STDOUT:   %Convert.ref.loc46: %.11 = name_ref Convert, %.loc46_24.1 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc46_22.2: ref %C = temporary %.loc46_22.1, %MakeC.call
-// CHECK:STDOUT:   %.loc46_24.2: %AdaptC = converted %MakeC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc46_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc54_22.1: ref %AdaptC = temporary_storage
 // CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc54_22.1
-// CHECK:STDOUT:   %ImplicitAs.type.loc54: type = interface_type @ImplicitAs, @ImplicitAs(constants.%C) [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %.loc54_24.1: %.14 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%C) [template = constants.%.15]
-// CHECK:STDOUT:   %Convert.ref.loc54: %.14 = name_ref Convert, %.loc54_24.1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc54_22.2: ref %AdaptC = temporary %.loc54_22.1, %MakeAdaptC.call
-// CHECK:STDOUT:   %.loc54_24.2: %C = converted %MakeAdaptC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc54_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -82,6 +82,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
   Driver d(fs, install_paths, dest, error_stream);
+  d.SetFuzzing();
   if (!d.RunCommand(args).success) {
     auto str = error_stream.TakeStr();
     // TODO: Fix command_line to use `error`, switch back to `find`.

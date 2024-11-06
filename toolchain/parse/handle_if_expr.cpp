@@ -24,11 +24,9 @@ auto HandleIfExprFinishCondition(Context& context) -> void {
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
     }
-    // Add placeholders for `IfExprThen` and final `Expr`.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
+    // Add invalid nodes to substitute for `IfExprThen` and the final `Expr`.
+    context.AddInvalidParse(*context.position());
+    context.AddInvalidParse(*context.position());
     context.ReturnErrorOnState();
   }
 }
@@ -49,9 +47,8 @@ auto HandleIfExprFinishThen(Context& context) -> void {
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
     }
-    // Add placeholder for the final `Expr`.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
+    // Add an invalid node to substitute for the final `Expr`.
+    context.AddInvalidParse(*context.position());
     context.ReturnErrorOnState();
   }
 }

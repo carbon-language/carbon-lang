@@ -157,11 +157,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %.5 = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%B) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc26_11.1: %.12 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%B) [template = constants.%.13]
-// CHECK:STDOUT:   %Convert.ref: %.12 = name_ref Convert, %.loc26_11.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc26_11.2: %B = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc26_11.3: i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc26_11.2: i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

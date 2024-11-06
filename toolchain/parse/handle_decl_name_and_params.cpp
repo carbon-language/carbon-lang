@@ -30,8 +30,7 @@ auto HandleDeclNameAndParams(Context& context) -> void {
                              context.tokens().GetKind(state.token));
     }
     context.ReturnErrorOnState();
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
+    context.AddInvalidParse(*context.position());
     return;
   }
 

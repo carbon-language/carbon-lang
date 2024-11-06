@@ -38,6 +38,10 @@ class Driver {
   // error stream (stderr by default).
   auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult;
 
+  // Configure the driver for fuzzing. This allows specific commands to error
+  // rather than perform operations that aren't well behaved during fuzzing.
+  auto SetFuzzing() -> void;
+
  private:
   DriverEnv driver_env_;
 };

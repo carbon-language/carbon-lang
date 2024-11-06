@@ -16,7 +16,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"

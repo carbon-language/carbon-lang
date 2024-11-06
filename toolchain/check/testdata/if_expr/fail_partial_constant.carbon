@@ -49,7 +49,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %ConditionIsNonConstant: %ConditionIsNonConstant.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,7 +104,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc12_10: type = block_arg !if.expr.result
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc12_35: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_35: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -120,7 +120,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,7 +167,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc9_36: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_36: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc13_13: bool = bool_literal false [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc13_13 br !if.expr.then.loc13 else br !if.expr.else.loc13
@@ -186,7 +186,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc13_10: type = block_arg !if.expr.result.loc13
 // CHECK:STDOUT:   %w.var: ref <error> = var w
 // CHECK:STDOUT:   %w: ref <error> = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc13_37: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_37: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

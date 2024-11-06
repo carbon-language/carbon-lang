@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -126,10 +126,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_type_info_"),
-                  complete_type_info_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_types_"),
-                  complete_types_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_type_info_"),
+                      complete_type_info_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_types_"),
+                      complete_types_);
   }
 
  private:

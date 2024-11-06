@@ -21,7 +21,7 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,7 +55,7 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_35: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_35: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_36: %.5 = struct_literal (%.loc14_35)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return

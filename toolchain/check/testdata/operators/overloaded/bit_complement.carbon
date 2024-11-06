@@ -139,7 +139,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %Op.ref: %.6 = name_ref Op, imports.%import_ref.3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc24_10.2: <bound method> = bound_method %a.ref, %.loc24_10.1
 // CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}

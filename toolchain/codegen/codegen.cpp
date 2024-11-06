@@ -49,7 +49,7 @@ auto CodeGen::EmitCode(llvm::raw_pwrite_stream& out,
 
   // Using the legacy PM to generate the assembly since the new PM
   // does not work with this yet.
-  // TODO: make the new PM work with the codegen pipeline.
+  // TODO: Make the new PM work with the codegen pipeline.
   llvm::legacy::PassManager pass;
   // Note that this returns true on an error.
   if (target_machine_->addPassesToEmitFile(pass, out, nullptr, file_type)) {

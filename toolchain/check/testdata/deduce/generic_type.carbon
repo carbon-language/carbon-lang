@@ -743,7 +743,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %WithNontype.3: type = class_type @WithNontype, @WithNontype(%.5) [template]
 // CHECK:STDOUT:   %struct: %WithNontype.3 = struct_value () [template]
 // CHECK:STDOUT:   %.6: <specific function> = specific_function %F, @F(%.5) [template]
@@ -847,7 +847,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc9_13.1: %.2 = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.1]
-// CHECK:STDOUT:   %.loc9_30: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_30: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%.5) [template = constants.%WithNontype.3]
 // CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.3 = temporary_storage
 // CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.3 = class_init (), %.loc9_13.2 [template = constants.%struct]

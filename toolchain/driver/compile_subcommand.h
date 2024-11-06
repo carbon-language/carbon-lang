@@ -19,8 +19,6 @@ namespace Carbon {
 //
 // See the implementation of `Build` for documentation on members.
 struct CompileOptions {
-  static const CommandLine::CommandInfo Info;
-
   enum class Phase : int8_t {
     Lex,
     Parse,
@@ -65,7 +63,11 @@ struct CompileOptions {
 // Implements the compile subcommand of the driver.
 class CompileSubcommand : public DriverSubcommand {
  public:
-  auto BuildOptions(CommandLine::CommandBuilder& b) { options_.Build(b); }
+  explicit CompileSubcommand();
+
+  auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
+    options_.Build(b);
+  }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 

@@ -36,9 +36,9 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [template]
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 6 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
@@ -89,8 +89,8 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, %Mul.decl [template = constants.%Mul]
-// CHECK:STDOUT:   %.loc4_20: i32 = int_literal 3 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_23: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_20: i32 = int_value 3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_23: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %int.umul: init i32 = call %Mul.ref(%.loc4_20, %.loc4_23) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
@@ -98,7 +98,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %arr.var: ref %.5 = var arr
 // CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_literal 6 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_18: i32 = int_value 6 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
 // CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
@@ -160,11 +160,11 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [template]
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 32767 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 65536 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2147418112 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 32768 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal -2147483648 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 32767 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 65536 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 2147418112 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 32768 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value -2147483648 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -223,15 +223,15 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref.loc6: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
-// CHECK:STDOUT:   %.loc6_18: i32 = int_literal 32767 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc6_26: i32 = int_literal 65536 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_18: i32 = int_value 32767 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_26: i32 = int_value 65536 [template = constants.%.3]
 // CHECK:STDOUT:   %int.umul.loc6: init i32 = call %Mul.ref.loc6(%.loc6_18, %.loc6_26) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc6_34.1: i32 = value_of_initializer %int.umul.loc6 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc6_34.2: i32 = converted %int.umul.loc6, %.loc6_34.1 [template = constants.%.4]
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc6_34.2
 // CHECK:STDOUT:   %Mul.ref.loc7: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 32768 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 65536 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_18: i32 = int_value 32768 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_26: i32 = int_value 65536 [template = constants.%.3]
 // CHECK:STDOUT:   %int.umul.loc7: init i32 = call %Mul.ref.loc7(%.loc7_18, %.loc7_26) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_34.1: i32 = value_of_initializer %int.umul.loc7 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_34.2: i32 = converted %int.umul.loc7, %.loc7_34.1 [template = constants.%.6]

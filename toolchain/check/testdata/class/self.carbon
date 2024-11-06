@@ -263,10 +263,7 @@ class Class {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
-// CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(type) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc18_25.1: %.4 = specific_constant imports.%import_ref.3, @ImplicitAs(type) [template = constants.%.5]
-// CHECK:STDOUT:     %Convert.ref: %.4 = name_ref Convert, %.loc18_25.1 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc18_25.2: type = converted %self.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc18: type = converted %self.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1

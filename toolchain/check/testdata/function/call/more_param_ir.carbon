@@ -28,10 +28,10 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -86,16 +86,16 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_15.4: type = converted %.loc14_15.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref %.3 = var x
 // CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc14_20: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_20: i32 = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_22.1: %.3 = tuple_literal (%.loc14_20)
 // CHECK:STDOUT:   %.loc14_22.2: init %.3 = tuple_init (%.loc14_20) to %x.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc14_23: init %.3 = converted %.loc14_22.1, %.loc14_22.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %x.var, %.loc14_23
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %.3 = name_ref x, %x
-// CHECK:STDOUT:   %.loc16_9: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc16_9: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc16_8.1: ref i32 = tuple_access %x.ref, element0
-// CHECK:STDOUT:   %.loc16_12: i32 = int_literal 6 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16_12: i32 = int_value 6 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_8.2: i32 = bind_value %.loc16_8.1
 // CHECK:STDOUT:   %Foo.call: init %.1 = call %Foo.ref(%.loc16_8.2, %.loc16_12)
 // CHECK:STDOUT:   return

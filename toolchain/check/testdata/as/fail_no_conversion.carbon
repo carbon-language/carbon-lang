@@ -25,7 +25,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
 // CHECK:STDOUT:   %As: %As.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -109,7 +109,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17_21: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_32.loc17_27: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc17_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_35.1: %.2 = tuple_literal (%int.make_type_32.loc17_27, %int.make_type_32.loc17_32)
@@ -118,11 +118,8 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc17_35.4: type = value_of_initializer %int.make_type_32.loc17_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_32.loc17_32, %.loc17_35.4 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %As.type: type = interface_type @As, @As(constants.%.3) [template = constants.%As.type.3]
-// CHECK:STDOUT:   %.loc17_23.1: %.8 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_23.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc17_23.2: %.3 = converted %.loc17_21, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc17_23.3: i32 = tuple_access %.loc17_23.2, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.1: %.3 = converted %.loc17_21, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.2: i32 = tuple_access %.loc17_23.1, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

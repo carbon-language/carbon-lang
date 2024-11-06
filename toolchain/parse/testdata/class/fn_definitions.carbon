@@ -34,7 +34,7 @@ class Foo {
 // CHECK:STDOUT:                 {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:               {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:             {kind: 'StructField', text: '=', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'StructLiteralField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'ReturnStatement', text: ';', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 16},

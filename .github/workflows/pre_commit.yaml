@@ -26,6 +26,7 @@ jobs:
           # prettier-ignore
           allowed-endpoints: >
             *.dl.sourceforge.net:443
+            api.github.com:443
             bcr.bazel.build:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
@@ -40,6 +41,13 @@ jobs:
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+
+      # Ensure LLVM is set up consistently.
+      - uses: ./.github/actions/build-setup-common
+        with:
+          matrix_runner: ubuntu-latest
+          remote_cache_upload: '--remote_upload_local_results=false'
+
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
       # We want to automatically create github suggestions for pre-commit file

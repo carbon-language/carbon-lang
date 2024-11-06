@@ -13,7 +13,11 @@ def _run(repository_ctx, cmd):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(cmd)
     if exec_result.return_code != 0:
-        fail("Unable to run command successfully: %s" % str(cmd))
+        fail("Command failed with return code {0}: {1}\n{2}".format(
+            exec_result.return_code,
+            str(cmd),
+            exec_result.stderr,
+        ))
 
     return exec_result
 
@@ -100,24 +104,26 @@ def _compute_bsd_sysroot(repository_ctx):
         return sysroot_path.realpath
     return default
 
+# File content used when computing search paths. This additionally verifies that
+# libc++ is installed.
+_CLANG_INCLUDE_FILE_CONTENT = """
+#if __has_include(<version>)
+#include <version>
+#endif
+#ifndef _LIBCPP_STD_VER
+#error "No libc++ install found!"
+#endif
+"""
+
 def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
 
     Returns the resulting paths as a list of strings.
     """
 
-    # Create an empty temp file for Clang to use
-    if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file("_temp", "")
-
-    # Read in an empty input file. If we are building from
-    # Windows, then we create an empty temp file. Clang
-    # on Windows does not like it when you pass a non-existent file.
-    if repository_ctx.os.name.lower().startswith("windows"):
-        repository_ctx.file("_temp", "")
-        input_file = repository_ctx.path("_temp")
-    else:
-        input_file = "/dev/null"
+    # Create a file for Clang to use as input.
+    repository_ctx.file("_temp", _CLANG_INCLUDE_FILE_CONTENT)
+    input_file = repository_ctx.path("_temp")
 
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
@@ -132,7 +138,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         # Force the language to be C++.
         "-x",
         "c++",
-        # Read in an empty input file.
+        # Use the input file.
         input_file,
         # Always use libc++.
         "-stdlib=libc++",
@@ -176,6 +182,11 @@ def _configure_clang_toolchain_impl(repository_ctx):
     (clang, clang_version, clang_version_for_cache) = _detect_system_clang(
         repository_ctx,
     )
+    if clang_version and clang_version < 16:
+        fail("Found clang {0}. ".format(clang_version) +
+             "Carbon requires clang >=16. See " +
+             "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md#old-llvm-versions")
+
     clang_cpp = clang.dirname.get_child("clang++")
 
     # Compute the various directories used by Clang.

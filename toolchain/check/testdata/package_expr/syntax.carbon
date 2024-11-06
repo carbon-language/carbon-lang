@@ -47,7 +47,7 @@ fn Main() {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,7 +82,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
@@ -97,10 +97,10 @@ fn Main() {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -136,7 +136,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_16: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_16: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %x.var, %.loc7_16
 // CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
@@ -152,7 +152,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

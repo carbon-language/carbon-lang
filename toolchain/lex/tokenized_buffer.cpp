@@ -12,7 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"
@@ -373,10 +373,10 @@ auto TokenizedBuffer::AddComment(int32_t indent, int32_t start, int32_t end)
 
 auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "comments_"), comments_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "comments_"), comments_);
 }
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(

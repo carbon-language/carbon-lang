@@ -22,7 +22,7 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,7 +57,7 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_22: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_22: i32 = int_value 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25: %.6 = tuple_literal (%.loc14_22)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return

@@ -819,8 +819,9 @@ static auto CheckRequiredDefinitions(Context& context,
         break;
       }
       case SemIR::InterfaceDecl::Kind: {
-        // TODO: handle `interface` as well, once we can test it without
-        // triggering https://github.com/carbon-language/carbon-lang/issues/4071
+        // TODO: Handle `interface` as well, once we can test it without
+        // triggering
+        // https://github.com/carbon-language/carbon-lang/issues/4071.
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       case CARBON_KIND(SemIR::SpecificFunction specific_function): {

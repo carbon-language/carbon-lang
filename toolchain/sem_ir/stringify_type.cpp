@@ -120,6 +120,21 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(FacetType inst): {
+        if (step.index == 0) {
+          out << "<facet type ";
+          steps.push_back(step.Next());
+          FacetTypeInfo facet_type_info =
+              sem_ir.facet_types().Get(inst.facet_type_id);
+          // TODO: Also output restrictions from
+          // facet_type_info.requirement_block_id.
+          TypeId type_id = facet_type_info.base_facet_type_id;
+          push_inst_id(sem_ir.types().GetInstId(type_id));
+        } else {
+          out << ">";
+        }
+        break;
+      }
       case CARBON_KIND(FacetTypeAccess inst): {
         // Print `T as type` as simply `T`.
         push_inst_id(inst.facet_id);
@@ -130,7 +145,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (step.index == 1) {
           out << ")";
         } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << "f";
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
@@ -167,7 +182,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (step.index == 1) {
           out << ")";
         } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
@@ -251,8 +266,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
           steps.push_back(step.Next());
           TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
           push_inst_id(sem_ir.types().GetInstId(type_id));
-          // TODO: also output restrictions from the inst block
-          // inst.requirements_id
+          // TODO: Also output restrictions from the inst block
+          // inst.requirements_id.
         } else {
           out << ">";
         }
@@ -297,7 +312,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case IntLiteral::Kind:
+      case IntValue::Kind:
       case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:

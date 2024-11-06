@@ -52,7 +52,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %AddrSelfBase: %AddrSelfBase.type = struct_value () [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %Derived [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
@@ -189,7 +189,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %.2 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc27_10: ref i32 = class_element_access %.loc27_4, element0
-// CHECK:STDOUT:   %.loc27_15: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc27_15: i32 = int_value 1 [template = constants.%.10]
 // CHECK:STDOUT:   assign %.loc27_10, %.loc27_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -35,7 +35,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,7 +133,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc20_11.1: ref %.3 = temporary_storage
 // CHECK:STDOUT:   %G.call: init %.3 = call %G.ref() to %.loc20_11.1
-// CHECK:STDOUT:   %.loc20_14: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc20_14: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc20_11.2: ref %.3 = temporary %.loc20_11.1, %G.call
 // CHECK:STDOUT:   %.loc20_13.1: ref i32 = tuple_access %.loc20_11.2, element0
 // CHECK:STDOUT:   %.loc20_13.2: i32 = bind_value %.loc20_13.1

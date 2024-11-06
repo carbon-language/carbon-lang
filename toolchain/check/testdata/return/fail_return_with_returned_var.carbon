@@ -40,8 +40,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, i32 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
@@ -49,7 +49,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.3, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,9 +117,9 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc12_19.2: type = converted %int.make_type_32.loc12, %.loc12_19.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc12_25: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_25: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc12_25
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,8 +127,8 @@ fn G() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %return
-// CHECK:STDOUT:   %.loc25_29: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc25_37: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc25_29: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_37: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc25_38.1: %.5 = struct_literal (%.loc25_29, %.loc25_37)
 // CHECK:STDOUT:   %.loc25_38.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc25_38.3: init i32 = initialize_from %.loc25_29 to %.loc25_38.2 [template = constants.%.3]

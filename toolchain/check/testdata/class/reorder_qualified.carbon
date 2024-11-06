@@ -79,16 +79,16 @@ class A {
 // CHECK:STDOUT:   %.12: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.13: <witness> = complete_type_witness %.12 [template]
 // CHECK:STDOUT:   %.14: type = ptr_type %.12 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.1: %A = struct_value (%.15) [template]
 // CHECK:STDOUT:   %.16: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct.2: %B = struct_value (%.17) [template]
 // CHECK:STDOUT:   %.18: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.19: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.19: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %struct.3: %C = struct_value (%.19) [template]
 // CHECK:STDOUT:   %.20: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %.21: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.21: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %struct.4: %D = struct_value (%.21) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,7 +187,7 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc29_24: i32 = int_literal 1 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc29_24: i32 = int_value 1 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc29_25.1: %.12 = struct_literal (%.loc29_24)
 // CHECK:STDOUT:   %.loc29_25.2: ref i32 = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc29_25.3: init i32 = initialize_from %.loc29_24 to %.loc29_25.2 [template = constants.%.15]
@@ -197,7 +197,7 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref %B = var b
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc30_24: i32 = int_literal 2 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc30_24: i32 = int_value 2 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc30_25.1: %.3 = struct_literal (%.loc30_24)
 // CHECK:STDOUT:   %.loc30_25.2: ref i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc30_25.3: init i32 = initialize_from %.loc30_24 to %.loc30_25.2 [template = constants.%.17]
@@ -207,7 +207,7 @@ class A {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc31_24: i32 = int_literal 3 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc31_24: i32 = int_value 3 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc31_25.1: %.9 = struct_literal (%.loc31_24)
 // CHECK:STDOUT:   %.loc31_25.2: ref i32 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc31_25.3: init i32 = initialize_from %.loc31_24 to %.loc31_25.2 [template = constants.%.19]
@@ -217,7 +217,7 @@ class A {
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc32_24: i32 = int_literal 4 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc32_24: i32 = int_value 4 [template = constants.%.21]
 // CHECK:STDOUT:   %.loc32_25.1: %.6 = struct_literal (%.loc32_24)
 // CHECK:STDOUT:   %.loc32_25.2: ref i32 = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc32_25.3: init i32 = initialize_from %.loc32_24 to %.loc32_25.2 [template = constants.%.21]

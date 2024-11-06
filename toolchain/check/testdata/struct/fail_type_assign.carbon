@@ -108,10 +108,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %.loc17_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_25.2: type = converted %int.make_type_32, %.loc17_25.1 [template = i32]
 // CHECK:STDOUT:   %.loc17_28: type = struct_type {.a: i32} [template = constants.%.2]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.2) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc17_29.1: %.5 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.2) [template = constants.%.6]
-// CHECK:STDOUT:   %Convert.ref: %.5 = name_ref Convert, %.loc17_29.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_29.2: %.2 = converted %.loc17_28, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_29: %.2 = converted %.loc17_28, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

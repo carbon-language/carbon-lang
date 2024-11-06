@@ -20,7 +20,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,7 +54,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

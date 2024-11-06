@@ -152,7 +152,7 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.template AddInst<SemIR::IntLiteral>(
+    auto index_id = block.template AddInst<SemIR::IntValue>(
         loc_id,
         {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
          .int_id = context.ints().Add(llvm::APInt(32, i))});
@@ -685,6 +685,32 @@ static auto IsValidExprCategoryForConversionTarget(
   }
 }
 
+// Determines whether we can pull a value directly out of an initializing
+// expression of type `type_id` to initialize a target of type `type_id` and
+// kind `target_kind`.
+static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
+                                     SemIR::TypeId type_id,
+                                     ConversionTarget::Kind target_kind)
+    -> bool {
+  if (!IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
+                                              target_kind)) {
+    // We don't want a value expression.
+    return false;
+  }
+
+  if (SemIR::InitRepr::ForType(sem_ir, type_id).kind !=
+      SemIR::InitRepr::ByCopy) {
+    // The initializing expression doesn't contain a copy of a value.
+    return false;
+  }
+
+  // If the value representation is a copy of the object representation, we
+  // already have a value of the right form and can use that value directly.
+  auto value_rep = SemIR::ValueRepr::ForType(sem_ir, type_id);
+  return value_rep.kind == SemIR::ValueRepr::Copy &&
+         value_rep.type_id == type_id;
+}
+
 // Returns the non-adapter type that is compatible with the specified type.
 static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
@@ -749,19 +775,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // If the source is an initializing expression, we may be able to pull a
     // value right out of it.
     if (value_cat == SemIR::ExprCategory::Initializing &&
-        IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
-                                               target.kind) &&
-        SemIR::InitRepr::ForType(sem_ir, value_type_id).kind ==
-            SemIR::InitRepr::ByCopy) {
-      auto value_rep = SemIR::ValueRepr::ForType(sem_ir, value_type_id);
-      if (value_rep.kind == SemIR::ValueRepr::Copy &&
-          value_rep.type_id == value_type_id) {
-        // The initializer produces an object representation by copy, and the
-        // value representation is a copy of the object representation, so we
-        // already have a value of the right form.
-        return context.AddInst<SemIR::ValueOfInitializer>(
-            loc_id, {.type_id = value_type_id, .init_id = value_id});
-      }
+        CanUseValueOfInitializer(sem_ir, value_type_id, target.kind)) {
+      return context.AddInst<SemIR::ValueOfInitializer>(
+          loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
   }
 
@@ -986,8 +1002,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
-  SemIR::Inst expr = sem_ir.insts().Get(expr_id);
-  if (expr.type_id() != target.type_id) {
+  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
     SemIR::InstId interface_args[] = {
         context.types().GetInstId(target.type_id)};
     Operator op = {
@@ -1010,6 +1025,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                          : ImplicitAsConversionFailure,
                                      expr_id, target.type_id);
     });
+
+    // Pull a value directly out of the initializer if possible and wanted.
+    if (expr_id != SemIR::InstId::BuiltinError &&
+        CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
+      expr_id = context.AddInst<SemIR::ValueOfInitializer>(
+          loc_id, {.type_id = target.type_id, .init_id = expr_id});
+    }
   }
 
   // Track that we performed a type conversion, if we did so.
@@ -1030,7 +1052,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL("Unexpected expression {0} after builtin conversions", expr);
+      CARBON_FATAL("Unexpected expression {0} after builtin conversions",
+                   sem_ir.insts().Get(expr_id));
 
     case SemIR::ExprCategory::Error:
       return SemIR::InstId::BuiltinError;
@@ -1068,7 +1091,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // TODO: Support types with custom value representations.
       expr_id = context.AddInst<SemIR::BindValue>(
           context.insts().GetLocId(expr_id),
-          {.type_id = expr.type_id(), .value_id = expr_id});
+          {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
       [[fallthrough]];
 
@@ -1147,16 +1170,22 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                  {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
-// TODO: consider moving this to pattern_match.h
-auto ConvertCallArgs(
-    Context& context, SemIR::LocId call_loc_id, SemIR::InstId self_id,
-    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id,
-    const CalleeParamsInfo& callee, SemIR::InstId return_slot_pattern_id,
-    SemIR::SpecificId callee_specific_id) -> SemIR::InstBlockId {
+// TODO: Consider moving this to pattern_match.h.
+auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
+                     SemIR::InstId self_id,
+                     llvm::ArrayRef<SemIR::InstId> arg_refs,
+                     SemIR::InstId return_slot_arg_id,
+                     const SemIR::Function& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId {
+  // The callee reference can be invalidated by conversions, so ensure all reads
+  // from it are done before conversion calls.
+  auto callee_decl_id = callee.latest_decl_id();
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(callee.implicit_param_patterns_id);
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
+  auto return_slot_pattern_id = callee.return_slot_pattern_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -1178,7 +1207,7 @@ auto ConvertCallArgs(
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee.callee_loc, InCallToFunction)
+        .Note(callee_decl_id, InCallToFunction)
         .Emit();
     self_id = SemIR::InstId::BuiltinError;
   }

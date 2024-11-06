@@ -10,11 +10,13 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -60,9 +62,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return ints()
-        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
-        .getZExtValue();
+    return ints().Get(insts().GetAs<IntValue>(bound_id).int_id).getZExtValue();
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -75,29 +75,33 @@ class File : public Printable<File> {
   auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
+  auto identifiers() -> SharedValueStores::IdentifierStore& {
     return value_stores_->identifiers();
   }
-  auto identifiers() const -> const CanonicalValueStore<IdentifierId>& {
+  auto identifiers() const -> const SharedValueStores::IdentifierStore& {
     return value_stores_->identifiers();
   }
-  auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
-  auto ints() const -> const CanonicalValueStore<IntId>& {
+  auto ints() -> SharedValueStores::IntStore& { return value_stores_->ints(); }
+  auto ints() const -> const SharedValueStores::IntStore& {
     return value_stores_->ints();
   }
-  auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
-  auto reals() const -> const ValueStore<RealId>& {
+  auto reals() -> SharedValueStores::RealStore& {
     return value_stores_->reals();
   }
-  auto floats() -> FloatValueStore& { return value_stores_->floats(); }
-  auto floats() const -> const FloatValueStore& {
+  auto reals() const -> const SharedValueStores::RealStore& {
+    return value_stores_->reals();
+  }
+  auto floats() -> SharedValueStores::FloatStore& {
     return value_stores_->floats();
   }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
+  auto floats() const -> const SharedValueStores::FloatStore& {
+    return value_stores_->floats();
+  }
+  auto string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return value_stores_->string_literal_values();
   }
   auto string_literal_values() const
-      -> const CanonicalValueStore<StringLiteralValueId>& {
+      -> const SharedValueStores::StringLiteralStore& {
     return value_stores_->string_literal_values();
   }
 
@@ -110,6 +114,12 @@ class File : public Printable<File> {
   auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
+  }
+  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
+  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
@@ -198,6 +208,9 @@ class File : public Printable<File> {
 
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
+
+  // Storage for facet types.
+  CanonicalValueStore<FacetTypeId> facet_types_;
 
   // Storage for impls.
   ImplStore impls_;

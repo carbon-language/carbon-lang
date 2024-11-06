@@ -42,12 +42,12 @@ fn F() {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.a: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.11: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,14 +92,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_9: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc21_9: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc21_10.1: %.6 = struct_literal (%.loc21_9)
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc21_10.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_10.3: ref %Class = temporary %.loc21_10.2, <error>
 // CHECK:STDOUT:   %.loc21_12: ref %Class = converted %.loc21_10.1, %.loc21_10.3
-// CHECK:STDOUT:   %.loc26_9: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc26_17: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc26_9: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc26_17: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc26_18.1: %.9 = struct_literal (%.loc26_9, %.loc26_17)
 // CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc26_18.2: ref %Class = temporary_storage
@@ -107,9 +107,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_18.4: init i32 = initialize_from %.loc26_9 to %.loc26_18.3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc26_18.5: ref %Class = temporary %.loc26_18.2, <error>
 // CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.5
-// CHECK:STDOUT:   %.loc30_9: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc30_17: i32 = int_literal 2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc30_25: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc30_9: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc30_17: i32 = int_value 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc30_25: i32 = int_value 3 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc30_26.1: %.11 = struct_literal (%.loc30_9, %.loc30_17, %.loc30_25)
 // CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc30_26.2: ref %Class = temporary_storage

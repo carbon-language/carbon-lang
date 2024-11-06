@@ -124,6 +124,17 @@ class Context {
     return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
   }
 
+  // If the instruction has an implicit location and a constant value, returns
+  // the constant value's instruction ID. Otherwise, same as AddInst.
+  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for GetOrAddInst with typed nodes.
+  template <typename InstT, typename LocT>
+  auto GetOrAddInst(LocT loc, InstT inst)
+      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
+  }
+
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
@@ -484,13 +495,13 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
+  auto identifiers() -> SharedValueStores::IdentifierStore& {
     return sem_ir().identifiers();
   }
-  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
-  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
+  auto ints() -> SharedValueStores::IntStore& { return sem_ir().ints(); }
+  auto reals() -> SharedValueStores::RealStore& { return sem_ir().reals(); }
+  auto floats() -> SharedValueStores::FloatStore& { return sem_ir().floats(); }
+  auto string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return sem_ir().string_literal_values();
   }
   auto entity_names() -> SemIR::EntityNameStore& {

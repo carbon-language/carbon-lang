@@ -15,7 +15,7 @@ var a: i32 = 0;
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -44,7 +44,7 @@ var a: i32 = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%a.var, %.loc10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

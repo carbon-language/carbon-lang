@@ -23,7 +23,7 @@ fn Run() {
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.BigInt = int_literal 64 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
@@ -82,7 +82,7 @@ fn Run() {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_13.1: Core.BigInt = int_literal 64 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_13.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc11_13.1) [template = f64]
 // CHECK:STDOUT:     %.loc11_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc11_13.3: type = converted %float.make_type, %.loc11_13.2 [template = f64]
@@ -112,7 +112,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.BigInt) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
@@ -129,12 +129,9 @@ fn Run() {
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc20_21.1: %.6 = specific_constant imports.%import_ref.5, @ImplicitAs(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc20_21.1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc20_19.1: ref f64 = temporary_storage
 // CHECK:STDOUT:   %.loc20_19.2: ref f64 = temporary %.loc20_19.1, %Foo.call
-// CHECK:STDOUT:   %.loc20_21.2: i32 = converted %Foo.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_21: i32 = converted %Foo.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

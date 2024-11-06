@@ -34,24 +34,24 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 9 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 9 [template]
 // CHECK:STDOUT:   %.4: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.5: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple: %.5 = tuple_value (%.7, %.8) [template]
-// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.10: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.11: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.13: type = ptr_type %.12 [template]
 // CHECK:STDOUT:   %struct: %.12 = struct_value (%.7, %.8) [template]
 // CHECK:STDOUT:   %.14: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.15: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.16: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 10 [template]
+// CHECK:STDOUT:   %.17: i32 = int_value 10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -79,10 +79,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32.loc12, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_value 12 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_16
 // CHECK:STDOUT:   %a.ref.loc13: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 9 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: i32 = int_value 9 [template = constants.%.3]
 // CHECK:STDOUT:   assign %a.ref.loc13, %.loc13
 // CHECK:STDOUT:   %int.make_type_32.loc15_11: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc15_16: init type = call constants.%Int32() [template = i32]
@@ -94,8 +94,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_19.6: type = converted %.loc15_19.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %b.var: ref %.5 = var b
 // CHECK:STDOUT:   %b: ref %.5 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc15_24: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_27: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc15_24: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_27: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc15_28.1: %.5 = tuple_literal (%.loc15_24, %.loc15_27)
 // CHECK:STDOUT:   %.loc15_28.2: ref i32 = tuple_access %b.var, element0
 // CHECK:STDOUT:   %.loc15_28.3: init i32 = initialize_from %.loc15_24 to %.loc15_28.2 [template = constants.%.7]
@@ -105,14 +105,14 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_29: init %.5 = converted %.loc15_28.1, %.loc15_28.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %b.var, %.loc15_29
 // CHECK:STDOUT:   %b.ref.loc16: ref %.5 = name_ref b, %b
-// CHECK:STDOUT:   %.loc16_5: i32 = int_literal 0 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc16_5: i32 = int_value 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc16_4: ref i32 = tuple_access %b.ref.loc16, element0
-// CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc16_9: i32 = int_value 3 [template = constants.%.10]
 // CHECK:STDOUT:   assign %.loc16_4, %.loc16_9
 // CHECK:STDOUT:   %b.ref.loc17: ref %.5 = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_5: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_5: i32 = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc17_4: ref i32 = tuple_access %b.ref.loc17, element1
-// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 4 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc17_9: i32 = int_value 4 [template = constants.%.11]
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
 // CHECK:STDOUT:   %int.make_type_32.loc19_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_15.1: type = value_of_initializer %int.make_type_32.loc19_15 [template = i32]
@@ -123,8 +123,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc19_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.12]
 // CHECK:STDOUT:   %c.var: ref %.12 = var c
 // CHECK:STDOUT:   %c: ref %.12 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc19_37: i32 = int_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc19_45: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19_37: i32 = int_value 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc19_45: i32 = int_value 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc19_46.1: %.12 = struct_literal (%.loc19_37, %.loc19_45)
 // CHECK:STDOUT:   %.loc19_46.2: ref i32 = struct_access %c.var, element0
 // CHECK:STDOUT:   %.loc19_46.3: init i32 = initialize_from %.loc19_37 to %.loc19_46.2 [template = constants.%.7]
@@ -135,11 +135,11 @@ fn Main() {
 // CHECK:STDOUT:   assign %c.var, %.loc19_47
 // CHECK:STDOUT:   %c.ref.loc20: ref %.12 = name_ref c, %c
 // CHECK:STDOUT:   %.loc20_4: ref i32 = struct_access %c.ref.loc20, element0
-// CHECK:STDOUT:   %.loc20_9: i32 = int_literal 3 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc20_9: i32 = int_value 3 [template = constants.%.10]
 // CHECK:STDOUT:   assign %.loc20_4, %.loc20_9
 // CHECK:STDOUT:   %c.ref.loc21: ref %.12 = name_ref c, %c
 // CHECK:STDOUT:   %.loc21_4: ref i32 = struct_access %c.ref.loc21, element1
-// CHECK:STDOUT:   %.loc21_9: i32 = int_literal 4 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc21_9: i32 = int_value 4 [template = constants.%.11]
 // CHECK:STDOUT:   assign %.loc21_4, %.loc21_9
 // CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_13.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
@@ -153,7 +153,7 @@ fn Main() {
 // CHECK:STDOUT:   %p.ref.loc24: ref %.14 = name_ref p, %p
 // CHECK:STDOUT:   %.loc24_4: %.14 = bind_value %p.ref.loc24
 // CHECK:STDOUT:   %.loc24_3: ref i32 = deref %.loc24_4
-// CHECK:STDOUT:   %.loc24_8: i32 = int_literal 5 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc24_8: i32 = int_value 5 [template = constants.%.15]
 // CHECK:STDOUT:   assign %.loc24_3, %.loc24_8
 // CHECK:STDOUT:   %.loc26_8: bool = bool_literal true [template = constants.%.16]
 // CHECK:STDOUT:   if %.loc26_8 br !if.expr.then else br !if.expr.else
@@ -171,7 +171,7 @@ fn Main() {
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc26_5: %.14 = block_arg !if.expr.result
 // CHECK:STDOUT:   %.loc26_3: ref i32 = deref %.loc26_5
-// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 10 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc26_31: i32 = int_value 10 [template = constants.%.17]
 // CHECK:STDOUT:   assign %.loc26_3, %.loc26_31
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -37,7 +37,7 @@ fn G() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 100 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 100 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, i32 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %.8: type = unbound_element_type %C, %.6 [template]
@@ -117,7 +117,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_26: i32 = int_literal 100 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_26: i32 = int_value 100 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc15_21.2: type = converted %int.make_type_32, %.loc15_21.1 [template = i32]
 // CHECK:STDOUT:   %.loc15_29: type = array_type %.loc15_26, i32 [template = constants.%.6]

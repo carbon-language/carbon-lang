@@ -41,9 +41,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.6: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.8: bool = bool_literal true [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
@@ -159,8 +159,8 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Neq.ref.loc8: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
-// CHECK:STDOUT:   %.loc8_21: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_24: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_21: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_24: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %int.neq.loc8: init bool = call %Neq.ref.loc8(%.loc8_21, %.loc8_24) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %int.neq.loc8 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc8_14.2: bool = converted %int.neq.loc8, %.loc8_14.1 [template = constants.%.6]
@@ -178,8 +178,8 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.loc8_14.3: type = block_arg !if.expr.result.loc8 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Neq.ref.loc9: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
-// CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_20: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_23: i32 = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %int.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.neq.loc9 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.neq.loc9, %.loc9_13.1 [template = constants.%.8]

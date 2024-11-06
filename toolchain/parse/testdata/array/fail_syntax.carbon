@@ -38,19 +38,11 @@ fn X() -> [:];
 
 // --- fail_unlexed_expr.carbon
 
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+20]]:9: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+12]]:9: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+16]]:9: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var y: [`];
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+12]]:9: error: expected `;` in array type [ExpectedArraySemi]
-// CHECK:STDERR: var y: [`];
-// CHECK:STDERR:         ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:9: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+8]]:9: error: expected `;` in array type [ExpectedArraySemi]
 // CHECK:STDERR: var y: [`];
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
@@ -62,11 +54,7 @@ var y: [`];
 
 // --- fail_no_close_bracket.carbon
 
-// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+8]]:8: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: var x: [i32;;
-// CHECK:STDERR:        ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+4]]:8: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_no_close_bracket.carbon:[[@LINE+4]]:8: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^
 // CHECK:STDERR:

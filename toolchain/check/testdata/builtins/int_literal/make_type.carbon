@@ -4,15 +4,15 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/big_int/make_type.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int_literal/make_type.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/big_int/make_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/int_literal/make_type.carbon
 
 // --- types.carbon
 
 library "[[@TEST_NAME]]";
 
-fn BigInt() -> type = "big_int.make_type";
+fn IntLiteral() -> type = "int_literal.make_type";
 
 // --- use_types.carbon
 
@@ -20,14 +20,14 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-var i: BigInt();
+var i: IntLiteral();
 
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %BigInt.type: type = fn_type @BigInt [template]
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %BigInt: %BigInt.type = struct_value () [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -40,10 +40,10 @@ var i: BigInt();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .BigInt = %BigInt.decl
+// CHECK:STDOUT:     .IntLiteral = %IntLiteral.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %BigInt.decl: %BigInt.type = fn_decl @BigInt [template = constants.%BigInt] {
+// CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [template = constants.%IntLiteral] {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -52,18 +52,18 @@ var i: BigInt();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BigInt() -> type = "big_int.make_type";
+// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %BigInt.type: type = fn_type @BigInt [template]
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %BigInt: %BigInt.type = struct_value () [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %BigInt.type = import_ref Main//types, inst+7, loaded [template = constants.%BigInt]
+// CHECK:STDOUT:   %import_ref: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -72,19 +72,19 @@ var i: BigInt();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .BigInt = imports.%import_ref
+// CHECK:STDOUT:     .IntLiteral = imports.%import_ref
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %BigInt.ref: %BigInt.type = name_ref BigInt, imports.%import_ref [template = constants.%BigInt]
-// CHECK:STDOUT:   %big_int.make_type: init type = call %BigInt.ref() [template = Core.BigInt]
-// CHECK:STDOUT:   %.loc6_15.1: type = value_of_initializer %big_int.make_type [template = Core.BigInt]
-// CHECK:STDOUT:   %.loc6_15.2: type = converted %big_int.make_type, %.loc6_15.1 [template = Core.BigInt]
-// CHECK:STDOUT:   %i.var: ref Core.BigInt = var i
-// CHECK:STDOUT:   %i: ref Core.BigInt = bind_name i, %i.var
+// CHECK:STDOUT:   %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:   %.loc6_19.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:   %.loc6_19.2: type = converted %int_literal.make_type, %.loc6_19.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:   %i.var: ref Core.IntLiteral = var i
+// CHECK:STDOUT:   %i: ref Core.IntLiteral = bind_name i, %i.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BigInt() -> type = "big_int.make_type";
+// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
 // CHECK:STDOUT:

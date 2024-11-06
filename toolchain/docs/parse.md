@@ -156,7 +156,7 @@ have two children: the lhs and rhs expressions. Many nodes have a child count of
 
 Because the tree structure is always valid, these are treated as contracts. Some
 nodes exist only to be used to construct valid tree structures for invalid
-input, such as `StructFieldUnknown`.
+input, such as `InvalidParse`.
 
 Although each subtree's size is also tracked as part of the node, we're
 currently trying to avoid relying on it and may eliminate it if it turns out to

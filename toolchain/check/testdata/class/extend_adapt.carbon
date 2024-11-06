@@ -339,10 +339,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SomeClass) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc23_3.1: %.8 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%SomeClass) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc23_3.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc23_3.2: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_3: %SomeClass = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %.1 = call %.loc23_4(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -519,11 +516,8 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %.2 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%SomeClass) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc21_11.1: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%SomeClass) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc21_11.1 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc21_11.2: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21_11.3: i32 = class_element_access <error>, element1 [template = <error>]
+// CHECK:STDOUT:   %.loc21_11.1: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21_11.2: i32 = class_element_access <error>, element1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

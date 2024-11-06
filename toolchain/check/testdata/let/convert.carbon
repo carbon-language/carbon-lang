@@ -26,9 +26,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6, %.7) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,9 +76,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12_24.8: type = converted %.loc12_24.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %v.var: ref %.3 = var v
 // CHECK:STDOUT:   %v: ref %.3 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc12_29: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_32: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_35: i32 = int_literal 3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12_29: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_32: i32 = int_value 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_35: i32 = int_value 3 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc12_36.1: %.3 = tuple_literal (%.loc12_29, %.loc12_32, %.loc12_35)
 // CHECK:STDOUT:   %.loc12_36.2: ref i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc12_36.3: init i32 = initialize_from %.loc12_29 to %.loc12_36.2 [template = constants.%.5]
@@ -111,7 +111,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_29: %.3 = converted %v.ref, %tuple
 // CHECK:STDOUT:   %w: %.3 = bind_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %.3 = name_ref w, %w
-// CHECK:STDOUT:   %.loc15_12: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_12: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_11: i32 = tuple_access %w.ref, element1
 // CHECK:STDOUT:   return %.loc15_11
 // CHECK:STDOUT: }

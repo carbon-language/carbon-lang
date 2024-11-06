@@ -27,7 +27,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,7 +64,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
 // CHECK:STDOUT:   %a_orig.ref: ref i32 = name_ref a_orig, file.%a_orig
 // CHECK:STDOUT:   %.loc5: %.3 = addr_of %a_orig.ref

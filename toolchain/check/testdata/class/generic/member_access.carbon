@@ -538,10 +538,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
 // CHECK:STDOUT:   %.loc15_18.3: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %.loc15_18.3 (constants.%.5)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc15_25.2: type = interface_type @ImplicitAs, @ImplicitAs(%Class.loc8_47.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Class.loc8_47.2) [symbolic = %Convert.type (constants.%Convert.type.2)]
-// CHECK:STDOUT:   %.loc15_25.3: type = assoc_entity_type @StaticMemberFunctionCall.%ImplicitAs.type.loc15_25.2 (%ImplicitAs.type.3), @StaticMemberFunctionCall.%Convert.type (%Convert.type.2) [symbolic = %.loc15_25.3 (constants.%.8)]
-// CHECK:STDOUT:   %.loc15_25.4: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.loc15_25.4 (constants.%.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %return: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) {
 // CHECK:STDOUT:   !entry:
@@ -553,11 +549,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %.loc15_18.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc15_18.3 (constants.%.5)]
 // CHECK:STDOUT:     %.loc15_23.1: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary_storage
 // CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = call %.loc15_18.2() to %.loc15_23.1
-// CHECK:STDOUT:     %ImplicitAs.type.loc15_25.1: type = interface_type @ImplicitAs, @ImplicitAs(constants.%Class.2) [symbolic = %ImplicitAs.type.loc15_25.2 (constants.%ImplicitAs.type.3)]
-// CHECK:STDOUT:     %.loc15_25.1: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%Class.2) [symbolic = %.loc15_25.4 (constants.%.9)]
-// CHECK:STDOUT:     %Convert.ref: @StaticMemberFunctionCall.%.loc15_25.3 (%.8) = name_ref Convert, %.loc15_25.1 [symbolic = %.loc15_25.4 (constants.%.9)]
 // CHECK:STDOUT:     %.loc15_23.2: ref @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = temporary %.loc15_23.1, %Make.call
-// CHECK:STDOUT:     %.loc15_25.2: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = converted %Make.call, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc15_25: @StaticMemberFunctionCall.%Class.loc8_47.2 (%Class.2) = converted %Make.call, <error> [template = <error>]
 // CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -645,10 +638,5 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: specific @Make(@StaticMemberFunctionCall.%T.loc8_29.2) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc5_21.1 => constants.%Class.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@StaticMemberFunctionCall.%Class.loc8_47.2) {
-// CHECK:STDOUT:   %Dest => constants.%Class.2
-// CHECK:STDOUT:   %Dest.patt => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

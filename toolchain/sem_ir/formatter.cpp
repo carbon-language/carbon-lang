@@ -9,7 +9,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -866,7 +866,7 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRHS(IntLiteral inst) -> void {
+  auto FormatInstRHS(IntValue inst) -> void {
     out_ << " ";
     sem_ir_.ints()
         .Get(inst.int_id)
@@ -954,6 +954,17 @@ class FormatterImpl {
     if (info.bind_index.is_valid()) {
       out_ << ", " << info.bind_index.index;
     }
+  }
+
+  auto FormatArg(FacetTypeId id) -> void {
+    const auto& info = sem_ir_.facet_types().Get(id);
+    out_ << "<facet-type ";
+    FormatType(info.base_facet_type_id);
+    if (info.requirement_block_id.is_valid()) {
+      // TODO: Include specifics.
+      out_ << "+requirements";
+    }
+    out_ << ">";
   }
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }

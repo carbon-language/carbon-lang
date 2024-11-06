@@ -36,12 +36,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.6, %.7) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.8: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,8 +105,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %result: ref %C = bind_name result, %return
-// CHECK:STDOUT:   %.loc17_34: i32 = int_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc17_42: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc17_34: i32 = int_value 1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_42: i32 = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc17_43.1: %.3 = struct_literal (%.loc17_34, %.loc17_42)
 // CHECK:STDOUT:   %.loc17_43.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc17_43.3: init i32 = initialize_from %.loc17_34 to %.loc17_43.2 [template = constants.%.6]
@@ -125,7 +125,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc22_24.2: type = converted %int.make_type_32.loc22, %.loc22_24.1 [template = i32]
 // CHECK:STDOUT:   %result.var: ref i32 = var result
 // CHECK:STDOUT:   %result: ref i32 = bind_name result, %result.var
-// CHECK:STDOUT:   %.loc22_30: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc22_30: i32 = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   assign %result.var, %.loc22_30
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %result
 // CHECK:STDOUT:   return %.loc22_16
