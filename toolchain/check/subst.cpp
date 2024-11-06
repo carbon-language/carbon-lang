@@ -172,14 +172,13 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       const auto& old_facet_type_info =
           context.sem_ir().facet_types().Get(SemIR::FacetTypeId(arg));
       SemIR::FacetTypeInfo new_facet_type_info = old_facet_type_info;
-      for (auto i : llvm::index_range(0, old_facet_type_info.impls.size())) {
-        // Since these were processed as a stack, we get them back in reverse
-        // order.
-        auto j = old_facet_type_info.impls.size() - i - 1;
+      // Since these were added to a stack, we get them back in reverse order.
+      for (auto i :
+           llvm::reverse(llvm::seq(old_facet_type_info.impls.size()))) {
         auto specific_id =
             PopOperand(context, worklist, SemIR::IdKind::For<SemIR::SpecificId>,
-                       old_facet_type_info.impls[j].specific_id.index);
-        new_facet_type_info.impls[j].specific_id =
+                       old_facet_type_info.impls[i].specific_id.index);
+        new_facet_type_info.impls[i].specific_id =
             SemIR::SpecificId(specific_id);
       }
       return context.sem_ir().facet_types().Add(new_facet_type_info).index;
