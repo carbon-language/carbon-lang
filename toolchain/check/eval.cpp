@@ -1484,14 +1484,25 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
-      // FIXME: process typed_inst.period_self_id
-      // SemIR::TypeId base_facet_type_id =
-      //     eval_context.insts().Get(typed_inst.period_self_id).type_id();
+      SemIR::TypeId base_facet_type_id =
+          eval_context.insts().Get(typed_inst.period_self_id).type_id();
       Phase phase = Phase::Template;
-      // base_facet_type_id =
-      //     GetConstantValue(eval_context, base_facet_type_id, &phase);
+      if (base_facet_type_id != SemIR::TypeId::TypeType) {
+        auto facet_type =
+            eval_context.types().GetAs<SemIR::FacetType>(base_facet_type_id);
+        const auto& info =
+            eval_context.facet_types().Get(facet_type.facet_type_id);
+        // FIXME: duplicate code
+        impls.reserve(info.impls.size());
+        for (SemIR::FacetTypeInfo::Impls req : info.impls) {
+          req.specific_id =
+              GetConstantValue(eval_context, req.specific_id, &phase);
+          impls.push_back(req);
+        }
+        std::sort(impls.begin(), impls.end());
+      }
       SemIR::InstBlockId requirement_block_id = typed_inst.requirements_id;
-      // TODO: process & canonicalize requirements
+      // TODO: Process & canonicalize other requirements.
       return MakeFacetTypeResult(eval_context.context(), impls,
                                  requirement_block_id, phase);
     }
