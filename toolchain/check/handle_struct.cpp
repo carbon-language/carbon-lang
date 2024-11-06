@@ -48,7 +48,8 @@ auto HandleParseNode(Context& /*context*/,
 auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
     -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
-  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+  // Get the name while leaving it on the stack.
+  auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
   auto value_type_id = context.insts().Get(value_inst_id).type_id();
@@ -60,28 +61,26 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::StructTypeLiteralFieldId node_id)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::StructTypeLiteralFieldId /*node_id*/) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id).type_id;
-
-  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+  // Get the name while leaving it on the stack.
+  auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   context.struct_type_fields_stack().AppendToTop(
       {.name_id = name_id, .type_id = cast_type_id});
-  context.node_stack().Push(node_id);
   return true;
 }
 
-// Diagnoses and returns true if there's a duplicate name. `get_field_loc`
-// returns the location for a field index, for diagnostics.
+// Diagnoses and returns true if there's a duplicate name.
 static auto DiagnoseDuplicateNames(
-    Context& context, llvm::ArrayRef<SemIR::StructTypeField> fields,
-    bool is_struct_type_literal,
-    llvm::function_ref<SemIRLoc(int)> get_field_loc) -> bool {
-  Map<SemIR::NameId, int> names;
-  for (auto [index, field] : llvm::enumerate(fields)) {
-    auto result = names.Insert(field.name_id, index);
+    Context& context, llvm::ArrayRef<Parse::NodeId> field_name_nodes,
+    llvm::ArrayRef<SemIR::StructTypeField> fields, bool is_struct_type_literal)
+    -> bool {
+  Map<SemIR::NameId, Parse::NodeId> names;
+  for (auto [field_name_node, field] : llvm::zip(field_name_nodes, fields)) {
+    auto result = names.Insert(field.name_id, field_name_node);
     if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "duplicated field name `{1}` in "
@@ -90,9 +89,9 @@ static auto DiagnoseDuplicateNames(
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "field with the same name here");
       context.emitter()
-          .Build(get_field_loc(index), StructNameDuplicate,
-                 is_struct_type_literal, field.name_id)
-          .Note(get_field_loc(result.value()), StructNamePrevious)
+          .Build(field_name_node, StructNameDuplicate, is_struct_type_literal,
+                 field.name_id)
+          .Note(result.value(), StructNamePrevious)
           .Emit();
       return true;
     }
@@ -100,20 +99,43 @@ static auto DiagnoseDuplicateNames(
   return false;
 }
 
+// Pops the names of each field from the stack. These will have been left while
+// handling struct fields.
+static auto PopFieldNameNodes(Context& context, size_t field_count)
+    -> llvm::SmallVector<Parse::NodeId> {
+  llvm::SmallVector<Parse::NodeId> nodes;
+  nodes.reserve(field_count);
+  while (true) {
+    auto [name_node, _] =
+        context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::MemberName>();
+    if (name_node.is_valid()) {
+      nodes.push_back(name_node);
+    } else {
+      break;
+    }
+  }
+  CARBON_CHECK(nodes.size() == field_count, "Found {0} names, expected {1}",
+               nodes.size(), field_count);
+  return nodes;
+}
+
 auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
-  auto elements_id = context.param_and_arg_refs_stack().EndAndPop(
+  // Remove the last parameter from the node stack before collecting names.
+  context.param_and_arg_refs_stack().EndNoPop(
       Parse::NodeKind::StructLiteralStart);
+
   auto fields = context.struct_type_fields_stack().PeekArray();
+  llvm::SmallVector<Parse::NodeId> field_name_nodes =
+      PopFieldNameNodes(context, fields.size());
+
+  auto elements_id = context.param_and_arg_refs_stack().Pop();
 
   context.scope_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructLiteralStart>();
 
-  if (DiagnoseDuplicateNames(context, fields, /*is_struct_type_literal=*/false,
-                             [&](int index) -> SemIRLoc {
-                               return context.inst_blocks().Get(
-                                   elements_id)[index];
-                             })) {
+  if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                             /*is_struct_type_literal=*/false)) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
   } else {
     auto type_id = context.GetStructType(
@@ -131,21 +153,15 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
     -> bool {
   auto fields = context.struct_type_fields_stack().PeekArray();
+  llvm::SmallVector<Parse::NodeId> field_name_nodes =
+      PopFieldNameNodes(context, fields.size());
 
   context.scope_stack().Pop();
-  llvm::SmallVector<Parse::NodeId> nodes;
-  while (
-      auto node_id =
-          context.node_stack()
-              .PopForSoloNodeIdIf<Parse::NodeKind::StructTypeLiteralField>()) {
-    nodes.push_back(*node_id);
-  }
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 
-  if (DiagnoseDuplicateNames(
-          context, fields, /*is_struct_type_literal=*/true,
-          [&](int index) -> SemIRLoc { return nodes[index]; })) {
+  if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                             /*is_struct_type_literal=*/true)) {
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
