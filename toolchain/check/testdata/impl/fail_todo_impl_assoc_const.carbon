@@ -14,7 +14,7 @@ interface I { let T:! type; }
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+6]]:27: error: cannot implicitly convert from `type` to `<associated type in <facet type I>>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+6]]:27: error: cannot implicitly convert from `type` to `<associated type in I>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR:                           ^~~~
 // CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:27: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]

@@ -10,7 +10,7 @@
 
 interface Undefined;
 
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `<facet type Undefined>` [QualifiedDeclInUndefinedInterfaceScope]
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined` [QualifiedDeclInUndefinedInterfaceScope]
 // CHECK:STDERR: fn Undefined.F();
 // CHECK:STDERR:    ^~~~~~~~~
 // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -20,7 +20,7 @@ interface Undefined;
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `<facet type Undefined>` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   Undefined.G();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -31,7 +31,7 @@ fn Test() {
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `<facet type BeingDefined>` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]

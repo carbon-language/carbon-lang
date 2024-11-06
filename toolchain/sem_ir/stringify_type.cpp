@@ -124,7 +124,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
         if (facet_type_info.impls.empty()) {
-          out << "`type`";
+          out << "type";
         } else {
           auto interface_id = facet_type_info.impls[step.index].interface_id;
           auto interface_name_id =

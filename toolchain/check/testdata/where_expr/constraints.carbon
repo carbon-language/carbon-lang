@@ -33,7 +33,7 @@ interface N {
   let P:! type;
 }
 
-// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error: cannot implicitly convert from `{}` to `<associated type in <facet type N>>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+7]]:27: error: cannot implicitly convert from `{}` to `<associated type in N>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn Equal(T:! N where .P = {});
 // CHECK:STDERR:                           ^~
 // CHECK:STDERR: fail_todo_equal_constraint.carbon:[[@LINE+4]]:27: note: type `{}` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
@@ -53,10 +53,10 @@ interface K {
   let Associated:! L;
 }
 
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error: cannot implicitly convert from `<associated <facet type L> in <facet type K>>` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+7]]:36: error: cannot implicitly convert from `<associated L in K>` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note: type `<associated <facet type L> in <facet type K>>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: note: type `<associated L in K>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
 // CHECK:STDERR:                                    ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -71,7 +71,7 @@ import library "state_constraints";
 // `2` can't be converted to the type of `I.Member`
 // TODO: The diagnostics are wrong since member access into facets isn't
 // working properly yet.
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in <facet type I>>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
@@ -128,7 +128,7 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `<facet type `type`>` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
@@ -146,7 +146,7 @@ fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `<facet type `type`>` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `type` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
@@ -167,7 +167,7 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `<facet type `type`>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let B: type where .Self impls A = D;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
