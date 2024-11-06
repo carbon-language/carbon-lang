@@ -946,17 +946,24 @@ class FormatterImpl {
 
   auto FormatArg(FacetTypeId id) -> void {
     const auto& info = sem_ir_.facet_types().Get(id);
-    out_ << "<facet-type ";
+    out_ << "<";
 
-    llvm::ListSeparator sep;
-    for (auto impls : info.impls) {
-      out_ << sep;
-      FormatName(impls.interface_id);
+    llvm::ListSeparator sep(" & ");
+    if (info.impls.empty()) {
+      out_ << "type";
+    } else {
+      for (auto impls : info.impls) {
+        out_ << sep;
+        FormatName(impls.interface_id);
+        if (impls.specific_id.is_valid()) {
+          out_ << "(...)";
+        }
+      }
     }
 
     if (info.requirement_block_id.is_valid()) {
       // TODO: Include specifics.
-      out_ << "+requirements";
+      out_ << " where...";
     }
     out_ << ">";
   }

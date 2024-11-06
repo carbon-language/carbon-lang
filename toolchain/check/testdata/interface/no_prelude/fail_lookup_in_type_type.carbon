@@ -55,7 +55,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   <unexpected>.inst+6: type = facet_type <facet-type +requirements> [template]
+// CHECK:STDOUT:   <unexpected>.inst+6: type = facet_type <facet-type type where...> [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
