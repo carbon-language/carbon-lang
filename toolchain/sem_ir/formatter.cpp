@@ -946,6 +946,8 @@ class FormatterImpl {
 
   auto FormatArg(FacetTypeId id) -> void {
     const auto& info = sem_ir_.facet_types().Get(id);
+    // Nothing output to indicate that this is a facet type since this is only
+    // used as the argument to a `facet_type` instruction.
     out_ << "<";
 
     llvm::ListSeparator sep(" & ");

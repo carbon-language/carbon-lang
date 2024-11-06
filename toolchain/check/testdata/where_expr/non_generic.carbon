@@ -16,7 +16,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT: --- non_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.1: type = facet_type <facet-type @I> [template]
+// CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
@@ -24,7 +24,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <facet-type @I where...> [template]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where...> [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
 // CHECK:STDOUT: }
