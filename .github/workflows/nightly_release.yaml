@@ -88,7 +88,6 @@ jobs:
       - name: Extract the release version
         run: |
           # Make sure we can run the toolchain to get the version.
-          # Note we're matching flags from building the release.
           ./bazel-bin/toolchain/install/run_carbon version
 
           # Now stash it in a variable and export it.
