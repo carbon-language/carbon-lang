@@ -94,13 +94,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref Main//a, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %.3 = import_ref Main//a, inst+11, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.7 = import_ref Main//a, inst+20, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.4: %.7 = import_ref Main//a, inst+17, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

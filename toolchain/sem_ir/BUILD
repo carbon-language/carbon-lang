@@ -110,6 +110,7 @@ cc_library(
         "interface.h",
         "name.h",
         "name_scope.h",
+        "struct_type_field.h",
         "type.h",
         "type_info.h",
     ],

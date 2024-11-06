@@ -424,7 +424,6 @@ class NodeStack {
         case Parse::NodeKind::ShortCircuitOperandAnd:
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructLiteralField:
-        case Parse::NodeKind::StructTypeLiteralField:
         case Parse::NodeKind::WhereOperand:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
@@ -465,6 +464,7 @@ class NodeStack {
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
         case Parse::NodeKind::StructLiteralStart:
+        case Parse::NodeKind::StructTypeLiteralField:
         case Parse::NodeKind::StructTypeLiteralStart:
         case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:

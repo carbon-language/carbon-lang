@@ -34,6 +34,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     generic0:        {decl: inst+24, bindings: block11}
 // CHECK:STDOUT:   specifics:
 // CHECK:STDOUT:     specific0:       {generic: generic0, args: block13}
+// CHECK:STDOUT:   struct_type_fields: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}

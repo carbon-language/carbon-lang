@@ -58,13 +58,6 @@ class InstBlockStack {
     insts_stack_.AppendToTop(inst_id);
   }
 
-  // Adds the given instruction ID to the front of the block at the top of the
-  // stack.
-  auto AddFrontInstId(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(!empty(), "no current block");
-    insts_stack_.PrependToTop(inst_id);
-  }
-
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
     return id_stack_.back() != SemIR::InstBlockId::Unreachable;

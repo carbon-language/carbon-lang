@@ -262,15 +262,15 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+14, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+12, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -298,12 +298,12 @@ private export C;
 // CHECK:STDOUT: --- not_reexporting.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//export, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//export, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst+20, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -327,16 +327,16 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = file.%NSC
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+20, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -385,16 +385,16 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+20, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -465,16 +465,16 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export_export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+24, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+20, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -546,16 +546,16 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export_export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+24, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, inst+20, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export_export, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -612,11 +612,11 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//base, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -660,11 +660,11 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -702,15 +702,15 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+14, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, inst+12, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst+17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -781,16 +781,16 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//export, inst+4, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+24, loaded [template = constants.%NSC]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, inst+20, loaded [template = constants.%NSC]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//export, inst+19, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -868,11 +868,11 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -905,9 +905,9 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//repeat_export, inst+15, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//repeat_export, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//repeat_export, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//repeat_export, inst+13, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//repeat_export, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//repeat_export, inst+12, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -951,11 +951,11 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//base, inst+11, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+12, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
 // CHECK:STDOUT: }

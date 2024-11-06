@@ -771,7 +771,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//use_non_export_then_base, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//use_non_export_then_base, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded

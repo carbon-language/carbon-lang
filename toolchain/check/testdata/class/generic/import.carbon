@@ -275,7 +275,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+9, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+21, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.2 = import_ref Main//foo, inst+71, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.3: %F.type.2 = import_ref Main//foo, inst+69, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
@@ -283,7 +283,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+46, unloaded
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,7 +448,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+21, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+71, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+69, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
@@ -457,7 +457,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.4: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.6: @CompleteClass.%.1 (%.4) = import_ref Main//foo, inst+38, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, inst+48, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, inst+46, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -649,7 +649,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+21, loaded [template = constants.%CompleteClass.1]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+71, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+69, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.7
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
@@ -658,7 +658,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//foo, inst+26, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+46, unloaded
 // CHECK:STDOUT:   %import_ref.7: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.8: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//prelude/operators/as, inst+55, unloaded
@@ -849,7 +849,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+9, loaded [template = constants.%Class.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+71, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+69, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

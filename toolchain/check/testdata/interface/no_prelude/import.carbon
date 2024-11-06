@@ -177,7 +177,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%Empty.type]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%Basic.type]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+20, loaded [template = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %import_ref.4: ref %.11 = import_ref Main//a, inst+42, loaded
+// CHECK:STDOUT:   %import_ref.4: ref %.11 = import_ref Main//a, inst+39, loaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.7: %.2 = import_ref Main//a, inst+11, loaded [template = constants.%.3]
