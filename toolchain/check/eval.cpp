@@ -1484,14 +1484,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
+      Phase phase = Phase::Template;
       SemIR::TypeId base_facet_type_id =
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
-      Phase phase = Phase::Template;
-      if (base_facet_type_id != SemIR::TypeId::TypeType) {
-        auto facet_type =
-            eval_context.types().GetAs<SemIR::FacetType>(base_facet_type_id);
+      SemIR::Inst base_facet_inst =
+          eval_context.GetConstantValueAsInst(base_facet_type_id);
+      // `where` provides that this is either `type` or a facet type.
+      if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
         const auto& info =
-            eval_context.facet_types().Get(facet_type.facet_type_id);
+            eval_context.facet_types().Get(facet_type->facet_type_id);
         // FIXME: duplicate code
         impls.reserve(info.impls.size());
         for (SemIR::FacetTypeInfo::Impls req : info.impls) {
