@@ -226,7 +226,7 @@ static auto PerformImplLookup(
   auto subst_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), interface_type.specific_id, assoc_type.entity_type_id);
 
-  return context.AddInst<SemIR::InterfaceWitnessAccess>(
+  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
       loc_id, {.type_id = subst_type_id,
                .witness_id = witness_id,
                .index = assoc_entity->index});
@@ -267,7 +267,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   // store the specific too.
   if (result.specific_id.is_valid() &&
       context.constant_values().Get(result.inst_id).is_symbolic()) {
-    result.inst_id = context.AddInst<SemIR::SpecificConstant>(
+    result.inst_id = context.GetOrAddInst<SemIR::SpecificConstant>(
         loc_id, {.type_id = type_id,
                  .inst_id = result.inst_id,
                  .specific_id = result.specific_id});
@@ -275,7 +275,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
   // TODO: Use a different kind of instruction that also references the
   // `base_id` so that `SemIR` consumers can find it.
-  auto member_id = context.AddInst<SemIR::NameRef>(
+  auto member_id = context.GetOrAddInst<SemIR::NameRef>(
       loc_id,
       {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 
@@ -316,7 +316,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                    "Non-constant value {0} of unbound element type",
                    context.insts().Get(member_id));
       auto index = GetClassElementIndex(context, element_id);
-      auto access_id = context.AddInst<SemIR::ClassElementAccess>(
+      auto access_id = context.GetOrAddInst<SemIR::ClassElementAccess>(
           loc_id, {.type_id = unbound_element_type.element_type_id,
                    .base_id = base_id,
                    .index = index});
@@ -335,7 +335,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
     }
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
-        return context.AddInst<SemIR::BoundMethod>(
+        return context.GetOrAddInst<SemIR::BoundMethod>(
             loc_id, {.type_id = context.GetBuiltinType(
                          SemIR::BuiltinInstKind::BoundMethodType),
                      .object_id = base_id,
@@ -411,7 +411,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
           // binding separately. Perhaps a struct type should be a name scope.
-          return context.AddInst<SemIR::StructAccess>(
+          return context.GetOrAddInst<SemIR::StructAccess>(
               loc_id, {.type_id = field.field_type_id,
                        .struct_id = base_id,
                        .index = SemIR::ElementIndex(i)});
@@ -530,10 +530,10 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   element_type_id = type_block[index_val->getZExtValue()];
   auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 
-  return context.AddInst<SemIR::TupleAccess>(loc_id,
-                                             {.type_id = element_type_id,
-                                              .tuple_id = tuple_inst_id,
-                                              .index = tuple_index});
+  return context.GetOrAddInst<SemIR::TupleAccess>(loc_id,
+                                                  {.type_id = element_type_id,
+                                                   .tuple_id = tuple_inst_id,
+                                                   .index = tuple_index});
 }
 
 }  // namespace Carbon::Check

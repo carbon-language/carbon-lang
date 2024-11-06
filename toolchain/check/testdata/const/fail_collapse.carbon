@@ -126,10 +126,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: fn @G(%p.param_patt: %.4) -> %.6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.6) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc22_11.1: %.9 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.6) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc22_11.1 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc22_11.2: %.6 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22: %.6 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -85,12 +85,9 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %bool.make_type.loc23_27: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.1) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:     %.loc23_27.1: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(constants.%.1) [template = constants.%.7]
-// CHECK:STDOUT:     %Convert.ref: %.6 = name_ref Convert, %.loc23_27.1 [template = constants.%.7]
-// CHECK:STDOUT:     %.loc23_27.2: ref type = temporary_storage
-// CHECK:STDOUT:     %.loc23_27.3: ref type = temporary %.loc23_27.2, %bool.make_type.loc23_27
-// CHECK:STDOUT:     %.loc23_27.4: %.1 = converted %bool.make_type.loc23_27, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc23_27.1: ref type = temporary_storage
+// CHECK:STDOUT:     %.loc23_27.2: ref type = temporary %.loc23_27.1, %bool.make_type.loc23_27
+// CHECK:STDOUT:     %.loc23_27.3: %.1 = converted %bool.make_type.loc23_27, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc23_16: type = where_expr %.Self [template = constants.%.9] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }

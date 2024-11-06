@@ -159,10 +159,7 @@ fn CallNegative() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
 // CHECK:STDOUT:   %.loc24_18: i32 = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(Core.IntLiteral) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc24_17.1: %.6 = specific_constant imports.%import_ref.5, @ImplicitAs(Core.IntLiteral) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc24_17.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc24_17.2: Core.IntLiteral = converted %.loc24_18, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24_17: Core.IntLiteral = converted %.loc24_18, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

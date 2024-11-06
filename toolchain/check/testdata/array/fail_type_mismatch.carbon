@@ -193,10 +193,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc18_39.2: i32 = int_value 0 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18_39.3: ref i32 = array_index file.%a.var, %.loc18_39.2
 // CHECK:STDOUT:   %.loc18_39.4: init i32 = initialize_from %.loc18_20 to %.loc18_39.3 [template = constants.%.5]
-// CHECK:STDOUT:   %ImplicitAs.type.loc18: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc18_39.5: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref.loc18: %.13 = name_ref Convert, %.loc18_39.5 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc18_39.6: i32 = converted %.loc18_23, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_39.5: i32 = converted %.loc18_23, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %t1.ref: ref %.9 = name_ref t1, file.%t1
 // CHECK:STDOUT:   %.loc28_19.1: ref i32 = tuple_access %t1.ref, element0
@@ -205,10 +202,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc28_19.4: ref i32 = array_index file.%b.var, %.loc28_19.3
 // CHECK:STDOUT:   %.loc28_19.5: init i32 = initialize_from %.loc28_19.2 to %.loc28_19.4
 // CHECK:STDOUT:   %.loc28_19.6: ref String = tuple_access %t1.ref, element1
-// CHECK:STDOUT:   %ImplicitAs.type.loc28: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc28_19.7: %.13 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.14]
-// CHECK:STDOUT:   %Convert.ref.loc28: %.13 = name_ref Convert, %.loc28_19.7 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc28_19.8: i32 = converted %.loc28_19.6, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc28_19.7: i32 = converted %.loc28_19.6, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %.loc34_20: i32 = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc34_23: i32 = int_value 2 [template = constants.%.19]

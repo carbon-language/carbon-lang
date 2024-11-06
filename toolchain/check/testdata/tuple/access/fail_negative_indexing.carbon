@@ -103,7 +103,6 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15: i32 = int_value 10 [template = constants.%.7]
-// CHECK:STDOUT:   %Op.ref: %.8 = name_ref Op, imports.%import_ref.4 [template = constants.%.9]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

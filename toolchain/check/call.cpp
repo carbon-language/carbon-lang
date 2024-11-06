@@ -97,7 +97,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }
-  return context.AddInst<SemIR::ClassType>(
+  return context.GetOrAddInst<SemIR::ClassType>(
       loc_id, {.type_id = SemIR::TypeId::TypeType,
                .class_id = class_id,
                .specific_id = *callee_specific_id});
@@ -117,7 +117,7 @@ static auto PerformCallToGenericInterface(
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }
-  return context.AddInst<SemIR::InterfaceType>(
+  return context.GetOrAddInst<SemIR::InterfaceType>(
       loc_id, {.type_id = SemIR::TypeId::TypeType,
                .interface_id = interface_id,
                .specific_id = *callee_specific_id});
@@ -162,13 +162,13 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::InstId::BuiltinError;
   }
   if (callee_specific_id->is_valid()) {
-    callee_id =
-        context.AddInst(context.insts().GetLocId(callee_id),
-                        SemIR::SpecificFunction{
-                            .type_id = context.GetBuiltinType(
-                                SemIR::BuiltinInstKind::SpecificFunctionType),
-                            .callee_id = callee_id,
-                            .specific_id = *callee_specific_id});
+    callee_id = context.GetOrAddInst(
+        context.insts().GetLocId(callee_id),
+        SemIR::SpecificFunction{
+            .type_id = context.GetBuiltinType(
+                SemIR::BuiltinInstKind::SpecificFunctionType),
+            .callee_id = callee_id,
+            .specific_id = *callee_specific_id});
     context.definitions_required().push_back(callee_id);
   }
 
@@ -212,9 +212,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
                       return_slot_arg_id, function, *callee_specific_id);
   auto call_inst_id =
-      context.AddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
-                                            .callee_id = callee_id,
-                                            .args_id = converted_args_id});
+      context.GetOrAddInst<SemIR::Call>(loc_id, {.type_id = return_info.type_id,
+                                                 .callee_id = callee_id,
+                                                 .args_id = converted_args_id});
 
   return call_inst_id;
 }

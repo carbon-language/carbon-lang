@@ -91,7 +91,8 @@ auto Context::VerifyOnFinish() -> void {
 auto Context::GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   if (loc_id_and_inst.loc_id.is_implicit()) {
-    auto const_id = TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
+    auto const_id =
+        TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
     if (const_id.is_valid()) {
       CARBON_VLOG("GetOrAddInst: constant: {0}\n", loc_id_and_inst.inst);
       return constant_values().GetInstId(const_id);

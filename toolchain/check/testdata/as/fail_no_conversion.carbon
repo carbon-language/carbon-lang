@@ -118,11 +118,8 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc17_35.4: type = value_of_initializer %int.make_type_32.loc17_32 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_32.loc17_32, %.loc17_35.4 [template = i32]
 // CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %As.type: type = interface_type @As, @As(constants.%.3) [template = constants.%As.type.3]
-// CHECK:STDOUT:   %.loc17_23.1: %.8 = specific_constant imports.%import_ref.4, @As(constants.%.3) [template = constants.%.9]
-// CHECK:STDOUT:   %Convert.ref: %.8 = name_ref Convert, %.loc17_23.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc17_23.2: %.3 = converted %.loc17_21, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc17_23.3: i32 = tuple_access %.loc17_23.2, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.1: %.3 = converted %.loc17_21, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.2: i32 = tuple_access %.loc17_23.1, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %.3 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

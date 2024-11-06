@@ -112,10 +112,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p.param_patt: %.3) -> %.5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(constants.%.5) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc18_11.1: %.9 = specific_constant imports.%import_ref.3, @ImplicitAs(constants.%.5) [template = constants.%.10]
-// CHECK:STDOUT:   %Convert.ref: %.9 = name_ref Convert, %.loc18_11.1 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc18_11.2: %.5 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: %.5 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

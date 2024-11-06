@@ -108,12 +108,9 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_24.1: %.2 = tuple_literal (%int.make_type_32)
-// CHECK:STDOUT:   %ImplicitAs.type: type = interface_type @ImplicitAs, @ImplicitAs(i32) [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %.loc17_24.2: %.6 = specific_constant imports.%import_ref.4, @ImplicitAs(i32) [template = constants.%.7]
-// CHECK:STDOUT:   %Convert.ref: %.6 = name_ref Convert, %.loc17_24.2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc17_19.1: ref type = temporary_storage
 // CHECK:STDOUT:   %.loc17_19.2: ref type = temporary %.loc17_19.1, %int.make_type_32
-// CHECK:STDOUT:   %.loc17_24.3: i32 = converted %int.make_type_32, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_24.2: i32 = converted %int.make_type_32, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
