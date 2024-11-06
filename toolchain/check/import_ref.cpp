@@ -979,9 +979,6 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ImplDecl inst): {
         return context_.impls().Get(inst.impl_id).scope_id;
       }
-      case CARBON_KIND(SemIR::InterfaceType inst): {
-        return context_.interfaces().Get(inst.interface_id).scope_id;
-      }
       case SemIR::StructValue::Kind: {
         auto type_inst = context_.types().GetAsInst(name_scope_inst.type_id());
         CARBON_KIND_SWITCH(type_inst) {
@@ -1226,9 +1223,6 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst, const_id);
       }
       case CARBON_KIND(SemIR::InterfaceWitness inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::IntValue inst): {
@@ -2066,35 +2060,6 @@ class ImportRefResolver {
       AddInterfaceDefinition(import_interface, new_interface, *self_param_id);
     }
     return ResolveAsConstant(interface_const_id);
-  }
-
-  auto TryResolveTypedInst(SemIR::InterfaceType inst) -> ResolveResult {
-    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto interface_const_id = GetLocalConstantId(
-        import_ir_.interfaces().Get(inst.interface_id).first_owning_decl_id);
-    auto specific_data = GetLocalSpecificData(inst.specific_id);
-    if (HasNewWork()) {
-      return Retry();
-    }
-
-    // Find the corresponding interface type. For a non-generic interface, this
-    // is the type of the interface declaration. For a generic interface, build
-    // a interface type referencing this specialization of the generic
-    // interface.
-    auto interface_const_inst = context_.insts().Get(
-        context_.constant_values().GetInstId(interface_const_id));
-    if (interface_const_inst.Is<SemIR::InterfaceType>()) {
-      return ResolveAsConstant(interface_const_id);
-    } else {
-      auto generic_interface_type =
-          context_.types().GetAs<SemIR::GenericInterfaceType>(
-              interface_const_inst.type_id());
-      auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
-      return ResolveAs<SemIR::InterfaceType>(
-          {.type_id = SemIR::TypeId::TypeType,
-           .interface_id = generic_interface_type.interface_id,
-           .specific_id = specific_id});
-    }
   }
 
   auto TryResolveTypedInst(SemIR::FacetType inst) -> ResolveResult {

@@ -180,12 +180,6 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
-      case CARBON_KIND(InterfaceType inst): {
-        auto interface_name_id =
-            sem_ir.interfaces().Get(inst.interface_id).name_id;
-        out << sem_ir.names().GetFormatted(interface_name_id);
-        break;
-      }
       case CARBON_KIND(IntType inst): {
         if (step.index == 1) {
           out << ")";

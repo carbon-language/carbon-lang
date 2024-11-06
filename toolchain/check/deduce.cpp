@@ -92,6 +92,21 @@ class DeductionWorklist {
            needs_substitution);
   }
 
+  auto AddAll(SemIR::FacetTypeId params, SemIR::FacetTypeId args,
+              bool needs_substitution) -> void {
+    const auto& param_impls = context_.sem_ir().facet_types().Get(params).impls;
+    const auto& arg_impls = context_.sem_ir().facet_types().Get(args).impls;
+    if (param_impls.size() != arg_impls.size()) {
+      // TODO: Decide whether to error on this or just treat the parameter list
+      // as non-deduced. For now we treat it as non-deduced.
+      return;
+    }
+    for (auto [param, arg] :
+         llvm::reverse(llvm::zip_equal(param_impls, arg_impls))) {
+      Add(param.specific_id, arg.specific_id, needs_substitution);
+    }
+  }
+
   // Adds a (param, arg) pair for an instruction argument, given its kind.
   auto AddInstArg(SemIR::IdKind kind, int32_t param, int32_t arg,
                   bool needs_substitution) -> void {
@@ -118,6 +133,10 @@ class DeductionWorklist {
       case SemIR::IdKind::For<SemIR::SpecificId>:
         Add(SemIR::SpecificId(param), SemIR::SpecificId(arg),
             needs_substitution);
+        break;
+      case SemIR::IdKind::For<SemIR::FacetTypeId>:
+        AddAll(SemIR::FacetTypeId(param), SemIR::FacetTypeId(arg),
+               needs_substitution);
         break;
       default:
         CARBON_FATAL("unexpected argument kind");
@@ -376,7 +395,6 @@ auto DeductionContext::Deduce() -> bool {
       case SemIR::ConstType::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
-      case SemIR::InterfaceType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::TupleType::Kind:

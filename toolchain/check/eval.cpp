@@ -1200,9 +1200,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildIfFieldsAreConstant(
           eval_context, inst,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
-    case SemIR::InterfaceType::Kind:
-      return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::InterfaceType::specific_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceWitness::elements_id);

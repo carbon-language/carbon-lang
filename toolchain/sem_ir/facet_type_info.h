@@ -12,18 +12,12 @@
 namespace Carbon::SemIR {
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
- public:
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{impls interface: ";
-    llvm::ListSeparator sep;
-    for (Impls req : impls) {
-      out << sep << req.interface_id;
-      if (req.specific_id.is_valid()) {
-        out << "(" << req.specific_id << ")";
-      }
-    }
-    out << "; requirements: " << requirement_block_id << "}";
-  }
+  // TODO: Need to switch to a processed, canonical form, that can support facet
+  // type equality as defined by
+  // https://github.com/carbon-language/carbon-lang/issues/2409.
+
+  // TODO: Replace these vectors with an array allocated in an
+  // `llvm::BumpPtrAllocator`.
 
   // `Impls` holds the interfaces this facet type requires.
   struct Impls {
@@ -41,6 +35,25 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     InterfaceId interface_id;
     SpecificId specific_id;
   };
+  llvm::SmallVector<Impls> impls;
+  // TODO: Add lookup contexts.
+  // TODO: Add rewrite constraints.
+  // TODO: Add same-type constraints.
+  // TODO: Remove `requirement_block_id`.
+  InstBlockId requirement_block_id;
+  // TODO: Add optional resolved facet type.
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{impls interface: ";
+    llvm::ListSeparator sep;
+    for (Impls req : impls) {
+      out << sep << req.interface_id;
+      if (req.specific_id.is_valid()) {
+        out << "(" << req.specific_id << ")";
+      }
+    }
+    out << "; requirements: " << requirement_block_id << "}";
+  }
 
   // TODO: Update callers to be able to deal with facet types that aren't a
   // single interface and then remove this function.
@@ -57,21 +70,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return impls == rhs.impls &&
            requirement_block_id == rhs.requirement_block_id;
   }
-
-  // TODO: Need to switch to a processed, canonical form, that can support facet
-  // type equality as defined by
-  // https://github.com/carbon-language/carbon-lang/issues/2409.
-
-  // TODO: Replace these vectors with an array allocated in an
-  // `llvm::BumpPtrAllocator`.
-
-  llvm::SmallVector<Impls> impls;
-  // TODO: Add lookup contexts.
-  // TODO: Add rewrite constraints.
-  // TODO: Add same-type constraints.
-  // TODO: Remove `requirement_block_id`.
-  InstBlockId requirement_block_id;
-  // TODO: Add optional resolved facet type.
 };
 
 // See common/hashing.h.
