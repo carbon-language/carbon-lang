@@ -2124,19 +2124,16 @@ class ImportRefResolver {
       // this is the type of the interface declaration. For a generic interface,
       // build a interface type referencing this specialization of the generic
       // interface.
-      auto interface_const_type_id =
-          context_.insts()
-              .Get(context_.constant_values().GetInstId(interface_const_id))
-              .type_id();
-      if (auto facet_type = context_.types().TryGetAs<SemIR::FacetType>(
-              interface_const_type_id)) {
+      auto interface_const_inst = context_.insts().Get(
+          context_.constant_values().GetInstId(interface_const_id));
+      if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
         const SemIR::FacetTypeInfo& new_facet_type_info =
             context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
         impls.append(new_facet_type_info.impls);
       } else {
         auto generic_interface_type =
             context_.types().GetAs<SemIR::GenericInterfaceType>(
-                interface_const_type_id);
+                interface_const_inst.type_id());
         auto specific_id =
             GetOrAddLocalSpecific(interface.specific_id, specific_data);
         impls.emplace_back(generic_interface_type.interface_id, specific_id);

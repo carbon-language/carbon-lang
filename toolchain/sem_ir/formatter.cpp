@@ -963,7 +963,7 @@ class FormatterImpl {
     llvm::ListSeparator sep;
     for (auto impls : info.impls) {
       out_ << sep;
-      FormatInterface(impls.interface_id);
+      FormatName(impls.interface_id);
     }
 
     if (info.requirement_block_id.is_valid()) {
