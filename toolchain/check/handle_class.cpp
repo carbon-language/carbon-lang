@@ -690,7 +690,36 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = complete_type_witness_id;
 
-  context.inst_block_stack().Pop();
+  int32_t field_index = class_info.is_dynamic;
+
+  // This is pretty subtle code, not something we'd want to endorse in general -
+  // lazily updating the indexes to account for whether this class needs a
+  // virtual table pointer - which can only be determined after examining all
+  // the member functions to see if any are virtual. (perhaps we could consider
+  // more explicit Carbon syntax to opt-in to having a vptr up-front/at the
+  // start of the class definition, at least before any base and field decls are
+  // encountered)
+  for (auto inst_id :
+       context.inst_blocks().Get(context.inst_block_stack().Pop())) {
+    if (auto field_decl = context.insts().TryGetAs<SemIR::FieldDecl>(inst_id)) {
+      field_decl->index = SemIR::ElementIndex(field_index++);
+      context.sem_ir().insts().Set(inst_id, *field_decl);
+    } else if (auto base_decl =
+                   context.insts().TryGetAs<SemIR::BaseDecl>(inst_id)) {
+      // `extends base` comes before fields, so we don't have to worry about
+      // going back to fix any fields up if we find that the base class is
+      // dynamic and so already has the vptr in it (so this class, the derived
+      // class, doesn't need to add a vptr).
+      if (auto* base_class_info =
+              TryGetAsClass(context, base_decl->base_type_id)) {
+        if (base_class_info->is_dynamic) {
+          field_index = 0;
+        }
+      }
+      base_decl->index = SemIR::ElementIndex(field_index++);
+      context.sem_ir().insts().Set(inst_id, *base_decl);
+    }
+  }
 
   FinishGenericDefinition(context, class_info.generic_id);
 

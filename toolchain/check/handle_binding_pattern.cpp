@@ -128,11 +128,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         auto field_type_id = context.GetUnboundElementType(
             class_info.self_type_id, cast_type_id);
         auto field_id = context.AddInst<SemIR::FieldDecl>(
-            binding_id,
-            {.type_id = field_type_id,
-             .name_id = name_id,
-             .index = SemIR::ElementIndex(
-                 context.struct_type_fields_stack().PeekArray().size())});
+            binding_id, {.type_id = field_type_id,
+                         .name_id = name_id,
+                         .index = SemIR::ElementIndex(-1)});
 
         // Add a corresponding field to the object representation of the class.
         context.struct_type_fields_stack().AppendToTop(
