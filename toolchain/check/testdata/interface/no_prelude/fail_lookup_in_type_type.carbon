@@ -55,7 +55,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   <unexpected>.inst+6: type = facet_type <type where...> [template]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where...> [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -66,7 +66,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:   %.loc12: type = where_expr %.Self [template = <unexpected>.inst+6] {
+// CHECK:STDOUT:   %.loc12: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:     requirement_impls %.Self.ref, type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

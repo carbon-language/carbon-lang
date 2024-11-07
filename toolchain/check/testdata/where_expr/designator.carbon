@@ -106,9 +106,9 @@ class D {
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self.2: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   <unexpected>.inst+56: type = facet_type <type where...> [template]
-// CHECK:STDOUT:   %V: <unexpected>.inst+56 = bind_symbolic_name V, 0 [symbolic]
-// CHECK:STDOUT:   %V.patt: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where...> [template]
+// CHECK:STDOUT:   %V: %type_where = bind_symbolic_name V, 0 [symbolic]
+// CHECK:STDOUT:   %V.patt: %type_where = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %TypeSelfImpls.type: type = fn_type @TypeSelfImpls [template]
 // CHECK:STDOUT:   %TypeSelfImpls: %TypeSelfImpls.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -160,17 +160,17 @@ class D {
 // CHECK:STDOUT:     %U.loc10_17.1: %I.type.3 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
-// CHECK:STDOUT:     %V.patt.loc12_18.1: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: <unexpected>.inst+56 = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc12_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: %type_where = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = <unexpected>.inst+56] {
+// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.param: <unexpected>.inst+56 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc12_18.1: <unexpected>.inst+56 = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.param: %type_where = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %V.loc12_18.1: %type_where = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,11 +199,11 @@ class D {
 // CHECK:STDOUT:   fn(%U.param_patt: %I.type.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: <unexpected>.inst+56) {
-// CHECK:STDOUT:   %V.loc12_18.2: <unexpected>.inst+56 = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc12_18.2: <unexpected>.inst+56 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: %type_where) {
+// CHECK:STDOUT:   %V.loc12_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:   %V.patt.loc12_18.2: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.param_patt: <unexpected>.inst+56);
+// CHECK:STDOUT:   fn(%V.param_patt: %type_where);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {

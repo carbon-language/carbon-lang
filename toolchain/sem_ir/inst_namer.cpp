@@ -460,6 +460,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           const auto& interface_info =
               sem_ir_.interfaces().Get(interface->interface_id);
           add_inst_name_id(interface_info.name_id, ".type");
+        } else if (facet_type_info.impls.empty()) {
+          if (facet_type_info.requirement_block_id.is_valid()) {
+            add_inst_name("type_where");
+          } else {
+            add_inst_name("type");
+          }
+        } else {
+          add_inst_name("facet_type");
         }
         continue;
       }
