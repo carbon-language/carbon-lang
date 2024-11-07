@@ -54,7 +54,7 @@ auto IntStore::OutputYaml() const -> Yaml::OutputMapping {
 
 auto IntStore::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
-  values_.CollectMemUsage(mem_usage, label);
+  mem_usage.Collect(std::string(label), values_);
 }
 
 }  // namespace Carbon

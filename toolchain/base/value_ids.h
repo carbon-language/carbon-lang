@@ -156,7 +156,7 @@ class IntId : public Printable<IntId> {
   // 3/4ths to embedded values. For 23-bits total this still gives us 2 million
   // unique integers larger than the embedded ones, which would be difficult to
   // fill without exceeding the number of tokens we can lex (8 million). For
-  // non-token based integers, the indics can continue downward to the 32-bit
+  // non-token based integers, the indices can continue downward to the 32-bit
   // signed integer minimum.
   //
   // Note that the invalid ID can't be used with a token. This is OK as we

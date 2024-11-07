@@ -35,8 +35,8 @@ struct IntStoreTestPeer;
 // width for use.
 //
 // This leverages a significant optimization for small integer values -- rather
-// than canonicalizing and making unique them in a `ValueStore`, they are
-// directly embedded in the `IntId` itself. Only larger integers are store in an
+// than canonicalizing and making them unique in a `ValueStore`, they are
+// directly embedded in the `IntId` itself. Only larger integers are stored in an
 // array of `APInt` values and represented as an index in the ID.
 class IntStore {
  public:
