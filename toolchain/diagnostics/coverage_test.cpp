@@ -50,6 +50,7 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::MismatchedIndentInString,
     DiagnosticKind::ModifierPrivateNotAllowed,
     DiagnosticKind::MultiLineStringWithDoubleQuotes,
+    DiagnosticKind::NameAmbiguousDueToExtend,
     DiagnosticKind::TooManyDigits,
     DiagnosticKind::UnaryOperatorRequiresWhitespace,
     DiagnosticKind::UnicodeEscapeSurrogate,
