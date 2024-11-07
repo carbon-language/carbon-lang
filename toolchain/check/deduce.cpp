@@ -113,7 +113,6 @@ class DeductionWorklist {
     switch (kind) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
-      case SemIR::IdKind::For<SemIR::InterfaceId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
       case SemIR::IdKind::For<SemIR::InstId>:
