@@ -77,20 +77,13 @@ fn CallTupleParam() {
   TupleParam((1, 2));
 }
 
-// --- fail_todo_deduce_nested_struct.carbon
+// --- deduce_nested_struct.carbon
 
 library "[[@TEST_NAME]]";
 
 fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
 
 fn CallStructParam() {
-  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
-  // CHECK:STDERR:   StructParam({.a = 1, .b = 2});
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_deduce_nested_struct.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   StructParam({.a = 1, .b = 2});
 }
 
@@ -810,7 +803,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduce_nested_struct.carbon
+// CHECK:STDOUT: --- deduce_nested_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -827,6 +820,9 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %StructParam, @StructParam(i32) [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %struct: %.6 = struct_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -882,9 +878,13 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: fn @CallStructParam() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [template = constants.%StructParam]
-// CHECK:STDOUT:   %.loc14_21: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_29: i32 = int_value 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_30: %.6 = struct_literal (%.loc14_21, %.loc14_29)
+// CHECK:STDOUT:   %.loc7_21: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_29: i32 = int_value 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_30.1: %.6 = struct_literal (%.loc7_21, %.loc7_29)
+// CHECK:STDOUT:   %.loc7_3: <specific function> = specific_function %StructParam.ref, @StructParam(i32) [template = constants.%.7]
+// CHECK:STDOUT:   %struct: %.6 = struct_value (%.loc7_21, %.loc7_29) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_30.2: %.6 = converted %.loc7_30.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %StructParam.call: init %.1 = call %.loc7_3(%.loc7_30.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -892,6 +892,14 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
 // CHECK:STDOUT:   %.loc4_44.2 => constants.%.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @StructParam(i32) {
+// CHECK:STDOUT:   %T.loc4_16.2 => i32
+// CHECK:STDOUT:   %T.patt.loc4_16.2 => i32
+// CHECK:STDOUT:   %.loc4_44.2 => constants.%.6
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_incomplete.carbon
