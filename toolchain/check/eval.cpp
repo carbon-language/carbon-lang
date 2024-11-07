@@ -687,7 +687,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   llvm::APInt result_val;
 
-  // First handle switch, which can directly use the canonical RHS and doesn't
+  // First handle shift, which can directly use the canonical RHS and doesn't
   // overflow.
   switch (builtin_kind) {
     // Bit shift.
