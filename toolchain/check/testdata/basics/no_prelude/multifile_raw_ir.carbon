@@ -40,7 +40,8 @@ fn B() {
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
-// CHECK:STDOUT:   struct_type_fields: {}
+// CHECK:STDOUT:   struct_type_fields:
+// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -95,7 +96,8 @@ fn B() {
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
-// CHECK:STDOUT:   struct_type_fields: {}
+// CHECK:STDOUT:   struct_type_fields:
+// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}

@@ -732,6 +732,10 @@ struct StructTypeFieldsId : public IdBase,
   // An explicitly invalid ID.
   static const StructTypeFieldsId Invalid;
 
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const StructTypeFieldsId Empty;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type_block";
@@ -741,6 +745,7 @@ struct StructTypeFieldsId : public IdBase,
 
 constexpr StructTypeFieldsId StructTypeFieldsId::Invalid =
     StructTypeFieldsId(InvalidIndex);
+constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
@@ -804,6 +809,10 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
   // An explicitly invalid ID.
   static const TypeBlockId Invalid;
 
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const TypeBlockId Empty;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type_block";
@@ -812,6 +821,7 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 };
 
 constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
+constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {

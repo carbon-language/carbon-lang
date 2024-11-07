@@ -126,7 +126,7 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   while (!stack_.empty()) {
     EmitPatternMatch(context, stack_.pop_back_val());
   }
-  auto block_id = context.inst_blocks().AddOrEmpty(results_);
+  auto block_id = context.inst_blocks().Add(results_);
   results_.clear();
   return block_id;
 }
