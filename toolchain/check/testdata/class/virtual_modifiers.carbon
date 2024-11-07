@@ -133,7 +133,7 @@ fn F() {
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.<vptr>: %.1, .base: %Base} [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

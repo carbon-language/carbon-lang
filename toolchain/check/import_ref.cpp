@@ -1418,7 +1418,8 @@ class ImportRefResolver {
     class_decl.class_id = context_.classes().Add(
         {GetIncompleteLocalEntityBase(class_decl_id, import_class),
          {.self_type_id = SemIR::TypeId::Invalid,
-          .inheritance_kind = import_class.inheritance_kind}});
+          .inheritance_kind = import_class.inheritance_kind,
+          .is_dynamic = import_class.is_dynamic}});
 
     if (import_class.has_parameters()) {
       class_decl.type_id = context_.GetGenericClassType(class_decl.class_id,
