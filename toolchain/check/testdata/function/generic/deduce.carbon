@@ -87,6 +87,74 @@ fn CallStructParam() {
   StructParam({.a = 1, .b = 2});
 }
 
+// --- fail_deduce_bigger_struct.carbon
+
+library "[[@TEST_NAME]]";
+
+fn BigStructParam[T:! type](x: {.c: T, .d: i32, .e: i32}) {}
+
+fn CallBigStructParam() {
+  // CHECK:STDERR: fail_deduce_bigger_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR:   BigStructParam({.c = 3, .d = 4});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_deduce_bigger_struct.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn BigStructParam[T:! type](x: {.c: T, .d: i32, .e: i32}) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  BigStructParam({.c = 3, .d = 4});
+}
+
+// --- fail_deduce_smaller_struct.carbon
+
+library "[[@TEST_NAME]]";
+
+fn SmallStructParam[T:! type](x: {.f: T, .g: i32}) {}
+
+fn CallSmallStructParam() {
+  // CHECK:STDERR: fail_deduce_smaller_struct.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR:   SmallStructParam({.f = 5, .g = 6, .h = 7});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_deduce_smaller_struct.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn SmallStructParam[T:! type](x: {.f: T, .g: i32}) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  SmallStructParam({.f = 5, .g = 6, .h = 7});
+}
+
+// --- fail_deduce_struct_wrong_name.carbon
+
+library "[[@TEST_NAME]]";
+
+fn WrongNameStructParam[T:! type](x: {.i: T, .different: i32}) {}
+
+fn CallWrongNameStructParam() {
+  // CHECK:STDERR: fail_deduce_struct_wrong_name.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR:   WrongNameStructParam({.i = 8, .j = 9});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_deduce_struct_wrong_name.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn WrongNameStructParam[T:! type](x: {.i: T, .different: i32}) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  WrongNameStructParam({.i = 8, .j = 9});
+}
+
+// --- fail_todo_deduce_struct_wrong_order.carbon
+
+library "[[@TEST_NAME]]";
+
+fn WrongOrderStructParam[T:! type](x: {.first: T, .second: i32}) {}
+
+fn CallWrongOrderStructParam() {
+  // CHECK:STDERR: fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR:   WrongOrderStructParam({.second = 11, .first = 10});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_deduce_struct_wrong_order.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn WrongOrderStructParam[T:! type](x: {.first: T, .second: i32}) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  WrongOrderStructParam({.second = 11, .first = 10});
+}
+
 // --- fail_deduce_incomplete.carbon
 
 library "[[@TEST_NAME]]";
@@ -900,6 +968,347 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc4_44.2 => constants.%.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.c: %T, .d: i32, .e: i32} [symbolic]
+// CHECK:STDOUT:   %BigStructParam.type: type = fn_type @BigStructParam [template]
+// CHECK:STDOUT:   %BigStructParam: %BigStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
+// CHECK:STDOUT:   %CallBigStructParam.type: type = fn_type @CallBigStructParam [template]
+// CHECK:STDOUT:   %CallBigStructParam: %CallBigStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.c: i32, .d: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .BigStructParam = %BigStructParam.decl
+// CHECK:STDOUT:     .CallBigStructParam = %CallBigStructParam.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %BigStructParam.decl: %BigStructParam.type = fn_decl @BigStructParam [template = constants.%BigStructParam] {
+// CHECK:STDOUT:     %T.patt.loc4_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_19.1, runtime_param<invalid> [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.patt: @BigStructParam.%.loc4_56.2 (%.2) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @BigStructParam.%.loc4_56.2 (%.2) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_19.1 [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:     %int.make_type_32.loc4_44: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_44.1: type = value_of_initializer %int.make_type_32.loc4_44 [template = i32]
+// CHECK:STDOUT:     %.loc4_44.2: type = converted %int.make_type_32.loc4_44, %.loc4_44.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc4_53: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_53.1: type = value_of_initializer %int.make_type_32.loc4_53 [template = i32]
+// CHECK:STDOUT:     %.loc4_53.2: type = converted %int.make_type_32.loc4_53, %.loc4_53.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_56.1: type = struct_type {.c: %T, .d: i32, .e: i32} [symbolic = %.loc4_56.2 (constants.%.2)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @BigStructParam.%.loc4_56.2 (%.2) = value_param runtime_param0
+// CHECK:STDOUT:     %x: @BigStructParam.%.loc4_56.2 (%.2) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallBigStructParam.decl: %CallBigStructParam.type = fn_decl @CallBigStructParam [template = constants.%CallBigStructParam] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @BigStructParam(%T.loc4_19.1: type) {
+// CHECK:STDOUT:   %T.loc4_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_19.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %.loc4_56.2: type = struct_type {.c: @BigStructParam.%T.loc4_19.2 (%T), .d: i32, .e: i32} [symbolic = %.loc4_56.2 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @BigStructParam.%.loc4_56.2 (%.2)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallBigStructParam() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %BigStructParam.ref: %BigStructParam.type = name_ref BigStructParam, file.%BigStructParam.decl [template = constants.%BigStructParam]
+// CHECK:STDOUT:   %.loc14_24: i32 = int_value 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_32: i32 = int_value 4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_33: %.6 = struct_literal (%.loc14_24, %.loc14_32)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @BigStructParam(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   %.loc4_56.2 => constants.%.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_deduce_smaller_struct.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.f: %T, .g: i32} [symbolic]
+// CHECK:STDOUT:   %SmallStructParam.type: type = fn_type @SmallStructParam [template]
+// CHECK:STDOUT:   %SmallStructParam: %SmallStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
+// CHECK:STDOUT:   %CallSmallStructParam.type: type = fn_type @CallSmallStructParam [template]
+// CHECK:STDOUT:   %CallSmallStructParam: %CallSmallStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 5 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 6 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 7 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.f: i32, .g: i32, .h: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .SmallStructParam = %SmallStructParam.decl
+// CHECK:STDOUT:     .CallSmallStructParam = %CallSmallStructParam.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %SmallStructParam.decl: %SmallStructParam.type = fn_decl @SmallStructParam [template = constants.%SmallStructParam] {
+// CHECK:STDOUT:     %T.patt.loc4_21.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_21.1, runtime_param<invalid> [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.patt: @SmallStructParam.%.loc4_49.2 (%.2) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @SmallStructParam.%.loc4_49.2 (%.2) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_21.1 [symbolic = %T.loc4_21.2 (constants.%T)]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_46.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_46.2: type = converted %int.make_type_32, %.loc4_46.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_49.1: type = struct_type {.f: %T, .g: i32} [symbolic = %.loc4_49.2 (constants.%.2)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_21.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_21.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @SmallStructParam.%.loc4_49.2 (%.2) = value_param runtime_param0
+// CHECK:STDOUT:     %x: @SmallStructParam.%.loc4_49.2 (%.2) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallSmallStructParam.decl: %CallSmallStructParam.type = fn_decl @CallSmallStructParam [template = constants.%CallSmallStructParam] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @SmallStructParam(%T.loc4_21.1: type) {
+// CHECK:STDOUT:   %T.loc4_21.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_21.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_21.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_21.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %.loc4_49.2: type = struct_type {.f: @SmallStructParam.%T.loc4_21.2 (%T), .g: i32} [symbolic = %.loc4_49.2 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @SmallStructParam.%.loc4_49.2 (%.2)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallSmallStructParam() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %SmallStructParam.ref: %SmallStructParam.type = name_ref SmallStructParam, file.%SmallStructParam.decl [template = constants.%SmallStructParam]
+// CHECK:STDOUT:   %.loc14_26: i32 = int_value 5 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_34: i32 = int_value 6 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_42: i32 = int_value 7 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_43: %.7 = struct_literal (%.loc14_26, %.loc14_34, %.loc14_42)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @SmallStructParam(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_21.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T
+// CHECK:STDOUT:   %.loc4_49.2 => constants.%.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_deduce_struct_wrong_name.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.i: %T, .different: i32} [symbolic]
+// CHECK:STDOUT:   %WrongNameStructParam.type: type = fn_type @WrongNameStructParam [template]
+// CHECK:STDOUT:   %WrongNameStructParam: %WrongNameStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
+// CHECK:STDOUT:   %CallWrongNameStructParam.type: type = fn_type @CallWrongNameStructParam [template]
+// CHECK:STDOUT:   %CallWrongNameStructParam: %CallWrongNameStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 8 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 9 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.i: i32, .j: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .WrongNameStructParam = %WrongNameStructParam.decl
+// CHECK:STDOUT:     .CallWrongNameStructParam = %CallWrongNameStructParam.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %WrongNameStructParam.decl: %WrongNameStructParam.type = fn_decl @WrongNameStructParam [template = constants.%WrongNameStructParam] {
+// CHECK:STDOUT:     %T.patt.loc4_25.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_25.1, runtime_param<invalid> [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.patt: @WrongNameStructParam.%.loc4_61.2 (%.2) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @WrongNameStructParam.%.loc4_61.2 (%.2) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_25.1 [symbolic = %T.loc4_25.2 (constants.%T)]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_58.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_58.2: type = converted %int.make_type_32, %.loc4_58.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_61.1: type = struct_type {.i: %T, .different: i32} [symbolic = %.loc4_61.2 (constants.%.2)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_25.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_25.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @WrongNameStructParam.%.loc4_61.2 (%.2) = value_param runtime_param0
+// CHECK:STDOUT:     %x: @WrongNameStructParam.%.loc4_61.2 (%.2) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallWrongNameStructParam.decl: %CallWrongNameStructParam.type = fn_decl @CallWrongNameStructParam [template = constants.%CallWrongNameStructParam] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @WrongNameStructParam(%T.loc4_25.1: type) {
+// CHECK:STDOUT:   %T.loc4_25.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_25.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_25.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %.loc4_61.2: type = struct_type {.i: @WrongNameStructParam.%T.loc4_25.2 (%T), .different: i32} [symbolic = %.loc4_61.2 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @WrongNameStructParam.%.loc4_61.2 (%.2)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallWrongNameStructParam() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %WrongNameStructParam.ref: %WrongNameStructParam.type = name_ref WrongNameStructParam, file.%WrongNameStructParam.decl [template = constants.%WrongNameStructParam]
+// CHECK:STDOUT:   %.loc14_30: i32 = int_value 8 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_38: i32 = int_value 9 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_39: %.6 = struct_literal (%.loc14_30, %.loc14_38)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WrongNameStructParam(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %.loc4_61.2 => constants.%.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_deduce_struct_wrong_order.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.first: %T, .second: i32} [symbolic]
+// CHECK:STDOUT:   %WrongOrderStructParam.type: type = fn_type @WrongOrderStructParam [template]
+// CHECK:STDOUT:   %WrongOrderStructParam: %WrongOrderStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
+// CHECK:STDOUT:   %CallWrongOrderStructParam.type: type = fn_type @CallWrongOrderStructParam [template]
+// CHECK:STDOUT:   %CallWrongOrderStructParam: %CallWrongOrderStructParam.type = struct_value () [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 11 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 10 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.second: i32, .first: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .WrongOrderStructParam = %WrongOrderStructParam.decl
+// CHECK:STDOUT:     .CallWrongOrderStructParam = %CallWrongOrderStructParam.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %WrongOrderStructParam.decl: %WrongOrderStructParam.type = fn_decl @WrongOrderStructParam [template = constants.%WrongOrderStructParam] {
+// CHECK:STDOUT:     %T.patt.loc4_26.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_26.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_26.1, runtime_param<invalid> [symbolic = %T.patt.loc4_26.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %x.patt: @WrongOrderStructParam.%.loc4_63.2 (%.2) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @WrongOrderStructParam.%.loc4_63.2 (%.2) = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_26.1 [symbolic = %T.loc4_26.2 (constants.%T)]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc4_60.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_60.2: type = converted %int.make_type_32, %.loc4_60.1 [template = i32]
+// CHECK:STDOUT:     %.loc4_63.1: type = struct_type {.first: %T, .second: i32} [symbolic = %.loc4_63.2 (constants.%.2)]
+// CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc4_26.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_26.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @WrongOrderStructParam.%.loc4_63.2 (%.2) = value_param runtime_param0
+// CHECK:STDOUT:     %x: @WrongOrderStructParam.%.loc4_63.2 (%.2) = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallWrongOrderStructParam.decl: %CallWrongOrderStructParam.type = fn_decl @CallWrongOrderStructParam [template = constants.%CallWrongOrderStructParam] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @WrongOrderStructParam(%T.loc4_26.1: type) {
+// CHECK:STDOUT:   %T.loc4_26.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_26.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_26.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_26.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %.loc4_63.2: type = struct_type {.first: @WrongOrderStructParam.%T.loc4_26.2 (%T), .second: i32} [symbolic = %.loc4_63.2 (constants.%.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @WrongOrderStructParam.%.loc4_63.2 (%.2)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallWrongOrderStructParam() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %WrongOrderStructParam.ref: %WrongOrderStructParam.type = name_ref WrongOrderStructParam, file.%WrongOrderStructParam.decl [template = constants.%WrongOrderStructParam]
+// CHECK:STDOUT:   %.loc14_36: i32 = int_value 11 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_49: i32 = int_value 10 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_51: %.6 = struct_literal (%.loc14_36, %.loc14_49)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WrongOrderStructParam(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_26.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_26.2 => constants.%T
+// CHECK:STDOUT:   %.loc4_63.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_incomplete.carbon
