@@ -124,7 +124,7 @@ var n: {} = i32;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -156,7 +156,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -193,10 +193,10 @@ var n: {} = i32;
 // CHECK:STDOUT: --- prelude_use_in_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -205,31 +205,31 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int32.decl: %Int32.type = fn_decl @Int32 [template = constants.%Int32] {
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_16.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %.loc8_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_16.2: type = converted %.loc8_16.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %n.var: ref %.1 = var n
-// CHECK:STDOUT:   %n: ref %.1 = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %n.var: ref %empty_tuple.type = var n
+// CHECK:STDOUT:   %n: ref %empty_tuple.type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> %.1 {
+// CHECK:STDOUT: fn @Int32() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_28: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_29: %.1 = converted %.loc8_28, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_28: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_29: %empty_tuple.type = converted %.loc8_28, %empty_tuple [template = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc8_29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Int32.call: init %.1 = call constants.%Int32()
+// CHECK:STDOUT:   %Int32.call: init %empty_tuple.type = call constants.%Int32()
 // CHECK:STDOUT:   assign file.%n.var, %Int32.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -239,7 +239,7 @@ var n: {} = i32;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -288,9 +288,9 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Core: type = class_type @Core [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,7 +316,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Core

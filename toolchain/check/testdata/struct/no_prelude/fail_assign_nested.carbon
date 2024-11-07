@@ -18,9 +18,9 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: %.1} [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: %.3} [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.b: %.1} [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.b: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,7 +37,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_26: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_27: %.5 = struct_literal (%.loc14_26)
+// CHECK:STDOUT:   %.loc14_27: %.4 = struct_literal (%.loc14_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

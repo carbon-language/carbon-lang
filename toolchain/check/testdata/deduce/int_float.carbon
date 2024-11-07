@@ -40,20 +40,20 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %N [symbolic]
+// CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.3: type = int_type signed, %.2 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%.3) [template]
+// CHECK:STDOUT:   %.4: <specific function> = specific_function %F, @F(%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,8 +77,8 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc4_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc4_6.1, runtime_param<invalid> [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %n.patt: @F.%.loc4_40 (%.2) = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: @F.%.loc4_40 (%.2) = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.patt: @F.%.loc4_40 (%.1) = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: @F.%.loc4_40 (%.1) = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -90,9 +90,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
 // CHECK:STDOUT:     %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%N.ref.loc4) [symbolic = %.loc4_40 (constants.%.2)]
-// CHECK:STDOUT:     %.loc4_42.1: type = value_of_initializer %int.make_type_signed [symbolic = %.loc4_40 (constants.%.2)]
-// CHECK:STDOUT:     %.loc4_42.2: type = converted %int.make_type_signed, %.loc4_42.1 [symbolic = %.loc4_40 (constants.%.2)]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%N.ref.loc4) [symbolic = %.loc4_40 (constants.%.1)]
+// CHECK:STDOUT:     %.loc4_42.1: type = value_of_initializer %int.make_type_signed [symbolic = %.loc4_40 (constants.%.1)]
+// CHECK:STDOUT:     %.loc4_42.2: type = converted %int.make_type_signed, %.loc4_42.1 [symbolic = %.loc4_40 (constants.%.1)]
 // CHECK:STDOUT:     %Core.ref.loc4_48: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc4_52: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc4_63: init type = call %IntLiteral.ref.loc4_52() [template = Core.IntLiteral]
@@ -100,28 +100,28 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_64.2: type = converted %int_literal.make_type.loc4_63, %.loc4_64.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:     %n.param: @F.%.loc4_40 (%.2) = value_param runtime_param0
-// CHECK:STDOUT:     %n: @F.%.loc4_40 (%.2) = bind_name n, %n.param
+// CHECK:STDOUT:     %n.param: @F.%.loc4_40 (%.1) = value_param runtime_param0
+// CHECK:STDOUT:     %n: @F.%.loc4_40 (%.1) = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %a.patt: %.4 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.4 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: %.3 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %.3 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_9.1: Core.IntLiteral = int_value 64 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_9.1) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %int.make_type_signed, %.loc8_9.2 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc8_9.1: Core.IntLiteral = int_value 64 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_9.1) [template = constants.%.3]
+// CHECK:STDOUT:     %.loc8_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%.3]
+// CHECK:STDOUT:     %.loc8_9.3: type = converted %int.make_type_signed, %.loc8_9.2 [template = constants.%.3]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %int_literal.make_type, %.loc8_33.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %a.param: %.4 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %.4 = bind_name a, %a.param
+// CHECK:STDOUT:     %a.param: %.3 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %.3 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -134,22 +134,22 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc4_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:   %N.patt.loc4_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:   %.loc4_40: type = int_type signed, %N.loc4_6.2 [symbolic = %.loc4_40 (constants.%.2)]
+// CHECK:STDOUT:   %.loc4_40: type = int_type signed, %N.loc4_6.2 [symbolic = %.loc4_40 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: @F.%.loc4_40 (%.2)) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: @F.%.loc4_40 (%.1)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: %.4) -> Core.IntLiteral {
+// CHECK:STDOUT: fn @G(%a.param_patt: %.3) -> Core.IntLiteral {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: %.4 = name_ref a, %a
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.3) [template = constants.%.5]
+// CHECK:STDOUT:   %a.ref: %.3 = name_ref a, %a
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.2) [template = constants.%.4]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %.loc9_10(%a.ref)
 // CHECK:STDOUT:   %.loc9_14.1: Core.IntLiteral = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc9_14.2: Core.IntLiteral = converted %F.call, %.loc9_14.1
@@ -159,13 +159,13 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%N
 // CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N
-// CHECK:STDOUT:   %.loc4_40 => constants.%.2
+// CHECK:STDOUT:   %.loc4_40 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%.3) {
-// CHECK:STDOUT:   %N.loc4_6.2 => constants.%.3
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%.3
-// CHECK:STDOUT:   %.loc4_40 => constants.%.4
+// CHECK:STDOUT: specific @F(constants.%.2) {
+// CHECK:STDOUT:   %N.loc4_6.2 => constants.%.2
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%.2
+// CHECK:STDOUT:   %.loc4_40 => constants.%.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
@@ -182,7 +182,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -242,7 +242,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_9.1: Core.IntLiteral = int_value 64 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc12_9.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
 // CHECK:STDOUT:     %.loc12_9.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc12_9.3: type = converted %float.make_type, %.loc12_9.2 [template = f64]

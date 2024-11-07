@@ -85,8 +85,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T.4: %L.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.4: %L.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.5: %I.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %T.patt.6: %J.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.7: %K.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.8: %L.type = symbolic_binding_pattern T, 0 [symbolic]
@@ -278,7 +278,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = %.loc18_36
@@ -292,7 +292,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc19_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = %.loc19_36
@@ -306,7 +306,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc20_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = %.loc20_36
@@ -320,7 +320,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc21_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     witness = %.loc21_36
@@ -376,8 +376,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %Self.2: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: %I.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %T.patt.2: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -453,12 +453,12 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%C, %C) [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -475,10 +475,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc14_11.1: %.3 = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
-// CHECK:STDOUT:     %.loc14_13: i32 = int_value 0 [template = constants.%.4]
-// CHECK:STDOUT:     %tuple: %.3 = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_11.2: %.3 = converted %.loc14_11.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_11.1: %tuple.type = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
+// CHECK:STDOUT:     %.loc14_13: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_11.2: %tuple.type = converted %.loc14_11.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_12: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -493,14 +493,14 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %I.ref {
-// CHECK:STDOUT:   %.loc13: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc14_12 as %I.ref {
-// CHECK:STDOUT:   %.loc14_20: <witness> = interface_witness () [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_20: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14_20

@@ -31,10 +31,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %Interface.type: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %Interface.type, %F.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %Interface.type, %F.type [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %T: %Interface.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: %Interface.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CallStatic.type: type = fn_type @CallStatic [template]
@@ -79,7 +79,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc11: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -101,7 +101,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
-// CHECK:STDOUT:     %F.ref: %.2 = name_ref F, @Interface.%.loc11 [template = constants.%.3]
+// CHECK:STDOUT:     %F.ref: %.1 = name_ref F, @Interface.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

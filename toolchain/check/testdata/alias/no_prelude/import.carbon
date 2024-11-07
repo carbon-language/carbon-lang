@@ -171,8 +171,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: --- var1.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -180,19 +180,19 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_alias = %a_alias
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %a.ref: ref %.1 = name_ref a, %a
-// CHECK:STDOUT:   %a_alias: ref %.1 = bind_alias a_alias, %a
+// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
+// CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
+// CHECK:STDOUT:   %a_alias: ref %empty_tuple.type = bind_alias a_alias, %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_14.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_14.2: init %.1 = tuple_init () to file.%a.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc4_15: init %.1 = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_14.2: init %empty_tuple.type = tuple_init () to file.%a.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_15: init %empty_tuple.type = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -200,13 +200,13 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: --- var2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//var1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.1 = import_ref Main//var1, inst+12, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %empty_tuple.type = import_ref Main//var1, inst+12, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -217,19 +217,19 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %a_alias.ref: ref %.1 = name_ref a_alias, imports.%import_ref.2
-// CHECK:STDOUT:   %a_alias_alias: ref %.1 = bind_alias a_alias_alias, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc8_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %b.var: ref %.1 = var b
-// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
+// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
+// CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%import_ref.2
+// CHECK:STDOUT:   %.loc8_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias.ref: ref %.1 = name_ref a_alias, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc8_13: init %.1 = tuple_init () to file.%b.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_20: init %.1 = converted %a_alias.ref, %.loc8_13 [template = constants.%tuple]
+// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
+// CHECK:STDOUT:   %.loc8_13: init %empty_tuple.type = tuple_init () to file.%b.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_20: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -237,12 +237,12 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: --- fail_var3.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref %.1 = import_ref Main//var2, inst+6, loaded [template = <error>]
+// CHECK:STDOUT:   %import_ref.1: ref %empty_tuple.type = import_ref Main//var2, inst+6, loaded [template = <error>]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//var2, inst+10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,17 +253,17 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %c.var: ref %.1 = var c
-// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias_alias.ref: ref %.1 = name_ref a_alias_alias, imports.%import_ref.1 [template = <error>]
-// CHECK:STDOUT:   %.loc10_13: init %.1 = tuple_init () to file.%c.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc10_26: init %.1 = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%tuple]
+// CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.1 [template = <error>]
+// CHECK:STDOUT:   %.loc10_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%c.var, %.loc10_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

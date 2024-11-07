@@ -35,10 +35,10 @@ fn Initializing() {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %X [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %X [template]
 // CHECK:STDOUT:   %Reference.type: type = fn_type @Reference [template]
 // CHECK:STDOUT:   %Reference: %Reference.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -74,13 +74,13 @@ fn Initializing() {
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
-// CHECK:STDOUT:     %p.patt: %.5 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.5 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %.4 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.4 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.5]
-// CHECK:STDOUT:     %p.param: %.5 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.5 = bind_name p, %p.param
+// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.4]
+// CHECK:STDOUT:     %p.param: %.4 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.4 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
@@ -109,15 +109,15 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.param_patt: %.5) {
+// CHECK:STDOUT: fn @Reference(%p.param_patt: %.4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.5]
-// CHECK:STDOUT:   %p.ref: %.5 = name_ref p, %p
+// CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.4]
+// CHECK:STDOUT:   %p.ref: %.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc22_15: %.5 = addr_of %.loc22_17
-// CHECK:STDOUT:   %q: %.5 = bind_name q, %.loc22_15
+// CHECK:STDOUT:   %.loc22_15: %.4 = addr_of %.loc22_17
+// CHECK:STDOUT:   %q: %.4 = bind_name q, %.loc22_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -53,7 +53,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %NotGenericNoParams.type: type = interface_type @NotGenericNoParams [template]
 // CHECK:STDOUT:   %Self.1: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %NotGenericButParams.type.1: type = generic_interface_type @NotGenericButParams [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %NotGenericButParams: %NotGenericButParams.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericButParams.type.2: type = interface_type @NotGenericButParams [template]
 // CHECK:STDOUT:   %Self.2: %NotGenericButParams.type.2 = bind_symbolic_name Self, 0 [symbolic]
@@ -76,15 +76,15 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %GenericAndParams.2: %GenericAndParams.type.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.type.4: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Self.5: %GenericAndParams.type.4 = bind_symbolic_name Self, 2 [symbolic]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %GenericAndParams.type.5: type = interface_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.type.6: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %GenericAndParams.type.7: type = interface_type @GenericAndParams.2, @GenericAndParams.2(%X, %X) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,35 +214,35 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %X.ref as %NotGenericNoParams.ref {
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %X.ref as %NotGenericButParams.type {
-// CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: %X.ref.loc16_6 as %GenericAndParams.type {
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4: %X.ref.loc17_6 as %GenericNoParams.ref {
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.5: %X.ref.loc18_6 as %GenericAndParams.type {
-// CHECK:STDOUT:   %.loc18_36: <witness> = interface_witness () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18_36: <witness> = interface_witness () [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc18_36
@@ -265,7 +265,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10_30.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc10_30.2 (constants.%U)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
@@ -275,7 +275,7 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -347,7 +347,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.1: type = generic_interface_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %A.type.2: type = interface_type @A [template]
 // CHECK:STDOUT:   %Self: %A.type.2 = bind_symbolic_name Self, 0 [symbolic]
@@ -372,7 +372,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.1: type = generic_interface_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %A.type.2: type = interface_type @A [template]
 // CHECK:STDOUT:   %Self: %A.type.2 = bind_symbolic_name Self, 0 [symbolic]

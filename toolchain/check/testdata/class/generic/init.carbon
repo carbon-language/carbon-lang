@@ -48,25 +48,25 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Class.2, %T [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [symbolic]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
+// CHECK:STDOUT:   %.2: type = struct_type {.k: %T} [symbolic]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [symbolic]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %InitFromStructGeneric.type: type = fn_type @InitFromStructGeneric [template]
 // CHECK:STDOUT:   %InitFromStructGeneric: %InitFromStructGeneric.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %InitFromStructSpecific.type: type = fn_type @InitFromStructSpecific [template]
 // CHECK:STDOUT:   %InitFromStructSpecific: %InitFromStructSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(i32) [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Class.3, i32 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.7 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Class.3, i32 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -135,14 +135,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc4_13.2 (%T) [symbolic = %.loc5_8.2 (constants.%.2)]
-// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.k: @Class.%T.loc4_13.2 (%T)} [symbolic = %.loc6_1.2 (constants.%.3)]
-// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @Class.%.loc6_1.2 (%.3) [symbolic = %.loc6_1.3 (constants.%.4)]
+// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc4_13.2 (%T) [symbolic = %.loc5_8.2 (constants.%.1)]
+// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.k: @Class.%T.loc4_13.2 (%T)} [symbolic = %.loc6_1.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @Class.%.loc6_1.2 (%.2) [symbolic = %.loc6_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc5_8.1: @Class.%.loc5_8.2 (%.2) = field_decl k, element0 [template]
-// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc6_1.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc5_8.1: @Class.%.loc5_8.2 (%.1) = field_decl k, element0 [template]
+// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.2 [symbolic = %.loc6_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
@@ -156,8 +156,8 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class.loc9_15.2: type = class_type @Class, @Class(%T.loc8_26.2) [symbolic = %Class.loc9_15.2 (constants.%Class.2)]
-// CHECK:STDOUT:   %.loc9_28.5: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %.loc9_28.5 (constants.%.3)]
-// CHECK:STDOUT:   %.loc10_11.3: type = unbound_element_type @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2), @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %.loc10_11.3 (constants.%.2)]
+// CHECK:STDOUT:   %.loc9_28.5: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %.loc9_28.5 (constants.%.2)]
+// CHECK:STDOUT:   %.loc10_11.3: type = unbound_element_type @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2), @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %.loc10_11.3 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -167,14 +167,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2) = var v
 // CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2) = bind_name v, %v.var
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.loc8_26.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc9_28.1: @InitFromStructGeneric.%.loc9_28.5 (%.3) = struct_literal (%x.ref)
+// CHECK:STDOUT:     %.loc9_28.1: @InitFromStructGeneric.%.loc9_28.5 (%.2) = struct_literal (%x.ref)
 // CHECK:STDOUT:     %.loc9_28.2: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = class_element_access %v.var, element0
 // CHECK:STDOUT:     %.loc9_28.3: init @InitFromStructGeneric.%T.loc8_26.2 (%T) = initialize_from %x.ref to %.loc9_28.2
 // CHECK:STDOUT:     %.loc9_28.4: init @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2) = class_init (%.loc9_28.3), %v.var
 // CHECK:STDOUT:     %.loc9_29: init @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2) = converted %.loc9_28.1, %.loc9_28.4
 // CHECK:STDOUT:     assign %v.var, %.loc9_29
 // CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc9_15.2 (%Class.2) = name_ref v, %v
-// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%.loc10_11.3 (%.2) = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
+// CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%.loc10_11.3 (%.1) = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
 // CHECK:STDOUT:     %.loc10_11.1: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = class_element_access %v.ref, element0
 // CHECK:STDOUT:     %.loc10_11.2: @InitFromStructGeneric.%T.loc8_26.2 (%T) = bind_value %.loc10_11.1
 // CHECK:STDOUT:     return %.loc10_11.2
@@ -193,14 +193,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %Class.3 = var v
 // CHECK:STDOUT:   %v: ref %Class.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %x.ref: i32 = name_ref x, %x
-// CHECK:STDOUT:   %.loc14_30.1: %.7 = struct_literal (%x.ref)
+// CHECK:STDOUT:   %.loc14_30.1: %.6 = struct_literal (%x.ref)
 // CHECK:STDOUT:   %.loc14_30.2: ref i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc14_30.3: init i32 = initialize_from %x.ref to %.loc14_30.2
 // CHECK:STDOUT:   %.loc14_30.4: init %Class.3 = class_init (%.loc14_30.3), %v.var
 // CHECK:STDOUT:   %.loc14_31: init %Class.3 = converted %.loc14_30.1, %.loc14_30.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_31
 // CHECK:STDOUT:   %v.ref: ref %Class.3 = name_ref v, %v
-// CHECK:STDOUT:   %k.ref: %.6 = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
+// CHECK:STDOUT:   %k.ref: %.5 = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
 // CHECK:STDOUT:   %.loc15_11.1: ref i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc15_11.2: i32 = bind_value %.loc15_11.1
 // CHECK:STDOUT:   return %.loc15_11.2
@@ -212,9 +212,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.2
-// CHECK:STDOUT:   %.loc5_8.2 => constants.%.2
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.3
-// CHECK:STDOUT:   %.loc6_1.3 => constants.%.4
+// CHECK:STDOUT:   %.loc5_8.2 => constants.%.1
+// CHECK:STDOUT:   %.loc6_1.2 => constants.%.2
+// CHECK:STDOUT:   %.loc6_1.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@Class.%T.loc4_13.2) {
@@ -238,9 +238,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.3
-// CHECK:STDOUT:   %.loc5_8.2 => constants.%.6
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.7
-// CHECK:STDOUT:   %.loc6_1.3 => constants.%.8
+// CHECK:STDOUT:   %.loc5_8.2 => constants.%.5
+// CHECK:STDOUT:   %.loc6_1.2 => constants.%.6
+// CHECK:STDOUT:   %.loc6_1.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt.carbon
@@ -249,10 +249,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Adapt.type: type = generic_class_type @Adapt [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Adapt.1: %Adapt.type = struct_value () [template]
 // CHECK:STDOUT:   %Adapt.2: type = class_type @Adapt, @Adapt(%T) [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %T [symbolic]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %T [symbolic]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.type: type = fn_type @InitFromAdaptedGeneric [template]
 // CHECK:STDOUT:   %InitFromAdaptedGeneric: %InitFromAdaptedGeneric.type = struct_value () [template]
@@ -261,7 +261,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.type: type = fn_type @InitFromAdaptedSpecific [template]
 // CHECK:STDOUT:   %InitFromAdaptedSpecific: %InitFromAdaptedSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %Adapt.3: type = class_type @Adapt, @Adapt(i32) [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness i32 [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -329,12 +329,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_1.2: <witness> = complete_type_witness @Adapt.%T.loc4_13.2 (%T) [symbolic = %.loc6_1.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc6_1.2: <witness> = complete_type_witness @Adapt.%T.loc4_13.2 (%T) [symbolic = %.loc6_1.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     adapt_decl %T
-// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %T [symbolic = %.loc6_1.2 (constants.%.2)]
+// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %T [symbolic = %.loc6_1.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Adapt.2
@@ -388,7 +388,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.2
+// CHECK:STDOUT:   %.loc6_1.2 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromAdaptedGeneric(constants.%T) {
@@ -406,6 +406,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.3
+// CHECK:STDOUT:   %.loc6_1.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

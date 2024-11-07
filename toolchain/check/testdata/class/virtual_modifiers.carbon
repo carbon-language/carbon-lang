@@ -52,13 +52,13 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type: type = fn_type @I [template]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
 // CHECK:STDOUT:   %J.type: type = fn_type @J [template]
 // CHECK:STDOUT:   %J: %J.type = struct_value () [template]
@@ -89,7 +89,7 @@ fn F() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [template = constants.%I] {} {}
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -101,7 +101,7 @@ fn F() {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {} {}
 // CHECK:STDOUT:   %L.decl: %L.type = fn_decl @L [template = constants.%L] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -125,16 +125,16 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
-// CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.<vptr>: %.2, .base: %Base} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.<vptr>: %.1, .base: %Base} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -167,8 +167,8 @@ fn F() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [template = imports.%Modifiers]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
-// CHECK:STDOUT:   %.loc8: %.6 = base_decl %Base, element0 [template]
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc8: %.5 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -190,14 +190,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
-// CHECK:STDOUT:   %.2: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.<vptr>: %.2} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -239,7 +239,7 @@ fn F() {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc7_28.1: %.6 = struct_literal ()
+// CHECK:STDOUT:   %.loc7_28.1: %.5 = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: init %Base = class_init (<error>), %v.var [template = <error>]
 // CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.2 [template = <error>]
 // CHECK:STDOUT:   assign %v.var, %.loc7_29

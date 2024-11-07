@@ -22,7 +22,7 @@ fn Run() {
 // CHECK:STDOUT: @array.1.loc12_25 = internal constant [1 x i32] [i32 1]
 // CHECK:STDOUT: @array.2.loc13_33 = internal constant [2 x double] [double 0x4026333333333334, double 2.200000e+00]
 // CHECK:STDOUT: @array.3.loc14_41 = internal constant [5 x {}] zeroinitializer
-// CHECK:STDOUT: @tuple.2.loc15_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.loc15_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -44,7 +44,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc15_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !17
 // CHECK:STDOUT:   %.loc15_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !17
 // CHECK:STDOUT:   %.loc15_36.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d.var, ptr align 4 @tuple.2.loc15_37, i64 12, i1 false), !dbg !18
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d.var, ptr align 4 @tuple.loc15_37, i64 12, i1 false), !dbg !18
 // CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !19
 // CHECK:STDOUT:   %.loc16_21.1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !20
 // CHECK:STDOUT:   %.loc16_21.2 = load i32, ptr %.loc16_21.1.tuple.elem, align 4, !dbg !20
