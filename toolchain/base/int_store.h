@@ -59,7 +59,8 @@ class IntStore {
     return AddLarge(value);
   }
 
-  // Stores a canonical copy of a signed value and returns its ID.
+  // Returns the ID corresponding to this integer value, storing an `APInt` if
+  // necessary to represent it.
   auto AddSigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
     if (IntId id = IntId::TryMakeSignedValue(value); id.is_valid()) [[likely]] {
@@ -70,7 +71,7 @@ class IntStore {
     return AddSignedLarge(std::move(value));
   }
 
-  // Stores a canonical copy of an unsigned value and returns its ID.
+  // Returns the ID corresponding to an equivalent signed integer value, storing an `APInt` if necessary to represent it.
   auto AddUnsigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
     if (IntId id = IntId::TryMakeUnsignedValue(value); id.is_valid())
@@ -113,9 +114,9 @@ class IntStore {
   // `GetAtWidth` overload using the value found for it. See that overload for
   // more details.
   auto GetAtWidth(IntId id, IntId bit_width_id) const -> llvm::APInt {
-    const llvm::APInt& bit_width = Get(bit_width_id);
+    const llvm::APInt bit_width = Get(bit_width_id);
     CARBON_CHECK(bit_width.isStrictlyPositive() &&
-                     bit_width.isSignedIntN(sizeof(int) * 8),
+                     bit_width.isSignedIntN(MinAPWidth),
                  "Invalid bit width value: {0}", bit_width);
     return GetAtWidth(id, bit_width.getSExtValue());
   }
@@ -153,7 +154,7 @@ class IntStore {
     static const APIntId Invalid;
     using IdBase::IdBase;
     auto Print(llvm::raw_ostream& out) const -> void {
-      out << "ap-int";
+      out << "ap_int";
       IdBase::Print(out);
     }
   };

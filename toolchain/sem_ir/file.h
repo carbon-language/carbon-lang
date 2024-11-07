@@ -83,15 +83,12 @@ class File : public Printable<File> {
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
     auto inst_id = types().GetInstId(int_type_id);
     if (inst_id == InstId::BuiltinIntType) {
-      return {true, ints().LookupSigned(llvm::APInt(/*numBits=*/64, 32))};
+      return {.is_signed = true, .bit_width = ints().LookupSigned(llvm::APInt(/*numBits=*/64, 32))};
     }
-    auto int_type = insts().TryGetAs<IntType>(inst_id);
-    CARBON_CHECK(int_type,
-                 "Integer type ID associated with an unknown instruction: {0}",
-                 insts().Get(inst_id));
+    auto int_type = insts().GetAs<IntType>(inst_id);
     auto bit_width_inst = insts().TryGetAs<IntValue>(int_type->bit_width_id);
-    return {int_type->int_kind.is_signed(),
-            bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
+    return {.is_signed = int_type->int_kind.is_signed(),
+            .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
