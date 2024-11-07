@@ -1334,12 +1334,11 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   // spaces then add a couple to indent past the Context label.
   constexpr int Indent = 10;
 
-  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
-  node_stack_.PrintForStackDump(formatter, Indent, output);
-  inst_block_stack_.PrintForStackDump(formatter, Indent, output);
-  pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
-  param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
-  args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
+  node_stack_.PrintForStackDump(Indent, output);
+  inst_block_stack_.PrintForStackDump(Indent, output);
+  pattern_block_stack_.PrintForStackDump(Indent, output);
+  param_and_arg_refs_stack_.PrintForStackDump(Indent, output);
+  args_type_info_stack_.PrintForStackDump(Indent, output);
 }
 
 auto Context::DumpFormattedFile() const -> void {

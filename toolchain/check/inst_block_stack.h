@@ -70,8 +70,7 @@ class InstBlockStack {
   }
 
   // Prints the stack for a stack dump.
-  auto PrintForStackDump(SemIR::Formatter& formatter, int indent,
-                         llvm::raw_ostream& output) const -> void;
+  auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {

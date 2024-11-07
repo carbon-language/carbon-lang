@@ -8,19 +8,15 @@
 
 namespace Carbon::Check {
 
-auto NodeStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
-                                  llvm::raw_ostream& output) const -> void {
+auto NodeStack::PrintForStackDump(int indent, llvm::raw_ostream& output) const
+    -> void {
   auto print_id = [&]<Id::Kind Kind>(Id id) {
     if constexpr (Kind == Id::Kind::None) {
-      output << "no value\n";
+      output << "no value";
     } else if constexpr (Kind == Id::Kind::Invalid) {
       CARBON_FATAL("Should not be in node stack");
-    } else if constexpr (Kind == Id::KindFor<SemIR::InstId>()) {
-      output << "\n";
-      formatter.PrintInst(id.As<Id::KindFor<SemIR::InstId>()>(), indent + 4,
-                          output);
     } else {
-      output << id.As<Kind>() << "\n";
+      output << id.As<Kind>();
     }
   };
 
@@ -37,6 +33,7 @@ auto NodeStack::PrintForStackDump(SemIR::Formatter& formatter, int indent,
     break;
 #include "toolchain/parse/node_kind.def"
     }
+    output << "\n";
   }
 }
 
