@@ -46,7 +46,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %.type.1: type = generic_interface_type @.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: %.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.2: type = facet_type <@.1(...)> [symbolic]
+// CHECK:STDOUT:   %.type.2: type = facet_type <@.1, @.1(%T.1)> [symbolic]
 // CHECK:STDOUT:   %Self.1: %.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
@@ -60,7 +60,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.4: %.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type.4: type = generic_interface_type @.3 [template]
 // CHECK:STDOUT:   %.3: %.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.type.5: type = facet_type <@.3(...)> [symbolic]
+// CHECK:STDOUT:   %.type.5: type = facet_type <@.3, @.3(%T.2)> [symbolic]
 // CHECK:STDOUT:   %Self.3: %.type.5 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,7 +111,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc19_22.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = facet_type <@.1(...)> [symbolic = %.type (constants.%.type.2)]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1, @.1(%T.loc19_22.2)> [symbolic = %.type (constants.%.type.2)]
 // CHECK:STDOUT:   %Self.2: %.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -150,7 +150,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc38_27.2: %.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = facet_type <@.3(...)> [symbolic = %.type (constants.%.type.5)]
+// CHECK:STDOUT:   %.type: type = facet_type <@.3, @.3(%T.loc38_27.2)> [symbolic = %.type (constants.%.type.5)]
 // CHECK:STDOUT:   %Self.2: %.type.5 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {

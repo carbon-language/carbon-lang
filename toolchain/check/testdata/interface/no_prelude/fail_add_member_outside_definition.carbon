@@ -42,7 +42,7 @@ interface Outer {
 // CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [template]
 // CHECK:STDOUT:   %Self.2: %Outer.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Inner.type.1: type = facet_type <@Inner> [template]
-// CHECK:STDOUT:   %Inner.type.2: type = facet_type <@Inner(...)> [symbolic]
+// CHECK:STDOUT:   %Inner.type.2: type = facet_type <@Inner, @Inner(%Self.2)> [symbolic]
 // CHECK:STDOUT:   %Self.3: %Inner.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic]
 // CHECK:STDOUT:   %.2: %.type = struct_value () [symbolic]
@@ -83,7 +83,7 @@ interface Outer {
 // CHECK:STDOUT: generic interface @Inner(@Outer.%Self: %Outer.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.2: %Outer.type = bind_symbolic_name Self, 0 [symbolic = %Self.2 (constants.%Self.2)]
-// CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner(...)> [symbolic = %Inner.type (constants.%Inner.type.2)]
+// CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.2)> [symbolic = %Inner.type (constants.%Inner.type.2)]
 // CHECK:STDOUT:   %Self.3: %Inner.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.3 (constants.%Self.3)]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @Inner(%Self.2) [symbolic = %.type (constants.%.type)]
 // CHECK:STDOUT:   %.loc26: @Inner.%.type (%.type) = struct_value () [symbolic = %.loc26 (constants.%.2)]

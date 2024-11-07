@@ -958,7 +958,8 @@ class FormatterImpl {
         out_ << sep;
         FormatName(impls.interface_id);
         if (impls.specific_id.is_valid()) {
-          out_ << "(...)";
+          out_ << ", ";
+          FormatName(impls.specific_id);
         }
       }
     }
