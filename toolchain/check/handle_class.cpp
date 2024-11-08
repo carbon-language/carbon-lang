@@ -18,15 +18,21 @@
 
 namespace Carbon::Check {
 
+struct ClassInfo {
+  const SemIR::Class* obj;
+  SemIR::SpecificId specific_id;
+};
+
 // If `type_id` is a class type, get its corresponding `SemIR::Class` object.
 // Otherwise returns `nullptr`.
 static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
-    -> SemIR::Class* {
+    -> std::optional<ClassInfo> {
   auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
   if (!class_type) {
-    return nullptr;
+    return std::nullopt;
   }
-  return &context.classes().Get(class_type->class_id);
+  return ClassInfo{.obj = &context.classes().Get(class_type->class_id),
+                   .specific_id = class_type->specific_id};
 }
 
 auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
@@ -405,27 +411,25 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extended_scope_id = SemIR::NameScopeId::Invalid;
+    LookupScope extended_scope{.name_scope_id = SemIR::NameScopeId::Invalid,
+                               .specific_id = SemIR::SpecificId::Invalid};
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
       // below.
-    } else if (auto* adapted_class_info =
+    } else if (auto adapted_class_info =
                    TryGetAsClass(context, adapted_type_id)) {
-      extended_scope_id = adapted_class_info->scope_id;
-      CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
+      extended_scope.name_scope_id = adapted_class_info->obj->scope_id;
+      CARBON_CHECK(extended_scope.name_scope_id.is_valid(),
                    "Complete class should have a scope");
+      extended_scope.specific_id = adapted_class_info->specific_id;
     } else {
       // TODO: Accept any type that has a scope.
       context.TODO(node_id, "extending non-class type");
     }
 
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (extended_scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(
-          LookupScope{.name_scope_id = extended_scope_id,
-                      // TODO: Determine the correct specific_id to support
-                      // `extend adapt C(T);`.
-                      .specific_id = SemIR::SpecificId::Invalid});
+    if (extended_scope.name_scope_id.is_valid()) {
+      class_scope.extended_scopes.push_back(extended_scope);
     } else {
       class_scope.has_error = true;
     }
@@ -451,10 +455,12 @@ struct BaseInfo {
   static const BaseInfo Error;
 
   SemIR::TypeId type_id;
-  SemIR::NameScopeId scope_id;
+  SemIR::LookupScope scope;
 };
-constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
-                                      .scope_id = SemIR::NameScopeId::Invalid};
+constexpr BaseInfo BaseInfo::Error = {
+    .type_id = SemIR::TypeId::Error,
+    .scope = LookupScope{.name_scope_id = SemIR::NameScopeId::Invalid,
+                         .specific_id = SemIR::SpecificId::Invalid}};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -483,7 +489,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     return BaseInfo::Error;
   }
 
-  auto* base_class_info = TryGetAsClass(context, base_type_id);
+  auto base_class_info = TryGetAsClass(context, base_type_id);
 
   // The base must not be a final class.
   if (!base_class_info) {
@@ -494,13 +500,15 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
     return BaseInfo::Error;
   }
-  if (base_class_info->inheritance_kind == SemIR::Class::Final) {
+  if (base_class_info->obj->inheritance_kind == SemIR::Class::Final) {
     DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
   }
 
-  CARBON_CHECK(base_class_info->scope_id.is_valid(),
+  CARBON_CHECK(base_class_info->obj->scope_id.is_valid(),
                "Complete class should have a scope");
-  return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
+  return {.type_id = base_type_id,
+          .scope = LookupScope{.name_scope_id = base_class_info->obj->scope_id,
+                               .specific_id = base_class_info->specific_id}};
 }
 
 auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
@@ -563,11 +571,8 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // Extend the class scope with the base class.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (base_info.scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(LookupScope{
-          .name_scope_id = base_info.scope_id,
-          // TODO: determine `specific_id` to support `extend base: C(T);`.
-          .specific_id = SemIR::SpecificId::Invalid});
+    if (base_info.scope.name_scope_id.is_valid()) {
+      class_scope.extended_scopes.push_back(base_info.scope);
     } else {
       class_scope.has_error = true;
     }
@@ -668,8 +673,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     auto base_info = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
     // TODO: If the base class is template dependent, we will need to decide
     // whether to add a vptr as part of instantiation.
-    if (auto* base_class_info = TryGetAsClass(context, base_info.base_type_id);
-        base_class_info && base_class_info->is_dynamic) {
+    if (auto base_class_info = TryGetAsClass(context, base_info.base_type_id);
+        base_class_info && base_class_info->obj->is_dynamic) {
       defining_vtable_ptr = false;
     }
   }
