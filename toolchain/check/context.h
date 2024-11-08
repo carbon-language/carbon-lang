@@ -29,6 +29,7 @@
 
 namespace Carbon::Check {
 
+// FIXME: Remove this and instead qualify uses of `LookupScope` with `SemIR::`?
 using SemIR::LookupScope;
 
 // A result produced by name lookup.
