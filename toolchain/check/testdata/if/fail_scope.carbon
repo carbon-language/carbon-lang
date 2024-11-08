@@ -23,13 +23,13 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %VarScope.type: type = fn_type @VarScope [template]
 // CHECK:STDOUT:   %VarScope: %VarScope.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,7 +83,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_32.loc13, %.loc13_12.1 [template = i32]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc13_18: i32 = int_value 2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_value 2 [template = constants.%.1]
 // CHECK:STDOUT:   assign %n.var, %.loc13_18
 // CHECK:STDOUT:   %n.ref.loc14: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc14: i32 = bind_value %n.ref.loc14

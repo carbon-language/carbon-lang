@@ -89,37 +89,16 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
-// Information about the syntactic parameters of a callee (excluding the return
-// slot, for example). This information is extracted from the
-// EntityWithParamsBase before calling ConvertCallArgs, because conversion can
-// trigger importing of more entities, which can invalidate the reference to the
-// callee.
-struct CalleeParamsInfo {
-  explicit CalleeParamsInfo(const SemIR::EntityWithParamsBase& callee)
-      : callee_loc(callee.latest_decl_id()),
-        implicit_param_refs_id(callee.implicit_param_refs_id),
-        implicit_param_patterns_id(callee.implicit_param_patterns_id),
-        param_refs_id(callee.param_refs_id),
-        param_patterns_id(callee.param_patterns_id) {}
-
-  // The location of the callee to use in diagnostics.
-  SemIRLoc callee_loc;
-  // The implicit parameters of the callee.
-  SemIR::InstBlockId implicit_param_refs_id;
-  SemIR::InstBlockId implicit_param_patterns_id;
-  // The explicit parameters of the callee.
-  SemIR::InstBlockId param_refs_id;
-  SemIR::InstBlockId param_patterns_id;
-};
-
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
 // argument values for runtime parameters.
-auto ConvertCallArgs(
-    Context& context, SemIR::LocId call_loc_id, SemIR::InstId self_id,
-    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_slot_arg_id,
-    const CalleeParamsInfo& callee, SemIR::InstId return_slot_pattern_id,
-    SemIR::SpecificId callee_specific_id) -> SemIR::InstBlockId;
+auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
+                     SemIR::InstId self_id,
+                     llvm::ArrayRef<SemIR::InstId> arg_refs,
+                     SemIR::InstId return_slot_arg_id,
+                     const SemIR::Function& callee,
+                     SemIR::SpecificId callee_specific_id)
+    -> SemIR::InstBlockId;
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {

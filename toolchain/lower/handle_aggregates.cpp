@@ -91,14 +91,11 @@ static auto GetAggregateElement(FunctionContext& context,
 static auto GetStructFieldName(FunctionContext& context,
                                SemIR::TypeId struct_type_id,
                                SemIR::ElementIndex index) -> llvm::StringRef {
-  auto fields = context.sem_ir().inst_blocks().Get(
-      context.sem_ir()
-          .types()
-          .GetAs<SemIR::StructType>(struct_type_id)
-          .fields_id);
-  auto field = context.sem_ir().insts().GetAs<SemIR::StructTypeField>(
-      fields[index.index]);
-  return context.sem_ir().names().GetIRBaseName(field.name_id);
+  auto struct_type =
+      context.sem_ir().types().GetAs<SemIR::StructType>(struct_type_id);
+  auto fields =
+      context.sem_ir().struct_type_fields().Get(struct_type.fields_id);
+  return context.sem_ir().names().GetIRBaseName(fields[index.index].name_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -235,11 +232,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   context.SetLocal(
       inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
-}
-
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::StructTypeField /*inst*/) -> void {
-  // No action to take.
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

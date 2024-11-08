@@ -21,10 +21,10 @@ interface I {
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type, i32 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element1, @I.%N [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type, i32 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -53,7 +53,7 @@ interface I {
 // CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
 // CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc13_14: %.4 = assoc_entity element1, %N [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_14: %.3 = assoc_entity element1, %N [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

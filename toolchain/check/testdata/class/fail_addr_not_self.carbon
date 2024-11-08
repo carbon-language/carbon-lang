@@ -29,12 +29,12 @@ class Class {
 // CHECK:STDOUT:   %a: %.1 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %.1 = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,7 +72,7 @@ class Class {
 // CHECK:STDOUT:     %b.param: %.1 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %.1 = bind_name b, %b.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

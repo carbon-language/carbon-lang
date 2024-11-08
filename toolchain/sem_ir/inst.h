@@ -423,7 +423,7 @@ class InstStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
@@ -445,20 +445,12 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto empty_id = AddCanonical({});
-    CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto import_refs_id = AddDefaultValue();
     CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
     auto global_init_id = AddDefaultValue();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
-  }
-
-  // Adds a block with the given content, returning an ID to reference it.
-  // Returns Empty rather than creating a unique ID if the block is empty.
-  auto AddOrEmpty(llvm::ArrayRef<ElementType> content) -> InstBlockId {
-    return content.empty() ? InstBlockId::Empty : Add(content);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {

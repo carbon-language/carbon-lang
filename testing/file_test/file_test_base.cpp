@@ -1015,7 +1015,9 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
 
   pool.wait();
   if (crashed) {
-    return EXIT_FAILURE;
+    // Abort rather than returning so that we don't get a LeakSanitizer report.
+    // We expect to have leaked memory if one or more of our tests crashed.
+    std::abort();
   }
   llvm::errs() << "\nDone!\n";
   return EXIT_SUCCESS;

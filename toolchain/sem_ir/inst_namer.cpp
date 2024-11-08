@@ -569,9 +569,19 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(TupleType inst): {
+        if (inst.elements_id == TypeBlockId::Empty) {
+          add_inst_name("empty_tuple.type");
+        } else {
+          add_inst_name("tuple.type");
+        }
+        continue;
+      }
       case CARBON_KIND(TupleValue inst): {
         if (sem_ir_.types().Is<ArrayType>(inst.type_id)) {
           add_inst_name("array");
+        } else if (inst.elements_id == InstBlockId::Empty) {
+          add_inst_name("empty_tuple");
         } else {
           add_inst_name("tuple");
         }

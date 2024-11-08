@@ -78,34 +78,6 @@ class FormatterImpl {
     out_ << "\n";
   }
 
-  // Prints a code block.
-  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
-      -> void {
-    out_ << ' ';
-    OpenBrace();
-    constexpr int NumPrintedOnSkip = 9;
-    // Avoid only skipping one item.
-    if (block.size() > NumPrintedOnSkip + 1) {
-      Indent();
-      out_ << "... skipping " << (block.size() - NumPrintedOnSkip)
-           << " insts ...\n";
-      block = block.take_back(NumPrintedOnSkip);
-    }
-    FormatCodeBlock(block);
-    CloseBrace();
-  }
-
-  // Prints a single instruction.
-  auto FormatInst(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
-  }
-
  private:
   enum class AddSpace : bool { Before, After };
 
@@ -342,14 +314,6 @@ class FormatterImpl {
              sem_ir_.inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
              sem_ir_.inst_blocks().GetOrEmpty(
                  specific.GetValueBlock(region)))) {
-      if (generic_inst_id && specific_inst_id &&
-          sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
-          sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {
-        // Skip printing struct type fields to match the way we print the
-        // generic.
-        continue;
-      }
-
       Indent();
       if (generic_inst_id) {
         FormatName(*generic_inst_id);
@@ -566,6 +530,17 @@ class FormatterImpl {
       Indent();
       out_ << "has_error\n";
     }
+  }
+
+  // Prints a single instruction.
+  auto FormatInst(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInst(InstId inst_id, Inst inst) -> void {
@@ -899,18 +874,14 @@ class FormatterImpl {
     FormatTrailingBlock(inst.requirements_id);
   }
 
-  // StructTypeFields are formatted as part of their StructType.
-  auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
-
   auto FormatInstRHS(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
+    for (auto field : sem_ir_.struct_type_fields().Get(inst.fields_id)) {
       out_ << sep << ".";
-      auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
       FormatName(field.name_id);
       out_ << ": ";
-      FormatType(field.field_type_id);
+      FormatType(field.type_id);
     }
     out_ << "}";
   }
@@ -942,6 +913,17 @@ class FormatterImpl {
     if (info.bind_index.is_valid()) {
       out_ << ", " << info.bind_index.index;
     }
+  }
+
+  auto FormatArg(FacetTypeId id) -> void {
+    const auto& info = sem_ir_.facet_types().Get(id);
+    out_ << "<facet-type ";
+    FormatType(info.base_facet_type_id);
+    if (info.requirement_block_id.is_valid()) {
+      // TODO: Include specifics.
+      out_ << "+requirements";
+    }
+    out_ << ">";
   }
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
@@ -1167,19 +1149,6 @@ Formatter::~Formatter() = default;
 auto Formatter::Print(llvm::raw_ostream& out) -> void {
   FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
   formatter.Format();
-}
-
-auto Formatter::PrintPartialTrailingCodeBlock(
-    llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
-    -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatPartialTrailingCodeBlock(block);
-}
-
-auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
-                          llvm::raw_ostream& out) -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatInst(inst_id);
 }
 
 }  // namespace Carbon::SemIR

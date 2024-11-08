@@ -40,15 +40,15 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,7 +101,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -118,23 +118,23 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc27: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
-// CHECK:STDOUT:   %F.call.loc27: init %.2 = call %.loc27(<error>)
+// CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %.loc27(<error>)
 // CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc29: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
-// CHECK:STDOUT:   %G.call.loc29: init %.2 = call %.loc29(%c.ref.loc29)
+// CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %.loc29(%c.ref.loc29)
 // CHECK:STDOUT:   %p.ref.loc32: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc32_4.1: ref %Class = deref %p.ref.loc32
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32_4.2: %.1 = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init %.2 = call %.loc32_7(%.loc32_4.2)
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %.loc32_7(%.loc32_4.2)
 // CHECK:STDOUT:   %p.ref.loc34: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc34_4.1: ref %Class = deref %p.ref.loc34
 // CHECK:STDOUT:   %G.ref.loc34: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc34_7: <bound method> = bound_method %.loc34_4.1, %G.ref.loc34
 // CHECK:STDOUT:   %.loc34_4.2: %Class = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %G.call.loc34: init %.2 = call %.loc34_7(%.loc34_4.2)
+// CHECK:STDOUT:   %G.call.loc34: init %empty_tuple.type = call %.loc34_7(%.loc34_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -34,7 +34,7 @@ struct Options {
   LinkSubcommand link;
 
   // On success, this is set to the subcommand to run.
-  DriverSubcommand* subcommand = nullptr;
+  DriverSubcommand* selected_subcommand = nullptr;
 };
 }  // namespace
 
@@ -73,31 +73,11 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&fuzzing); });
 
-  b.AddSubcommand(ClangOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
-    clang.BuildOptions(sub_b);
-    sub_b.Do([&] { subcommand = &clang; });
-  });
-
-  b.AddSubcommand(CompileOptions::Info,
-                  [&](CommandLine::CommandBuilder& sub_b) {
-                    compile.BuildOptions(sub_b);
-                    sub_b.Do([&] { subcommand = &compile; });
-                  });
-
-  b.AddSubcommand(FormatOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
-    format.BuildOptions(sub_b);
-    sub_b.Do([&] { subcommand = &format; });
-  });
-
-  b.AddSubcommand(LanguageServerSubcommand::Info,
-                  [&](CommandLine::CommandBuilder& sub_b) {
-                    sub_b.Do([&] { subcommand = &language_server; });
-                  });
-
-  b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
-    link.BuildOptions(sub_b);
-    sub_b.Do([&] { subcommand = &link; });
-  });
+  clang.AddTo(b, &selected_subcommand);
+  compile.AddTo(b, &selected_subcommand);
+  format.AddTo(b, &selected_subcommand);
+  language_server.AddTo(b, &selected_subcommand);
+  link.AddTo(b, &selected_subcommand);
 
   b.RequiresSubcommand();
 }
@@ -128,8 +108,8 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     SetFuzzing();
   }
 
-  CARBON_CHECK(options.subcommand != nullptr);
-  return options.subcommand->Run(driver_env_);
+  CARBON_CHECK(options.selected_subcommand != nullptr);
+  return options.selected_subcommand->Run(driver_env_);
 }
 
 auto Driver::SetFuzzing() -> void { driver_env_.fuzzing = true; }

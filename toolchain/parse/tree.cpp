@@ -71,8 +71,8 @@ auto Tree::Verify() const -> ErrorOr<Success> {
 
 auto Tree::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "node_impls_"), node_impls_);
-  mem_usage.Add(MemUsage::ConcatLabel(label, "imports_"), imports_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "node_impls_"), node_impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "imports_"), imports_);
 }
 
 auto Tree::PostorderIterator::MakeRange(NodeId begin, NodeId end)

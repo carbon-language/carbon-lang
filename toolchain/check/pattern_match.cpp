@@ -46,7 +46,7 @@ enum class MatchKind {
   // against the portion of the pattern below the ParamPattern insts.
   Callee,
 
-  // TODO: add enumerator for non-function-call pattern match
+  // TODO: Add enumerator for non-function-call pattern match.
 };
 
 // The collected state of a pattern-matching operation.
@@ -115,7 +115,7 @@ class MatchContext {
   SemIR::SpecificId callee_specific_id_;
 
   // The return slot inst emitted by `DoWork`, if any.
-  // TODO: can this be added to the block returned by `DoWork`, instead?
+  // TODO: Can this be added to the block returned by `DoWork`, instead?
   SemIR::InstId return_slot_id_;
 };
 
@@ -126,7 +126,7 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   while (!stack_.empty()) {
     EmitPatternMatch(context, stack_.pop_back_val());
   }
-  auto block_id = context.inst_blocks().AddOrEmpty(results_);
+  auto block_id = context.inst_blocks().Add(results_);
   results_.clear();
   return block_id;
 }
@@ -254,7 +254,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           break;
         }
         case MatchKind::Callee: {
-          // TODO: consider ways to address near-duplication with the
+          // TODO: Consider ways to address near-duplication with the
           // ValueParamPattern case.
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {

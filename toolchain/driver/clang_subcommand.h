@@ -17,8 +17,6 @@ namespace Carbon {
 //
 // See the implementation of `Build` for documentation on members.
 struct ClangOptions {
-  static const CommandLine::CommandInfo Info;
-
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   llvm::SmallVector<llvm::StringRef> args;
@@ -27,7 +25,11 @@ struct ClangOptions {
 // Implements the clang subcommand of the driver.
 class ClangSubcommand : public DriverSubcommand {
  public:
-  auto BuildOptions(CommandLine::CommandBuilder& b) { options_.Build(b); }
+  explicit ClangSubcommand();
+
+  auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
+    options_.Build(b);
+  }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 

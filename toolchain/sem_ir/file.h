@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -25,6 +26,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 
@@ -114,6 +116,12 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
+  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
+  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto generics() -> GenericStore& { return generics_; }
@@ -135,6 +143,12 @@ class File : public Printable<File> {
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
+  auto struct_type_fields() -> StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
+  auto struct_type_fields() const -> const StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
   auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
@@ -202,6 +216,9 @@ class File : public Printable<File> {
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
 
+  // Storage for facet types.
+  CanonicalValueStore<FacetTypeId> facet_types_;
+
   // Storage for impls.
   ImplStore impls_;
 
@@ -245,6 +262,9 @@ class File : public Printable<File> {
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
+
+  // Storage for StructTypeField lists.
+  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);

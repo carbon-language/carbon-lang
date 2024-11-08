@@ -44,7 +44,7 @@ abstract var e: ();
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,21 +54,21 @@ abstract var e: ();
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_19.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_19.2: type = converted %.loc15_19.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %b.var: ref %.1 = var b
-// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc24_27.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_27.2: type = converted %.loc24_27.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %c.var: ref %.1 = var c
-// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc37_29.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc37_29.2: type = converted %.loc37_29.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc42_18.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc42_18.2: type = converted %.loc42_18.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc15_19.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_19.2: type = converted %.loc15_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc24_27.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc24_27.2: type = converted %.loc24_27.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc37_29.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc37_29.2: type = converted %.loc37_29.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc42_18.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc42_18.2: type = converted %.loc42_18.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

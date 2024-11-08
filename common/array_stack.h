@@ -84,6 +84,9 @@ class ArrayStack {
   // Returns the current number of values in all arrays.
   auto all_values_size() const -> size_t { return values_.size(); }
 
+  // Returns true if the stack has no arrays pushed.
+  auto empty() const -> bool { return array_offsets_.empty(); }
+
  private:
   // For each pushed array, the start index in elements_.
   llvm::SmallVector<int32_t> array_offsets_;

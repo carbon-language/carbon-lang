@@ -62,7 +62,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,7 +79,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +99,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,9 +115,9 @@ fn A {
 // CHECK:STDOUT: --- fail_invalid_file_generic_regression_test.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x [symbolic]
-// CHECK:STDOUT:   %tuple: %.1 = tuple_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %x: %empty_tuple.type = bind_symbolic_name x [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -127,25 +127,25 @@ fn A {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: %.1 = bind_symbolic_name x, %x.var [symbolic = constants.%x]
+// CHECK:STDOUT:   %.loc8_10.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x: %empty_tuple.type = bind_symbolic_name x, %x.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_15.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_15.2: init %.1 = tuple_init () to file.%x.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_16: init %.1 = converted %.loc8_15.1, %.loc8_15.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_15.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_15.2: init %empty_tuple.type = tuple_init () to file.%x.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_16: init %empty_tuple.type = converted %.loc8_15.1, %.loc8_15.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%x.var, %.loc8_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

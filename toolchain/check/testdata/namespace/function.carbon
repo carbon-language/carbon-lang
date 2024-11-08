@@ -25,7 +25,7 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Baz.type.1: type = fn_type @Baz.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Baz.1: %Baz.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Baz.type.2: type = fn_type @Baz.2 [template]
 // CHECK:STDOUT:   %Baz.2: %Baz.type.2 = struct_value () [template]
@@ -70,7 +70,7 @@ fn Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Baz.ref: %Baz.type.2 = name_ref Baz, file.%Baz.decl.loc17 [template = constants.%Baz.2]
-// CHECK:STDOUT:   %Baz.call: init %.1 = call %Baz.ref()
+// CHECK:STDOUT:   %Baz.call: init %empty_tuple.type = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

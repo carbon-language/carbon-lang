@@ -34,7 +34,7 @@ auto DiagnosticLoc::FormatSnippet(llvm::raw_ostream& out, int indent) const
   out << "^";
   // We want to ensure that we don't underline past the end of the line in
   // case of a multiline token.
-  // TODO: revisit this once we can reference multiple ranges on multiple
+  // TODO: Revisit this once we can reference multiple ranges on multiple
   // lines in a single diagnostic message.
   int underline_length =
       std::min(length, static_cast<int32_t>(line.size()) - column);

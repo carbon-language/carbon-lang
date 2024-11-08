@@ -17,7 +17,9 @@ namespace Carbon {
 // Implements the link subcommand of the driver.
 class LanguageServerSubcommand : public DriverSubcommand {
  public:
-  static const CommandLine::CommandInfo Info;
+  explicit LanguageServerSubcommand();
+
+  auto BuildOptions(CommandLine::CommandBuilder& /*b*/) -> void override {}
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 };

@@ -69,10 +69,10 @@ fn NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: %.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.3: %.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.2: %.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -92,9 +92,9 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

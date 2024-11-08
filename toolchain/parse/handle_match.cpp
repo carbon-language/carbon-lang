@@ -176,8 +176,7 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
 
       context.AddLeafNode(NodeKind::MatchCaseGuardStart, *context.position(),
                           true);
-      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                          /*has_error=*/true);
+      context.AddInvalidParse(*context.position());
       state = context.PopState();
       context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
                       /*has_error=*/true);

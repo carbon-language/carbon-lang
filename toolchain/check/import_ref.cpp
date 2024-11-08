@@ -1231,7 +1231,7 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::StructType inst): {
-        return TryResolveTypedInst(inst, inst_id);
+        return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::StructValue inst): {
         return TryResolveTypedInst(inst);
@@ -1800,23 +1800,27 @@ class ImportRefResolver {
 
     new_impl.witness_id = witness_id;
 
-    // Import the definition scope, if we might need it. Name lookup is never
-    // performed into this scope by a user of the impl, so this is only
-    // necessary in the same library that defined the impl, in order to support
-    // defining members of the impl out of line in the impl file when the impl
-    // is defined in the API file.
-    if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+    if (import_impl.scope_id.is_valid()) {
       new_impl.scope_id = context_.name_scopes().Add(
           new_impl.first_owning_decl_id, SemIR::NameId::Invalid,
           new_impl.parent_scope_id);
-      auto& new_scope = context_.name_scopes().Get(new_impl.scope_id);
-      const auto& import_scope =
-          import_ir_.name_scopes().Get(import_impl.scope_id);
+      // Import the contents of the definition scope, if we might need it. Name
+      // lookup is never performed into this scope by a user of the impl, so
+      // this is only necessary in the same library that defined the impl, in
+      // order to support defining members of the impl out of line in the impl
+      // file when the impl is defined in the API file.
+      // TODO: Check to see if this impl is owned by the API file, rather than
+      // merely being imported into it.
+      if (import_ir_id_ == SemIR::ImportIRId::ApiForImpl) {
+        auto& new_scope = context_.name_scopes().Get(new_impl.scope_id);
+        const auto& import_scope =
+            import_ir_.name_scopes().Get(import_impl.scope_id);
 
-      // Push a block so that we can add scoped instructions to it.
-      context_.inst_block_stack().Push();
-      AddNameScopeImportRefs(import_scope, new_scope);
-      new_impl.body_block_id = context_.inst_block_stack().Pop();
+        // Push a block so that we can add scoped instructions to it.
+        context_.inst_block_stack().Push();
+        AddNameScopeImportRefs(import_scope, new_scope);
+        new_impl.body_block_id = context_.inst_block_stack().Pop();
+      }
     }
   }
 
@@ -2140,38 +2144,31 @@ class ImportRefResolver {
                                                .specific_id = specific_id});
   }
 
-  auto TryResolveTypedInst(SemIR::StructType inst, SemIR::InstId import_inst_id)
-      -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::StructType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto orig_fields = import_ir_.inst_blocks().Get(inst.fields_id);
+    auto orig_fields = import_ir_.struct_type_fields().Get(inst.fields_id);
     llvm::SmallVector<SemIR::ConstantId> field_const_ids;
     field_const_ids.reserve(orig_fields.size());
-    for (auto field_id : orig_fields) {
-      auto field = import_ir_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      field_const_ids.push_back(GetLocalConstantId(field.field_type_id));
+    for (auto field : orig_fields) {
+      field_const_ids.push_back(GetLocalConstantId(field.type_id));
     }
     if (HasNewWork()) {
       return Retry();
     }
 
     // Prepare a vector of fields for GetStructType.
-    // TODO: Should we have field constants so that we can deduplicate fields
-    // without creating instructions here?
-    llvm::SmallVector<SemIR::InstId> fields;
-    fields.reserve(orig_fields.size());
-    for (auto [field_id, field_const_id] :
+    llvm::SmallVector<SemIR::StructTypeField> new_fields;
+    new_fields.reserve(orig_fields.size());
+    for (auto [orig_field, field_const_id] :
          llvm::zip(orig_fields, field_const_ids)) {
-      auto field = import_ir_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      auto name_id = GetLocalNameId(field.name_id);
+      auto name_id = GetLocalNameId(orig_field.name_id);
       auto field_type_id = context_.GetTypeIdForTypeConstant(field_const_id);
-      fields.push_back(context_.AddInstInNoBlock<SemIR::StructTypeField>(
-          AddImportIRInst(import_inst_id),
-          {.name_id = name_id, .field_type_id = field_type_id}));
+      new_fields.push_back({.name_id = name_id, .type_id = field_type_id});
     }
 
     return ResolveAs<SemIR::StructType>(
         {.type_id = SemIR::TypeId::TypeType,
-         .fields_id = context_.inst_blocks().AddCanonical(fields)});
+         .fields_id = context_.struct_type_fields().AddCanonical(new_fields)});
   }
 
   auto TryResolveTypedInst(SemIR::StructValue inst) -> ResolveResult {
@@ -2461,11 +2458,15 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void {
   ImportRefResolver resolver(context, import_ir_id);
+  context.generic_region_stack().Push();
+
   resolver.Resolve(context.import_irs()
                        .Get(import_ir_id)
                        .sem_ir->impls()
                        .Get(impl_id)
                        .first_decl_id());
+
+  context.generic_region_stack().Pop();
 }
 
 }  // namespace Carbon::Check

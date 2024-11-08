@@ -20,14 +20,16 @@ class File;
 class Inst;
 struct EntityName;
 struct Class;
+struct FacetTypeInfo;
 struct Function;
 struct Generic;
 struct Specific;
 struct ImportIR;
 struct ImportIRInst;
-struct Interface;
 struct Impl;
+struct Interface;
 struct NameScope;
+struct StructTypeField;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -336,6 +338,22 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
 };
 
 constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
+
+// The ID of an faceet type value.
+struct FacetTypeId : public IdBase, public Printable<FacetTypeId> {
+  using ValueType = FacetTypeInfo;
+
+  // An explicitly invalid ID.
+  static const FacetTypeId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "facet type";
+    IdBase::Print(out);
+  }
+};
+
+constexpr FacetTypeId FacetTypeId::Invalid = FacetTypeId(InvalidIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase, public Printable<ImplId> {
@@ -682,6 +700,30 @@ constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
+// The ID of a type block.
+struct StructTypeFieldsId : public IdBase,
+                            public Printable<StructTypeFieldsId> {
+  using ElementType = StructTypeField;
+  using ValueType = llvm::MutableArrayRef<StructTypeField>;
+
+  // An explicitly invalid ID.
+  static const StructTypeFieldsId Invalid;
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const StructTypeFieldsId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "type_block";
+    IdBase::Print(out);
+  }
+};
+
+constexpr StructTypeFieldsId StructTypeFieldsId::Invalid =
+    StructTypeFieldsId(InvalidIndex);
+constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
+
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
   // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
@@ -744,6 +786,10 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
   // An explicitly invalid ID.
   static const TypeBlockId Invalid;
 
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const TypeBlockId Empty;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type_block";
@@ -752,6 +798,7 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 };
 
 constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
+constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
@@ -830,13 +877,17 @@ struct ImportIRInstId : public IdBase, public Printable<ImportIRInstId> {
 
 constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
 
-// A SemIR location used exclusively for diagnostic locations.
+// A SemIR location used as the location of instructions.
 //
 // Contents:
 // - index > Invalid: A Parse::NodeId in the current IR.
 // - index < Invalid: An ImportIRInstId.
 // - index == Invalid: Can be used for either.
 struct LocId : public IdBase, public Printable<LocId> {
+  // This bit, if set for a node ID location, indicates a location for
+  // operations performed implicitly.
+  static const int32_t ImplicitBit = 1 << 30;
+
   // An explicitly invalid ID.
   static const LocId Invalid;
 
@@ -848,22 +899,37 @@ struct LocId : public IdBase, public Printable<LocId> {
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
     CARBON_CHECK(node_id.is_valid() == is_valid());
+    CARBON_CHECK(!is_implicit());
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(ImportIRInstId inst_id)
       : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
     CARBON_CHECK(inst_id.is_valid() == is_valid());
+    CARBON_CHECK(index & ImplicitBit);
+  }
+
+  // Forms an equivalent LocId for an implicit location.
+  auto ToImplicit() const -> LocId {
+    // For import IR locations and the invalid location, the implicit bit is
+    // always set, so this is a no-op.
+    return LocId(index | ImplicitBit);
   }
 
   auto is_node_id() const -> bool { return index > InvalidIndex; }
   auto is_import_ir_inst_id() const -> bool { return index < InvalidIndex; }
+  auto is_implicit() const -> bool {
+    return is_node_id() && (index & ImplicitBit) != 0;
+  }
 
   // This is allowed to return an invalid NodeId, but should never be used for a
   // valid InstId.
   auto node_id() const -> Parse::NodeId {
-    CARBON_CHECK(is_node_id() || !is_valid());
-    return Parse::NodeId(index);
+    if (!is_valid()) {
+      return Parse::NodeId::Invalid;
+    }
+    CARBON_CHECK(is_node_id());
+    return Parse::NodeId(index & ~ImplicitBit);
   }
 
   // This is allowed to return an invalid InstId, but should never be used for a

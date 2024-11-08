@@ -67,9 +67,8 @@ auto HandleBindingPattern(Context& context) -> void {
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
     on_error(/*expected_name=*/false);
-    // Add a placeholder for the type.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
+    // Add a substitute for a type node.
+    context.AddInvalidParse(*context.position());
     context.PushState(state, State::BindingPatternFinishAsRegular);
   }
 }

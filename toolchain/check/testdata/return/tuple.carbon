@@ -17,16 +17,16 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 15 [template]
-// CHECK:STDOUT:   %.6: i32 = int_value 35 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5, %.6) [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %tuple.type.2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 15 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 35 [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.2, %.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -45,35 +45,35 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {
-// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc12_15: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc12_20: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc12_23.1: %.2 = tuple_literal (%int.make_type_32.loc12_15, %int.make_type_32.loc12_20)
+// CHECK:STDOUT:     %.loc12_23.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc12_15, %int.make_type_32.loc12_20)
 // CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %int.make_type_32.loc12_15 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.3: type = converted %int.make_type_32.loc12_15, %.loc12_23.2 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.4: type = value_of_initializer %int.make_type_32.loc12_20 [template = i32]
 // CHECK:STDOUT:     %.loc12_23.5: type = converted %int.make_type_32.loc12_20, %.loc12_23.4 [template = i32]
-// CHECK:STDOUT:     %.loc12_23.6: type = converted %.loc12_23.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:     %.loc12_23.6: type = converted %.loc12_23.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %tuple.type.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> %return: %.3 {
+// CHECK:STDOUT: fn @Main() -> %return: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_11: i32 = int_value 15 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_15: i32 = int_value 35 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_17.1: %.3 = tuple_literal (%.loc13_11, %.loc13_15)
+// CHECK:STDOUT:   %.loc13_11: i32 = int_value 15 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_15: i32 = int_value 35 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_17.1: %tuple.type.2 = tuple_literal (%.loc13_11, %.loc13_15)
 // CHECK:STDOUT:   %.loc13_17.2: ref i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc13_17.3: init i32 = initialize_from %.loc13_11 to %.loc13_17.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_17.3: init i32 = initialize_from %.loc13_11 to %.loc13_17.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_17.4: ref i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc13_17.5: init i32 = initialize_from %.loc13_15 to %.loc13_17.4 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_17.6: init %.3 = tuple_init (%.loc13_17.3, %.loc13_17.5) to %return [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc13_18: init %.3 = converted %.loc13_17.1, %.loc13_17.6 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc13_17.5: init i32 = initialize_from %.loc13_15 to %.loc13_17.4 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_17.6: init %tuple.type.2 = tuple_init (%.loc13_17.3, %.loc13_17.5) to %return [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc13_18: init %tuple.type.2 = converted %.loc13_17.1, %.loc13_17.6 [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc13_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

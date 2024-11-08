@@ -124,6 +124,17 @@ class Context {
     return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
   }
 
+  // If the instruction has an implicit location and a constant value, returns
+  // the constant value's instruction ID. Otherwise, same as AddInst.
+  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for GetOrAddInst with typed nodes.
+  template <typename InstT, typename LocT>
+  auto GetOrAddInst(LocT loc, InstT inst)
+      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
+  }
+
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
@@ -383,9 +394,8 @@ class Context {
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
-  // Returns a struct type with the given fields, which should be a block of
-  // `StructTypeField`s.
-  auto GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+  // Returns a struct type with the given fields.
+  auto GetStructType(SemIR::StructTypeFieldsId fields_id) -> SemIR::TypeId;
 
   // Returns a tuple type with the given element types.
   auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
@@ -456,6 +466,10 @@ class Context {
     return args_type_info_stack_;
   }
 
+  auto struct_type_fields_stack() -> ArrayStack<SemIR::StructTypeField>& {
+    return struct_type_fields_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -515,6 +529,9 @@ class Context {
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
+  }
+  auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
+    return sem_ir().struct_type_fields();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
@@ -605,6 +622,10 @@ class Context {
   // where we need to track names for a type separate from the literal
   // arguments.
   InstBlockStack args_type_info_stack_;
+
+  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
+  // object representations.
+  ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

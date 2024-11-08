@@ -111,6 +111,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("classes", classes_.OutputYaml());
           map.Add("generics", generics_.OutputYaml());
           map.Add("specifics", specifics_.OutputYaml());
+          map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
           map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add(
@@ -151,7 +152,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
-  mem_usage.Add(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
@@ -163,6 +164,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
+                    struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "type_blocks_"), type_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "name_scopes_"), name_scopes_);
@@ -202,7 +205,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnSlotPattern::Kind:
       case ReturnExpr::Kind:
-      case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -256,6 +258,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
+      case FacetType::Kind:
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:
@@ -293,7 +296,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case CARBON_KIND(BindName inst): {
-        // TODO: don't rely on value_id for expression category, since it may
+        // TODO: Don't rely on value_id for expression category, since it may
         // not be valid yet. This workaround only works because we don't support
         // `var` in function signatures yet.
         if (!inst.value_id.is_valid()) {
@@ -355,7 +358,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return ExprCategory::EphemeralRef;
 
       case OutParam::Kind:
-        // TODO: consider introducing a separate category for OutParam:
+        // TODO: Consider introducing a separate category for OutParam:
         // unlike other DurableRefs, it permits initialization.
         return ExprCategory::DurableRef;
     }
