@@ -7,10 +7,10 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/multiple_extend.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/multiple_extend.carbon
-// CHECK:STDERR: fail_ambiguous_impls.carbon: error: `Main//default` previously provided by `different_impl_member_names.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
 
 // --- different_impl_member_names.carbon
+
+library "[[@TEST_NAME]]";
 
 interface HasF {
   fn F();
@@ -38,6 +38,8 @@ fn H(c: C) {
 
 // --- fail_ambiguous_impls.carbon
 
+library "[[@TEST_NAME]]";
+
 interface HasA1 {
   fn A();
 }
@@ -61,18 +63,16 @@ fn B(d: D) {
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   D.A();
-  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+8]]:3: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+4]]:3: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
   // CHECK:STDERR:   d.A();
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: different_impl_and_base.carbon: error: `Main//default` previously provided by `different_impl_member_names.carbon` [DuplicateMainApi]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon: error: `Main//default` previously provided by `different_impl_member_names.carbon` [DuplicateMainApi]
   // CHECK:STDERR:
   d.A();
 }
 
 // --- different_impl_and_base.carbon
+
+library "[[@TEST_NAME]]";
 
 interface HasI {
   fn I();
@@ -98,6 +98,8 @@ fn H(e: E) {
 
 // --- fail_ambiguous_impl_and_base.carbon
 
+library "[[@TEST_NAME]]";
+
 base class Base {
   fn K() {}
 }
@@ -119,15 +121,15 @@ fn M(l: L) {
    // CHECK:STDERR:    ^~~
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+5]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+3]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
    // CHECK:STDERR:    l.K();
    // CHECK:STDERR:    ^~~
-   // CHECK:STDERR:
-   // CHECK:STDERR: ambiguity_hidden.carbon: error: `Main//default` previously provided by `different_impl_member_names.carbon` [DuplicateMainApi]
    l.K();
 }
 
 // --- ambiguity_hidden.carbon
+
+library "[[@TEST_NAME]]";
 
 base class NBase {
   fn N() {}
@@ -210,7 +212,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -219,41 +221,41 @@ fn P(o: O) {
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc3: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc3
+// CHECK:STDOUT:   .F = %.loc5
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
 // CHECK:STDOUT:   %Self: %HasG.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {} {}
-// CHECK:STDOUT:   %.loc7: %.4 = assoc_entity element0, %G.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9: %.4 = assoc_entity element0, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .G = %.loc7
+// CHECK:STDOUT:   .G = %.loc9
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%F.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.loc11
+// CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasG.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {} {}
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%G.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%G.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = %.loc14
+// CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -265,7 +267,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [template = constants.%HasG.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.8 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -295,22 +297,22 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc20: %.2 = name_ref F, @HasF.%.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc20: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc20: init %.1 = call %.loc20()
-// CHECK:STDOUT:   %c.ref.loc21: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc21: %.2 = name_ref F, @HasF.%.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc21: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc21: init %.1 = call %.loc21()
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc22: %.4 = name_ref G, @HasG.%.loc7 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc22: %G.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call.loc22: init %.1 = call %.loc22()
+// CHECK:STDOUT:   %F.ref.loc22: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc22: init %.1 = call %.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc23: %.4 = name_ref G, @HasG.%.loc7 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc23: %G.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call.loc23: init %.1 = call %.loc23()
+// CHECK:STDOUT:   %F.ref.loc23: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc23: init %.1 = call %.loc23()
+// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc24: %.4 = name_ref G, @HasG.%.loc9 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc24: %G.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call.loc24: init %.1 = call %.loc24()
+// CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc25: %.4 = name_ref G, @HasG.%.loc9 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc25: %G.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call.loc25: init %.1 = call %.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -375,7 +377,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %d.patt: %D = binding_pattern d
 // CHECK:STDOUT:     %d.param_patt: %D = value_param_pattern %d.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %D.ref.loc19: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %d.param: %D = value_param runtime_param0
 // CHECK:STDOUT:     %d: %D = bind_name d, %d.param
 // CHECK:STDOUT:   }
@@ -384,41 +386,41 @@ fn P(o: O) {
 // CHECK:STDOUT: interface @HasA1 {
 // CHECK:STDOUT:   %Self: %HasA1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %A.decl: %A.type.1 = fn_decl @A.1 [template = constants.%A.1] {} {}
-// CHECK:STDOUT:   %.loc3: %.2 = assoc_entity element0, %A.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %A.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .A = %.loc3
+// CHECK:STDOUT:   .A = %.loc5
 // CHECK:STDOUT:   witness = (%A.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasA2 {
 // CHECK:STDOUT:   %Self: %HasA2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %A.decl: %A.type.2 = fn_decl @A.2 [template = constants.%A.2] {} {}
-// CHECK:STDOUT:   %.loc7: %.4 = assoc_entity element0, %A.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9: %.4 = assoc_entity element0, %A.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .A = %.loc7
+// CHECK:STDOUT:   .A = %.loc9
 // CHECK:STDOUT:   witness = (%A.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasA1.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.3 = fn_decl @A.3 [template = constants.%A.3] {} {}
-// CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%A.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%A.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
-// CHECK:STDOUT:   witness = %.loc11
+// CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasA2.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.4 = fn_decl @A.4 [template = constants.%A.4] {} {}
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%A.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%A.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
-// CHECK:STDOUT:   witness = %.loc14
+// CHECK:STDOUT:   witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -430,7 +432,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [template = constants.%HasA2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.8 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.8 [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -460,10 +462,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %D.ref.loc24: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %A.ref.loc24: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   %D.ref.loc26: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:   %A.ref.loc26: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
-// CHECK:STDOUT:   %A.ref.loc33: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   %A.ref.loc31: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +529,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %e.patt: %E = binding_pattern e
 // CHECK:STDOUT:     %e.param_patt: %E = value_param_pattern %e.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %E.ref.loc17: type = name_ref E, file.%E.decl [template = constants.%E]
+// CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:     %e.param: %E = value_param runtime_param0
 // CHECK:STDOUT:     %e: %E = bind_name e, %e.param
 // CHECK:STDOUT:   }
@@ -536,26 +538,26 @@ fn P(o: O) {
 // CHECK:STDOUT: interface @HasI {
 // CHECK:STDOUT:   %Self: %HasI.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {} {}
-// CHECK:STDOUT:   %.loc3: %.2 = assoc_entity element0, %I.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %I.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .I = %.loc3
+// CHECK:STDOUT:   .I = %.loc5
 // CHECK:STDOUT:   witness = (%I.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasI.ref {
 // CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {} {}
-// CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%I.decl) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%I.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .I = %I.decl
-// CHECK:STDOUT:   witness = %.loc12
+// CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -564,16 +566,16 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc11: %.7 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.7 = base_decl %B, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [template = constants.%HasI.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.9 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
-// CHECK:STDOUT:   .base = %.loc11
+// CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
@@ -595,20 +597,20 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%e.param_patt: %E) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %E.ref.loc18: type = name_ref E, file.%E.decl [template = constants.%E]
-// CHECK:STDOUT:   %I.ref.loc18: %.2 = name_ref I, @HasI.%.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc18: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
-// CHECK:STDOUT:   %I.call.loc18: init %.1 = call %.loc18()
-// CHECK:STDOUT:   %e.ref.loc19: %E = name_ref e, %e
-// CHECK:STDOUT:   %I.ref.loc19: %.2 = name_ref I, @HasI.%.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
-// CHECK:STDOUT:   %I.call.loc19: init %.1 = call %.loc19()
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [template = constants.%E]
-// CHECK:STDOUT:   %J.ref.loc20: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
-// CHECK:STDOUT:   %J.call.loc20: init %.1 = call %J.ref.loc20()
+// CHECK:STDOUT:   %I.ref.loc20: %.2 = name_ref I, @HasI.%.loc5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %I.call.loc20: init %.1 = call %.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
-// CHECK:STDOUT:   %J.ref.loc21: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
-// CHECK:STDOUT:   %J.call.loc21: init %.1 = call %J.ref.loc21()
+// CHECK:STDOUT:   %I.ref.loc21: %.2 = name_ref I, @HasI.%.loc5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc21: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %I.call.loc21: init %.1 = call %.loc21()
+// CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [template = constants.%E]
+// CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
+// CHECK:STDOUT:   %J.call.loc22: init %.1 = call %J.ref.loc22()
+// CHECK:STDOUT:   %e.ref.loc23: %E = name_ref e, %e
+// CHECK:STDOUT:   %J.ref.loc23: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
+// CHECK:STDOUT:   %J.call.loc23: init %.1 = call %J.ref.loc23()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -668,7 +670,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %l.patt: %L = binding_pattern l
 // CHECK:STDOUT:     %l.param_patt: %L = value_param_pattern %l.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %L.ref.loc17: type = name_ref L, file.%L.decl [template = constants.%L]
+// CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [template = constants.%L]
 // CHECK:STDOUT:     %l.param: %L = value_param runtime_param0
 // CHECK:STDOUT:     %l: %L = bind_name l, %l.param
 // CHECK:STDOUT:   }
@@ -677,26 +679,26 @@ fn P(o: O) {
 // CHECK:STDOUT: interface @HasK {
 // CHECK:STDOUT:   %Self: %HasK.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %K.decl: %K.type.2 = fn_decl @K.2 [template = constants.%K.2] {} {}
-// CHECK:STDOUT:   %.loc7: %.4 = assoc_entity element0, %K.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9: %.4 = assoc_entity element0, %K.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .K = %.loc7
+// CHECK:STDOUT:   .K = %.loc9
 // CHECK:STDOUT:   witness = (%K.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasK.ref {
 // CHECK:STDOUT:   %K.decl: %K.type.3 = fn_decl @K.3 [template = constants.%K.3] {} {}
-// CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%K.decl) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%K.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %K.decl
-// CHECK:STDOUT:   witness = %.loc12
+// CHECK:STDOUT:   witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %K.decl: %K.type.1 = fn_decl @K.1 [template = constants.%K.1] {} {}
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -705,16 +707,16 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc11: %.7 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.7 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [template = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [template = constants.%HasK.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.9 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
-// CHECK:STDOUT:   .base = %.loc11
+// CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT: }
@@ -736,8 +738,8 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param_patt: %L) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %L.ref.loc22: type = name_ref L, file.%L.decl [template = constants.%L]
-// CHECK:STDOUT:   %K.ref.loc22: <error> = name_ref K, <error> [template = <error>]
+// CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [template = constants.%L]
+// CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
 // CHECK:STDOUT:   %K.ref.loc28: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -812,7 +814,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %o.patt: %O = binding_pattern o
 // CHECK:STDOUT:     %o.param_patt: %O = value_param_pattern %o.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %O.ref.loc25: type = name_ref O, file.%O.decl [template = constants.%O]
+// CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [template = constants.%O]
 // CHECK:STDOUT:     %o.param: %O = value_param runtime_param0
 // CHECK:STDOUT:     %o: %O = bind_name o, %o.param
 // CHECK:STDOUT:   }
@@ -821,46 +823,46 @@ fn P(o: O) {
 // CHECK:STDOUT: interface @HasN1 {
 // CHECK:STDOUT:   %Self: %HasN1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %N.decl: %N.type.2 = fn_decl @N.2 [template = constants.%N.2] {} {}
-// CHECK:STDOUT:   %.loc7: %.4 = assoc_entity element0, %N.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9: %.4 = assoc_entity element0, %N.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .N = %.loc7
+// CHECK:STDOUT:   .N = %.loc9
 // CHECK:STDOUT:   witness = (%N.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasN2 {
 // CHECK:STDOUT:   %Self: %HasN2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %N.decl: %N.type.3 = fn_decl @N.3 [template = constants.%N.3] {} {}
-// CHECK:STDOUT:   %.loc11: %.6 = assoc_entity element0, %N.decl [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13: %.6 = assoc_entity element0, %N.decl [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .N = %.loc11
+// CHECK:STDOUT:   .N = %.loc13
 // CHECK:STDOUT:   witness = (%N.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasN1.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.4 = fn_decl @N.4 [template = constants.%N.4] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%N.decl) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%N.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   witness = %.loc16
+// CHECK:STDOUT:   witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasN2.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.5 = fn_decl @N.5 [template = constants.%N.5] {} {}
-// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%N.decl) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc21: <witness> = interface_witness (%N.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   witness = %.loc19
+// CHECK:STDOUT:   witness = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NBase {
 // CHECK:STDOUT:   %N.decl: %N.type.1 = fn_decl @N.1 [template = constants.%N.1] {} {}
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NBase
@@ -869,7 +871,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
 // CHECK:STDOUT:   %NBase.ref: type = name_ref NBase, file.%NBase.decl [template = constants.%NBase]
-// CHECK:STDOUT:   %.loc15: %.9 = base_decl %NBase, element0 [template]
+// CHECK:STDOUT:   %.loc17: %.9 = base_decl %NBase, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [template = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [template = constants.%HasN1.type]
@@ -879,11 +881,11 @@ fn P(o: O) {
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [template = constants.%HasN2.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N.decl: %N.type.6 = fn_decl @N.6 [template = constants.%N.6] {} {}
-// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.12 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %.12 [template = constants.%.13]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O
-// CHECK:STDOUT:   .base = %.loc15
+// CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT:   .N = %N.decl
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT:   extend name_scope3
@@ -919,12 +921,12 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @P(%o.param_patt: %O) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %O.ref.loc26: type = name_ref O, file.%O.decl [template = constants.%O]
-// CHECK:STDOUT:   %N.ref.loc26: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
-// CHECK:STDOUT:   %N.call.loc26: init %.1 = call %N.ref.loc26()
+// CHECK:STDOUT:   %O.ref.loc28: type = name_ref O, file.%O.decl [template = constants.%O]
+// CHECK:STDOUT:   %N.ref.loc28: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
+// CHECK:STDOUT:   %N.call.loc28: init %.1 = call %N.ref.loc28()
 // CHECK:STDOUT:   %o.ref: %O = name_ref o, %o
-// CHECK:STDOUT:   %N.ref.loc27: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
-// CHECK:STDOUT:   %N.call.loc27: init %.1 = call %N.ref.loc27()
+// CHECK:STDOUT:   %N.ref.loc29: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
+// CHECK:STDOUT:   %N.call.loc29: init %.1 = call %N.ref.loc29()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
