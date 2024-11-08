@@ -968,7 +968,7 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FacetType inst): {
         const SemIR::FacetTypeInfo& facet_type_info =
             context_.sem_ir().facet_types().Get(inst.facet_type_id);
-        // This is specifically the facet type produce by an interface
+        // This is specifically the facet type produced by an interface
         // declaration, and so should consist of a single interface.
         // TODO: Will also have to handle named constraints here, once those are
         // implemented.
@@ -2105,7 +2105,7 @@ class ImportRefResolver {
                 interface_const_inst.type_id());
         auto specific_id =
             GetOrAddLocalSpecific(interface.specific_id, specific_data);
-        impls.emplace_back(generic_interface_type.interface_id, specific_id);
+        impls.push_back({generic_interface_type.interface_id, specific_id});
       }
     }
     // TODO: Also process the other requirements.
