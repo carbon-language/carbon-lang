@@ -151,9 +151,11 @@ auto MatchContext::EmitPatternMatch(Context& context,
     case SemIR::SymbolicBindingPattern::Kind: {
       CARBON_CHECK(kind_ == MatchKind::Callee);
       auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
-      auto bind_name_id = context.bind_name_cache()
-                              .Lookup(binding_pattern.entity_name_id)
-                              .value();
+      auto cache_entry =
+          context.bind_name_cache().Lookup(binding_pattern.entity_name_id);
+      // The cached bind_name should only be used once.
+      auto bind_name_id =
+          std::exchange(cache_entry.value(), SemIR::InstId::Invalid);
       auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
       CARBON_CHECK(!bind_name.value_id.is_valid());
       bind_name.value_id = entry.scrutinee_id;
