@@ -126,7 +126,7 @@ class Derived {
 }
 
 fn Return(a: Abstract) -> Abstract {
-  // FIXME: Seems like this would be better off failing with "function returns abstract type" here instead of this \/
+  // TODO: Seems like this would be better off failing with "function returns abstract type" here instead of this \/
   // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
   // CHECK:STDERR:   return a;
   // CHECK:STDERR:   ^~~~~~~~~

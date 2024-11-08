@@ -100,9 +100,9 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
   llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
   llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                             llvm::DEBUG_METADATA_VERSION);
-  // FIXME: Include directory path in the compile_unit_file.
+  // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // FIXME: Introduce a new language code for Carbon. C works well for now since
+  // TODO: Introduce a new language code for Carbon. C works well for now since
   // it's something debuggers will already know/have support for at least.
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
@@ -447,7 +447,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   CARBON_CHECK(name, "Unexpected special name for function: {0}",
                function.name_id);
   auto loc = GetLocForDI(function.definition_id);
-  // FIXME: Add more details here, including real subroutine type (once type
+  // TODO: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(
       di_compile_unit_, *name, llvm_function->getName(),
