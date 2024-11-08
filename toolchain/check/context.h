@@ -29,14 +29,7 @@
 
 namespace Carbon::Check {
 
-// Information about a scope in which we can perform name lookup.
-struct LookupScope {
-  // The name scope in which names are searched.
-  SemIR::NameScopeId name_scope_id;
-  // The specific for the name scope, or `Invalid` if the name scope is not
-  // defined by a generic or we should perform lookup into the generic itself.
-  SemIR::SpecificId specific_id;
-};
+using SemIR::LookupScope;
 
 // A result produced by name lookup.
 struct LookupResult {

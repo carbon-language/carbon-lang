@@ -421,7 +421,11 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (extended_scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(extended_scope_id);
+      class_scope.extended_scopes.push_back(
+          LookupScope{.name_scope_id = extended_scope_id,
+                      // TODO: Determine the correct specific_id to support
+                      // `extend adapt C(T);`.
+                      .specific_id = SemIR::SpecificId::Invalid});
     } else {
       class_scope.has_error = true;
     }
@@ -560,7 +564,10 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(base_info.scope_id);
+      class_scope.extended_scopes.push_back(LookupScope{
+          .name_scope_id = base_info.scope_id,
+          // TODO: determine `specific_id` to support `extend base: C(T);`.
+          .specific_id = SemIR::SpecificId::Invalid});
     } else {
       class_scope.has_error = true;
     }

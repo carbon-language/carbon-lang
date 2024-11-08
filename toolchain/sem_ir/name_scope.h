@@ -18,6 +18,15 @@ enum class AccessKind : int8_t {
   Private,
 };
 
+// Information about a scope in which we can perform name lookup.
+struct LookupScope {
+  // The name scope in which names are searched.
+  SemIR::NameScopeId name_scope_id;
+  // The specific for the name scope, or `Invalid` if the name scope is not
+  // defined by a generic or we should perform lookup into the generic itself.
+  SemIR::SpecificId specific_id;
+};
+
 struct NameScope : Printable<NameScope> {
   struct Entry {
     NameId name_id;
@@ -31,8 +40,11 @@ struct NameScope : Printable<NameScope> {
 
     out << ", extended_scopes: [";
     llvm::ListSeparator scope_sep;
-    for (auto id : extended_scopes) {
-      out << scope_sep << id;
+    for (auto s : extended_scopes) {
+      out << scope_sep << s.name_scope_id;
+      if (s.specific_id.is_valid()) {
+        out << "/" << s.specific_id;
+      }
     }
     out << "]";
 
@@ -77,21 +89,12 @@ struct NameScope : Printable<NameScope> {
 
   // Scopes extended by this scope.
   //
-  // TODO: A `NameScopeId` is currently insufficient to describe an extended
-  // scope in general. For example:
-  //
-  //   class A(T:! type) {
-  //     extend base: B(T*);
-  //   }
-  //
-  // needs to describe the `T*` argument.
-  //
   // Small vector size is set to 1: we expect that there will rarely be more
   // than a single extended scope. Currently the only kind of extended scope is
   // a base class, and there can be only one of those per scope.
   // TODO: Revisit this once we have more kinds of extended scope and data.
   // TODO: Consider using something like `TinyPtrVector` for this.
-  llvm::SmallVector<NameScopeId, 1> extended_scopes;
+  llvm::SmallVector<LookupScope, 1> extended_scopes;
 
   // The instruction which owns the scope.
   InstId inst_id;

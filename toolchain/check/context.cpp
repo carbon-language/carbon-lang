@@ -481,11 +481,8 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
       // access, look in its extended scopes.
       auto extended = name_scope.extended_scopes;
       scopes.reserve(scopes.size() + extended.size());
-      for (auto extended_id : llvm::reverse(extended)) {
-        // TODO: Track a constant describing the extended scope, and substitute
-        // into it to determine its corresponding specific.
-        scopes.push_back({.name_scope_id = extended_id,
-                          .specific_id = SemIR::SpecificId::Invalid});
+      for (auto extended_scope : llvm::reverse(extended)) {
+        scopes.push_back(extended_scope);
       }
       is_parent_access |= !extended.empty();
       continue;

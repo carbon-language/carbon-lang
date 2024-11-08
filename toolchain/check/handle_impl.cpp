@@ -194,7 +194,9 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     return;
   }
 
-  parent_scope.extended_scopes.push_back(interface.scope_id);
+  parent_scope.extended_scopes.push_back(
+      LookupScope{.name_scope_id = interface.scope_id,
+                  .specific_id = interface_type->specific_id});
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no

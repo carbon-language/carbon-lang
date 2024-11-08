@@ -503,7 +503,11 @@ class FormatterImpl {
     for (auto extended_scope_id : scope.extended_scopes) {
       // TODO: Print this scope in a better way.
       Indent();
-      out_ << "extend " << extended_scope_id << "\n";
+      out_ << "extend " << extended_scope_id.name_scope_id;
+      if (extended_scope_id.specific_id.is_valid()) {
+        out_ << ", " << extended_scope_id.specific_id;
+      }
+      out_ << "\n";
     }
 
     // This is used to cluster all "Core//prelude/..." imports, but not

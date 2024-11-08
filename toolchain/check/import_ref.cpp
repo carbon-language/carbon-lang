@@ -1456,7 +1456,10 @@ class ImportRefResolver {
               .base_type_id);
       const auto& base_class = context_.classes().Get(
           context_.insts().GetAs<SemIR::ClassType>(base_inst_id).class_id);
-      new_scope.extended_scopes.push_back(base_class.scope_id);
+      new_scope.extended_scopes.push_back(
+          LookupScope{.name_scope_id = base_class.scope_id,
+                      // TODO: Determine the correct specific_id.
+                      .specific_id = SemIR::SpecificId::Invalid});
     }
     CARBON_CHECK(new_scope.extended_scopes.size() ==
                  import_scope.extended_scopes.size());
