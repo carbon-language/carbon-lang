@@ -212,7 +212,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where...> [template]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -230,19 +230,19 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc7_6.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc7_6.1) [template = f64]
-// CHECK:STDOUT:     %.loc7_6.2: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc7_6.3: type = converted %float.make_type, %.loc7_6.2 [template = f64]
+// CHECK:STDOUT:     %.loc10_6.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc10_6.1) [template = f64]
+// CHECK:STDOUT:     %.loc10_6.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc10_6.3: type = converted %float.make_type, %.loc10_6.2 [template = f64]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc7_18: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc10_18: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc7_6.3 as %.loc7_18 {
+// CHECK:STDOUT: impl @impl: %.loc10_6.3 as %.loc10_18 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

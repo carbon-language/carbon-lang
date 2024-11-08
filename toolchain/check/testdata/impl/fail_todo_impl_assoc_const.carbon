@@ -50,7 +50,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.8: %.4 = assoc_entity element0, imports.%import_ref.7 [symbolic]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where...> [template]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
