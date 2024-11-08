@@ -125,7 +125,7 @@ static auto CheckAssociatedFunctionImplementation(
 // Builds a witness that the specified impl implements the given interface.
 static auto BuildInterfaceWitness(
     Context& context, const SemIR::Impl& impl, SemIR::TypeId interface_type_id,
-    SemIR::FacetTypeInfo::Impls interface_type,
+    SemIR::FacetTypeInfo::ImplsConstraint interface_type,
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
   if (!context.TryToDefineType(interface_type_id, [&] {

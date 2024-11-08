@@ -1235,7 +1235,7 @@ auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
     -> SemIR::FacetType {
   SemIR::FacetTypeId facet_type_id =
       sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
-          .impls = {{interface_id, specific_id}},
+          .impls_constraints = {{interface_id, specific_id}},
           .requirement_block_id = SemIR::InstBlockId::Invalid});
   return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }

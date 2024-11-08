@@ -19,13 +19,13 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Replace these vectors with an array allocated in an
   // `llvm::BumpPtrAllocator`.
 
-  // `Impls` holds the interfaces this facet type requires.
-  struct Impls {
-    auto operator==(const Impls& rhs) const -> bool {
+  // `ImplsConstraint` holds the interfaces this facet type requires.
+  struct ImplsConstraint {
+    auto operator==(const ImplsConstraint& rhs) const -> bool {
       return interface_id == rhs.interface_id && specific_id == rhs.specific_id;
     }
     // Canonically ordered by the numerical ids.
-    auto operator<=>(const Impls& rhs) const -> std::strong_ordering {
+    auto operator<=>(const ImplsConstraint& rhs) const -> std::strong_ordering {
       return std::tie(interface_id.index, specific_id.index) <=>
              std::tie(rhs.interface_id.index, rhs.specific_id.index);
     }
@@ -35,7 +35,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     InterfaceId interface_id;
     SpecificId specific_id;
   };
-  llvm::SmallVector<Impls> impls;
+  llvm::SmallVector<ImplsConstraint> impls_constraints;
   // TODO: Add lookup contexts.
   // TODO: Add rewrite constraints.
   // TODO: Add same-type constraints.
@@ -46,7 +46,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{impls interface: ";
     llvm::ListSeparator sep;
-    for (Impls req : impls) {
+    for (ImplsConstraint req : impls_constraints) {
       out << sep << req.interface_id;
       if (req.specific_id.is_valid()) {
         out << "(" << req.specific_id << ")";
@@ -57,17 +57,17 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   // TODO: Update callers to be able to deal with facet types that aren't a
   // single interface and then remove this function.
-  auto TryAsSingleInterface() const -> std::optional<Impls> {
+  auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     // We are ignoring requirement_block_id for the moment since nothing uses it
     // yet.
-    if (impls.size() == 1) {
-      return impls.front();
+    if (impls_constraints.size() == 1) {
+      return impls_constraints.front();
     }
     return std::nullopt;
   }
 
   auto operator==(const FacetTypeInfo& rhs) const -> bool {
-    return impls == rhs.impls &&
+    return impls_constraints == rhs.impls_constraints &&
            requirement_block_id == rhs.requirement_block_id;
   }
 };
@@ -76,7 +76,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.HashSizedBytes(llvm::ArrayRef(value.impls));
+  hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
   hasher.HashRaw(value.requirement_block_id);
   return static_cast<HashCode>(hasher);
 }

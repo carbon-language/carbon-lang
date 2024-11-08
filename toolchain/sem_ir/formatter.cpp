@@ -934,15 +934,15 @@ class FormatterImpl {
     out_ << "<";
 
     llvm::ListSeparator sep(" & ");
-    if (info.impls.empty()) {
+    if (info.impls_constraints.empty()) {
       out_ << "type";
     } else {
-      for (auto impls : info.impls) {
+      for (auto interface : info.impls_constraints) {
         out_ << sep;
-        FormatName(impls.interface_id);
-        if (impls.specific_id.is_valid()) {
+        FormatName(interface.interface_id);
+        if (interface.specific_id.is_valid()) {
           out_ << ", ";
-          FormatName(impls.specific_id);
+          FormatName(interface.specific_id);
         }
       }
     }
