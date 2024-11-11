@@ -87,8 +87,7 @@ struct NameScope : Printable<NameScope> {
   // needs to describe the `T*` argument.
   //
   // Small vector size is set to 1: we expect that there will rarely be more
-  // than a single extended scope. Currently the only kind of extended scope is
-  // a base class, and there can be only one of those per scope.
+  // than a single extended scope.
   // TODO: Revisit this once we have more kinds of extended scope and data.
   // TODO: Consider using something like `TinyPtrVector` for this.
   llvm::SmallVector<NameScopeId, 1> extended_scopes;
