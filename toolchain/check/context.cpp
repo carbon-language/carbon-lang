@@ -493,9 +493,6 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
     // If this is our second lookup result, diagnose an ambiguity.
     if (result.inst_id.is_valid()) {
-      // TODO: This is currently not reachable because the only scope that can
-      // extend is a class scope, and it can only extend a single base class.
-      // Add test coverage once this is possible.
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
           "ambiguous use of name `{0}` found in multiple extended scopes",

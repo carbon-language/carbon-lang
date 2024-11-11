@@ -56,8 +56,8 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,7 +73,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: %.2 = struct_literal ()
+// CHECK:STDOUT:   %.loc12: %.1 = struct_literal ()
 // CHECK:STDOUT:   %U: <error> = bind_name U, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

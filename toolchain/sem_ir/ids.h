@@ -107,29 +107,6 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
-// An ID of an instruction that is the pattern-match counterpart of a pattern
-// inst. This should only be used as the type of a field within a typed
-// instruction class that represents a pattern.
-//
-// In SemIR, a given pattern is represented by one or more pattern insts, which
-// describe the pattern itself, and typically by one or more pattern-match
-// insts, which describe the process of matching the pattern against the
-// scrutinee. The pattern insts are emitted while traversing the parse tree,
-// and then the pattern-match insts are emitted by traversing the pattern
-// insts, but in some cases it's necessary to precompute the pattern-match
-// insts during that first phase. In such a case, the precomputed inst is stored
-// as a MatchingInstId member of the pattern inst, so that it's available when
-// the pattern inst is later traversed.
-class MatchingInstId : public InstId {
- public:
-  // Support implicit conversion from InstId so that InstId and MatchingInstId
-  // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr MatchingInstId(InstId inst_id) : InstId(inst_id) {}
-
-  using InstId::InstId;
-};
-
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
@@ -732,6 +709,10 @@ struct StructTypeFieldsId : public IdBase,
   // An explicitly invalid ID.
   static const StructTypeFieldsId Invalid;
 
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const StructTypeFieldsId Empty;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type_block";
@@ -741,6 +722,7 @@ struct StructTypeFieldsId : public IdBase,
 
 constexpr StructTypeFieldsId StructTypeFieldsId::Invalid =
     StructTypeFieldsId(InvalidIndex);
+constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
@@ -804,6 +786,10 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
   // An explicitly invalid ID.
   static const TypeBlockId Invalid;
 
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const TypeBlockId Empty;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type_block";
@@ -812,6 +798,7 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 };
 
 constexpr TypeBlockId TypeBlockId::Invalid = TypeBlockId(InvalidIndex);
+constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {

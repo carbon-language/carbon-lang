@@ -43,16 +43,16 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %If1.type: type = fn_type @If1 [template]
 // CHECK:STDOUT:   %If1: %If1.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %If2.type: type = fn_type @If2 [template]
 // CHECK:STDOUT:   %If2: %If2.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %If3.type: type = fn_type @If3 [template]
 // CHECK:STDOUT:   %If3: %If3.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -139,7 +139,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -157,7 +157,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc25: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25: i32 = int_value 2 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
@@ -169,7 +169,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc35: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc35: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc35
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

@@ -23,12 +23,14 @@
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
-// CHECK:STDOUT:   struct_type_fields: {}
+// CHECK:STDOUT:   struct_type_fields:
+// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
 // CHECK:STDOUT:     'type(instNamespaceType)': {kind: copy, type: type(instNamespaceType)}
-// CHECK:STDOUT:   type_blocks:     {}
+// CHECK:STDOUT:   type_blocks:
+// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: BuiltinInst, arg0: TypeType, type: typeTypeType}
 // CHECK:STDOUT:     instError:       {kind: BuiltinInst, arg0: Error, type: typeError}

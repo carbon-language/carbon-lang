@@ -25,12 +25,12 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32, %Incomplete) [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %Incomplete [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, %Incomplete) [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -53,16 +53,16 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc19_24.1: %.2 = tuple_literal (%int.make_type_32, %Incomplete.ref.loc19)
+// CHECK:STDOUT:   %.loc19_24.1: %tuple.type.1 = tuple_literal (%int.make_type_32, %Incomplete.ref.loc19)
 // CHECK:STDOUT:   %.loc19_24.2: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc19_24.3: type = converted %int.make_type_32, %.loc19_24.2 [template = i32]
-// CHECK:STDOUT:   %.loc19_24.4: type = converted %.loc19_24.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19_24.4: type = converted %.loc19_24.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.4]
-// CHECK:STDOUT:   %p.var: ref %.4 = var p
-// CHECK:STDOUT:   %p: ref %.4 = bind_name p, %p.var
+// CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.1]
+// CHECK:STDOUT:   %p.var: ref %.1 = var p
+// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -72,7 +72,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, file.%t
-// CHECK:STDOUT:   %.loc21_25: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc21_25: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc21_22: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return

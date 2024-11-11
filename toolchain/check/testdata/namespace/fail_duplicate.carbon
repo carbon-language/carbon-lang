@@ -26,7 +26,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

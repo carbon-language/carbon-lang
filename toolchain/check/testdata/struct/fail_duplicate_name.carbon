@@ -56,17 +56,17 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %.7: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.8: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.6: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_value 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -122,18 +122,18 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %int.make_type_32.loc45: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc45_13.1: type = value_of_initializer %int.make_type_32.loc45 [template = i32]
 // CHECK:STDOUT:   %.loc45_13.2: type = converted %int.make_type_32.loc45, %.loc45_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc45_16: type = struct_type {.a: i32} [template = constants.%.3]
-// CHECK:STDOUT:   %x.var: ref %.3 = var x
-// CHECK:STDOUT:   %x: ref %.3 = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc45_16: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %x.var: ref %.2 = var x
+// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
 // CHECK:STDOUT:   %int.make_type_32.loc53_13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_13.1: type = value_of_initializer %int.make_type_32.loc53_13 [template = i32]
 // CHECK:STDOUT:   %.loc53_13.2: type = converted %int.make_type_32.loc53_13, %.loc53_13.1 [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc53_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_22.1: type = value_of_initializer %int.make_type_32.loc53_22 [template = i32]
 // CHECK:STDOUT:   %.loc53_22.2: type = converted %int.make_type_32.loc53_22, %.loc53_22.1 [template = i32]
-// CHECK:STDOUT:   %.loc53_25: type = struct_type {.b: i32, .c: i32} [template = constants.%.5]
-// CHECK:STDOUT:   %y.var: ref %.5 = var y
-// CHECK:STDOUT:   %y: ref %.5 = bind_name y, %y.var
+// CHECK:STDOUT:   %.loc53_25: type = struct_type {.b: i32, .c: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %y.var: ref %.4 = var y
+// CHECK:STDOUT:   %y: ref %.4 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -142,17 +142,17 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27_35: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc27_36: %.3 = struct_literal (%.loc27_35)
+// CHECK:STDOUT:   %.loc27_35: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc27_36: %.2 = struct_literal (%.loc27_35)
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
-// CHECK:STDOUT:   %.loc36_22: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc36_32: i32 = int_value 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc36_22: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc36_32: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %w: i32 = bind_name w, <error>
-// CHECK:STDOUT:   %.loc45_26: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc45_34: i32 = int_value 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc45_26: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc45_34: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   assign file.%x.var, <error>
-// CHECK:STDOUT:   %.loc53_35: i32 = int_value 3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc53_43: i32 = int_value 4 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc53_35: i32 = int_value 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc53_43: i32 = int_value 4 [template = constants.%.7]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
