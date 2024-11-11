@@ -46,16 +46,16 @@ fn G(c: C) {
 // CHECK:STDOUT:   %I.type: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,7 +70,7 @@ fn G(c: C) {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -80,7 +80,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc9: <witness> = interface_witness (%F.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9: <witness> = interface_witness (%F.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -92,7 +92,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -120,9 +120,9 @@ fn G(c: C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

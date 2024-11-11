@@ -50,33 +50,33 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Base.1: %Base.type = struct_value () [template]
 // CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%T) [symbolic]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Base.2, %T [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [symbolic]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Base.2, %T [symbolic]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %T} [symbolic]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [symbolic]
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Param, i32 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.y: i32} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Param, i32 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.y: i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %Base.3: type = class_type @Base, @Base(%Param) [template]
-// CHECK:STDOUT:   %.8: type = unbound_element_type %Base.3, %Param [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.x: %Param} [template]
-// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.x: %.11} [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.14: type = unbound_element_type %Derived, %Base.3 [template]
-// CHECK:STDOUT:   %.15: type = struct_type {.base: %Base.3} [template]
-// CHECK:STDOUT:   %.16: <witness> = complete_type_witness %.15 [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type %Base.3, %Param [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.x: %Param} [template]
+// CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.11: type = struct_type {.x: %.10} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %.8 [template]
+// CHECK:STDOUT:   %.13: type = unbound_element_type %Derived, %Base.3 [template]
+// CHECK:STDOUT:   %.14: type = struct_type {.base: %Base.3} [template]
+// CHECK:STDOUT:   %.15: <witness> = complete_type_witness %.14 [template]
 // CHECK:STDOUT:   %DoubleFieldAccess.type: type = fn_type @DoubleFieldAccess [template]
 // CHECK:STDOUT:   %DoubleFieldAccess: %DoubleFieldAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %.17: type = struct_type {.base: %.13} [template]
-// CHECK:STDOUT:   %.18: type = ptr_type %.15 [template]
+// CHECK:STDOUT:   %.16: type = struct_type {.base: %.12} [template]
+// CHECK:STDOUT:   %.17: type = ptr_type %.14 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -129,14 +129,14 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_17.2) [symbolic = %Base (constants.%Base.2)]
-// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T.loc4_17.2 (%T) [symbolic = %.loc5_8.2 (constants.%.2)]
-// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.x: @Base.%T.loc4_17.2 (%T)} [symbolic = %.loc6_1.2 (constants.%.3)]
-// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @Base.%.loc6_1.2 (%.3) [symbolic = %.loc6_1.3 (constants.%.4)]
+// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T.loc4_17.2 (%T) [symbolic = %.loc5_8.2 (constants.%.1)]
+// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.x: @Base.%T.loc4_17.2 (%T)} [symbolic = %.loc6_1.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @Base.%.loc6_1.2 (%.2) [symbolic = %.loc6_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.1 [symbolic = %T.loc4_17.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc5_8.1: @Base.%.loc5_8.2 (%.2) = field_decl x, element0 [template]
-// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.3 [symbolic = %.loc6_1.3 (constants.%.4)]
+// CHECK:STDOUT:     %.loc5_8.1: @Base.%.loc5_8.2 (%.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.2 [symbolic = %.loc6_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.2
@@ -148,8 +148,8 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_32, %.loc9_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc9_8: %.5 = field_decl y, element0 [template]
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_8: %.4 = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
@@ -160,8 +160,8 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %Base.ref: %Base.type = name_ref Base, file.%Base.decl [template = constants.%Base.1]
 // CHECK:STDOUT:   %Param.ref: type = name_ref Param, file.%Param.decl [template = constants.%Param]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%Param) [template = constants.%Base.3]
-// CHECK:STDOUT:   %.loc13: %.14 = base_decl %Base.3, element0 [template]
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.15 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc13: %.13 = base_decl %Base.3, element0 [template]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.14 [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -174,11 +174,11 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT: fn @DoubleFieldAccess(%d.param_patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %.8 = name_ref x, @Base.%.loc5_8.1 [template = @Base.%.loc5_8.1]
+// CHECK:STDOUT:   %x.ref: %.7 = name_ref x, @Base.%.loc5_8.1 [template = @Base.%.loc5_8.1]
 // CHECK:STDOUT:   %.loc17_11.1: ref %Base.3 = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base.3 = converted %d.ref, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
-// CHECK:STDOUT:   %y.ref: %.5 = name_ref y, @Param.%.loc9_8 [template = @Param.%.loc9_8]
+// CHECK:STDOUT:   %y.ref: %.4 = name_ref y, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc17_13.1: ref i32 = class_element_access %.loc17_11.3, element0
 // CHECK:STDOUT:   %.loc17_13.2: i32 = bind_value %.loc17_13.1
 // CHECK:STDOUT:   return %.loc17_13.2
@@ -200,9 +200,9 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base => constants.%Base.3
-// CHECK:STDOUT:   %.loc5_8.2 => constants.%.8
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.9
-// CHECK:STDOUT:   %.loc6_1.3 => constants.%.10
+// CHECK:STDOUT:   %.loc5_8.2 => constants.%.7
+// CHECK:STDOUT:   %.loc6_1.2 => constants.%.8
+// CHECK:STDOUT:   %.loc6_1.3 => constants.%.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import.carbon
@@ -213,28 +213,28 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %.1: type = struct_type {.y: i32} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Base.1: %Base.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {.x: %T} [symbolic]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [symbolic]
+// CHECK:STDOUT:   %.3: type = struct_type {.x: %T} [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [symbolic]
 // CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Base.3: type = class_type @Base, @Base(%Param) [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %Base.3 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %Base.3} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
-// CHECK:STDOUT:   %.9: type = unbound_element_type %Base.2, %T [symbolic]
-// CHECK:STDOUT:   %.10: type = unbound_element_type %Base.3, %Param [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.x: %Param} [template]
-// CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base.3 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: %Base.3} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.8: type = unbound_element_type %Base.2, %T [symbolic]
+// CHECK:STDOUT:   %.9: type = unbound_element_type %Base.3, %Param [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.x: %Param} [template]
+// CHECK:STDOUT:   %.11: <witness> = complete_type_witness %.10 [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess: %ImportedDoubleFieldAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %.4 [symbolic]
-// CHECK:STDOUT:   %.14: type = struct_type {.base: %.13} [symbolic]
-// CHECK:STDOUT:   %.15: type = ptr_type %.7 [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %.3 [symbolic]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: %.12} [symbolic]
+// CHECK:STDOUT:   %.14: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -244,14 +244,14 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.16: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, imports.%import_ref.16 [symbolic]
+// CHECK:STDOUT:   %.15: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
+// CHECK:STDOUT:   %.16: %.15 = assoc_entity element0, imports.%import_ref.16 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = interface_type @ImplicitAs, @ImplicitAs(%Base.2) [symbolic]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%Base.2) [symbolic]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.18: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
-// CHECK:STDOUT:   %.19: %.18 = assoc_entity element0, imports.%import_ref.16 [symbolic]
-// CHECK:STDOUT:   %.20: %.16 = assoc_entity element0, imports.%import_ref.17 [symbolic]
+// CHECK:STDOUT:   %.17: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
+// CHECK:STDOUT:   %.18: %.17 = assoc_entity element0, imports.%import_ref.16 [symbolic]
+// CHECK:STDOUT:   %.19: %.15 = assoc_entity element0, imports.%import_ref.17 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -268,16 +268,16 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//extend_generic_base, inst+27, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst+39, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extend_generic_base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.8: @Base.%.1 (%.9) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8: @Base.%.1 (%.8) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+44, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_base, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.12: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+49, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+55, unloaded
-// CHECK:STDOUT:   %import_ref.14: @ImplicitAs.%.1 (%.16) = import_ref Core//prelude/operators/as, inst+77, loaded [symbolic = @ImplicitAs.%.2 (constants.%.20)]
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/as, inst+70, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/as, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.12: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+48, loaded [template = constants.%ImplicitAs]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.14: @ImplicitAs.%.1 (%.15) = import_ref Core//prelude/operators/as, inst+76, loaded [symbolic = @ImplicitAs.%.2 (constants.%.19)]
+// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/as, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/as, inst+69, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -317,8 +317,8 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.16)]
-// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.16) = assoc_entity element0, imports.%import_ref.16 [symbolic = %.2 (constants.%.17)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.15)]
+// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.15) = assoc_entity element0, imports.%import_ref.16 [symbolic = %.2 (constants.%.16)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -347,9 +347,9 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.2)]
-// CHECK:STDOUT:   %.1: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T (%T) [symbolic = %.1 (constants.%.9)]
-// CHECK:STDOUT:   %.2: type = struct_type {.x: @Base.%T (%T)} [symbolic = %.2 (constants.%.4)]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Base.%.2 (%.4) [symbolic = %.3 (constants.%.5)]
+// CHECK:STDOUT:   %.1: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T (%T) [symbolic = %.1 (constants.%.8)]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: @Base.%T (%T)} [symbolic = %.2 (constants.%.3)]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness @Base.%.2 (%.3) [symbolic = %.3 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
@@ -363,7 +363,7 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %.9 = name_ref x, imports.%import_ref.8 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %.8 = name_ref x, imports.%import_ref.8 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc13_11.1: %Base.2 = converted %d.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc13_11.2: %T = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -383,9 +383,9 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base => constants.%Base.2
-// CHECK:STDOUT:   %.1 => constants.%.9
-// CHECK:STDOUT:   %.2 => constants.%.4
-// CHECK:STDOUT:   %.3 => constants.%.5
+// CHECK:STDOUT:   %.1 => constants.%.8
+// CHECK:STDOUT:   %.2 => constants.%.3
+// CHECK:STDOUT:   %.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%Param) {
@@ -394,9 +394,9 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base => constants.%Base.3
-// CHECK:STDOUT:   %.1 => constants.%.10
-// CHECK:STDOUT:   %.2 => constants.%.11
-// CHECK:STDOUT:   %.3 => constants.%.12
+// CHECK:STDOUT:   %.1 => constants.%.9
+// CHECK:STDOUT:   %.2 => constants.%.10
+// CHECK:STDOUT:   %.3 => constants.%.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(@Base.%T) {
@@ -434,7 +434,7 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.1 => constants.%.18
-// CHECK:STDOUT:   %.2 => constants.%.19
+// CHECK:STDOUT:   %.1 => constants.%.17
+// CHECK:STDOUT:   %.2 => constants.%.18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
