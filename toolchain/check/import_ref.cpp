@@ -847,9 +847,7 @@ class ImportRefResolver {
                .bind_index = SemIR::CompileTimeBindIndex::Invalid});
           new_param_id = context_.AddInstInNoBlock<SemIR::BindingPattern>(
               AddImportIRInst(binding_id),
-              {.type_id = type_id,
-               .entity_name_id = entity_name_id,
-               .bind_name_id = SemIR::InstId::Invalid});
+              {.type_id = type_id, .entity_name_id = entity_name_id});
           break;
         }
         case SemIR::SymbolicBindingPattern::Kind: {
@@ -968,7 +966,7 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FacetType inst): {
         const SemIR::FacetTypeInfo& facet_type_info =
             context_.sem_ir().facet_types().Get(inst.facet_type_id);
-        // This is specifically the facet type produce by an interface
+        // This is specifically the facet type produced by an interface
         // declaration, and so should consist of a single interface.
         // TODO: Will also have to handle named constraints here, once those are
         // implemented.
@@ -1400,8 +1398,7 @@ class ImportRefResolver {
          .bind_index = import_entity_name.bind_index});
     return ResolveAs<SemIR::SymbolicBindingPattern>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .entity_name_id = entity_name_id,
-         .bind_name_id = SemIR::InstId::Invalid});
+         .entity_name_id = entity_name_id});
   }
 
   // Makes an incomplete class. This is necessary even with classes with a
@@ -2071,7 +2068,7 @@ class ImportRefResolver {
 
     const SemIR::FacetTypeInfo& facet_type_info =
         import_ir_.facet_types().Get(inst.facet_type_id);
-    for (auto interface : facet_type_info.impls) {
+    for (auto interface : facet_type_info.impls_constraints) {
       GetLocalConstantId(import_ir_.interfaces()
                              .Get(interface.interface_id)
                              .first_owning_decl_id);
@@ -2081,8 +2078,8 @@ class ImportRefResolver {
       return Retry();
     }
 
-    llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
-    for (auto interface : facet_type_info.impls) {
+    llvm::SmallVector<SemIR::FacetTypeInfo::ImplsConstraint> impls_constraints;
+    for (auto interface : facet_type_info.impls_constraints) {
       auto interface_const_id =
           GetLocalConstantId(import_ir_.interfaces()
                                  .Get(interface.interface_id)
@@ -2098,20 +2095,21 @@ class ImportRefResolver {
       if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
         const SemIR::FacetTypeInfo& new_facet_type_info =
             context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
-        impls.append(new_facet_type_info.impls);
+        impls_constraints.append(new_facet_type_info.impls_constraints);
       } else {
         auto generic_interface_type =
             context_.types().GetAs<SemIR::GenericInterfaceType>(
                 interface_const_inst.type_id());
         auto specific_id =
             GetOrAddLocalSpecific(interface.specific_id, specific_data);
-        impls.emplace_back(generic_interface_type.interface_id, specific_id);
+        impls_constraints.push_back(
+            {generic_interface_type.interface_id, specific_id});
       }
     }
     // TODO: Also process the other requirements.
     SemIR::FacetTypeId facet_type_id =
         context_.sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
-            .impls = impls,
+            .impls_constraints = impls_constraints,
             .requirement_block_id = SemIR::InstBlockId::Invalid});
     return ResolveAs<SemIR::FacetType>(
         {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id});

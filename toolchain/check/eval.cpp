@@ -397,11 +397,11 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::FacetTypeId facet_type_id,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
   SemIR::FacetTypeInfo info = eval_context.facet_types().Get(facet_type_id);
-  for (auto& impls : info.impls) {
-    impls.specific_id =
-        GetConstantValue(eval_context, impls.specific_id, phase);
+  for (auto& interface : info.impls_constraints) {
+    interface.specific_id =
+        GetConstantValue(eval_context, interface.specific_id, phase);
   }
-  std::sort(info.impls.begin(), info.impls.end());
+  std::sort(info.impls_constraints.begin(), info.impls_constraints.end());
   // TODO: Process & canonicalize other requirements.
   return info;
 }

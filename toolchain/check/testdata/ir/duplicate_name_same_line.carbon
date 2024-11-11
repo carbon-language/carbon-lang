@@ -14,13 +14,13 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -43,7 +43,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_14: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_14: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
@@ -52,12 +52,12 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %.loc11_29.2: type = converted %int.make_type_32.loc11_29, %.loc11_29.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_26: ref i32 = var n
 // CHECK:STDOUT:   %n.loc11_26: ref i32 = bind_name n, %n.var.loc11_26
-// CHECK:STDOUT:   %.loc11_35: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_35: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %n.var.loc11_26, %.loc11_35
 // CHECK:STDOUT:   br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_18:
-// CHECK:STDOUT:   %.loc11_44: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_44: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
@@ -66,7 +66,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %.loc11_59.2: type = converted %int.make_type_32.loc11_59, %.loc11_59.1 [template = i32]
 // CHECK:STDOUT:   %n.var.loc11_56: ref i32 = var n
 // CHECK:STDOUT:   %n.loc11_56: ref i32 = bind_name n, %n.var.loc11_56
-// CHECK:STDOUT:   %.loc11_65: i32 = int_value 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_65: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   assign %n.var.loc11_56, %.loc11_65
 // CHECK:STDOUT:   br !if.else.loc11_48
 // CHECK:STDOUT:

@@ -38,9 +38,9 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %While.type: type = fn_type @While [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %While: %While.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

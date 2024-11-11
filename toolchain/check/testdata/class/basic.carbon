@@ -31,19 +31,19 @@ fn Run() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -130,8 +130,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_32, %.loc18_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc18_8: %.2 = field_decl k, element0 [template]
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18_8: %.1 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -158,7 +158,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc26_18: i32 = int_value 4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc26_18: i32 = int_value 4 [template = constants.%.5]
 // CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc26_18)
 // CHECK:STDOUT:   %.loc26_20.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc26_20.2: i32 = converted %F.call, %.loc26_20.1

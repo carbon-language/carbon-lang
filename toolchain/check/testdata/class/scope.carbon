@@ -32,21 +32,21 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,7 +101,7 @@ fn Run() {
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -113,7 +113,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,7 +128,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: i32 = int_value 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc22: i32 = int_value 2 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

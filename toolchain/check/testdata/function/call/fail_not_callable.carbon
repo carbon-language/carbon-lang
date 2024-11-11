@@ -19,12 +19,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type String [template]
-// CHECK:STDOUT:   %.3: String = string_literal "hello" [template]
+// CHECK:STDOUT:   %.1: type = ptr_type String [template]
+// CHECK:STDOUT:   %.2: String = string_literal "hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,7 +52,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_32, %.loc15_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_16: String = string_literal "hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_16: String = string_literal "hello" [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

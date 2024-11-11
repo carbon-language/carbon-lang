@@ -1188,7 +1188,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
   if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
     const auto& facet_type_info =
         sem_ir().facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls) {
+    for (auto interface : facet_type_info.impls_constraints) {
       auto interface_id = interface.interface_id;
       if (!interfaces().Get(interface_id).is_defined()) {
         auto builder = diagnoser();
@@ -1224,11 +1224,10 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
 auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
                                      SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  llvm::SmallVector<SemIR::FacetTypeInfo::Impls> impls;
-  impls.emplace_back(interface_id, specific_id);
   SemIR::FacetTypeId facet_type_id =
       sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
-          .impls = impls, .requirement_block_id = SemIR::InstBlockId::Invalid});
+          .impls_constraints = {{interface_id, specific_id}},
+          .requirement_block_id = SemIR::InstBlockId::Invalid});
   return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }
 

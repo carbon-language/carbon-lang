@@ -17,9 +17,9 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -43,8 +43,8 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_19: i32 = int_value 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_20: %.4 = struct_literal (%.loc14_19)
+// CHECK:STDOUT:   %.loc14_19: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_20: %.3 = struct_literal (%.loc14_19)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

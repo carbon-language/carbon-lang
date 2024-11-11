@@ -460,7 +460,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           const auto& interface_info =
               sem_ir_.interfaces().Get(interface->interface_id);
           add_inst_name_id(interface_info.name_id, ".type");
-        } else if (facet_type_info.impls.empty()) {
+        } else if (facet_type_info.impls_constraints.empty()) {
           if (facet_type_info.requirement_block_id.is_valid()) {
             add_inst_name("type_where");
           } else {
@@ -581,9 +581,19 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(TupleType inst): {
+        if (inst.elements_id == TypeBlockId::Empty) {
+          add_inst_name("empty_tuple.type");
+        } else {
+          add_inst_name("tuple.type");
+        }
+        continue;
+      }
       case CARBON_KIND(TupleValue inst): {
         if (sem_ir_.types().Is<ArrayType>(inst.type_id)) {
           add_inst_name("array");
+        } else if (inst.elements_id == InstBlockId::Empty) {
+          add_inst_name("empty_tuple");
         } else {
           add_inst_name("tuple");
         }

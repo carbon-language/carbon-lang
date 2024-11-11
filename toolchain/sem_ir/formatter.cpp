@@ -892,19 +892,7 @@ class FormatterImpl {
   auto FormatArgs(Args... args) -> void {
     out_ << ' ';
     llvm::ListSeparator sep;
-    FormatArgsImpl(sep, args...);
-  }
-
-  auto FormatArgsImpl(llvm::ListSeparator& /* sep */) -> void {}
-
-  template <typename Arg, typename... Args>
-  auto FormatArgsImpl(llvm::ListSeparator& sep, Arg arg, Args... args) -> void {
-    // Suppress printing MatchingInstIds, which aren't really operands.
-    if constexpr (!std::is_same_v<Arg, SemIR::MatchingInstId>) {
-      out_ << sep;
-      FormatArg(arg);
-    }
-    FormatArgsImpl(sep, args...);
+    ((out_ << sep, FormatArg(args)), ...);
   }
 
   // FormatArg variants handling printing instruction arguments. Several things
@@ -934,22 +922,22 @@ class FormatterImpl {
     out_ << "<";
 
     llvm::ListSeparator sep(" & ");
-    if (info.impls.empty()) {
+    if (info.impls_constraints.empty()) {
       out_ << "type";
     } else {
-      for (auto impls : info.impls) {
+      for (auto interface : info.impls_constraints) {
         out_ << sep;
-        FormatName(impls.interface_id);
-        if (impls.specific_id.is_valid()) {
+        FormatName(interface.interface_id);
+        if (interface.specific_id.is_valid()) {
           out_ << ", ";
-          FormatName(impls.specific_id);
+          FormatName(interface.specific_id);
         }
       }
     }
 
     if (info.requirement_block_id.is_valid()) {
       // TODO: Include specifics.
-      out_ << " where...";
+      out_ << " where TODO";
     }
     out_ << ">";
   }

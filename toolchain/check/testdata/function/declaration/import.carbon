@@ -259,15 +259,15 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
@@ -314,24 +314,24 @@ import library "extern_api";
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %.3 = value_param_pattern %c.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.4 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %c.patt: %tuple.type.2 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.2 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc6_14.1: %.2 = tuple_literal (%int.make_type_32.loc6_10)
+// CHECK:STDOUT:     %.loc6_14.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc6_10)
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_32.loc6_10 [template = i32]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_32.loc6_10, %.loc6_14.2 [template = i32]
-// CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int.make_type_32.loc6_25: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_32.loc6_25 [template = i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_32.loc6_25, %.loc6_25.1 [template = i32]
-// CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %c.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
+// CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -346,7 +346,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -356,15 +356,15 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
@@ -411,24 +411,24 @@ import library "extern_api";
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %c.patt: %.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %.3 = value_param_pattern %c.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.4 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %c.patt: %tuple.type.2 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.2 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc6_45: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc6_49.1: %.2 = tuple_literal (%int.make_type_32.loc6_45)
+// CHECK:STDOUT:     %.loc6_49.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc6_45)
 // CHECK:STDOUT:     %.loc6_49.2: type = value_of_initializer %int.make_type_32.loc6_45 [template = i32]
 // CHECK:STDOUT:     %.loc6_49.3: type = converted %int.make_type_32.loc6_45, %.loc6_49.2 [template = i32]
-// CHECK:STDOUT:     %.loc6_49.4: type = converted %.loc6_49.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc6_49.4: type = converted %.loc6_49.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int.make_type_32.loc6_60: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc6_60.1: type = value_of_initializer %int.make_type_32.loc6_60 [template = i32]
 // CHECK:STDOUT:     %.loc6_60.2: type = converted %int.make_type_32.loc6_60, %.loc6_60.1 [template = i32]
-// CHECK:STDOUT:     %.loc6_63: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %c.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.4 = return_slot %return.param
+// CHECK:STDOUT:     %.loc6_63: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -443,7 +443,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.2) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -452,19 +452,19 @@ import library "extern_api";
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.2) [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.1) [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
@@ -505,10 +505,10 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
@@ -517,17 +517,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_16: type = struct_type {.c: i32} [template = constants.%.3]
-// CHECK:STDOUT:   %c.var: ref %.3 = var c
-// CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc9_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc8_16: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %c.var: ref %.2 = var c
+// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc9_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -536,7 +536,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type) -> %.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -545,25 +545,25 @@ import library "extern_api";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc7: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc7)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8_23: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_25.1: %.4 = tuple_literal (%.loc8_23)
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc8_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_25.2: %.4 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc8_25.2)
+// CHECK:STDOUT:   %.loc8_23: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_25.1: %tuple.type = tuple_literal (%.loc8_23)
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.loc8_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_25.2: %tuple.type = converted %.loc8_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.2 = call %C.ref(%.loc8_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, imports.%import_ref.6 [template = constants.%E]
-// CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
+// CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -572,23 +572,23 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
 // CHECK:STDOUT:   %E: %E.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5) [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -640,25 +640,25 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc32_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc32_21.1: %.2 = tuple_literal (%int.make_type_32.loc32_17)
+// CHECK:STDOUT:     %.loc32_21.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc32_17)
 // CHECK:STDOUT:     %.loc32_21.2: type = value_of_initializer %int.make_type_32.loc32_17 [template = i32]
 // CHECK:STDOUT:     %.loc32_21.3: type = converted %int.make_type_32.loc32_17, %.loc32_21.2 [template = i32]
-// CHECK:STDOUT:     %.loc32_21.4: type = converted %.loc32_21.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc32_21.4: type = converted %.loc32_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int.make_type_32.loc32_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc32_32.1: type = value_of_initializer %int.make_type_32.loc32_32 [template = i32]
 // CHECK:STDOUT:     %.loc32_32.2: type = converted %int.make_type_32.loc32_32, %.loc32_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc32_35: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %c.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc32_24: ref %.4 = return_slot %return.param
+// CHECK:STDOUT:     %.loc32_35: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %.loc32_24: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %.loc52_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc52_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
 // CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_32.loc53, %.loc53_8.1 [template = i32]
@@ -667,17 +667,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %int.make_type_32.loc54: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_32.loc54 [template = i32]
 // CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_32.loc54, %.loc54_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:   %c.var: ref %.4 = var c
-// CHECK:STDOUT:   %c: ref %.4 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc56_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %c.var: ref %.1 = var c
+// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc55_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc56_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -686,7 +686,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %.3) -> %.4;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -695,25 +695,25 @@ import library "extern_api";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc53: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc53: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc53)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc54_23: i32 = int_value 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc54_25.1: %.3 = tuple_literal (%.loc54_23)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc54_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc54_25.2: %.3 = converted %.loc54_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc54_25.2)
+// CHECK:STDOUT:   %.loc54_23: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc54_25.1: %tuple.type.2 = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc54_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc54_25.2: %tuple.type.2 = converted %.loc54_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.1 = call %C.ref(%.loc54_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [template = constants.%E]
-// CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
+// CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -722,23 +722,23 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
 // CHECK:STDOUT:   %E: %E.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.5) [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -790,25 +790,25 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int.make_type_32.loc8_17: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_21.1: %.2 = tuple_literal (%int.make_type_32.loc8_17)
+// CHECK:STDOUT:     %.loc8_21.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc8_17)
 // CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_32.loc8_17 [template = i32]
 // CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_32.loc8_17, %.loc8_21.2 [template = i32]
-// CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int.make_type_32.loc8_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_32.loc8_32 [template = i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_32.loc8_32, %.loc8_32.1 [template = i32]
-// CHECK:STDOUT:     %.loc8_35: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:     %c.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %.3 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc8_24: ref %.4 = return_slot %return.param
+// CHECK:STDOUT:     %.loc8_35: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
+// CHECK:STDOUT:     %.loc8_24: ref %.1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %.loc12_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc12_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_32.loc13, %.loc13_8.1 [template = i32]
@@ -817,17 +817,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_32.loc14, %.loc14_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_16: type = struct_type {.c: i32} [template = constants.%.4]
-// CHECK:STDOUT:   %c.var: ref %.4 = var c
-// CHECK:STDOUT:   %c: ref %.4 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc15_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc16_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc14_16: type = struct_type {.c: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %c.var: ref %.1 = var c
+// CHECK:STDOUT:   %c: ref %.1 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc15_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_9.2: type = converted %.loc15_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc16_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -836,7 +836,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %.3) -> %.4;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.2) -> %.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -845,25 +845,25 @@ import library "extern_api";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc13)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc14_23: i32 = int_value 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_25.1: %.3 = tuple_literal (%.loc14_23)
-// CHECK:STDOUT:   %tuple: %.3 = tuple_value (%.loc14_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_25.2: %.3 = converted %.loc14_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.4 = call %C.ref(%.loc14_25.2)
+// CHECK:STDOUT:   %.loc14_23: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_25.1: %tuple.type.2 = tuple_literal (%.loc14_23)
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc14_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_25.2: %tuple.type.2 = converted %.loc14_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.1 = call %C.ref(%.loc14_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [template = constants.%E]
-// CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
+// CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -871,19 +871,19 @@ import library "extern_api";
 // CHECK:STDOUT: --- fail_merge.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.2) [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.1) [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
@@ -929,10 +929,10 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc52_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc52_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc52_9.2: type = converted %.loc52_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
 // CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_32.loc53, %.loc53_8.1 [template = i32]
@@ -941,17 +941,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %int.make_type_32.loc54: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_32.loc54 [template = i32]
 // CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_32.loc54, %.loc54_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.3]
-// CHECK:STDOUT:   %c.var: ref %.3 = var c
-// CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc56_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc54_16: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %c.var: ref %.2 = var c
+// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc55_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc56_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc56_9.2: type = converted %.loc56_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -960,7 +960,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %.4) -> %.3;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type) -> %.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -969,25 +969,25 @@ import library "extern_api";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc53: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc53: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc53)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc54_23: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc54_25.1: %.4 = tuple_literal (%.loc54_23)
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc54_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc54_25.2: %.4 = converted %.loc54_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc54_25.2)
+// CHECK:STDOUT:   %.loc54_23: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc54_25.1: %tuple.type = tuple_literal (%.loc54_23)
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.loc54_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc54_25.2: %tuple.type = converted %.loc54_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.2 = call %C.ref(%.loc54_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, imports.%import_ref.6 [template = constants.%E]
-// CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
+// CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -995,19 +995,19 @@ import library "extern_api";
 // CHECK:STDOUT: --- fail_merge_reverse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.2) [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.1) [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
@@ -1053,10 +1053,10 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc51_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc51_9.2: type = converted %.loc51_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc51_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc51_9.2: type = converted %.loc51_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.make_type_32.loc52: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc52_8.1: type = value_of_initializer %int.make_type_32.loc52 [template = i32]
 // CHECK:STDOUT:   %.loc52_8.2: type = converted %int.make_type_32.loc52, %.loc52_8.1 [template = i32]
@@ -1065,17 +1065,17 @@ import library "extern_api";
 // CHECK:STDOUT:   %int.make_type_32.loc53: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc53_13.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]
 // CHECK:STDOUT:   %.loc53_13.2: type = converted %int.make_type_32.loc53, %.loc53_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc53_16: type = struct_type {.c: i32} [template = constants.%.3]
-// CHECK:STDOUT:   %c.var: ref %.3 = var c
-// CHECK:STDOUT:   %c: ref %.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc54_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc54_9.2: type = converted %.loc54_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %d.var: ref %.1 = var d
-// CHECK:STDOUT:   %d: ref %.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc55_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc53_16: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %c.var: ref %.2 = var c
+// CHECK:STDOUT:   %c: ref %.2 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc54_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc54_9.2: type = converted %.loc54_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc55_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc55_9.2: type = converted %.loc55_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
@@ -1084,7 +1084,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @B(%b.param_patt: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %.4) -> %.3;
+// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type) -> %.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -1093,25 +1093,25 @@ import library "extern_api";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
-// CHECK:STDOUT:   %.loc52: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc52: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc52)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %.loc53_23: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc53_25.1: %.4 = tuple_literal (%.loc53_23)
-// CHECK:STDOUT:   %tuple: %.4 = tuple_value (%.loc53_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc53_25.2: %.4 = converted %.loc53_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.3 = call %C.ref(%.loc53_25.2)
+// CHECK:STDOUT:   %.loc53_23: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc53_25.1: %tuple.type = tuple_literal (%.loc53_23)
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%.loc53_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc53_25.2: %tuple.type = converted %.loc53_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %.2 = call %C.ref(%.loc53_25.2)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, imports.%import_ref.6 [template = constants.%E]
-// CHECK:STDOUT:   %E.call: init %.1 = call %E.ref()
+// CHECK:STDOUT:   %E.call: init %empty_tuple.type = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

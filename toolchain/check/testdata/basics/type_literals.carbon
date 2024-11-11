@@ -124,13 +124,13 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 8 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %.7: type = int_type signed, %.6 [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 16 [template]
+// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.6: type = int_type signed, %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -151,23 +151,23 @@ var test_f128: f128;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc3_14.1: Core.IntLiteral = int_value 8 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc3: init type = call constants.%Int(%.loc3_14.1) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_signed.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_signed.loc3, %.loc3_14.2 [template = constants.%.3]
-// CHECK:STDOUT:   %test_i8.var: ref %.3 = var test_i8
-// CHECK:STDOUT:   %test_i8: ref %.3 = bind_name test_i8, %test_i8.var
-// CHECK:STDOUT:   %.loc4_15.1: Core.IntLiteral = int_value 16 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_signed.loc4: init type = call constants.%Int(%.loc4_15.1) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_signed.loc4, %.loc4_15.2 [template = constants.%.5]
-// CHECK:STDOUT:   %test_i16.var: ref %.5 = var test_i16
-// CHECK:STDOUT:   %test_i16: ref %.5 = bind_name test_i16, %test_i16.var
-// CHECK:STDOUT:   %.loc5_15.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%.loc5_15.1) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_signed.loc5, %.loc5_15.2 [template = constants.%.7]
-// CHECK:STDOUT:   %test_i64.var: ref %.7 = var test_i64
-// CHECK:STDOUT:   %test_i64: ref %.7 = bind_name test_i64, %test_i64.var
+// CHECK:STDOUT:   %int.make_type_signed.loc3: init type = call constants.%Int(%.loc3_14.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_signed.loc3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_signed.loc3, %.loc3_14.2 [template = constants.%.2]
+// CHECK:STDOUT:   %test_i8.var: ref %.2 = var test_i8
+// CHECK:STDOUT:   %test_i8: ref %.2 = bind_name test_i8, %test_i8.var
+// CHECK:STDOUT:   %.loc4_15.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_signed.loc4: init type = call constants.%Int(%.loc4_15.1) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_signed.loc4, %.loc4_15.2 [template = constants.%.4]
+// CHECK:STDOUT:   %test_i16.var: ref %.4 = var test_i16
+// CHECK:STDOUT:   %test_i16: ref %.4 = bind_name test_i16, %test_i16.var
+// CHECK:STDOUT:   %.loc5_15.1: Core.IntLiteral = int_value 64 [template = constants.%.5]
+// CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%.loc5_15.1) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_signed.loc5, %.loc5_15.2 [template = constants.%.6]
+// CHECK:STDOUT:   %test_i64.var: ref %.6 = var test_i64
+// CHECK:STDOUT:   %test_i64: ref %.6 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
@@ -177,12 +177,12 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 15 [template]
-// CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 1000000000 [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 15 [template]
+// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
@@ -194,13 +194,13 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 8 [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = int_type unsigned, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %.5: type = int_type unsigned, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %.7: type = int_type unsigned, %.6 [template]
+// CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 16 [template]
+// CHECK:STDOUT:   %.4: type = int_type unsigned, %.3 [template]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.6: type = int_type unsigned, %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -221,23 +221,23 @@ var test_f128: f128;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc3_14.1: Core.IntLiteral = int_value 8 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_unsigned.loc3: init type = call constants.%UInt(%.loc3_14.1) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_unsigned.loc3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_unsigned.loc3, %.loc3_14.2 [template = constants.%.3]
-// CHECK:STDOUT:   %test_u8.var: ref %.3 = var test_u8
-// CHECK:STDOUT:   %test_u8: ref %.3 = bind_name test_u8, %test_u8.var
-// CHECK:STDOUT:   %.loc4_15.1: Core.IntLiteral = int_value 16 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_unsigned.loc4: init type = call constants.%UInt(%.loc4_15.1) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_unsigned.loc4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_unsigned.loc4, %.loc4_15.2 [template = constants.%.5]
-// CHECK:STDOUT:   %test_u16.var: ref %.5 = var test_u16
-// CHECK:STDOUT:   %test_u16: ref %.5 = bind_name test_u16, %test_u16.var
-// CHECK:STDOUT:   %.loc5_15.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:   %int.make_type_unsigned.loc5: init type = call constants.%UInt(%.loc5_15.1) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_unsigned.loc5 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_unsigned.loc5, %.loc5_15.2 [template = constants.%.7]
-// CHECK:STDOUT:   %test_u64.var: ref %.7 = var test_u64
-// CHECK:STDOUT:   %test_u64: ref %.7 = bind_name test_u64, %test_u64.var
+// CHECK:STDOUT:   %int.make_type_unsigned.loc3: init type = call constants.%UInt(%.loc3_14.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc3_14.2: type = value_of_initializer %int.make_type_unsigned.loc3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc3_14.3: type = converted %int.make_type_unsigned.loc3, %.loc3_14.2 [template = constants.%.2]
+// CHECK:STDOUT:   %test_u8.var: ref %.2 = var test_u8
+// CHECK:STDOUT:   %test_u8: ref %.2 = bind_name test_u8, %test_u8.var
+// CHECK:STDOUT:   %.loc4_15.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:   %int.make_type_unsigned.loc4: init type = call constants.%UInt(%.loc4_15.1) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.2: type = value_of_initializer %int.make_type_unsigned.loc4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_15.3: type = converted %int.make_type_unsigned.loc4, %.loc4_15.2 [template = constants.%.4]
+// CHECK:STDOUT:   %test_u16.var: ref %.4 = var test_u16
+// CHECK:STDOUT:   %test_u16: ref %.4 = bind_name test_u16, %test_u16.var
+// CHECK:STDOUT:   %.loc5_15.1: Core.IntLiteral = int_value 64 [template = constants.%.5]
+// CHECK:STDOUT:   %int.make_type_unsigned.loc5: init type = call constants.%UInt(%.loc5_15.1) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.2: type = value_of_initializer %int.make_type_unsigned.loc5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_15.3: type = converted %int.make_type_unsigned.loc5, %.loc5_15.2 [template = constants.%.6]
+// CHECK:STDOUT:   %test_u64.var: ref %.6 = var test_u64
+// CHECK:STDOUT:   %test_u64: ref %.6 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UInt(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
@@ -247,12 +247,12 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = int_type unsigned, %.1 [template]
-// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 15 [template]
-// CHECK:STDOUT:   %.5: type = int_type unsigned, %.4 [template]
-// CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 1000000000 [template]
+// CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 15 [template]
+// CHECK:STDOUT:   %.4: type = int_type unsigned, %.3 [template]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

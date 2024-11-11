@@ -5,7 +5,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
-load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
+load("install_filegroups.bzl", "install_busybox_wrapper", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("run_tool.bzl", "run_tool")
 
@@ -108,10 +108,9 @@ lld_aliases = [
 # based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
-        install_symlink(
+        install_busybox_wrapper(
             "carbon",
             "../lib/carbon/carbon-busybox",
-            is_driver = True,
         ),
     ],
     "lib/carbon": [
@@ -130,10 +129,13 @@ install_dirs = {
             "@llvm-project//lld:lld",
             executable = True,
         ),
-        install_symlink(
+        install_busybox_wrapper(
             "clang",
             "../../carbon-busybox",
-            is_driver = True,
+            [
+                "clang",
+                "--",
+            ],
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
 }

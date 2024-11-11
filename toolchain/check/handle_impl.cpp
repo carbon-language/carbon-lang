@@ -181,7 +181,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   }
   const SemIR::FacetTypeInfo& info =
       context.sem_ir().facet_types().Get(facet_type->facet_type_id);
-  for (auto interface_type : info.impls) {
+  for (auto interface_type : info.impls_constraints) {
     auto& interface = context.interfaces().Get(interface_type.interface_id);
     if (!interface.is_defined()) {
       CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
