@@ -27,17 +27,17 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Class, %.2 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.p: %.2} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, %.1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.p: %.1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -98,9 +98,9 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc18_14: type = ptr_type %Class [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_8: %.3 = field_decl p, element0 [template]
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18_14: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_8: %.2 = field_decl p, element0 [template]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -114,9 +114,9 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc21
-// CHECK:STDOUT:   %p.ref: %.3 = name_ref p, @Class.%.loc18_8 [template = @Class.%.loc18_8]
-// CHECK:STDOUT:   %.loc22_16.1: ref %.2 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc22_16.2: %.2 = bind_value %.loc22_16.1
+// CHECK:STDOUT:   %p.ref: %.2 = name_ref p, @Class.%.loc18_8 [template = @Class.%.loc18_8]
+// CHECK:STDOUT:   %.loc22_16.1: ref %.1 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc22_16.2: %.1 = bind_value %.loc22_16.1
 // CHECK:STDOUT:   %.loc22_11.1: ref %Class = deref %.loc22_16.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc22_19: <bound method> = bound_method %.loc22_11.1, %F.ref
@@ -133,10 +133,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return
 // CHECK:STDOUT:   %s.ref.loc15_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc15_16: ref %Class = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_15: %.2 = addr_of %s.ref.loc15_16
-// CHECK:STDOUT:   %.loc15_17.1: %.4 = struct_literal (%.loc15_15)
-// CHECK:STDOUT:   %.loc15_17.2: ref %.2 = class_element_access %s.ref.loc15_5, element0
-// CHECK:STDOUT:   %.loc15_17.3: init %.2 = initialize_from %.loc15_15 to %.loc15_17.2
+// CHECK:STDOUT:   %.loc15_15: %.1 = addr_of %s.ref.loc15_16
+// CHECK:STDOUT:   %.loc15_17.1: %.3 = struct_literal (%.loc15_15)
+// CHECK:STDOUT:   %.loc15_17.2: ref %.1 = class_element_access %s.ref.loc15_5, element0
+// CHECK:STDOUT:   %.loc15_17.3: init %.1 = initialize_from %.loc15_15 to %.loc15_17.2
 // CHECK:STDOUT:   %.loc15_17.4: init %Class = class_init (%.loc15_17.3), %s.ref.loc15_5
 // CHECK:STDOUT:   %.loc15_7: init %Class = converted %.loc15_17.1, %.loc15_17.4
 // CHECK:STDOUT:   assign %s.ref.loc15_5, %.loc15_7

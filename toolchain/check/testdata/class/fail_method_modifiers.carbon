@@ -60,12 +60,12 @@ base class BaseClass {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
 // CHECK:STDOUT:   %Abstract.type.1: type = fn_type @Abstract.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Abstract.1: %Abstract.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Virtual.type: type = fn_type @Virtual [template]
 // CHECK:STDOUT:   %Virtual: %Virtual.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [template]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [template]
@@ -113,7 +113,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%FinalClass
@@ -138,7 +138,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc45: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc45: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractClass
@@ -155,7 +155,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.param: %BaseClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc56: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%BaseClass

@@ -25,11 +25,11 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,7 +51,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -67,7 +67,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22_27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc22_27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

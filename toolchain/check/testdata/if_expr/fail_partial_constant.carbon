@@ -43,13 +43,13 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %ConditionIsNonConstant.type: type = fn_type @ConditionIsNonConstant [template]
 // CHECK:STDOUT:   %ConditionIsNonConstant: %ConditionIsNonConstant.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,7 +104,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc12_10: type = block_arg !if.expr.result
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc12_35: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_35: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -115,13 +115,13 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.type: type = fn_type @ChosenBranchIsNonConstant [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: %ChosenBranchIsNonConstant.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -150,7 +150,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t.param_patt: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc9_13 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -167,9 +167,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc9_36: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_36: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   %.loc13_13: bool = bool_literal false [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_13: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc13_13 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
@@ -186,7 +186,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %.loc13_10: type = block_arg !if.expr.result.loc13
 // CHECK:STDOUT:   %w.var: ref <error> = var w
 // CHECK:STDOUT:   %w: ref <error> = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc13_37: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_37: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -61,15 +61,15 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [template]
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -118,20 +118,20 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32.loc4: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, %Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc4_20: i32 = int_value 3 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_23: i32 = int_value 2 [template = constants.%.3]
-// CHECK:STDOUT:   %int.sdiv: init i32 = call %Div.ref(%.loc4_20, %.loc4_23) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_20: i32 = int_value 3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_23: i32 = int_value 2 [template = constants.%.2]
+// CHECK:STDOUT:   %int.sdiv: init i32 = call %Div.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %int.sdiv, i32 [template = constants.%.5]
-// CHECK:STDOUT:   %arr.var: ref %.5 = var arr
-// CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc4_25: type = array_type %int.sdiv, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %arr.var: ref %.4 = var arr
+// CHECK:STDOUT:   %arr: ref %.4 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_18: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.4 [template = constants.%.5]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: i32 = value_param_pattern %a.patt, runtime_param0
@@ -175,9 +175,9 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc5: %.6 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %arr.ref: ref %.4 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc5: %.5 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.5 = bind_name arr_p, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -185,7 +185,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [template]
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [template]
@@ -193,11 +193,11 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [template]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 2147483647 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value -2147483647 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_value -1 [template]
-// CHECK:STDOUT:   %.6: i32 = int_value -2147483648 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 2147483647 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value -2147483647 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_value -1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_value -2147483648 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -308,54 +308,54 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref.loc9: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %Negate.ref.loc9_18: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc9_25: i32 = int_value 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %int.snegate.loc9_24: init i32 = call %Negate.ref.loc9_18(%.loc9_25) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_25: i32 = int_value 2147483647 [template = constants.%.1]
+// CHECK:STDOUT:   %int.snegate.loc9_24: init i32 = call %Negate.ref.loc9_18(%.loc9_25) [template = constants.%.2]
 // CHECK:STDOUT:   %Negate.ref.loc9_39: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc9_46: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %int.snegate.loc9_45: init i32 = call %Negate.ref.loc9_39(%.loc9_46) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_24.1: i32 = value_of_initializer %int.snegate.loc9_24 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_24.2: i32 = converted %int.snegate.loc9_24, %.loc9_24.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_45.1: i32 = value_of_initializer %int.snegate.loc9_45 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_45.2: i32 = converted %int.snegate.loc9_45, %.loc9_45.1 [template = constants.%.5]
-// CHECK:STDOUT:   %int.sdiv.loc9: init i32 = call %Div.ref.loc9(%.loc9_24.2, %.loc9_45.2) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.sdiv.loc9 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.sdiv.loc9, %.loc9_49.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_46: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %int.snegate.loc9_45: init i32 = call %Negate.ref.loc9_39(%.loc9_46) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_24.1: i32 = value_of_initializer %int.snegate.loc9_24 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_24.2: i32 = converted %int.snegate.loc9_24, %.loc9_24.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_45.1: i32 = value_of_initializer %int.snegate.loc9_45 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_45.2: i32 = converted %int.snegate.loc9_45, %.loc9_45.1 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sdiv.loc9: init i32 = call %Div.ref.loc9(%.loc9_24.2, %.loc9_45.2) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.sdiv.loc9 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.sdiv.loc9, %.loc9_49.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc9_49.2
 // CHECK:STDOUT:   %Div.ref.loc12: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %Sub.ref.loc12: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
 // CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc12_29: i32 = int_value 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_29) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_43: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_28.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_28.2: i32 = converted %int.snegate.loc12, %.loc12_28.1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.ssub.loc12: init i32 = call %Sub.ref.loc12(%.loc12_28.2, %.loc12_43) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_47: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_21.1: i32 = value_of_initializer %int.ssub.loc12 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_21.2: i32 = converted %int.ssub.loc12, %.loc12_21.1 [template = constants.%.6]
-// CHECK:STDOUT:   %int.sdiv.loc12: init i32 = call %Div.ref.loc12(%.loc12_21.2, %.loc12_47) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.sdiv.loc12 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.sdiv.loc12, %.loc12_49.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_29: i32 = int_value 2147483647 [template = constants.%.1]
+// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_29) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_43: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_28.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_28.2: i32 = converted %int.snegate.loc12, %.loc12_28.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.ssub.loc12: init i32 = call %Sub.ref.loc12(%.loc12_28.2, %.loc12_43) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_47: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_21.1: i32 = value_of_initializer %int.ssub.loc12 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_21.2: i32 = converted %int.ssub.loc12, %.loc12_21.1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.sdiv.loc12: init i32 = call %Div.ref.loc12(%.loc12_21.2, %.loc12_47) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.sdiv.loc12 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.sdiv.loc12, %.loc12_49.1 [template = constants.%.5]
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc12_49.2
 // CHECK:STDOUT:   %Div.ref.loc19: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %Sub.ref.loc19: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
 // CHECK:STDOUT:   %Negate.ref.loc19_22: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc19_29: i32 = int_value 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %int.snegate.loc19_28: init i32 = call %Negate.ref.loc19_22(%.loc19_29) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19_43: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc19_28.1: i32 = value_of_initializer %int.snegate.loc19_28 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc19_28.2: i32 = converted %int.snegate.loc19_28, %.loc19_28.1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.ssub.loc19: init i32 = call %Sub.ref.loc19(%.loc19_28.2, %.loc19_43) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19_29: i32 = int_value 2147483647 [template = constants.%.1]
+// CHECK:STDOUT:   %int.snegate.loc19_28: init i32 = call %Negate.ref.loc19_22(%.loc19_29) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_43: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc19_28.1: i32 = value_of_initializer %int.snegate.loc19_28 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_28.2: i32 = converted %int.snegate.loc19_28, %.loc19_28.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.ssub.loc19: init i32 = call %Sub.ref.loc19(%.loc19_28.2, %.loc19_43) [template = constants.%.5]
 // CHECK:STDOUT:   %Negate.ref.loc19_47: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc19_54: i32 = int_value 1 [template = constants.%.4]
-// CHECK:STDOUT:   %int.snegate.loc19_53: init i32 = call %Negate.ref.loc19_47(%.loc19_54) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc19_21.1: i32 = value_of_initializer %int.ssub.loc19 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc19_21.2: i32 = converted %int.ssub.loc19, %.loc19_21.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc19_53.1: i32 = value_of_initializer %int.snegate.loc19_53 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc19_53.2: i32 = converted %int.snegate.loc19_53, %.loc19_53.1 [template = constants.%.5]
-// CHECK:STDOUT:   %int.sdiv.loc19: init i32 = call %Div.ref.loc19(%.loc19_21.2, %.loc19_53.2) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc19_57.1: i32 = value_of_initializer %int.sdiv.loc19 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc19_57.2: i32 = converted %int.sdiv.loc19, %.loc19_57.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19_54: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %int.snegate.loc19_53: init i32 = call %Negate.ref.loc19_47(%.loc19_54) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19_21.1: i32 = value_of_initializer %int.ssub.loc19 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_21.2: i32 = converted %int.ssub.loc19, %.loc19_21.1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_53.1: i32 = value_of_initializer %int.snegate.loc19_53 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19_53.2: i32 = converted %int.snegate.loc19_53, %.loc19_53.1 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sdiv.loc19: init i32 = call %Div.ref.loc19(%.loc19_21.2, %.loc19_53.2) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_57.1: i32 = value_of_initializer %int.sdiv.loc19 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_57.2: i32 = converted %int.sdiv.loc19, %.loc19_57.1 [template = constants.%.5]
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc19_57.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -364,12 +364,12 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [template]
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -428,15 +428,15 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc10_18: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_21: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_18: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_21: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %int.sdiv.loc10: init i32 = call %Div.ref.loc10(%.loc10_18, %.loc10_21) [template = <error>]
 // CHECK:STDOUT:   %.loc10_23.1: i32 = value_of_initializer %int.sdiv.loc10 [template = <error>]
 // CHECK:STDOUT:   %.loc10_23.2: i32 = converted %int.sdiv.loc10, %.loc10_23.1 [template = <error>]
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc10_23.2
 // CHECK:STDOUT:   %Div.ref.loc15: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc15_18: i32 = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_21: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_18: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_21: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %int.sdiv.loc15: init i32 = call %Div.ref.loc15(%.loc15_18, %.loc15_21) [template = <error>]
 // CHECK:STDOUT:   %.loc15_23.1: i32 = value_of_initializer %int.sdiv.loc15 [template = <error>]
 // CHECK:STDOUT:   %.loc15_23.2: i32 = converted %int.sdiv.loc15, %.loc15_23.1 [template = <error>]

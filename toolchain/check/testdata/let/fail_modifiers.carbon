@@ -87,9 +87,9 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,21 +144,21 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc15
-// CHECK:STDOUT:   %.loc21: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc21
-// CHECK:STDOUT:   %.loc27: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc27: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %d: i32 = bind_name d, %.loc27
-// CHECK:STDOUT:   %.loc33: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc33: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %e: i32 = bind_name e, %.loc33
-// CHECK:STDOUT:   %.loc46: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc46: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %f: i32 = bind_name f, %.loc46
-// CHECK:STDOUT:   %.loc59: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc59: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %g: i32 = bind_name g, %.loc59
-// CHECK:STDOUT:   %.loc72: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc72: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %h: i32 = bind_name h, %.loc72
-// CHECK:STDOUT:   %.loc84: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc84: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %i: i32 = bind_name i, %.loc84
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

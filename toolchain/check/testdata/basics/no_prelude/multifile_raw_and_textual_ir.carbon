@@ -81,7 +81,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -181,7 +181,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
@@ -208,7 +208,7 @@ fn B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, imports.%A [template = imports.%A]
 // CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%import_ref [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc6_4()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc6_4()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

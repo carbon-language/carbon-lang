@@ -552,6 +552,10 @@ class Context {
     return import_ref_ids_;
   }
 
+  auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
+    return bind_name_cache_;
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -666,6 +670,11 @@ class Context {
   // instructions and needs to be visible in textual IR.
   // FinalizeImportRefBlock() will produce an inst block for them.
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
+
+  // Cache of allocated AnyBindName insts, keyed by the entity names they refer
+  // to. These are allocated while generating the pattern IR, but are emitted
+  // later as part of the pattern-match IR.
+  Map<SemIR::EntityNameId, SemIR::InstId> bind_name_cache_;
 };
 
 }  // namespace Carbon::Check

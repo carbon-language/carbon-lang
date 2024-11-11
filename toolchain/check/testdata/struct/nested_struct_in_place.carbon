@@ -18,18 +18,18 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: %.3, .b: %.3} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.a: %.5, .b: %.5} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %tuple.type.2 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: %.2, .b: %.2} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -49,66 +49,66 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32.loc11_12: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc11_17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc11_22: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc11_25.1: %.2 = tuple_literal (%int.make_type_32.loc11_12, %int.make_type_32.loc11_17, %int.make_type_32.loc11_22)
+// CHECK:STDOUT:     %.loc11_25.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc11_12, %int.make_type_32.loc11_17, %int.make_type_32.loc11_22)
 // CHECK:STDOUT:     %.loc11_25.2: type = value_of_initializer %int.make_type_32.loc11_12 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.3: type = converted %int.make_type_32.loc11_12, %.loc11_25.2 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.4: type = value_of_initializer %int.make_type_32.loc11_17 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.5: type = converted %int.make_type_32.loc11_17, %.loc11_25.4 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.6: type = value_of_initializer %int.make_type_32.loc11_22 [template = i32]
 // CHECK:STDOUT:     %.loc11_25.7: type = converted %int.make_type_32.loc11_22, %.loc11_25.6 [template = i32]
-// CHECK:STDOUT:     %.loc11_25.8: type = converted %.loc11_25.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:     %.loc11_25.8: type = converted %.loc11_25.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %tuple.type.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %.3;
+// CHECK:STDOUT: fn @F() -> %tuple.type.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc14_16: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_26: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_29.1: %.2 = tuple_literal (%int.make_type_32.loc14_16, %int.make_type_32.loc14_21, %int.make_type_32.loc14_26)
+// CHECK:STDOUT:   %.loc14_29.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc14_16, %int.make_type_32.loc14_21, %int.make_type_32.loc14_26)
 // CHECK:STDOUT:   %.loc14_29.2: type = value_of_initializer %int.make_type_32.loc14_16 [template = i32]
 // CHECK:STDOUT:   %.loc14_29.3: type = converted %int.make_type_32.loc14_16, %.loc14_29.2 [template = i32]
 // CHECK:STDOUT:   %.loc14_29.4: type = value_of_initializer %int.make_type_32.loc14_21 [template = i32]
 // CHECK:STDOUT:   %.loc14_29.5: type = converted %int.make_type_32.loc14_21, %.loc14_29.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_29.6: type = value_of_initializer %int.make_type_32.loc14_26 [template = i32]
 // CHECK:STDOUT:   %.loc14_29.7: type = converted %int.make_type_32.loc14_26, %.loc14_29.6 [template = i32]
-// CHECK:STDOUT:   %.loc14_29.8: type = converted %.loc14_29.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_29.8: type = converted %.loc14_29.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %int.make_type_32.loc14_37: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_42: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %int.make_type_32.loc14_47: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc14_50.1: %.2 = tuple_literal (%int.make_type_32.loc14_37, %int.make_type_32.loc14_42, %int.make_type_32.loc14_47)
+// CHECK:STDOUT:   %.loc14_50.1: %tuple.type.1 = tuple_literal (%int.make_type_32.loc14_37, %int.make_type_32.loc14_42, %int.make_type_32.loc14_47)
 // CHECK:STDOUT:   %.loc14_50.2: type = value_of_initializer %int.make_type_32.loc14_37 [template = i32]
 // CHECK:STDOUT:   %.loc14_50.3: type = converted %int.make_type_32.loc14_37, %.loc14_50.2 [template = i32]
 // CHECK:STDOUT:   %.loc14_50.4: type = value_of_initializer %int.make_type_32.loc14_42 [template = i32]
 // CHECK:STDOUT:   %.loc14_50.5: type = converted %int.make_type_32.loc14_42, %.loc14_50.4 [template = i32]
 // CHECK:STDOUT:   %.loc14_50.6: type = value_of_initializer %int.make_type_32.loc14_47 [template = i32]
 // CHECK:STDOUT:   %.loc14_50.7: type = converted %int.make_type_32.loc14_47, %.loc14_50.6 [template = i32]
-// CHECK:STDOUT:   %.loc14_50.8: type = converted %.loc14_50.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_51: type = struct_type {.a: %.3, .b: %.3} [template = constants.%.4]
-// CHECK:STDOUT:   %v.var: ref %.4 = var v
-// CHECK:STDOUT:   %v: ref %.4 = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc14_50.8: type = converted %.loc14_50.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc14_51: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template = constants.%.1]
+// CHECK:STDOUT:   %v.var: ref %.1 = var v
+// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_61: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc14_74.1: ref %.3 = struct_access %v.var, element0
-// CHECK:STDOUT:   %F.call.loc14_62: init %.3 = call %F.ref.loc14_61() to %.loc14_74.1
+// CHECK:STDOUT:   %.loc14_74.1: ref %tuple.type.2 = struct_access %v.var, element0
+// CHECK:STDOUT:   %F.call.loc14_62: init %tuple.type.2 = call %F.ref.loc14_61() to %.loc14_74.1
 // CHECK:STDOUT:   %F.ref.loc14_71: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc14_74.2: ref %.3 = struct_access %v.var, element1
-// CHECK:STDOUT:   %F.call.loc14_72: init %.3 = call %F.ref.loc14_71() to %.loc14_74.2
-// CHECK:STDOUT:   %.loc14_74.3: %.4 = struct_literal (%F.call.loc14_62, %F.call.loc14_72)
-// CHECK:STDOUT:   %.loc14_74.4: init %.4 = struct_init (%F.call.loc14_62, %F.call.loc14_72) to %v.var
-// CHECK:STDOUT:   %.loc14_75: init %.4 = converted %.loc14_74.3, %.loc14_74.4
+// CHECK:STDOUT:   %.loc14_74.2: ref %tuple.type.2 = struct_access %v.var, element1
+// CHECK:STDOUT:   %F.call.loc14_72: init %tuple.type.2 = call %F.ref.loc14_71() to %.loc14_74.2
+// CHECK:STDOUT:   %.loc14_74.3: %.1 = struct_literal (%F.call.loc14_62, %F.call.loc14_72)
+// CHECK:STDOUT:   %.loc14_74.4: init %.1 = struct_init (%F.call.loc14_62, %F.call.loc14_72) to %v.var
+// CHECK:STDOUT:   %.loc14_75: init %.1 = converted %.loc14_74.3, %.loc14_74.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_75
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

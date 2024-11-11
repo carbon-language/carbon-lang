@@ -596,7 +596,7 @@ declaration or statement.
 
 ### Something required in context
 
-FIXME
+TODO
 
 Example: name after introducer
 [parse/handle_decl_name_and_params.cpp](/toolchain/parse/handle_decl_name_and_params.cpp)
@@ -796,7 +796,7 @@ deal with the `as` that follows when the type expression is present.
 
 ### Operators
 
-FIXME
+TODO
 
 An independent description of our approach:
 ["Better operator precedence" on scattered-thoughts.net](https://www.scattered-thoughts.net/writing/better-operator-precedence/)

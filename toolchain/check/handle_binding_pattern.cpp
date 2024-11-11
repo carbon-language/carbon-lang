@@ -216,18 +216,20 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context.AddNameToLookup(name_id, bind_id);
         auto entity_name_id =
             context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+        bool inserted = context.bind_name_cache()
+                            .Insert(entity_name_id, bind_id)
+                            .is_inserted();
+        CARBON_CHECK(inserted);
         auto pattern_inst_id = SemIR::InstId::Invalid;
         if (is_generic) {
           pattern_inst_id =
               context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-                  name_node, {.type_id = cast_type_id,
-                              .entity_name_id = entity_name_id,
-                              .bind_name_id = bind_id});
+                  name_node,
+                  {.type_id = cast_type_id, .entity_name_id = entity_name_id});
         } else {
           pattern_inst_id = context.AddPatternInst<SemIR::BindingPattern>(
-              name_node, {.type_id = cast_type_id,
-                          .entity_name_id = entity_name_id,
-                          .bind_name_id = bind_id});
+              name_node,
+              {.type_id = cast_type_id, .entity_name_id = entity_name_id});
         }
         param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
             node_id,

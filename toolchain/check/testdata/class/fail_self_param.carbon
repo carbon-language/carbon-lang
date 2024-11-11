@@ -20,12 +20,12 @@ var v: C(0);
 // CHECK:STDOUT:   %x: <error> = bind_symbolic_name x, 0 [symbolic]
 // CHECK:STDOUT:   %x.patt: <error> = symbolic_binding_pattern x, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%x) [symbolic]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,7 +51,7 @@ var v: C(0);
 // CHECK:STDOUT:     %x.loc14_22.1: <error> = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc14_22.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc15: i32 = int_value 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15: i32 = int_value 0 [template = constants.%.3]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ var v: C(0);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc14: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2

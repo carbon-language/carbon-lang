@@ -29,10 +29,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.type: type = interface_type @Simple [template]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %Simple.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %Simple.type, %G.type.1 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
@@ -88,7 +88,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %G.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %G.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -126,7 +126,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %.2 = name_ref G, @Simple.%.loc12 [template = constants.%.3]
+// CHECK:STDOUT:   %G.ref: %.1 = name_ref G, @Simple.%.loc12 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc23_4.1: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   %.loc23_4.2: <bound method> = bound_method %n.ref, %.loc23_4.1
 // CHECK:STDOUT:   return

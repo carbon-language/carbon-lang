@@ -18,10 +18,10 @@ interface UseSelf {
 // CHECK:STDOUT:   %UseSelf.type: type = interface_type @UseSelf [template]
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %UseSelf.type, %F.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %UseSelf.type, %F.type [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @UseSelf.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,7 +50,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %return.param: ref @F.%Self (%Self) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

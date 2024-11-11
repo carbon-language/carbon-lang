@@ -37,16 +37,16 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
-// CHECK:STDOUT:   %struct: %.5 = struct_value (%.3, %.4) [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %struct: %.4 = struct_value (%.2, %.3) [template]
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ElementType: type = bind_symbolic_name ElementType, 1 [symbolic]
@@ -58,8 +58,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %Self.2: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %At: %At.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type %IndexWith.type.2, %At.type [symbolic]
-// CHECK:STDOUT:   %.8: %.7 = assoc_entity element0, imports.%import_ref.6 [symbolic]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %IndexWith.type.2, %At.type [symbolic]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -123,8 +123,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %At.type: type = fn_type @At, @IndexWith(%SubscriptType, %ElementType) [symbolic = %At.type (constants.%At.type)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type) = struct_value () [symbolic = %At (constants.%At)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type) [symbolic = %.1 (constants.%.7)]
-// CHECK:STDOUT:   %.2: @IndexWith.%.1 (%.7) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.2 (constants.%.8)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type) [symbolic = %.1 (constants.%.6)]
+// CHECK:STDOUT:   %.2: @IndexWith.%.1 (%.6) = assoc_entity element0, imports.%import_ref.6 [symbolic = %.2 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -150,17 +150,17 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
-// CHECK:STDOUT:   %.loc16: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: i32 = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc23: i32 = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23: i32 = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %.loc29_20: i32 = int_value 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc29_28: i32 = int_value 2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc29_29.1: %.5 = struct_literal (%.loc29_20, %.loc29_28)
-// CHECK:STDOUT:   %.loc29_31: i32 = int_value 0 [template = constants.%.2]
-// CHECK:STDOUT:   %struct: %.5 = struct_value (%.loc29_20, %.loc29_28) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc29_29.2: %.5 = converted %.loc29_29.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc29_20: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc29_28: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29_29.1: %.4 = struct_literal (%.loc29_20, %.loc29_28)
+// CHECK:STDOUT:   %.loc29_31: i32 = int_value 0 [template = constants.%.1]
+// CHECK:STDOUT:   %struct: %.4 = struct_value (%.loc29_20, %.loc29_28) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc29_29.2: %.4 = converted %.loc29_29.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %int.make_type_32.loc34_19: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_19.1: type = value_of_initializer %int.make_type_32.loc34_19 [template = i32]
@@ -168,8 +168,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %int.make_type_32.loc34_28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_28.1: type = value_of_initializer %int.make_type_32.loc34_28 [template = i32]
 // CHECK:STDOUT:   %.loc34_28.2: type = converted %int.make_type_32.loc34_28, %.loc34_28.1 [template = i32]
-// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.5]
-// CHECK:STDOUT:   %.loc34_33: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc34_33: i32 = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

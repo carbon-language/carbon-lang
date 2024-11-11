@@ -18,12 +18,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,14 +51,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_32, %.loc12_21.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %.loc12_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc13: type = ptr_type %T [symbolic = constants.%.2]
-// CHECK:STDOUT:   %p.var: ref %.2 = var p
-// CHECK:STDOUT:   %p: ref %.2 = bind_name p, %p.var
+// CHECK:STDOUT:   %.loc13: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %p.var: ref %.1 = var p
+// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
 // CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a.var: ref %T = var a
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
-// CHECK:STDOUT:   %p.ref: ref %.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc14_15: %.2 = bind_value %p.ref
+// CHECK:STDOUT:   %p.ref: ref %.1 = name_ref p, %p
+// CHECK:STDOUT:   %.loc14_15: %.1 = bind_value %p.ref
 // CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15
 // CHECK:STDOUT:   %.loc14_14.2: %T = bind_value %.loc14_14.1
 // CHECK:STDOUT:   assign %a.var, %.loc14_14.2

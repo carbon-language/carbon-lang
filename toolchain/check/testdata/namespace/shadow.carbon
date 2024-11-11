@@ -31,7 +31,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.1: type = fn_type @A.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %A.type.2: type = fn_type @A.2 [template]
 // CHECK:STDOUT:   %A.2: %A.type.2 = struct_value () [template]
@@ -39,8 +39,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,8 +89,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc20: %A.type.2 = name_ref A, file.%A.decl.loc14 [template = constants.%A.2]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref.loc20()
-// CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc20()
+// CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc21 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -99,14 +99,14 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.loc22_12.2: type = converted %int.make_type_32.loc22, %.loc22_12.1 [template = i32]
 // CHECK:STDOUT:   %A.var: ref i32 = var A
 // CHECK:STDOUT:   %A: ref i32 = bind_name A, %A.var
-// CHECK:STDOUT:   %.loc22_18: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc22_18: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %A.var, %.loc22_18
 // CHECK:STDOUT:   %A.ref.loc25: ref i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc25: i32 = bind_value %A.ref.loc25
 // CHECK:STDOUT:   return %.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

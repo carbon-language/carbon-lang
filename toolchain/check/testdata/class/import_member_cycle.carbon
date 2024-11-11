@@ -67,12 +67,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %Cycle [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: %.2} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,9 +105,9 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, imports.%import_ref.1 [template = constants.%Cycle]
-// CHECK:STDOUT:   %.loc7: type = ptr_type %Cycle [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc7: type = ptr_type %Cycle [template = constants.%.1]
+// CHECK:STDOUT:   %a.var: ref %.1 = var a
+// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
