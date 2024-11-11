@@ -296,7 +296,6 @@ struct AnyBindingPattern {
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Represents a non-symbolic binding pattern.
@@ -306,13 +305,9 @@ struct BindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Represents a symbolic binding pattern.
-//
-// TODO: Consider dropping this and AnyBindingPattern, using BindingPattern
-// everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
@@ -324,7 +319,6 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -749,18 +743,6 @@ struct InterfaceDecl {
   InstBlockId decl_block_id;
 };
 
-// The type for an interface, either non-generic or specific.
-struct InterfaceType {
-  static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
-      {.ir_name = "interface_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  InterfaceId interface_id;
-  SpecificId specific_id;
-};
-
 // A witness that a type implements an interface.
 struct InterfaceWitness {
   static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
@@ -1117,22 +1099,7 @@ struct StructType {
            .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
-  InstBlockId fields_id;
-};
-
-// A field in a struct's type, such as `.a: i32` in `{.a: i32}`.
-//
-// This instruction is an implementation detail of `StructType`, and doesn't
-// produce a value. As a consequence, although there's a type for the field, the
-// instruction has no type.
-struct StructTypeField {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::StructTypeField.Define<Parse::NodeId>(
-      {.ir_name = "struct_type_field",
-       .constant_kind = InstConstantKind::Conditional});
-
-  NameId name_id;
-  TypeId field_type_id;
+  StructTypeFieldsId fields_id;
 };
 
 // A struct value.

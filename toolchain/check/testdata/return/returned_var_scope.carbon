@@ -31,13 +31,13 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %UnrelatedScopes.type: type = fn_type @UnrelatedScopes [template]
 // CHECK:STDOUT:   %UnrelatedScopes: %UnrelatedScopes.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %EnclosingButAfter.type: type = fn_type @EnclosingButAfter [template]
@@ -95,7 +95,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnrelatedScopes() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc12 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
@@ -104,12 +104,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc13_27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
 // CHECK:STDOUT:   br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
-// CHECK:STDOUT:   %.loc15: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc15 br !if.then.loc15 else br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc15:
@@ -118,12 +118,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc16_21.2: type = converted %int.make_type_32.loc16, %.loc16_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc16_27: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16_27: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc16_27
 // CHECK:STDOUT:   br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
-// CHECK:STDOUT:   %.loc18: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -140,7 +140,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_32.loc23, %.loc23_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc23_27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23_27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc23_27
 // CHECK:STDOUT:   %.loc23_18: i32 = bind_value %v
 // CHECK:STDOUT:   return %.loc23_18
@@ -151,7 +151,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc26_19.2: type = converted %int.make_type_32.loc26, %.loc26_19.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc26_25: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc26_25: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc26_25
 // CHECK:STDOUT:   %.loc26_16: i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc26_16

@@ -39,13 +39,13 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.j: i32, .k: i32} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, i32 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,22 +70,22 @@ class Class {
 // CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_18.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:   %.loc17_18.2: type = converted %int.make_type_32.loc17, %.loc17_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc17_16: %.2 = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc17_16: %.1 = field_decl j, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_16.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
 // CHECK:STDOUT:   %.loc23_16.2: type = converted %int.make_type_32.loc23, %.loc23_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc23_14: %.2 = field_decl k, element1 [template]
+// CHECK:STDOUT:   %.loc23_14: %.1 = field_decl k, element1 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc29_24: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29_24: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_24
 // CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_16.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
 // CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc34_22: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc34_22: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
-// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

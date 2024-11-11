@@ -17,7 +17,7 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %UnknownBuiltin.type: type = fn_type @UnknownBuiltin [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UnknownBuiltin: %UnknownBuiltin.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

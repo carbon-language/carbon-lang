@@ -171,7 +171,7 @@ A fairly complete list of `ValueStore` uses should be available on
 
 ## Template metaprogramming
 
-FIXME: show example patterns
+TODO: show example patterns
 
 -   TypedInstArgsInfo from toolchain/sem_ir/inst.h
 -   templated using

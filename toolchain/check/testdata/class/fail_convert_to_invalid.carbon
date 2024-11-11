@@ -24,10 +24,10 @@ fn Make() -> C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 123 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 123 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,8 +67,8 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_16: i32 = int_value 123 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc19_19: %.3 = struct_literal (%.loc19_16)
+// CHECK:STDOUT:   %.loc19_16: i32 = int_value 123 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_19: %.2 = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

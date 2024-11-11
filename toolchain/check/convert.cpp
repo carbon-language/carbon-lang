@@ -390,8 +390,11 @@ static auto ConvertStructToStructOrClass(Context& context,
       std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT>;
 
   auto& sem_ir = context.sem_ir();
-  auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
-  auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
+  auto src_elem_fields = sem_ir.struct_type_fields().Get(src_type.fields_id);
+  auto dest_elem_fields = sem_ir.struct_type_fields().Get(dest_type.fields_id);
+  bool dest_has_vptr = !dest_elem_fields.empty() &&
+                       dest_elem_fields.front().name_id == SemIR::NameId::Vptr;
+  auto dest_elem_fields_size = dest_elem_fields.size() - dest_has_vptr;
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -411,14 +414,14 @@ static auto ConvertStructToStructOrClass(Context& context,
   // Check that the structs are the same size.
   // TODO: If not, include the name of the first source field that doesn't
   // exist in the destination or vice versa in the diagnostic.
-  if (src_elem_fields.size() != dest_elem_fields.size()) {
+  if (src_elem_fields.size() != dest_elem_fields_size) {
     CARBON_DIAGNOSTIC(
         StructInitElementCountMismatch, Error,
         "cannot initialize {0:class|struct} with {1} field{1:s} from struct "
         "with {2} field{2:s}",
         BoolAsSelect, IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
-                           ToClass, dest_elem_fields.size(),
+                           ToClass, dest_elem_fields_size,
                            src_elem_fields.size());
     return SemIR::InstId::BuiltinError;
   }
@@ -426,9 +429,8 @@ static auto ConvertStructToStructOrClass(Context& context,
   // Prepare to look up fields in the source by index.
   Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
-    for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
-      auto result = src_field_indexes.Insert(
-          context.insts().GetAs<SemIR::StructTypeField>(field_id).name_id, i);
+    for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
+      auto result = src_field_indexes.Insert(field.name_id, i);
       CARBON_CHECK(result.is_inserted(), "Duplicate field in source structure");
     }
   }
@@ -449,14 +451,17 @@ static auto ConvertStructToStructOrClass(Context& context,
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
-      literal_elems_id.is_valid()
+      literal_elems_id.is_valid() && !dest_has_vptr
           ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
                 sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            src_elem_fields.size()});
-  for (auto [i, dest_field_id] : llvm::enumerate(dest_elem_fields)) {
-    auto dest_field =
-        sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
+                            dest_elem_fields.size()});
+  for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
+    if (dest_field.name_id == SemIR::NameId::Vptr) {
+      // TODO: Initialize the vptr to point to a vtable.
+      new_block.Set(i, SemIR::InstId::BuiltinError);
+      continue;
+    }
 
     // Find the matching source field.
     auto src_field_index = i;
@@ -483,16 +488,15 @@ static auto ConvertStructToStructOrClass(Context& context,
         return SemIR::InstId::BuiltinError;
       }
     }
-    auto src_field = sem_ir.insts().GetAs<SemIR::StructTypeField>(
-        src_elem_fields[src_field_index]);
+    auto src_field = src_elem_fields[src_field_index];
 
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
-            context, value_loc_id, value_id, src_field.field_type_id,
-            literal_elems, inner_kind, target.init_id, dest_field.field_type_id,
-            target.init_block, src_field_index);
+            context, value_loc_id, value_id, src_field.type_id, literal_elems,
+            inner_kind, target.init_id, dest_field.type_id, target.init_block,
+            src_field_index);
     if (init_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstId::BuiltinError;
     }
@@ -890,7 +894,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // the case where F1 is an interface type and F2 is `type`.
     // TODO: Support converting tuple and struct values to facet types,
     // combining the above conversions and this one in a single conversion.
-    if (sem_ir.types().Is<SemIR::InterfaceType>(value_type_id)) {
+    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
       return context.AddInst<SemIR::FacetTypeAccess>(
           loc_id, {.type_id = target.type_id, .facet_id = value_id});
     }

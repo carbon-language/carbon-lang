@@ -82,10 +82,29 @@ auto Context::VerifyOnFinish() -> void {
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
   // node_stack_ will still contain top-level entities.
-  scope_stack_.VerifyOnFinish();
   inst_block_stack_.VerifyOnFinish();
   pattern_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
+  args_type_info_stack_.VerifyOnFinish();
+  CARBON_CHECK(struct_type_fields_stack_.empty());
+  // TODO: Add verification for decl_name_stack_ and
+  // decl_introducer_state_stack_.
+  scope_stack_.VerifyOnFinish();
+  // TODO: Add verification for generic_region_stack_.
+}
+
+auto Context::GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  if (loc_id_and_inst.loc_id.is_implicit()) {
+    auto const_id =
+        TryEvalInst(*this, SemIR::InstId::Invalid, loc_id_and_inst.inst);
+    if (const_id.is_valid()) {
+      CARBON_VLOG("GetOrAddInst: constant: {0}\n", loc_id_and_inst.inst);
+      return constant_values().GetInstId(const_id);
+    }
+  }
+  // TODO: For an implicit instruction, this reattempts evaluation.
+  return AddInst(loc_id_and_inst);
 }
 
 // Finish producing an instruction. Set its constant value, and register it in
@@ -474,9 +493,6 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
     // If this is our second lookup result, diagnose an ambiguity.
     if (result.inst_id.is_valid()) {
-      // TODO: This is currently not reachable because the only scope that can
-      // extend is a class scope, and it can only extend a single base class.
-      // Add test coverage once this is possible.
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
           "ambiguous use of name `{0}` found in multiple extended scopes",
@@ -833,10 +849,8 @@ class TypeCompleter {
         break;
       }
       case CARBON_KIND(SemIR::StructType inst): {
-        for (auto field_id : context_.inst_blocks().Get(inst.fields_id)) {
-          Push(context_.insts()
-                   .GetAs<SemIR::StructTypeField>(field_id)
-                   .field_type_id);
+        for (auto field : context_.struct_type_fields().Get(inst.fields_id)) {
+          Push(field.type_id);
         }
         break;
       }
@@ -967,33 +981,30 @@ class TypeCompleter {
   auto BuildValueReprForInst(SemIR::TypeId type_id,
                              SemIR::StructType struct_type) const
       -> SemIR::ValueRepr {
-    // TODO: Share more code with tuples.
-    auto fields = context_.inst_blocks().Get(struct_type.fields_id);
+    auto fields = context_.struct_type_fields().Get(struct_type.fields_id);
     if (fields.empty()) {
       return MakeEmptyValueRepr();
     }
 
     // Find the value representation for each field, and construct a struct
     // of value representations.
-    llvm::SmallVector<SemIR::InstId> value_rep_fields;
+    llvm::SmallVector<SemIR::StructTypeField> value_rep_fields;
     value_rep_fields.reserve(fields.size());
     bool same_as_object_rep = true;
-    for (auto field_id : fields) {
-      auto field = context_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      auto field_value_rep = GetNestedValueRepr(field.field_type_id);
-      if (field_value_rep.type_id != field.field_type_id) {
+    for (auto field : fields) {
+      auto field_value_rep = GetNestedValueRepr(field.type_id);
+      if (field_value_rep.type_id != field.type_id) {
         same_as_object_rep = false;
-        field.field_type_id = field_value_rep.type_id;
-        field_id = context_.constant_values().GetInstId(
-            TryEvalInst(context_, SemIR::InstId::Invalid, field));
+        field.type_id = field_value_rep.type_id;
       }
-      value_rep_fields.push_back(field_id);
+      value_rep_fields.push_back(field);
     }
 
-    auto value_rep = same_as_object_rep
-                         ? type_id
-                         : context_.GetStructType(
-                               context_.inst_blocks().Add(value_rep_fields));
+    auto value_rep =
+        same_as_object_rep
+            ? type_id
+            : context_.GetStructType(
+                  context_.struct_type_fields().AddCanonical(value_rep_fields));
     return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                        same_as_object_rep);
   }
@@ -1058,12 +1069,10 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(
-        InstT::Kind
-            .template IsAnyOf<SemIR::AssociatedEntityType, SemIR::FacetType,
-                              SemIR::FunctionType, SemIR::GenericClassType,
-                              SemIR::GenericInterfaceType, SemIR::InterfaceType,
-                              SemIR::UnboundElementType, SemIR::WhereExpr>())
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+             SemIR::GenericClassType, SemIR::GenericInterfaceType,
+             SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value
@@ -1176,7 +1185,18 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
     return false;
   }
 
-  if (auto interface = types().TryGetAs<SemIR::InterfaceType>(type_id)) {
+  if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
+    const auto& facet_type_info =
+        sem_ir().facet_types().Get(facet_type->facet_type_id);
+    auto interface = facet_type_info.TryAsSingleInterface();
+    if (!interface) {
+      auto builder = diagnoser();
+      CARBON_DIAGNOSTIC(SingleInterfaceFacetTypeOnly, Note,
+                        "only single interface facet types supported so far");
+      builder.Note(SemIR::LocId::Invalid, SingleInterfaceFacetTypeOnly);
+      builder.Emit();
+      return false;
+    }
     auto interface_id = interface->interface_id;
     if (!interfaces().Get(interface_id).is_defined()) {
       auto builder = diagnoser();
@@ -1207,6 +1227,16 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   return SemIR::TypeId::ForTypeConstant(constant_id);
 }
 
+auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                                     SemIR::SpecificId specific_id)
+    -> SemIR::FacetType {
+  SemIR::FacetTypeId facet_type_id =
+      sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
+          .impls_constraints = {{interface_id, specific_id}},
+          .requirement_block_id = SemIR::InstBlockId::Invalid});
+  return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
+}
+
 // Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
@@ -1229,8 +1259,9 @@ static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
   return type_id;
 }
 
-auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::StructType>(*this, refs_id);
+auto Context::GetStructType(SemIR::StructTypeFieldsId fields_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::StructType>(*this, fields_id);
 }
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
@@ -1299,12 +1330,11 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   // spaces then add a couple to indent past the Context label.
   constexpr int Indent = 10;
 
-  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
-  node_stack_.PrintForStackDump(formatter, Indent, output);
-  inst_block_stack_.PrintForStackDump(formatter, Indent, output);
-  pattern_block_stack_.PrintForStackDump(formatter, Indent, output);
-  param_and_arg_refs_stack_.PrintForStackDump(formatter, Indent, output);
-  args_type_info_stack_.PrintForStackDump(formatter, Indent, output);
+  node_stack_.PrintForStackDump(Indent, output);
+  inst_block_stack_.PrintForStackDump(Indent, output);
+  pattern_block_stack_.PrintForStackDump(Indent, output);
+  param_and_arg_refs_stack_.PrintForStackDump(Indent, output);
+  args_type_info_stack_.PrintForStackDump(Indent, output);
 }
 
 auto Context::DumpFormattedFile() const -> void {

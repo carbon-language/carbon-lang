@@ -43,13 +43,13 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %SameScope.type: type = fn_type @SameScope [template]
 // CHECK:STDOUT:   %SameScope: %SameScope.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %DifferentScopes.type: type = fn_type @DifferentScopes [template]
 // CHECK:STDOUT:   %DifferentScopes: %DifferentScopes.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -96,7 +96,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SameScope() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc12 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -105,25 +105,25 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc13_27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc13_27
 // CHECK:STDOUT:   %int.make_type_32.loc21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc21_21.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
 // CHECK:STDOUT:   %.loc21_21.2: type = converted %int.make_type_32.loc21, %.loc21_21.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc21_27: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc21_27: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc21_27
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc23: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DifferentScopes() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc27: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc27 br !if.then.loc27 else br !if.else.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc27:
@@ -132,9 +132,9 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc28_21.2: type = converted %int.make_type_32.loc28, %.loc28_21.1 [template = i32]
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc28_27: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc28_27: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc28_27
-// CHECK:STDOUT:   %.loc29: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc29: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc29 br !if.then.loc29 else br !if.else.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc29:
@@ -143,7 +143,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc36_23.2: type = converted %int.make_type_32.loc36, %.loc36_23.1 [template = i32]
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc36_29: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc36_29: i32 = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc36_29
 // CHECK:STDOUT:   br !if.else.loc29
 // CHECK:STDOUT:
@@ -151,7 +151,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   br !if.else.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc27:
-// CHECK:STDOUT:   %.loc39: i32 = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc39: i32 = int_value 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

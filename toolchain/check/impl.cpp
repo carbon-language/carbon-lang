@@ -125,7 +125,7 @@ static auto CheckAssociatedFunctionImplementation(
 // Builds a witness that the specified impl implements the given interface.
 static auto BuildInterfaceWitness(
     Context& context, const SemIR::Impl& impl, SemIR::TypeId interface_type_id,
-    SemIR::InterfaceType interface_type,
+    SemIR::FacetTypeInfo::ImplsConstraint interface_type,
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
   if (!context.TryToDefineType(interface_type_id, [&] {
@@ -210,19 +210,28 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   auto& impl = context.impls().Get(impl_id);
   CARBON_CHECK(impl.is_being_defined());
 
-  // TODO: Handle non-interface constraints.
-  auto interface_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
-  auto interface_type =
-      context.types().TryGetAs<SemIR::InterfaceType>(interface_type_id);
-  if (!interface_type) {
-    context.TODO(impl.definition_id, "impl as non-interface");
+  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  if (facet_type_id == SemIR::TypeId::Error) {
+    return SemIR::InstId::BuiltinError;
+  }
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
+    context.emitter().Emit(impl.definition_id, ImplAsNonFacetType);
+    return SemIR::InstId::BuiltinError;
+  }
+  const SemIR::FacetTypeInfo& facet_type_info =
+      context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+
+  auto interface = facet_type_info.TryAsSingleInterface();
+  if (!interface) {
+    context.TODO(impl.definition_id, "impl as not 1 interface");
     return SemIR::InstId::BuiltinError;
   }
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
-
-  auto witness_id = BuildInterfaceWitness(context, impl, interface_type_id,
-                                          *interface_type, used_decl_ids);
+  auto witness_id = BuildInterfaceWitness(context, impl, facet_type_id,
+                                          *interface, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 

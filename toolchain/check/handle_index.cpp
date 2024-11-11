@@ -34,7 +34,7 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   auto index_with_inst_id = context.LookupNameInCore(node_id, "IndexWith");
   // If the `IndexWith` interface doesn't have generic arguments then return an
   // empty reference.
-  if (context.insts().Is<SemIR::InterfaceType>(index_with_inst_id)) {
+  if (context.insts().Is<SemIR::FacetType>(index_with_inst_id)) {
     return llvm::ArrayRef<SemIR::InstId>();
   }
 
@@ -59,12 +59,17 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
     if (impl_self_type_id != self_id) {
       continue;
     }
-    auto interface_type =
-        context.types().TryGetAs<SemIR::InterfaceType>(impl_constraint_type_id);
+    auto facet_type =
+        context.types().TryGetAs<SemIR::FacetType>(impl_constraint_type_id);
+    if (!facet_type) {
+      continue;
+    }
+    const auto& facet_type_info =
+        context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+    auto interface_type = facet_type_info.TryAsSingleInterface();
     if (!interface_type) {
       continue;
     }
-
     if (index_with_interface->interface_id != interface_type->interface_id) {
       continue;
     }

@@ -25,10 +25,10 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.2: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -55,19 +55,19 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_15.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_15.2: type = converted %int.make_type_32.loc5, %.loc5_15.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_15.3: type = ptr_type i32 [template = constants.%.3]
-// CHECK:STDOUT:   %a_ref.var: ref %.3 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.3 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %.loc5_15.3: type = ptr_type i32 [template = constants.%.2]
+// CHECK:STDOUT:   %a_ref.var: ref %.2 = var a_ref
+// CHECK:STDOUT:   %a_ref: ref %.2 = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: i32 = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
 // CHECK:STDOUT:   %a_orig.ref: ref i32 = name_ref a_orig, file.%a_orig
-// CHECK:STDOUT:   %.loc5: %.3 = addr_of %a_orig.ref
+// CHECK:STDOUT:   %.loc5: %.2 = addr_of %a_orig.ref
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -76,14 +76,14 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.2 = import_ref Implicit//default, inst+25, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %.1 = import_ref Implicit//default, inst+25, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
@@ -105,17 +105,17 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc4_11.3: type = ptr_type i32 [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc4_11.3: type = ptr_type i32 [template = constants.%.1]
+// CHECK:STDOUT:   %a.var: ref %.1 = var a
+// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %.2 = name_ref a_ref, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc4: %.2 = bind_value %a_ref.ref
+// CHECK:STDOUT:   %a_ref.ref: ref %.1 = name_ref a_ref, imports.%import_ref.2
+// CHECK:STDOUT:   %.loc4: %.1 = bind_value %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

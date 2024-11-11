@@ -5,7 +5,25 @@
 """Rules for constructing install information."""
 
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
-load("symlink_helpers.bzl", "symlink_file", "symlink_filegroup")
+load("symlink_helpers.bzl", "busybox_wrapper", "symlink_file", "symlink_filegroup")
+
+def install_busybox_wrapper(name, busybox, busybox_args = []):
+    """Adds a busybox wrapper for install.
+
+    Used in the `install_dirs` dict.
+
+    Args:
+      name: The filename to use.
+      busybox: A relative path for the busybox.
+      busybox_args: Arguments needed to simulate busybox when a symlink isn't
+        actually used.
+    """
+    return {
+        "busybox": busybox,
+        "busybox_args": busybox_args,
+        "is_driver": True,
+        "name": name,
+    }
 
 def install_filegroup(name, filegroup_target):
     """Adds a filegroup for install.
@@ -22,7 +40,7 @@ def install_filegroup(name, filegroup_target):
         "name": name,
     }
 
-def install_symlink(name, symlink_to, is_driver = False):
+def install_symlink(name, symlink_to):
     """Adds a symlink for install.
 
     Used in the `install_dirs` dict.
@@ -30,11 +48,9 @@ def install_symlink(name, symlink_to, is_driver = False):
     Args:
       name: The filename to use.
       symlink_to: A relative path for the symlink.
-      is_driver: False if it should be included in the `no_driver_name`
-        filegroup.
     """
     return {
-        "is_driver": is_driver,
+        "is_driver": False,
         "name": name,
         "symlink": symlink_to,
     }
@@ -105,6 +121,19 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     srcs = [entry["target"]],
                     attributes = pkg_attributes(mode = mode),
                     renames = {entry["target"]: path},
+                )
+            elif "busybox" in entry:
+                busybox_wrapper(
+                    name = prefixed_path,
+                    symlink = entry["busybox"],
+                    busybox_args = entry["busybox_args"],
+                )
+
+                # For the distributed package, we retain relative symlinks.
+                pkg_mklink(
+                    name = pkg_path,
+                    link_name = path,
+                    target = entry["busybox"],
                 )
             elif "filegroup" in entry:
                 symlink_filegroup(

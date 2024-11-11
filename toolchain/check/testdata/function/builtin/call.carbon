@@ -16,15 +16,15 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,14 +69,14 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %.loc13_20: i32 = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_23: i32 = int_value 2 [template = constants.%.3]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc13_20, %.loc13_23) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_20: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc13_23: i32 = int_value 2 [template = constants.%.2]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc13_20, %.loc13_23) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_32, %.loc13_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_25: type = array_type %int.sadd, i32 [template = constants.%.5]
-// CHECK:STDOUT:   %arr.var: ref %.5 = var arr
-// CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc13_25: type = array_type %int.sadd, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %arr.var: ref %.4 = var arr
+// CHECK:STDOUT:   %arr: ref %.4 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

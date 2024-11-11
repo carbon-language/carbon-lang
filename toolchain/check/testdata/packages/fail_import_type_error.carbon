@@ -82,15 +82,15 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref Implicit//default, inst+5, loaded
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+10, loaded
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+14, loaded
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+18, loaded
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+9, loaded
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+17, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude

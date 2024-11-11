@@ -30,10 +30,18 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   using ElementType = IdT::ElementType;
 
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator) {}
+      : allocator_(&allocator) {
+    auto empty = llvm::MutableArrayRef<ElementType>();
+    auto empty_val = canonical_blocks_.Insert(
+        empty, [&] { return values_.Add(empty); }, KeyContext(this));
+    CARBON_CHECK(empty_val.key() == IdT::Empty);
+  }
 
   // Adds a block with the given content, returning an ID to reference it.
   auto Add(llvm::ArrayRef<ElementType> content) -> IdT {
+    if (content.empty()) {
+      return IdT::Empty;
+    }
     return values_.Add(AllocateCopy(content));
   }
 
@@ -50,6 +58,9 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
   auto AddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {
+    if (content.empty()) {
+      return IdT::Empty;
+    }
     auto result = canonical_blocks_.Insert(
         content, [&] { return Add(content); }, KeyContext(this));
     return result.key();

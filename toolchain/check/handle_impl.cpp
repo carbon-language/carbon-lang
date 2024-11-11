@@ -173,10 +173,18 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  auto interface_type =
-      context.types().TryGetAs<SemIR::InterfaceType>(constraint_id);
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(constraint_id);
+  if (!facet_type) {
+    context.TODO(node_id, "extending non-facet-type constraint");
+    parent_scope.has_error = true;
+    return;
+  }
+  const SemIR::FacetTypeInfo& info =
+      context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+
+  auto interface_type = info.TryAsSingleInterface();
   if (!interface_type) {
-    context.TODO(node_id, "extending non-interface constraint");
+    context.TODO(node_id, "extending non-single-interface facet type");
     parent_scope.has_error = true;
     return;
   }
