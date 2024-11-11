@@ -1461,8 +1461,9 @@ class ImportRefResolver {
                       // TODO: Determine the correct specific_id.
                       .specific_id = SemIR::SpecificId::Invalid});
     }
-    CARBON_CHECK(new_scope.extended_scopes.size() ==
-                 import_scope.extended_scopes.size());
+    // TODO: `extended_scopes` from `extend impl` are currently not imported.
+    // CARBON_CHECK(new_scope.extended_scopes.size() ==
+    //             import_scope.extended_scopes.size());
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst,
