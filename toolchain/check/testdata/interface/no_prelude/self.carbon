@@ -15,7 +15,7 @@ interface UseSelf {
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %UseSelf.type: type = interface_type @UseSelf [template]
+// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [template]
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]

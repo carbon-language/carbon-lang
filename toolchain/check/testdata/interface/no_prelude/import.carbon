@@ -51,9 +51,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Empty.type: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [template]
 // CHECK:STDOUT:   %Self.1: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Basic.type: type = interface_type @Basic [template]
+// CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [template]
 // CHECK:STDOUT:   %Self.2: %Basic.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Basic.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Basic.%T [template]
@@ -62,7 +62,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %Basic.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @Basic.%F.decl [template]
-// CHECK:STDOUT:   %ForwardDeclared.type: type = interface_type @ForwardDeclared [template]
+// CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [template]
 // CHECK:STDOUT:   %Self.3: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %ForwardDeclared.type, type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @ForwardDeclared.%T [template]
@@ -143,16 +143,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Empty.type: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [template]
 // CHECK:STDOUT:   %Self.1: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [template]
-// CHECK:STDOUT:   %Basic.type: type = interface_type @Basic [template]
+// CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [template]
 // CHECK:STDOUT:   %Self.2: %Basic.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %UseBasic.type: type = fn_type @UseBasic [template]
 // CHECK:STDOUT:   %UseBasic: %UseBasic.type = struct_value () [template]
-// CHECK:STDOUT:   %ForwardDeclared.type: type = interface_type @ForwardDeclared [template]
+// CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [template]
 // CHECK:STDOUT:   %Self.3: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %UseForwardDeclared.type: type = fn_type @UseForwardDeclared [template]
 // CHECK:STDOUT:   %UseForwardDeclared: %UseForwardDeclared.type = struct_value () [template]

@@ -22,11 +22,7 @@ fn F(T:! i32 where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+8]]:10: error: name `NOT_DECLARED` not found [NameNotFound]
-// CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
-// CHECK:STDERR:          ^~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:10: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:10: error: name `NOT_DECLARED` not found [NameNotFound]
 // CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
 // CHECK:STDERR:          ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -36,11 +32,7 @@ fn G(U:! NOT_DECLARED where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var.carbon:[[@LINE+7]]:8: error: name `e` not found [NameNotFound]
-// CHECK:STDERR: var v: e where .x = 3;
-// CHECK:STDERR:        ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: name `e` not found [NameNotFound]
 // CHECK:STDERR: var v: e where .x = 3;
 // CHECK:STDERR:        ^
 var v: e where .x = 3;
@@ -140,33 +132,33 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc12_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc12_6.1, runtime_param<invalid> [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc8_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<invalid> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc12_6.1: <error> = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc12_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc8_6.1: <error> = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc8_6.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc12_6.1: <error>) {
-// CHECK:STDOUT:   %U.loc12_6.2: <error> = bind_symbolic_name U, 0 [symbolic = %U.loc12_6.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc12_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @G(%U.loc8_6.1: <error>) {
+// CHECK:STDOUT:   %U.loc8_6.2: <error> = bind_symbolic_name U, 0 [symbolic = %U.loc8_6.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc8_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.loc12_6.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc12_6.2 => constants.%U
+// CHECK:STDOUT:   %U.loc8_6.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc8_6.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon
@@ -192,8 +184,8 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %e.ref: <error> = name_ref e, <error> [template = <error>]
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:   %.loc11_21: i32 = int_value 3 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_10: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:   %.loc7_21: i32 = int_value 3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc7_10: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:     requirement_rewrite <error>, <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v

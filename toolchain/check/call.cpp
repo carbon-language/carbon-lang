@@ -117,10 +117,8 @@ static auto PerformCallToGenericInterface(
   if (!callee_specific_id) {
     return SemIR::InstId::BuiltinError;
   }
-  return context.GetOrAddInst<SemIR::InterfaceType>(
-      loc_id, {.type_id = SemIR::TypeId::TypeType,
-               .interface_id = interface_id,
-               .specific_id = *callee_specific_id});
+  return context.GetOrAddInst(loc_id, context.FacetTypeFromInterface(
+                                          interface_id, *callee_specific_id));
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,

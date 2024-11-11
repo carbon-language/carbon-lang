@@ -22,7 +22,7 @@ interface Interface {
 // CHECK:STDOUT: --- fail_redeclare_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Interface.type: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]

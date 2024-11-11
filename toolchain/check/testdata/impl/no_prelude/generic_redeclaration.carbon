@@ -66,15 +66,15 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: --- same_self_and_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Interface.type: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
 // CHECK:STDOUT:   %Self.1: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.2: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %J.type: type = interface_type @J [template]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self.3: %J.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.type: type = interface_type @K [template]
+// CHECK:STDOUT:   %K.type: type = facet_type <@K> [template]
 // CHECK:STDOUT:   %Self.4: %K.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %L.type: type = interface_type @L [template]
+// CHECK:STDOUT:   %L.type: type = facet_type <@L> [template]
 // CHECK:STDOUT:   %Self.5: %L.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T.1: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: %I.type = symbolic_binding_pattern T, 0 [symbolic]
@@ -366,9 +366,9 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %J.type: type = interface_type @J [template]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self.2: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %I.type = symbolic_binding_pattern T, 0 [symbolic]
@@ -446,7 +446,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]

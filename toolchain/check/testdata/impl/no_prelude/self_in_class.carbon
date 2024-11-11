@@ -25,7 +25,7 @@ class A {
 // CHECK:STDOUT: --- self_in_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %DefaultConstructible.type: type = interface_type @DefaultConstructible [template]
+// CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [template]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]

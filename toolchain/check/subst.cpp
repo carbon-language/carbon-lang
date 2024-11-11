@@ -96,6 +96,16 @@ static auto PushOperand(Context& context, Worklist& worklist,
                     context.specifics().Get(specific_id).args_id.index);
       }
       break;
+    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+      const auto& facet_type_info =
+          context.sem_ir().facet_types().Get(SemIR::FacetTypeId(arg));
+      for (auto interface : facet_type_info.impls_constraints) {
+        PushOperand(context, worklist, SemIR::IdKind::For<SemIR::SpecificId>,
+                    interface.specific_id.index);
+      }
+      // TODO: Process other requirements as well.
+      break;
+    }
     default:
       break;
   }
@@ -175,6 +185,21 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return MakeSpecific(context, specific.generic_id,
                           SemIR::InstBlockId(args_id))
           .index;
+    }
+    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+      const auto& old_facet_type_info =
+          context.sem_ir().facet_types().Get(SemIR::FacetTypeId(arg));
+      SemIR::FacetTypeInfo new_facet_type_info = old_facet_type_info;
+      // Since these were added to a stack, we get them back in reverse order.
+      for (auto i : llvm::reverse(
+               llvm::seq(old_facet_type_info.impls_constraints.size()))) {
+        auto specific_id = PopOperand(
+            context, worklist, SemIR::IdKind::For<SemIR::SpecificId>,
+            old_facet_type_info.impls_constraints[i].specific_id.index);
+        new_facet_type_info.impls_constraints[i].specific_id =
+            SemIR::SpecificId(specific_id);
+      }
+      return context.sem_ir().facet_types().Add(new_facet_type_info).index;
     }
     default:
       return arg;

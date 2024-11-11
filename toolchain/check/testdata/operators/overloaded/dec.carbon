@@ -29,7 +29,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %Dec.type: type = interface_type @Dec [template]
+// CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [template]
 // CHECK:STDOUT:   %Self: %Dec.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]

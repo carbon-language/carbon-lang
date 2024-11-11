@@ -20,9 +20,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Empty.type: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [template]
 // CHECK:STDOUT:   %Self.1: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %ForwardDeclared.type: type = interface_type @ForwardDeclared [template]
+// CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [template]
 // CHECK:STDOUT:   %Self.2: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]

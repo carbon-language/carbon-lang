@@ -52,13 +52,13 @@ interface BeingDefined {
 // CHECK:STDOUT: --- fail_lookup_undefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Undefined.type: type = interface_type @Undefined [template]
+// CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [template]
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %BeingDefined.type: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [template]
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]

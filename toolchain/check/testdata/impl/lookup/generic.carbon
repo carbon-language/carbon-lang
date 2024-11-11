@@ -124,7 +124,7 @@ fn G(x: A) {
 // CHECK:STDOUT: --- deduced_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -273,7 +273,7 @@ fn G(x: A) {
 // CHECK:STDOUT: --- deduced_type_subst.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -473,7 +473,7 @@ fn G(x: A) {
 // CHECK:STDOUT: --- deduced_type_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -680,7 +680,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.type.1: type = generic_interface_type @HasF [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %HasF: %HasF.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %HasF.type.2: type = interface_type @HasF, @HasF(%T) [symbolic]
+// CHECK:STDOUT:   %HasF.type.2: type = facet_type <@HasF, @HasF(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %HasF.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @HasF(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
@@ -692,7 +692,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %HasF.type.3: type = interface_type @HasF, @HasF(%.3) [template]
+// CHECK:STDOUT:   %HasF.type.3: type = facet_type <@HasF, @HasF(%.3)> [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @HasF(%.3) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
@@ -732,7 +732,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     %.loc8_25.2: type = converted %.loc8_25.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
-// CHECK:STDOUT:     %HasF.type.loc8_34.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:     %HasF.type.loc8_34.1: type = facet_type <@HasF, @HasF(constants.%T)> [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -752,7 +752,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(%T.loc4_16.2) [symbolic = %HasF.type (constants.%HasF.type.2)]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.2)> [symbolic = %HasF.type (constants.%HasF.type.2)]
 // CHECK:STDOUT:   %Self.2: %HasF.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @HasF(%T.loc4_16.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @HasF.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
@@ -774,7 +774,7 @@ fn G(x: A) {
 // CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
 // CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %HasF.type.loc8_34.2: type = interface_type @HasF, @HasF(%T.loc8_14.2) [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:   %HasF.type.loc8_34.2: type = facet_type <@HasF, @HasF(%T.loc8_14.2)> [symbolic = %HasF.type.loc8_34.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
@@ -811,7 +811,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:   %.loc13_12: %.3 = struct_literal ()
 // CHECK:STDOUT:   %.loc13_10: type = converted %.loc13_12, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%.3) [template = constants.%HasF.type.3]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%.3)> [template = constants.%HasF.type.3]
 // CHECK:STDOUT:   %.loc13_14: %.5 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%.3) [template = constants.%.6]
 // CHECK:STDOUT:   %F.ref: %.5 = name_ref F, %.loc13_14 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_4.1: %F.type.3 = interface_witness_access constants.%.7, element0 [template = constants.%F.4]
@@ -897,7 +897,7 @@ fn G(x: A) {
 // CHECK:STDOUT: --- fail_incomplete_deduction.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -1042,7 +1042,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.type.1: type = generic_interface_type @HasF [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %HasF: %HasF.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %HasF.type.2: type = interface_type @HasF, @HasF(%T) [symbolic]
+// CHECK:STDOUT:   %HasF.type.2: type = facet_type <@HasF, @HasF(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %HasF.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @HasF(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
@@ -1058,7 +1058,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %HasF.type.3: type = interface_type @HasF, @HasF(%B) [template]
+// CHECK:STDOUT:   %HasF.type.3: type = facet_type <@HasF, @HasF(%B)> [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @HasF(%B) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
@@ -1095,7 +1095,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     %T.ref.loc8_24: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:     %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:     %T.ref.loc8_34: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
-// CHECK:STDOUT:     %HasF.type.loc8_33.1: type = interface_type @HasF, @HasF(constants.%T) [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:     %HasF.type.loc8_33.1: type = facet_type <@HasF, @HasF(constants.%T)> [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -1116,7 +1116,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt.loc4_16.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(%T.loc4_16.2) [symbolic = %HasF.type (constants.%HasF.type.2)]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.2)> [symbolic = %HasF.type (constants.%HasF.type.2)]
 // CHECK:STDOUT:   %Self.2: %HasF.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @HasF(%T.loc4_16.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @HasF.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
@@ -1138,7 +1138,7 @@ fn G(x: A) {
 // CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
 // CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %HasF.type.loc8_33.2: type = interface_type @HasF, @HasF(%T.loc8_14.2) [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
+// CHECK:STDOUT:   %HasF.type.loc8_33.2: type = facet_type <@HasF, @HasF(%T.loc8_14.2)> [symbolic = %HasF.type.loc8_33.2 (constants.%HasF.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
@@ -1188,7 +1188,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %A = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: %HasF.type.1 = name_ref HasF, file.%HasF.decl [template = constants.%HasF]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF, @HasF(constants.%B) [template = constants.%HasF.type.3]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%B)> [template = constants.%HasF.type.3]
 // CHECK:STDOUT:   %.loc21: %.7 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%B) [template = constants.%.8]
 // CHECK:STDOUT:   %F.ref: %.7 = name_ref F, %.loc21 [template = constants.%.8]
 // CHECK:STDOUT:   return

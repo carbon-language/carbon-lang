@@ -39,7 +39,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: --- self_in_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %UseSelf.type: type = interface_type @UseSelf [template]
+// CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [template]
 // CHECK:STDOUT:   %Self.1: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -59,7 +59,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %struct.2: %D = struct_value () [template]
-// CHECK:STDOUT:   %SelfNested.type: type = interface_type @SelfNested [template]
+// CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [template]
 // CHECK:STDOUT:   %Self.2: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %.9: type = struct_type {.x: %Self.2, .y: %empty_tuple.type} [symbolic]

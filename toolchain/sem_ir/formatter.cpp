@@ -921,11 +921,27 @@ class FormatterImpl {
 
   auto FormatArg(FacetTypeId id) -> void {
     const auto& info = sem_ir_.facet_types().Get(id);
-    out_ << "<facet-type ";
-    FormatType(info.base_facet_type_id);
+    // Nothing output to indicate that this is a facet type since this is only
+    // used as the argument to a `facet_type` instruction.
+    out_ << "<";
+
+    llvm::ListSeparator sep(" & ");
+    if (info.impls_constraints.empty()) {
+      out_ << "type";
+    } else {
+      for (auto interface : info.impls_constraints) {
+        out_ << sep;
+        FormatName(interface.interface_id);
+        if (interface.specific_id.is_valid()) {
+          out_ << ", ";
+          FormatName(interface.specific_id);
+        }
+      }
+    }
+
     if (info.requirement_block_id.is_valid()) {
       // TODO: Include specifics.
-      out_ << "+requirements";
+      out_ << " where TODO";
     }
     out_ << ">";
   }

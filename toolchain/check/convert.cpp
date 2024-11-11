@@ -894,7 +894,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // the case where F1 is an interface type and F2 is `type`.
     // TODO: Support converting tuple and struct values to facet types,
     // combining the above conversions and this one in a single conversion.
-    if (sem_ir.types().Is<SemIR::InterfaceType>(value_type_id)) {
+    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
       return context.AddInst<SemIR::FacetTypeAccess>(
           loc_id, {.type_id = target.type_id, .facet_id = value_id});
     }

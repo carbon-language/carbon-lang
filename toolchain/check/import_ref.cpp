@@ -963,11 +963,19 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ClassType inst): {
         return context_.classes().Get(inst.class_id).scope_id;
       }
+      case CARBON_KIND(SemIR::FacetType inst): {
+        const SemIR::FacetTypeInfo& facet_type_info =
+            context_.sem_ir().facet_types().Get(inst.facet_type_id);
+        // This is specifically the facet type produced by an interface
+        // declaration, and so should consist of a single interface.
+        // TODO: Will also have to handle named constraints here, once those are
+        // implemented.
+        auto interface = facet_type_info.TryAsSingleInterface();
+        CARBON_CHECK(interface);
+        return context_.interfaces().Get(interface->interface_id).scope_id;
+      }
       case CARBON_KIND(SemIR::ImplDecl inst): {
         return context_.impls().Get(inst.impl_id).scope_id;
-      }
-      case CARBON_KIND(SemIR::InterfaceType inst): {
-        return context_.interfaces().Get(inst.interface_id).scope_id;
       }
       case SemIR::StructValue::Kind: {
         auto type_inst = context_.types().GetAsInst(name_scope_inst.type_id());
@@ -1185,6 +1193,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ExportDecl inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::FacetType inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::FieldDecl inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
@@ -1210,9 +1221,6 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst, const_id);
       }
       case CARBON_KIND(SemIR::InterfaceWitness inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::InterfaceType inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::IntValue inst): {
@@ -2008,8 +2016,11 @@ class ImportRefResolver {
       // the declaration.
       auto interface_const_inst = context_.insts().Get(
           context_.constant_values().GetInstId(interface_const_id));
-      if (auto interface_type =
-              interface_const_inst.TryAs<SemIR::InterfaceType>()) {
+      if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
+        const SemIR::FacetTypeInfo& facet_type_info =
+            context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
+        auto interface_type = facet_type_info.TryAsSingleInterface();
+        CARBON_CHECK(interface_type);
         interface_id = interface_type->interface_id;
       } else {
         auto generic_interface_type =
@@ -2056,33 +2067,56 @@ class ImportRefResolver {
     return ResolveAsConstant(interface_const_id);
   }
 
-  auto TryResolveTypedInst(SemIR::InterfaceType inst) -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::FacetType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto interface_const_id = GetLocalConstantId(
-        import_ir_.interfaces().Get(inst.interface_id).first_owning_decl_id);
-    auto specific_data = GetLocalSpecificData(inst.specific_id);
+
+    const SemIR::FacetTypeInfo& facet_type_info =
+        import_ir_.facet_types().Get(inst.facet_type_id);
+    for (auto interface : facet_type_info.impls_constraints) {
+      GetLocalConstantId(import_ir_.interfaces()
+                             .Get(interface.interface_id)
+                             .first_owning_decl_id);
+      GetLocalSpecificData(interface.specific_id);
+    }
     if (HasNewWork()) {
       return Retry();
     }
 
-    // Find the corresponding interface type. For a non-generic interface, this
-    // is the type of the interface declaration. For a generic interface, build
-    // a interface type referencing this specialization of the generic
-    // interface.
-    auto interface_const_inst = context_.insts().Get(
-        context_.constant_values().GetInstId(interface_const_id));
-    if (interface_const_inst.Is<SemIR::InterfaceType>()) {
-      return ResolveAsConstant(interface_const_id);
-    } else {
-      auto generic_interface_type =
-          context_.types().GetAs<SemIR::GenericInterfaceType>(
-              interface_const_inst.type_id());
-      auto specific_id = GetOrAddLocalSpecific(inst.specific_id, specific_data);
-      return ResolveAs<SemIR::InterfaceType>(
-          {.type_id = SemIR::TypeId::TypeType,
-           .interface_id = generic_interface_type.interface_id,
-           .specific_id = specific_id});
+    llvm::SmallVector<SemIR::FacetTypeInfo::ImplsConstraint> impls_constraints;
+    for (auto interface : facet_type_info.impls_constraints) {
+      auto interface_const_id =
+          GetLocalConstantId(import_ir_.interfaces()
+                                 .Get(interface.interface_id)
+                                 .first_owning_decl_id);
+      auto specific_data = GetLocalSpecificData(interface.specific_id);
+
+      // Find the corresponding interface type. For a non-generic interface,
+      // this is the type of the interface declaration. For a generic interface,
+      // build a interface type referencing this specialization of the generic
+      // interface.
+      auto interface_const_inst = context_.insts().Get(
+          context_.constant_values().GetInstId(interface_const_id));
+      if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
+        const SemIR::FacetTypeInfo& new_facet_type_info =
+            context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
+        impls_constraints.append(new_facet_type_info.impls_constraints);
+      } else {
+        auto generic_interface_type =
+            context_.types().GetAs<SemIR::GenericInterfaceType>(
+                interface_const_inst.type_id());
+        auto specific_id =
+            GetOrAddLocalSpecific(interface.specific_id, specific_data);
+        impls_constraints.push_back(
+            {generic_interface_type.interface_id, specific_id});
+      }
     }
+    // TODO: Also process the other requirements.
+    SemIR::FacetTypeId facet_type_id =
+        context_.sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
+            .impls_constraints = impls_constraints,
+            .requirement_block_id = SemIR::InstBlockId::Invalid});
+    return ResolveAs<SemIR::FacetType>(
+        {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id});
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceWitness inst) -> ResolveResult {

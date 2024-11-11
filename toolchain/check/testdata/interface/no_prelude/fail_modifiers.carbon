@@ -36,12 +36,12 @@ protected interface Protected;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Abstract.type: type = interface_type @Abstract [template]
+// CHECK:STDOUT:   %Abstract.type: type = facet_type <@Abstract> [template]
 // CHECK:STDOUT:   %Self.1: %Abstract.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Default.type: type = interface_type @Default [template]
-// CHECK:STDOUT:   %Virtual.type: type = interface_type @Virtual [template]
+// CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [template]
+// CHECK:STDOUT:   %Virtual.type: type = facet_type <@Virtual> [template]
 // CHECK:STDOUT:   %Self.2: %Virtual.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Protected.type: type = interface_type @Protected [template]
+// CHECK:STDOUT:   %Protected.type: type = facet_type <@Protected> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

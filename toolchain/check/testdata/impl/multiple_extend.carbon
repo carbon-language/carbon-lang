@@ -162,14 +162,14 @@ fn P(o: O) {
 // CHECK:STDOUT: --- different_impl_member_names.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasF.type: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self.1: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %HasF.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @HasF.%F.decl [template]
-// CHECK:STDOUT:   %HasG.type: type = interface_type @HasG [template]
+// CHECK:STDOUT:   %HasG.type: type = facet_type <@HasG> [template]
 // CHECK:STDOUT:   %Self.2: %HasG.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
@@ -327,14 +327,14 @@ fn P(o: O) {
 // CHECK:STDOUT: --- fail_ambiguous_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasA1.type: type = interface_type @HasA1 [template]
+// CHECK:STDOUT:   %HasA1.type: type = facet_type <@HasA1> [template]
 // CHECK:STDOUT:   %Self.1: %HasA1.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %A.type.1: type = fn_type @A.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %HasA1.type, %A.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @HasA1.%A.decl [template]
-// CHECK:STDOUT:   %HasA2.type: type = interface_type @HasA2 [template]
+// CHECK:STDOUT:   %HasA2.type: type = facet_type <@HasA2> [template]
 // CHECK:STDOUT:   %Self.2: %HasA2.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %A.type.2: type = fn_type @A.2 [template]
 // CHECK:STDOUT:   %A.2: %A.type.2 = struct_value () [template]
@@ -480,7 +480,7 @@ fn P(o: O) {
 // CHECK:STDOUT: --- different_impl_and_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %HasI.type: type = interface_type @HasI [template]
+// CHECK:STDOUT:   %HasI.type: type = facet_type <@HasI> [template]
 // CHECK:STDOUT:   %Self: %HasI.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.1: type = fn_type @I.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -627,7 +627,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %K.1: %K.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %HasK.type: type = interface_type @HasK [template]
+// CHECK:STDOUT:   %HasK.type: type = facet_type <@HasK> [template]
 // CHECK:STDOUT:   %Self: %HasK.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type.2: type = fn_type @K.2 [template]
 // CHECK:STDOUT:   %K.2: %K.type.2 = struct_value () [template]
@@ -758,13 +758,13 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.1: %N.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %HasN1.type: type = interface_type @HasN1 [template]
+// CHECK:STDOUT:   %HasN1.type: type = facet_type <@HasN1> [template]
 // CHECK:STDOUT:   %Self.1: %HasN1.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %N.type.2: type = fn_type @N.2 [template]
 // CHECK:STDOUT:   %N.2: %N.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %HasN1.type, %N.type.2 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @HasN1.%N.decl [template]
-// CHECK:STDOUT:   %HasN2.type: type = interface_type @HasN2 [template]
+// CHECK:STDOUT:   %HasN2.type: type = facet_type <@HasN2> [template]
 // CHECK:STDOUT:   %Self.2: %HasN2.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %N.type.3: type = fn_type @N.3 [template]
 // CHECK:STDOUT:   %N.3: %N.type.3 = struct_value () [template]

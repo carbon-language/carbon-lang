@@ -453,6 +453,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
         continue;
       }
+      case CARBON_KIND(FacetType inst): {
+        const auto& facet_type_info =
+            sem_ir_.facet_types().Get(inst.facet_type_id);
+        if (auto interface = facet_type_info.TryAsSingleInterface()) {
+          const auto& interface_info =
+              sem_ir_.interfaces().Get(interface->interface_id);
+          add_inst_name_id(interface_info.name_id, ".type");
+        } else if (facet_type_info.impls_constraints.empty()) {
+          if (facet_type_info.requirement_block_id.is_valid()) {
+            add_inst_name("type_where");
+          } else {
+            add_inst_name("type");
+          }
+        } else {
+          add_inst_name("facet_type");
+        }
+        continue;
+      }
       case CARBON_KIND(FunctionDecl inst): {
         const auto& function_info = sem_ir_.functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
@@ -513,12 +531,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id,
                             interface_info.pattern_block_id);
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
-        continue;
-      }
-      case CARBON_KIND(InterfaceType inst): {
-        const auto& interface_info =
-            sem_ir_.interfaces().Get(inst.interface_id);
-        add_inst_name_id(interface_info.name_id, ".type");
         continue;
       }
       case CARBON_KIND(NameRef inst): {

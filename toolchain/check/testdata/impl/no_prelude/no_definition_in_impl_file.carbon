@@ -82,7 +82,7 @@ impl () as D;
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -112,7 +112,7 @@ impl () as D;
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = interface_type @A [template]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
@@ -179,7 +179,7 @@ impl () as D;
 // CHECK:STDOUT: --- decl_only_in_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B.type: type = interface_type @B [template]
+// CHECK:STDOUT:   %B.type: type = facet_type <@B> [template]
 // CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -209,7 +209,7 @@ impl () as D;
 // CHECK:STDOUT: --- decl_only_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B.type: type = interface_type @B [template]
+// CHECK:STDOUT:   %B.type: type = facet_type <@B> [template]
 // CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -240,7 +240,7 @@ impl () as D;
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.type: type = interface_type @C [template]
+// CHECK:STDOUT:   %C.type: type = facet_type <@C> [template]
 // CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -270,7 +270,7 @@ impl () as D;
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.type: type = interface_type @C [template]
+// CHECK:STDOUT:   %C.type: type = facet_type <@C> [template]
 // CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -312,7 +312,7 @@ impl () as D;
 // CHECK:STDOUT: --- fail_decl_only_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %D.type: type = interface_type @D [template]
+// CHECK:STDOUT:   %D.type: type = facet_type <@D> [template]
 // CHECK:STDOUT:   %Self: %D.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }

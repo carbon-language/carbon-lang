@@ -143,7 +143,7 @@ private interface Redecl {}
 // CHECK:STDOUT: --- def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Def.type: type = interface_type @Def [template]
+// CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [template]
 // CHECK:STDOUT:   %Self: %Def.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,7 +165,7 @@ private interface Redecl {}
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ForwardWithDef.type: type = interface_type @ForwardWithDef [template]
+// CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [template]
 // CHECK:STDOUT:   %Self: %ForwardWithDef.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,7 +194,7 @@ private interface Redecl {}
 // CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Def.type: type = interface_type @Def [template]
+// CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [template]
 // CHECK:STDOUT:   %Self: %Def.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -301,7 +301,7 @@ private interface Redecl {}
 // CHECK:STDOUT: --- forward_with_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ForwardWithDef.type: type = interface_type @ForwardWithDef [template]
+// CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [template]
 // CHECK:STDOUT:   %Self: %ForwardWithDef.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -411,7 +411,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %Forward.type: type = interface_type @Forward [template]
+// CHECK:STDOUT:   %Forward.type: type = facet_type <@Forward> [template]
 // CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -515,7 +515,7 @@ private interface Redecl {}
 // CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Redecl.type: type = interface_type @Redecl [template]
+// CHECK:STDOUT:   %Redecl.type: type = facet_type <@Redecl> [template]
 // CHECK:STDOUT:   %Self: %Redecl.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

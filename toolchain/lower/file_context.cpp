@@ -576,7 +576,7 @@ template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
            SemIR::GenericClassType, SemIR::GenericInterfaceType,
-           SemIR::InterfaceType, SemIR::UnboundElementType, SemIR::WhereExpr>())
+           SemIR::UnboundElementType, SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

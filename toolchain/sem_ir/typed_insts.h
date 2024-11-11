@@ -743,18 +743,6 @@ struct InterfaceDecl {
   InstBlockId decl_block_id;
 };
 
-// The type for an interface, either non-generic or specific.
-struct InterfaceType {
-  static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
-      {.ir_name = "interface_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  InterfaceId interface_id;
-  SpecificId specific_id;
-};
-
 // A witness that a type implements an interface.
 struct InterfaceWitness {
   static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(

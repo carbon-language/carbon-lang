@@ -1066,12 +1066,10 @@ class TypeCompleter {
   }
 
   template <typename InstT>
-    requires(
-        InstT::Kind
-            .template IsAnyOf<SemIR::AssociatedEntityType, SemIR::FacetType,
-                              SemIR::FunctionType, SemIR::GenericClassType,
-                              SemIR::GenericInterfaceType, SemIR::InterfaceType,
-                              SemIR::UnboundElementType, SemIR::WhereExpr>())
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+             SemIR::GenericClassType, SemIR::GenericInterfaceType,
+             SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value
@@ -1184,7 +1182,18 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
     return false;
   }
 
-  if (auto interface = types().TryGetAs<SemIR::InterfaceType>(type_id)) {
+  if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
+    const auto& facet_type_info =
+        sem_ir().facet_types().Get(facet_type->facet_type_id);
+    auto interface = facet_type_info.TryAsSingleInterface();
+    if (!interface) {
+      auto builder = diagnoser();
+      CARBON_DIAGNOSTIC(SingleInterfaceFacetTypeOnly, Note,
+                        "only single interface facet types supported so far");
+      builder.Note(SemIR::LocId::Invalid, SingleInterfaceFacetTypeOnly);
+      builder.Emit();
+      return false;
+    }
     auto interface_id = interface->interface_id;
     if (!interfaces().Get(interface_id).is_defined()) {
       auto builder = diagnoser();
@@ -1213,6 +1222,16 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
                types().GetAsInst(type_id));
 
   return SemIR::TypeId::ForTypeConstant(constant_id);
+}
+
+auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                                     SemIR::SpecificId specific_id)
+    -> SemIR::FacetType {
+  SemIR::FacetTypeId facet_type_id =
+      sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
+          .impls_constraints = {{interface_id, specific_id}},
+          .requirement_block_id = SemIR::InstBlockId::Invalid});
+  return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.

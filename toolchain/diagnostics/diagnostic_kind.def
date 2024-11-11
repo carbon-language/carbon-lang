@@ -240,6 +240,7 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(SingleInterfaceFacetTypeOnly)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
@@ -247,6 +248,7 @@ CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAs)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAsDefault)
 CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)

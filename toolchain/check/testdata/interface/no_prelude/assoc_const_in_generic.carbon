@@ -31,7 +31,7 @@ fn H() {
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %I.type.2: type = interface_type @I, @I(%T) [symbolic]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 2 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 2 [symbolic]
@@ -45,7 +45,7 @@ fn H() {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %G, @G(%.3) [template]
-// CHECK:STDOUT:   %I.type.3: type = interface_type @I, @I(%.3) [template]
+// CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%.3)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F, @I(%.3) [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %I.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @I.%F.decl [template]
@@ -79,7 +79,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type: type = interface_type @I, @I(%T.loc11_13.2) [symbolic = %I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc11_13.2)> [symbolic = %I.type (constants.%I.type.2)]
 // CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F)]
@@ -121,7 +121,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc15_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type.loc19_4.2: type = interface_type @I, @I(%T.loc15_6.2) [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
+// CHECK:STDOUT:   %I.type.loc19_4.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc15_6.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %.loc19_7.2: type = assoc_entity_type @G.%I.type.loc19_4.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %.loc19_7.2 (constants.%.1)]
 // CHECK:STDOUT:   %.loc19_7.3: @G.%.loc19_7.2 (%.1) = assoc_entity element0, @I.%F.decl [symbolic = %.loc19_7.3 (constants.%.2)]
@@ -130,7 +130,7 @@ fn H() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
-// CHECK:STDOUT:     %I.type.loc19_4.1: type = interface_type @I, @I(constants.%T) [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
+// CHECK:STDOUT:     %I.type.loc19_4.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
 // CHECK:STDOUT:     %.loc19_7.1: @G.%.loc19_7.2 (%.1) = specific_constant @I.%.loc12_22.1, @I(constants.%T) [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:     %F.ref: @G.%.loc19_7.2 (%.1) = name_ref F, %.loc19_7.1 [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:     return

@@ -121,17 +121,27 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(FacetType inst): {
-        if (step.index == 0) {
-          out << "<facet type ";
-          steps.push_back(step.Next());
-          FacetTypeInfo facet_type_info =
-              sem_ir.facet_types().Get(inst.facet_type_id);
-          // TODO: Also output restrictions from
-          // facet_type_info.requirement_block_id.
-          TypeId type_id = facet_type_info.base_facet_type_id;
-          push_inst_id(sem_ir.types().GetInstId(type_id));
+        const FacetTypeInfo& facet_type_info =
+            sem_ir.facet_types().Get(inst.facet_type_id);
+        if (facet_type_info.impls_constraints.empty()) {
+          out << "type";
         } else {
-          out << ">";
+          auto interface_id =
+              facet_type_info.impls_constraints[step.index].interface_id;
+          auto interface_name_id =
+              sem_ir.interfaces().Get(interface_id).name_id;
+          out << sem_ir.names().GetFormatted(interface_name_id);
+          if (step.index + 1 <
+              static_cast<int>(facet_type_info.impls_constraints.size())) {
+            out << " & ";
+            steps.push_back(step.Next());
+          }
+        }
+        // TODO: Also output other restrictions from facet_type_info.
+        if (step.index + 1 >=
+                static_cast<int>(facet_type_info.impls_constraints.size()) &&
+            facet_type_info.requirement_block_id.is_valid()) {
+          out << " where...";
         }
         break;
       }
@@ -170,12 +180,6 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
             sem_ir.interfaces().Get(inst.interface_id).name_id;
         out << "<type of " << sem_ir.names().GetFormatted(interface_name_id)
             << ">";
-        break;
-      }
-      case CARBON_KIND(InterfaceType inst): {
-        auto interface_name_id =
-            sem_ir.interfaces().Get(inst.interface_id).name_id;
-        out << sem_ir.names().GetFormatted(interface_name_id);
         break;
       }
       case CARBON_KIND(IntType inst): {

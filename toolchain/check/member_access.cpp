@@ -46,7 +46,7 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
     return LookupScope{.name_scope_id = class_info.scope_id,
                        .specific_id = base_as_class->specific_id};
   }
-  if (auto base_as_interface = base.TryAs<SemIR::InterfaceType>()) {
+  if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     context.TryToDefineType(
         context.GetTypeIdForTypeConstant(base_const_id), [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
@@ -55,10 +55,15 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
           return context.emitter().Build(
               loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
         });
-    auto& interface_info =
-        context.interfaces().Get(base_as_interface->interface_id);
-    return LookupScope{.name_scope_id = interface_info.scope_id,
-                       .specific_id = base_as_interface->specific_id};
+    const auto& facet_type_info =
+        context.sem_ir().facet_types().Get(base_as_facet_type->facet_type_id);
+    auto base_as_interface = facet_type_info.TryAsSingleInterface();
+    if (base_as_interface) {
+      auto& interface_info =
+          context.interfaces().Get(base_as_interface->interface_id);
+      return LookupScope{.name_scope_id = interface_info.scope_id,
+                         .specific_id = base_as_interface->specific_id};
+    }
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
@@ -176,9 +181,19 @@ static auto PerformImplLookup(
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
-  auto interface_type =
-      context.types().GetAs<SemIR::InterfaceType>(assoc_type.interface_type_id);
-  auto& interface = context.interfaces().Get(interface_type.interface_id);
+  auto facet_type =
+      context.types().GetAs<SemIR::FacetType>(assoc_type.interface_type_id);
+  const auto& facet_type_info =
+      context.sem_ir().facet_types().Get(facet_type.facet_type_id);
+  auto interface_type = facet_type_info.TryAsSingleInterface();
+  if (!interface_type) {
+    context.TODO(loc_id,
+                 "Lookup of impl witness not yet supported except for a single "
+                 "interface");
+    return SemIR::InstId::BuiltinError;
+  }
+
+  auto& interface = context.interfaces().Get(interface_type->interface_id);
   auto witness_id =
       LookupInterfaceWitness(context, loc_id, type_const_id,
                              assoc_type.interface_type_id.AsConstantId());
@@ -224,7 +239,7 @@ static auto PerformImplLookup(
   // `Self`. The type `Self` might appear in the type of an associated constant,
   // and if so, we'll need to substitute it here somehow.
   auto subst_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_type.specific_id, assoc_type.entity_type_id);
+      context.sem_ir(), interface_type->specific_id, assoc_type.entity_type_id);
 
   return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
       loc_id, {.type_id = subst_type_id,

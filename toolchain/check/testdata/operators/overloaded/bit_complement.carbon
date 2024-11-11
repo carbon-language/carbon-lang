@@ -30,7 +30,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %BitComplement.type: type = interface_type @BitComplement [template]
+// CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [template]
 // CHECK:STDOUT:   %Self: %BitComplement.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
