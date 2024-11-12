@@ -47,8 +47,6 @@ cc_library(
     hdrs = ["timings.h"],
     deps = [
         ":yaml",
-        "//common:map",
-        "//common:set",
         "@llvm-project//llvm:Support",
     ],
 )
