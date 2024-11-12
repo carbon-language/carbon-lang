@@ -106,13 +106,13 @@ class IntId : public Printable<IntId> {
   }
 
   // Construct an ID from a raw 32-bit ID value.
-  static auto MakeRaw(int32_t raw_id) -> IntId { return IntId(raw_id); }
+  static constexpr auto MakeRaw(int32_t raw_id) -> IntId { return IntId(raw_id); }
 
   constexpr auto is_valid() const -> bool { return id_ != InvalidId; }
   constexpr auto is_value() const -> bool { return id_ > ZeroIndexId; }
   constexpr auto is_index() const -> bool { return id_ <= ZeroIndexId; }
 
-  auto AsValue() const -> int {
+  constexpr auto AsValue() const -> int {
     CARBON_DCHECK(is_value());
     return id_;
   }

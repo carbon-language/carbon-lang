@@ -40,12 +40,8 @@ struct IntStoreTestPeer;
 // an array of `APInt` values and represented as an index in the ID.
 class IntStore {
  public:
-  // Adds an integer value representable in a host `int64_t` to the store.
-  // Especially useful when the integer is computed without an `APInt` in the
-  // first place.
-  //
-  // This only accepts a signed `int64_t` and uses the mathematical signed
-  // integer value of it as the added integer value.
+  // Accepts a signed `int64_t` and uses the mathematical signed integer value
+  // of it as the added integer value.
   //
   // Returns the ID corresponding to this integer value, storing an `APInt` if
   // necessary to represent it.
@@ -170,10 +166,13 @@ class IntStore {
   // Canonicalize an incoming unsigned APInt to the correct bit width.
   static auto CanonicalizeUnsigned(llvm::APInt value) -> llvm::APInt;
 
+  // Helper functions for handling values that are large enough to require an
+  // allocated `APInt` for storage. Creating or manipulating that storage is
+  // only a few lines of code, but it ends up expensive and a lot of code so we
+  // move these out-of-line.
   auto AddLarge(int64_t value) -> IntId;
   auto AddSignedLarge(llvm::APInt value) -> IntId;
   auto AddUnsignedLarge(llvm::APInt value) -> IntId;
-
   auto LookupSignedLarge(llvm::APInt value) const -> IntId;
 
   CanonicalValueStore<APIntId> values_;

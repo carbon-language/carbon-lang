@@ -51,7 +51,7 @@ TEST(SharedValueStores, PrintVals) {
 
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
               MatchSharedValues(
-                  ElementsAre(Pair("ap-int0", Yaml::Scalar("999999999999"))),
+                  ElementsAre(Pair("ap_int0", Yaml::Scalar("999999999999"))),
                   ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
                   ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
                   ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));

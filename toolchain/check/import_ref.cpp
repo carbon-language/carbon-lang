@@ -2103,10 +2103,16 @@ class ImportRefResolver {
       return Retry();
     }
 
+    // We can directly reuse the value IDs across file IRs. Otherwise, we need
+    // to add a new canonical int in this IR.
+    auto int_id =
+        inst.int_id.is_value()
+            ? inst.int_id
+            : context_.ints().AddSigned(import_ir_.ints().Get(inst.int_id));
+
     return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .int_id =
-             context_.ints().AddSigned(import_ir_.ints().Get(inst.int_id))});
+         .int_id = int_id});
   }
 
   auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {

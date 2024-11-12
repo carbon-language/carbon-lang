@@ -20,130 +20,136 @@ struct IntStoreTestPeer {
 namespace {
 
 using ::testing::Eq;
-using ::testing::Not;
 
 static constexpr int MinAPWidth = IntStoreTestPeer::MinAPWidth;
 
 TEST(IntStore, Basic) {
   IntStore ints;
-  IntId id1 = ints.Add(1);
-  IntId id2 = ints.Add(2);
-  IntId id3 = ints.Add(999'999'999'999);
+  IntId id_0 = ints.Add(0);
+  IntId id_1 = ints.Add(1);
+  IntId id_2 = ints.Add(2);
+  IntId id_42 = ints.Add(42);
+  IntId id_n1 = ints.Add(-1);
+  IntId id_n42 = ints.Add(-42);
+  IntId id_nines = ints.Add(999'999'999'999);
+  IntId id_max64 = ints.Add(std::numeric_limits<int64_t>::max());
+  IntId id_min64 = ints.Add(std::numeric_limits<int64_t>::min());
 
-  ASSERT_TRUE(id1.is_valid());
-  ASSERT_TRUE(id2.is_valid());
-  ASSERT_TRUE(id3.is_valid());
-  EXPECT_THAT(id1, Not(Eq(id2)));
-  EXPECT_THAT(id1, Not(Eq(id3)));
-  EXPECT_THAT(id2, Not(Eq(id3)));
+  for (IntId id :
+       {id_0, id_1, id_2, id_42, id_n1, id_n42, id_nines, id_max64, id_min64}) {
+    ASSERT_TRUE(id.is_valid());
+  }
 
-  EXPECT_THAT(ints.Get(id1), Eq(1));
-  EXPECT_THAT(ints.Get(id2), Eq(2));
-  EXPECT_THAT(ints.Get(id3), Eq(999'999'999'999));
+  // Small values should be embedded.
+  EXPECT_THAT(id_0.AsValue(), Eq(0));
+  EXPECT_THAT(id_1.AsValue(), Eq(1));
+  EXPECT_THAT(id_2.AsValue(), Eq(2));
+  EXPECT_THAT(id_42.AsValue(), Eq(42));
+  EXPECT_THAT(id_n1.AsValue(), Eq(-1));
+  EXPECT_THAT(id_n42.AsValue(), Eq(-42));
+
+  // Rest should be indices as they don't fit as embedded values.
+  EXPECT_TRUE(!id_nines.is_value());
+  EXPECT_TRUE(id_nines.is_index());
+  EXPECT_TRUE(!id_max64.is_value());
+  EXPECT_TRUE(id_max64.is_index());
+  EXPECT_TRUE(!id_min64.is_value());
+  EXPECT_TRUE(id_min64.is_index());
+
+  // And round tripping all the way through the store should work.
+  EXPECT_THAT(ints.Get(id_0), Eq(0));
+  EXPECT_THAT(ints.Get(id_1), Eq(1));
+  EXPECT_THAT(ints.Get(id_2), Eq(2));
+  EXPECT_THAT(ints.Get(id_42), Eq(42));
+  EXPECT_THAT(ints.Get(id_n1), Eq(-1));
+  EXPECT_THAT(ints.Get(id_n42), Eq(-42));
+  EXPECT_THAT(ints.Get(id_nines), Eq(999'999'999'999));
+  EXPECT_THAT(ints.Get(id_max64), Eq(std::numeric_limits<int64_t>::max()));
+  EXPECT_THAT(ints.Get(id_min64), Eq(std::numeric_limits<int64_t>::min()));
 }
+
+// Helper struct to hold test values and the resulting IDs.
+struct APAndId {
+  llvm::APInt ap;
+  IntId id = IntId::Invalid;
+};
 
 TEST(IntStore, APSigned) {
   IntStore ints;
 
-  llvm::APInt one_ap(MinAPWidth, 1, /*isSigned=*/true);
-  llvm::APInt two_ap(MinAPWidth, 2, /*isSigned=*/true);
-  llvm::APInt nines_ap(MinAPWidth, 999'999'999'999, /*isSigned=*/true);
-  llvm::APInt big_nines_ap = nines_ap.sext(128) * 10'000;
-  llvm::APInt bigger_nines_ap = nines_ap.sext(512) * 100'000;
+  llvm::APInt big_128_ap =
+      llvm::APInt(128, 0x1234'abcd'1234'abcd, /*isSigned=*/true) * 0xabcd'0000;
   llvm::APInt biggest_small_ap(
       MinAPWidth, std::numeric_limits<int32_t>::max() >> (32 - TokenIdBits),
       /*isSigned=*/true);
-  llvm::APInt smallest_large_ap = biggest_small_ap + 1;
   llvm::APInt biggest_neg_large_ap(
       MinAPWidth, std::numeric_limits<int32_t>::min() >> (32 - TokenIdBits + 1),
       /*isSigned=*/true);
   llvm::APInt smallest_neg_small_ap = biggest_neg_large_ap + 1;
-  IntId ids[] = {
-      ints.AddSigned(one_ap),
-      ints.AddSigned(two_ap),
-      ints.AddSigned(nines_ap),
-      ints.AddSigned(big_nines_ap),
-      ints.AddSigned(bigger_nines_ap),
-      ints.AddSigned(biggest_small_ap),
-      ints.AddSigned(smallest_large_ap),
-      ints.AddSigned(biggest_neg_large_ap),
-      ints.AddSigned(smallest_neg_small_ap),
+
+  APAndId ap_and_ids[] = {
+      {.ap = llvm::APInt(MinAPWidth, 1, /*isSigned=*/true)},
+      {.ap = llvm::APInt(MinAPWidth, 2, /*isSigned=*/true)},
+      {.ap = llvm::APInt(MinAPWidth, 999'999'999'999, /*isSigned=*/true)},
+      {.ap = big_128_ap},
+      {.ap = -big_128_ap},
+      {.ap =
+           big_128_ap.sext(512) * big_128_ap.sext(512) * big_128_ap.sext(512)},
+      {.ap =
+           -big_128_ap.sext(512) * big_128_ap.sext(512) * big_128_ap.sext(512)},
+      {.ap = biggest_small_ap},
+      {.ap = biggest_small_ap + 1},
+      {.ap = biggest_neg_large_ap},
+      {.ap = biggest_neg_large_ap + 1},
   };
-
-  for (IntId id : ids) {
-    ASSERT_TRUE(id.is_valid());
+  for (auto& [ap, id] : ap_and_ids) {
+    id = ints.AddSigned(ap);
+    ASSERT_TRUE(id.is_valid()) << ap;
   }
 
-  for (int i : llvm::seq<int>(std::size(ids))) {
-    for (int j : llvm::seq<int>(i + 1, std::size(ids))) {
-      EXPECT_THAT(ids[i], Not(Eq(ids[j])));
-    }
+  for (const auto& [ap, id] : ap_and_ids) {
+    // The sign extend here may be a no-op, but the original bit width is a
+    // reliable one at which to do the comparison.
+    EXPECT_THAT(ints.Get(id).sext(ap.getBitWidth()), Eq(ap));
   }
-
-  EXPECT_THAT(ints.Get(ids[0]), Eq(1));
-  EXPECT_THAT(ints.Get(ids[1]), Eq(2));
-  EXPECT_THAT(ints.Get(ids[2]), Eq(999'999'999'999));
-  EXPECT_THAT(ints.Get(ids[3]).sext(big_nines_ap.getBitWidth()),
-              Eq(big_nines_ap));
-  EXPECT_THAT(ints.Get(ids[4]).sext(bigger_nines_ap.getBitWidth()),
-              Eq(bigger_nines_ap));
-  EXPECT_THAT(ints.Get(ids[5]), Eq(biggest_small_ap));
-  EXPECT_THAT(ints.Get(ids[6]), Eq(smallest_large_ap));
-  EXPECT_THAT(ints.Get(ids[7]), Eq(biggest_neg_large_ap));
-  EXPECT_THAT(ints.Get(ids[8]), Eq(smallest_neg_small_ap));
 }
 
 TEST(IntStore, APUnsigned) {
   IntStore ints;
 
-  llvm::APInt one_ap(MinAPWidth, 1);
-  llvm::APInt two_ap(MinAPWidth, 2);
-  llvm::APInt nines_ap(MinAPWidth, 999'999'999'999);
-  llvm::APInt max64_ap(MinAPWidth, std::numeric_limits<uint64_t>::max());
-  llvm::APInt max64_plus_one_ap = max64_ap.zext(65) + 1;
-  llvm::APInt big_nines_ap = nines_ap.zext(128) * 10'000;
-  llvm::APInt bigger_nines_ap = nines_ap.zext(512) * 100'000;
+  llvm::APInt big_128_ap =
+      llvm::APInt(128, 0xabcd'abcd'abcd'abcd) * 0xabcd'0000'abcd'0000;
   llvm::APInt biggest_small_ap(
-      64, std::numeric_limits<int32_t>::max() >> (32 - TokenIdBits));
-  llvm::APInt smallest_large_ap = biggest_small_ap + 1;
-  IntId ids[] = {
-      ints.AddUnsigned(one_ap),
-      ints.AddUnsigned(two_ap),
-      ints.AddUnsigned(nines_ap),
-      ints.AddUnsigned(max64_ap),
-      ints.AddUnsigned(max64_plus_one_ap),
-      ints.AddUnsigned(big_nines_ap),
-      ints.AddUnsigned(bigger_nines_ap),
-      ints.AddUnsigned(biggest_small_ap),
-      ints.AddUnsigned(smallest_large_ap),
+      MinAPWidth, std::numeric_limits<int32_t>::max() >> (32 - TokenIdBits));
+
+  APAndId ap_and_ids[] = {
+      {.ap = llvm::APInt(MinAPWidth, 1)},
+      {.ap = llvm::APInt(MinAPWidth, 2)},
+      {.ap = llvm::APInt(MinAPWidth, 999'999'999'999)},
+      {.ap = llvm::APInt(MinAPWidth, std::numeric_limits<uint64_t>::max())},
+      {.ap = llvm::APInt(MinAPWidth + 1, std::numeric_limits<uint64_t>::max()) +
+             1},
+      {.ap = big_128_ap},
+      {.ap =
+           big_128_ap.zext(512) * big_128_ap.zext(512) * big_128_ap.zext(512)},
+      {.ap = biggest_small_ap},
+      {.ap = biggest_small_ap + 1},
   };
-
-  for (IntId id : ids) {
-    ASSERT_TRUE(id.is_valid());
+  for (auto& [ap, id] : ap_and_ids) {
+    id = ints.AddUnsigned(ap);
+    ASSERT_TRUE(id.is_valid()) << ap;
   }
 
-  for (int i : llvm::seq<int>(std::size(ids))) {
-    for (int j : llvm::seq<int>(i + 1, std::size(ids))) {
-      EXPECT_THAT(ids[i], Not(Eq(ids[j])));
-    }
+  for (const auto& [ap, id] : ap_and_ids) {
+    auto stored_ap = ints.Get(id);
+    // Pick a bit width wide enough to represent both whatever is returned and
+    // the original value as a *signed* integer without any truncation.
+    int width = std::max(stored_ap.getBitWidth(), ap.getBitWidth() + 1);
+    // We sign extend the stored value and zero extend the original number. This
+    // ensures that anything added as unsigned ends up stored as a positive
+    // number even when sign extended.
+    EXPECT_THAT(stored_ap.sext(width), Eq(ap.zext(width)));
   }
-
-  EXPECT_THAT(ints.Get(ids[0]), Eq(1));
-  EXPECT_THAT(ints.Get(ids[1]), Eq(2));
-  EXPECT_THAT(ints.Get(ids[2]), Eq(999'999'999'999));
-  EXPECT_THAT(ints.Get(ids[3]).getActiveBits(), Eq(64));
-  EXPECT_THAT(ints.Get(ids[3]).trunc(64),
-              Eq(std::numeric_limits<uint64_t>::max()));
-  EXPECT_THAT(ints.Get(ids[4]).truncUSat(max64_plus_one_ap.getBitWidth()),
-              Eq(max64_plus_one_ap));
-  // We have lots of extra bits in our initial AP, so we sign extend here to
-  // ensure that we don't get a negative number from `Get`.
-  EXPECT_THAT(ints.Get(ids[5]).sext(big_nines_ap.getBitWidth()),
-              Eq(big_nines_ap));
-  EXPECT_THAT(ints.Get(ids[6]).sext(bigger_nines_ap.getBitWidth()),
-              Eq(bigger_nines_ap));
-  EXPECT_THAT(ints.Get(ids[7]), Eq(biggest_small_ap));
-  EXPECT_THAT(ints.Get(ids[8]), Eq(smallest_large_ap));
 }
 
 }  // namespace
