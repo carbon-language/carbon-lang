@@ -12,7 +12,7 @@ fn While() {
   // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `String` to `bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: note: type `String` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: note: type `String` does not implement interface `ImplicitAs(bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}

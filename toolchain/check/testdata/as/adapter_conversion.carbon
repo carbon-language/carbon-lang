@@ -100,7 +100,7 @@ class B {
 // CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+6]]:12: error: cannot convert from `{.x: i32}` to `B` with `as` [ExplicitAsConversionFailure]
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: note: type `{.x: i32}` does not implement interface `As` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12: note: type `{.x: i32}` does not implement interface `As(B)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: B = {.x = 1} as B;
 // CHECK:STDERR:            ^~~~~~~~~~~~~
 var b: B = {.x = 1} as B;

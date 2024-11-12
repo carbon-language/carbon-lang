@@ -26,7 +26,7 @@ fn CallNegative() {
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `i32` to `Core.IntLiteral` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   ErrorIfNIsZero(0);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+6]]:3: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+6]]:3: note: type `i32` does not implement interface `ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ErrorIfNIsZero(0);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE-17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

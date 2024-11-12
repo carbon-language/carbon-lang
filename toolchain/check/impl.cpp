@@ -124,11 +124,14 @@ static auto CheckAssociatedFunctionImplementation(
 
 // Builds a witness that the specified impl implements the given interface.
 static auto BuildInterfaceWitness(
-    Context& context, const SemIR::Impl& impl, SemIR::TypeId interface_type_id,
+    Context& context, const SemIR::Impl& impl, SemIR::TypeId facet_type_id,
     SemIR::FacetTypeInfo::ImplsConstraint interface_type,
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
-  if (!context.TryToDefineType(interface_type_id, [&] {
+  // TODO: This is going to try and define all the interfaces for this facet
+  // type, and so once we support impl of a facet type with more than one
+  // interface, it might give the wrong name in the diagnostic.
+  if (!context.TryToDefineType(facet_type_id, [&] {
         CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
                           "implementation of undefined interface {0}",
                           SemIR::NameId);

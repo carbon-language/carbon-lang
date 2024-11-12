@@ -12,7 +12,7 @@ fn Main() -> i32 {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: note: type `f64` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: note: type `f64` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
   return 1.0;

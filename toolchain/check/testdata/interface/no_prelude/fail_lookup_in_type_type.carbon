@@ -22,11 +22,6 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+8]]:8: error: member access into undefined interface `type where...` [QualifiedExprInUndefinedInterfaceScope]
-// CHECK:STDERR: let U: (type where .Self impls type).missing = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_lookup_type_where.carbon: note: only single interface facet types supported so far [SingleInterfaceFacetTypeOnly]
-// CHECK:STDERR:
 // CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+3]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,14 +61,14 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:   %.loc12: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:   %.loc7: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:     requirement_impls %.Self.ref, type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc7: %.1 = struct_literal ()
 // CHECK:STDOUT:   %U: <error> = bind_name U, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

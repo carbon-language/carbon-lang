@@ -1188,26 +1188,20 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
   if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
     const auto& facet_type_info =
         sem_ir().facet_types().Get(facet_type->facet_type_id);
-    auto interface = facet_type_info.TryAsSingleInterface();
-    if (!interface) {
-      auto builder = diagnoser();
-      CARBON_DIAGNOSTIC(SingleInterfaceFacetTypeOnly, Note,
-                        "only single interface facet types supported so far");
-      builder.Note(SemIR::LocId::Invalid, SingleInterfaceFacetTypeOnly);
-      builder.Emit();
-      return false;
-    }
-    auto interface_id = interface->interface_id;
-    if (!interfaces().Get(interface_id).is_defined()) {
-      auto builder = diagnoser();
-      NoteUndefinedInterface(interface_id, builder);
-      builder.Emit();
-      return false;
-    }
+    for (auto interface : facet_type_info.impls_constraints) {
+      auto interface_id = interface.interface_id;
+      if (!interfaces().Get(interface_id).is_defined()) {
+        auto builder = diagnoser();
+        NoteUndefinedInterface(interface_id, builder);
+        builder.Emit();
+        return false;
+      }
 
-    if (interface->specific_id.is_valid()) {
-      ResolveSpecificDefinition(*this, interface->specific_id);
+      if (interface.specific_id.is_valid()) {
+        ResolveSpecificDefinition(*this, interface.specific_id);
+      }
     }
+    // TODO: Process other requirements.
   }
 
   return true;
@@ -1303,6 +1297,12 @@ auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
     -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::GenericInterfaceType>(
       *this, interface_id, enclosing_specific_id);
+}
+
+auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,
+                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetType>(
+      *this, FacetTypeFromInterface(interface_id, specific_id).facet_type_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
