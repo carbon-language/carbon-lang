@@ -9,10 +9,10 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/base/index_base.h"
 
 namespace Carbon {
 
@@ -32,7 +32,7 @@ struct IntStoreTestPeer;
 // index.
 //
 // ## Details of the encoding scheme ##
-// 
+//
 // We need all the values from a maximum to minimum, as well as a healthy range
 // of indices, to fit within the token ID bits.
 //
@@ -151,7 +151,7 @@ class IntId : public Printable<IntId> {
   // The maximum embedded value in an ID.
   static constexpr int32_t MaxValue =
       std::numeric_limits<int32_t>::max() >> TokenIdBitsShift;
-  
+
   // The ID value that represents an index of `0`. This is the first ID value
   // representing an index, and all indices are `<=` to this.
   static constexpr int32_t ZeroIndexId = std::numeric_limits<int32_t>::min() >>
@@ -250,8 +250,7 @@ class IntStore {
   // represent it.
   auto AddUnsigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = TryMakeUnsignedValue(value); id.is_valid())
-        [[likely]] {
+    if (IntId id = TryMakeUnsignedValue(value); id.is_valid()) [[likely]] {
       return id;
     }
 
@@ -291,9 +290,9 @@ class IntStore {
   // more details.
   auto GetAtWidth(IntId id, IntId bit_width_id) const -> llvm::APInt {
     const llvm::APInt bit_width = Get(bit_width_id);
-    CARBON_CHECK(bit_width.isStrictlyPositive() &&
-                     bit_width.isSignedIntN(MinAPWidth),
-                 "Invalid bit width value: {0}", bit_width);
+    CARBON_CHECK(
+        bit_width.isStrictlyPositive() && bit_width.isSignedIntN(MinAPWidth),
+        "Invalid bit width value: {0}", bit_width);
     return GetAtWidth(id, bit_width.getSExtValue());
   }
 

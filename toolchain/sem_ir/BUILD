@@ -56,6 +56,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//toolchain/base:int_store",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:ids",

@@ -86,8 +86,8 @@ cc_library(
     srcs = ["int_store.cpp"],
     hdrs = ["int_store.h"],
     deps = [
-        ":mem_usage",
         ":index_base",
+        ":mem_usage",
         ":value_store",
         ":yaml",
         "//common:check",
