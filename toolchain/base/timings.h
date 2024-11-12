@@ -28,9 +28,11 @@ class Timings {
                 std::chrono::nanoseconds total_nanoseconds(0);
                 for (const auto& entry : timings_) {
                   total_nanoseconds += entry.nanoseconds;
-                  label_map.Add(entry.label, entry.nanoseconds.count());
+                  label_map.Add(entry.label, static_cast<int64_t>(
+                                                 entry.nanoseconds.count()));
                 }
-                label_map.Add("Total", total_nanoseconds.count());
+                label_map.Add("Total",
+                              static_cast<int64_t>(total_nanoseconds.count()));
               }));
     });
   }
