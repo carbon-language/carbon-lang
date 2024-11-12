@@ -241,7 +241,7 @@ Dumps the amount of memory used.
       {
           .name = "dump-timings",
           .help = R"""(
-Dump timing information from each phase for each input source file.
+Dumps the duration of each phase for each compilation unit.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_timings); });
