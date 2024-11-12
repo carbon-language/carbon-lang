@@ -225,10 +225,18 @@ class Context {
                               const SemIR::NameScope& scope)
       -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
-  // Performs a qualified name lookup in a specified scope and in scopes that
+  // Returns the lookup scopes corresponding to `base_const_id`, or `nullopt` if
+  // not a scope. On invalid scopes, prints a diagnostic and still returns the
+  // scopes.
+  auto LookupScopesForConstant(SemIR::LocId loc_id,
+                               SemIR::ConstantId base_const_id)
+      -> std::optional<llvm::SmallVector<LookupScope, 1>>;
+
+  // Performs a qualified name lookup in a specified scopes and in scopes that
   // it extends, returning the referenced instruction.
   auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                           LookupScope scope, bool required = true,
+                           llvm::ArrayRef<LookupScope> scope,
+                           bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
