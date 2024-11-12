@@ -193,28 +193,29 @@ static auto PerformImplLookup(
     return SemIR::InstId::BuiltinError;
   }
 
-  auto& interface = context.interfaces().Get(interface_type->interface_id);
   auto witness_id =
       LookupInterfaceWitness(context, loc_id, type_const_id,
                              assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.is_valid()) {
+    auto interface_type_id = context.GetInterfaceType(
+        interface_type->interface_id, interface_type->specific_id);
     if (missing_impl_diagnoser) {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
-                        "type {1} does not implement interface `{0}`",
-                        SemIR::NameId, SemIR::TypeId);
+                        "type {1} does not implement interface {0}",
+                        SemIR::TypeId, SemIR::TypeId);
       missing_impl_diagnoser()
-          .Note(loc_id, MissingImplInMemberAccessNote, interface.name_id,
+          .Note(loc_id, MissingImplInMemberAccessNote, interface_type_id,
                 context.GetTypeIdForTypeConstant(type_const_id))
           .Emit();
     } else {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                        "cannot access member of interface `{0}` in type {1} "
+                        "cannot access member of interface {0} in type {1} "
                         "that does not implement that interface",
-                        SemIR::NameId, SemIR::TypeId);
+                        SemIR::TypeId, SemIR::TypeId);
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
-                             interface.name_id,
+                             interface_type_id,
                              context.GetTypeIdForTypeConstant(type_const_id));
     }
     return SemIR::InstId::BuiltinError;
