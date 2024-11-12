@@ -132,14 +132,24 @@ library "[[@TEST_NAME]]";
 
 import library "extern_of_import";
 
-// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern library "extern_of_import" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: extern_of_import.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 extern library "extern_of_import" fn F();
+
+// --- fail_extern_library_on_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_extern_library_on_definition.carbon:[[@LINE+3]]:1: error: a library cannot be provided for an `extern` modifier on a definition [ExternLibraryOnDefinition]
+// CHECK:STDERR: extern library "extern_library_owner" fn F() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+extern library "extern_library_owner" fn F() {}
 
 // CHECK:STDOUT: --- extern_library.carbon
 // CHECK:STDOUT:
@@ -366,4 +376,24 @@ extern library "extern_of_import" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_extern_library_on_definition.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

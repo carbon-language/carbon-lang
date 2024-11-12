@@ -303,13 +303,9 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
           "whitespace is not allowed {0:after|before} this unary operator",
           BoolAsSelect);
       emitter_->Emit(*position_, UnaryOperatorHasWhitespace, prefix);
-    } else if (IsLexicallyValidInfixOperator()) {
-      // Pre/postfix operators must not satisfy the infix operator rules.
-      CARBON_DIAGNOSTIC(
-          UnaryOperatorRequiresWhitespace, Error,
-          "whitespace is required {0:before|after} this unary operator",
-          BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+    } else {
+      CARBON_CHECK(!IsLexicallyValidInfixOperator(),
+                   "whitespace should have been required for an infix parse");
     }
   }
 }
