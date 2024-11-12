@@ -1016,7 +1016,7 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
         return LexTokenWithPayload(TokenKind::IntLiteral,
                                    buffer_.value_stores_->ints()
                                        .AddUnsigned(std::move(value.value))
-                                       .AsRaw(),
+                                       .AsTokenPayload(),
                                    byte_offset);
       },
       [&](NumericLiteral::RealValue&& value) {
@@ -1227,7 +1227,7 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   // unsigned as that's less expensive and it can't be negative.
   CARBON_CHECK(suffix_value >= 0);
   auto bit_width_payload =
-      buffer_.value_stores_->ints().Add(suffix_value).AsRaw();
+      buffer_.value_stores_->ints().Add(suffix_value).AsTokenPayload();
 
   return LexTokenWithPayload(kind, bit_width_payload, byte_offset);
 }

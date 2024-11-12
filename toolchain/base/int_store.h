@@ -16,12 +16,6 @@
 
 namespace Carbon {
 
-// Valid IDs which are associated with tokens during lexing need to fit into a
-// compressed storage space, which may influence the specific formulation of the
-// ID. Note that there may still be IDs either not associated with tokens or
-// computed after lexing outside of this range.
-constexpr int TokenIdBits = 23;
-
 // Forward declare a testing peer so we can friend it.
 namespace Testing {
 struct IntStoreTestPeer;
@@ -33,70 +27,95 @@ struct IntStoreTestPeer;
 //
 // Small values are internalized into the ID itself. Large values are
 // represented as an index into an array of `APInt`s with a canonicalized bit
-// width.
+// width. The ID itself can be queried for whether it is a value-embedded-ID or
+// an index ID. The ID also provides APIs for extracting either the value or an
+// index.
+//
+// ## Details of the encoding scheme ##
+// 
+// We need all the values from a maximum to minimum, as well as a healthy range
+// of indices, to fit within the token ID bits.
+//
+// We represent this as a signed `TokenIdBits`-bit 2s compliment integer. The
+// sign extension from TokenIdBits to a register size can be folded into the
+// shift used to extract those bits from compressed bitfield storage.
+//
+// We then divide the smallest 1/4th of that bit width's space to represent
+// indices, and the larger 3/4ths to embedded values. For 23-bits total this
+// still gives us 2 million unique integers larger than the embedded ones, which
+// would be difficult to fill without exceeding the number of tokens we can lex
+// (8 million). For non-token based integers, the indices can continue downward
+// to the 32-bit signed integer minimum, supporting approximately 1.998 billion
+// unique larger integers.
+//
+// Note that the invalid ID can't be used with a token. This is OK as we
+// expect invalid tokens to be *error* tokens and not need to represent an
+// invalid integer.
 class IntId : public Printable<IntId> {
  public:
   using ValueType = llvm::APInt;
 
+  // The encoding of integer IDs ensures that valid IDs associated with tokens
+  // during lexing can fit into a compressed storage space. We arrange for
+  // `TokenIdBits` to be the minimum number of bits of storage for token
+  // associated IDs. The constant is public so the lexer can ensure it reserves
+  // adequate space.
+  //
+  // Note that there may still be IDs either not associated with
+  // tokens or computed after lexing outside of this range.
+  static constexpr int TokenIdBits = 23;
+
   static const IntId Invalid;
 
-  static auto MakeIndexOrInvalid(int index) -> IntId {
-    CARBON_DCHECK(index >= 0 && index <= InvalidIndex);
-    return IntId(ZeroIndexId - index);
-  }
-
   static auto MakeFromTokenPayload(uint32_t payload) -> IntId {
-    // Token-associated IDs are signed `TokenIdBits` integers, so force the sign
+    // Token-associated IDs are signed `TokenIdBits` integers, so force sign
     // extension from that bit.
-    constexpr int Shift = 32 - TokenIdBits;
-    return IntId(static_cast<int32_t>(payload << Shift) >> Shift);
-  }
-
-  // Tries to make a signed 64-bit integer into an embedded value in the ID, and
-  // if unable to do that returns the `Invalid` ID.
-  static auto TryMakeValue(int64_t value) -> IntId {
-    if (MinValue <= value && value <= MaxValue) {
-      return IntId(value);
-    }
-
-    return Invalid;
-  }
-
-  // Tries to make a signed APInt into an embedded value in the ID, and if
-  // unable to do that returns the `Invalid` ID.
-  static auto TryMakeSignedValue(llvm::APInt value) -> IntId {
-    if (value.sge(MinValue) && value.sle(MaxValue)) {
-      return IntId(value.getSExtValue());
-    }
-
-    return Invalid;
-  }
-
-  // Tries to make an unsigned APInt into an embedded value in the ID, and if
-  // unable to do that returns the `Invalid` ID.
-  static auto TryMakeUnsignedValue(llvm::APInt value) -> IntId {
-    if (value.ule(MaxValue)) {
-      return IntId(value.getZExtValue());
-    }
-
-    return Invalid;
+    return IntId(static_cast<int32_t>(payload << TokenIdBitsShift) >>
+                 TokenIdBitsShift);
   }
 
   // Construct an ID from a raw 32-bit ID value.
-  static constexpr auto MakeRaw(int32_t raw_id) -> IntId { return IntId(raw_id); }
+  static constexpr auto MakeRaw(int32_t raw_id) -> IntId {
+    return IntId(raw_id);
+  }
 
-  constexpr auto is_valid() const -> bool { return id_ != InvalidId; }
+  // Tests whether the ID is a value ID.
+  //
+  // Only *valid* IDs can have an embedded value, so when true this also implies
+  // the ID is valid.
   constexpr auto is_value() const -> bool { return id_ > ZeroIndexId; }
+
+  // Tests whether the ID is an index ID.
+  //
+  // Note that an invalid ID is represented as an index ID, so this is *not*
+  // sufficient to test whether an ID is valid.
   constexpr auto is_index() const -> bool { return id_ <= ZeroIndexId; }
 
+  // Test whether an ID is valid.
+  //
+  // This does not distinguish between value and index IDs, only whether valid.
+  constexpr auto is_valid() const -> bool { return id_ != InvalidId; }
+
+  // Converts an ID to the embedded value. Requires that `is_value()` is true.
   constexpr auto AsValue() const -> int {
     CARBON_DCHECK(is_value());
     return id_;
   }
 
+  // Converts an ID to an index. Requires that `is_index()` is true.
+  //
+  // Note that this does *not* require that the ID is valid. An invalid ID will
+  // turn into an invalid index.
   constexpr auto AsIndex() const -> int {
     CARBON_DCHECK(is_index());
     return ZeroIndexId - id_;
+  }
+
+  constexpr auto AsTokenPayload() const -> uint32_t {
+    uint32_t payload = id_;
+    // Ensure this ID round trips as the token payload.
+    CARBON_DCHECK(*this == MakeFromTokenPayload(payload));
+    return payload;
   }
 
   constexpr auto AsRaw() const -> int32_t { return id_; }
@@ -122,34 +141,39 @@ class IntId : public Printable<IntId> {
   }
 
  private:
-  // We need all the values from maximum to minimum and a healthy range of
-  // indices to all fit within the token ID bits.
-  //
-  // We represent this as a signed TokenIdBits-bit 2s compliment integer. The
-  // sign extension from TokenIdBits to a register size can be folded into the
-  // shift used to extract from compressed bitfield storage.
-  //
-  // We then divide the smallest 1/4th of the space to indices, and the larger
-  // 3/4ths to embedded values. For 23-bits total this still gives us 2 million
-  // unique integers larger than the embedded ones, which would be difficult to
-  // fill without exceeding the number of tokens we can lex (8 million). For
-  // non-token based integers, the indices can continue downward to the 32-bit
-  // signed integer minimum.
-  //
-  // Note that the invalid ID can't be used with a token. This is OK as we
-  // expect invalid tokens to be *error* tokens and not need to represent an
-  // invalid integer.
+  friend class IntStore;
+  friend Testing::IntStoreTestPeer;
+
+  // The shift needed when adjusting a between a `TokenIdBits`-width integer and
+  // a 32-bit integer.
   static constexpr int TokenIdBitsShift = 32 - TokenIdBits;
+
+  // The maximum embedded value in an ID.
   static constexpr int32_t MaxValue =
       std::numeric_limits<int32_t>::max() >> TokenIdBitsShift;
+  
+  // The ID value that represents an index of `0`. This is the first ID value
+  // representing an index, and all indices are `<=` to this.
   static constexpr int32_t ZeroIndexId = std::numeric_limits<int32_t>::min() >>
                                          (TokenIdBitsShift + 1);
-  static constexpr int32_t MinValue = ZeroIndexId + 1;
-  static constexpr int32_t InvalidId = std::numeric_limits<int32_t>::min();
-  static constexpr int32_t InvalidIndex = ZeroIndexId - InvalidId;
 
-  // Document the specific values of these constants to help visualize how the
-  // bit patterns map from the above computations.
+  // The minimum embedded value in an ID.
+  static constexpr int32_t MinValue = ZeroIndexId + 1;
+
+  // The invalid ID, which needs to be placed after the largest index, which
+  // count downwards as IDs so below the smallest index ID, in order to optimize
+  // the code sequence needed to distinguish between integer and value IDs and
+  // to convert index IDs into actual indices small.
+  static constexpr int32_t InvalidId = std::numeric_limits<int32_t>::min();
+
+  // The invalid index. This is the result of converting an invalid ID into an
+  // index. We ensure that conversion can be done so that we can simplify the
+  // code that first tries to use an embedded value, then converts to an index
+  // and checks that the index is valid.
+  static const int32_t InvalidIndex;
+
+  // Document the specific values of some of these constants to help visualize
+  // how the bit patterns map from the above computations.
   //
   // Each bit is either `T` for part of the token or `P` as part
   // of the available payload that we use for the ID:
@@ -167,7 +191,13 @@ class IntId : public Printable<IntId> {
 
   int32_t id_;
 };
+
 constexpr IntId IntId::Invalid(IntId::InvalidId);
+
+// Note that we initialize the invalid index in a constexpr context which
+// ensures there is no UB in forming it. This helps ensure all the ID -> index
+// conversions are correct because the invalid ID is at the limit of that range.
+constexpr int32_t IntId::InvalidIndex = Invalid.AsIndex();
 
 // A canonicalizing value store with deep optimizations for integers.
 //
@@ -195,7 +225,7 @@ class IntStore {
   // necessary to represent it.
   auto Add(int64_t value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = IntId::TryMakeValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeValue(value); id.is_valid()) [[likely]] {
       return id;
     }
 
@@ -203,11 +233,11 @@ class IntStore {
     return AddLarge(value);
   }
 
-  // Returns the ID corresponding to this integer value, storing an `APInt` if
-  // necessary to represent it.
+  // Returns the ID corresponding to this signed integer value, storing an
+  // `APInt` if necessary to represent it.
   auto AddSigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = IntId::TryMakeSignedValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeSignedValue(value); id.is_valid()) [[likely]] {
       return id;
     }
 
@@ -215,10 +245,12 @@ class IntStore {
     return AddSignedLarge(std::move(value));
   }
 
-  // Returns the ID corresponding to an equivalent signed integer value, storing an `APInt` if necessary to represent it.
+  // Returns the ID corresponding to an equivalent signed integer value for the
+  // provided unsigned integer value, storing an `APInt` if necessary to
+  // represent it.
   auto AddUnsigned(llvm::APInt value) -> IntId {
     // First try directly making this into an ID.
-    if (IntId id = IntId::TryMakeUnsignedValue(value); id.is_valid())
+    if (IntId id = TryMakeUnsignedValue(value); id.is_valid())
         [[likely]] {
       return id;
     }
@@ -265,10 +297,22 @@ class IntStore {
     return GetAtWidth(id, bit_width.getSExtValue());
   }
 
-  // Looks up the canonical ID for a value, or returns invalid if not in the
-  // store.
+  // Accepts a signed `int64_t` and uses the mathematical signed integer value
+  // of it as the integer value to lookup. Returns the canonical ID for that
+  // value or returns invalid if not in the store.
+  auto Lookup(int64_t value) const -> IntId {
+    if (IntId id = TryMakeValue(value); id.is_valid()) [[likely]] {
+      return id;
+    }
+
+    // Fallback for larger values.
+    return LookupLarge(value);
+  }
+
+  // Looks up the canonical ID for this signed integer value, or returns invalid
+  // if not in the store.
   auto LookupSigned(llvm::APInt value) const -> IntId {
-    if (IntId id = IntId::TryMakeSignedValue(value); id.is_valid()) [[likely]] {
+    if (IntId id = TryMakeSignedValue(value); id.is_valid()) [[likely]] {
       return id;
     }
 
@@ -305,6 +349,41 @@ class IntStore {
 
   static constexpr int MinAPWidth = 64;
 
+  static auto MakeIndexOrInvalid(int index) -> IntId {
+    CARBON_DCHECK(index >= 0 && index <= IntId::InvalidIndex);
+    return IntId(IntId::ZeroIndexId - index);
+  }
+
+  // Tries to make a signed 64-bit integer into an embedded value in the ID, and
+  // if unable to do that returns the `Invalid` ID.
+  static auto TryMakeValue(int64_t value) -> IntId {
+    if (IntId::MinValue <= value && value <= IntId::MaxValue) {
+      return IntId(value);
+    }
+
+    return IntId::Invalid;
+  }
+
+  // Tries to make a signed APInt into an embedded value in the ID, and if
+  // unable to do that returns the `Invalid` ID.
+  static auto TryMakeSignedValue(llvm::APInt value) -> IntId {
+    if (value.sge(IntId::MinValue) && value.sle(IntId::MaxValue)) {
+      return IntId(value.getSExtValue());
+    }
+
+    return IntId::Invalid;
+  }
+
+  // Tries to make an unsigned APInt into an embedded value in the ID, and if
+  // unable to do that returns the `Invalid` ID.
+  static auto TryMakeUnsignedValue(llvm::APInt value) -> IntId {
+    if (value.ule(IntId::MaxValue)) {
+      return IntId(value.getZExtValue());
+    }
+
+    return IntId::Invalid;
+  }
+
   // Pick a canonical bit width for the provided number of significant bits.
   static auto CanonicalBitWidth(int significant_bits) -> int;
 
@@ -321,6 +400,7 @@ class IntStore {
   auto AddLarge(int64_t value) -> IntId;
   auto AddSignedLarge(llvm::APInt value) -> IntId;
   auto AddUnsignedLarge(llvm::APInt value) -> IntId;
+  auto LookupLarge(int64_t value) const -> IntId;
   auto LookupSignedLarge(llvm::APInt value) const -> IntId;
 
   CanonicalValueStore<APIntId> values_;

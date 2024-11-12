@@ -13,6 +13,9 @@ namespace Carbon::Testing {
 
 struct IntStoreTestPeer {
   static constexpr int MinAPWidth = IntStore::MinAPWidth;
+
+  static constexpr int32_t MaxIdEmbeddedValue = IntId::MaxValue;
+  static constexpr int32_t MinIdEmbeddedValue = IntId::MinValue;
 };
 
 namespace {
@@ -20,6 +23,11 @@ namespace {
 using ::testing::Eq;
 
 static constexpr int MinAPWidth = IntStoreTestPeer::MinAPWidth;
+
+static constexpr int32_t MaxIdEmbeddedValue =
+    IntStoreTestPeer::MaxIdEmbeddedValue;
+static constexpr int32_t MinIdEmbeddedValue =
+    IntStoreTestPeer::MinIdEmbeddedValue;
 
 TEST(IntStore, Basic) {
   IntStore ints;
@@ -77,13 +85,10 @@ TEST(IntStore, APSigned) {
 
   llvm::APInt big_128_ap =
       llvm::APInt(128, 0x1234'abcd'1234'abcd, /*isSigned=*/true) * 0xabcd'0000;
-  llvm::APInt biggest_small_ap(
-      MinAPWidth, std::numeric_limits<int32_t>::max() >> (32 - TokenIdBits),
-      /*isSigned=*/true);
-  llvm::APInt biggest_neg_large_ap(
-      MinAPWidth, std::numeric_limits<int32_t>::min() >> (32 - TokenIdBits + 1),
-      /*isSigned=*/true);
-  llvm::APInt smallest_neg_small_ap = biggest_neg_large_ap + 1;
+  llvm::APInt max_embedded_ap(MinAPWidth, MaxIdEmbeddedValue,
+                              /*isSigned=*/true);
+  llvm::APInt min_embedded_ap(MinAPWidth, MinIdEmbeddedValue,
+                              /*isSigned=*/true);
 
   APAndId ap_and_ids[] = {
       {.ap = llvm::APInt(MinAPWidth, 1, /*isSigned=*/true)},
@@ -95,10 +100,10 @@ TEST(IntStore, APSigned) {
            big_128_ap.sext(512) * big_128_ap.sext(512) * big_128_ap.sext(512)},
       {.ap =
            -big_128_ap.sext(512) * big_128_ap.sext(512) * big_128_ap.sext(512)},
-      {.ap = biggest_small_ap},
-      {.ap = biggest_small_ap + 1},
-      {.ap = biggest_neg_large_ap},
-      {.ap = biggest_neg_large_ap + 1},
+      {.ap = max_embedded_ap},
+      {.ap = max_embedded_ap + 1},
+      {.ap = min_embedded_ap},
+      {.ap = min_embedded_ap - 1},
   };
   for (auto& [ap, id] : ap_and_ids) {
     id = ints.AddSigned(ap);
@@ -117,8 +122,7 @@ TEST(IntStore, APUnsigned) {
 
   llvm::APInt big_128_ap =
       llvm::APInt(128, 0xabcd'abcd'abcd'abcd) * 0xabcd'0000'abcd'0000;
-  llvm::APInt biggest_small_ap(
-      MinAPWidth, std::numeric_limits<int32_t>::max() >> (32 - TokenIdBits));
+  llvm::APInt max_embedded_ap(MinAPWidth, MaxIdEmbeddedValue);
 
   APAndId ap_and_ids[] = {
       {.ap = llvm::APInt(MinAPWidth, 1)},
@@ -130,8 +134,8 @@ TEST(IntStore, APUnsigned) {
       {.ap = big_128_ap},
       {.ap =
            big_128_ap.zext(512) * big_128_ap.zext(512) * big_128_ap.zext(512)},
-      {.ap = biggest_small_ap},
-      {.ap = biggest_small_ap + 1},
+      {.ap = max_embedded_ap},
+      {.ap = max_embedded_ap + 1},
   };
   for (auto& [ap, id] : ap_and_ids) {
     id = ints.AddUnsigned(ap);

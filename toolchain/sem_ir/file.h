@@ -87,9 +87,7 @@ class File : public Printable<File> {
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
     auto inst_id = types().GetInstId(int_type_id);
     if (inst_id == InstId::BuiltinIntType) {
-      return {
-          .is_signed = true,
-          .bit_width = ints().LookupSigned(llvm::APInt(/*numBits=*/64, 32))};
+      return {.is_signed = true, .bit_width = ints().Lookup(32)};
     }
     auto int_type = insts().GetAs<IntType>(inst_id);
     auto bit_width_inst = insts().TryGetAs<IntValue>(int_type.bit_width_id);

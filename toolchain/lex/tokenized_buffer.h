@@ -364,7 +364,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     static constexpr int PayloadBits = 23;
 
     // Make sure we have enough payload bits to represent token-associated IDs.
-    static_assert(PayloadBits >= TokenIdBits);
+    static_assert(PayloadBits >= IntId::TokenIdBits);
 
     // Constructor for a TokenKind that carries no payload, or where the payload
     // will be set later.
