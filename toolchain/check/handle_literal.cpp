@@ -45,7 +45,7 @@ static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  // We directly re-use the integer ID as it represents the canonical value
+  // We directly reuse the integer ID as it represents the canonical value.
   return context.AddInst<SemIR::IntValue>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
