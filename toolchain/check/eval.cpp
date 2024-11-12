@@ -1158,7 +1158,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
 static auto MakeFacetTypeResult(Context& context,
                                 const SemIR::FacetTypeInfo& info, Phase phase)
     -> SemIR::ConstantId {
-  SemIR::FacetTypeId facet_type_id = context.sem_ir().facet_types().Add(info);
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return MakeConstantResult(context,
                             SemIR::FacetType{.type_id = SemIR::TypeId::TypeType,
                                              .facet_type_id = facet_type_id},

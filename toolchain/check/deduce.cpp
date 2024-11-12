@@ -117,9 +117,8 @@ class DeductionWorklist {
   auto AddAll(SemIR::FacetTypeId params, SemIR::FacetTypeId args,
               bool needs_substitution) -> void {
     const auto& param_impls =
-        context_.sem_ir().facet_types().Get(params).impls_constraints;
-    const auto& arg_impls =
-        context_.sem_ir().facet_types().Get(args).impls_constraints;
+        context_.facet_types().Get(params).impls_constraints;
+    const auto& arg_impls = context_.facet_types().Get(args).impls_constraints;
     if (param_impls.size() != arg_impls.size()) {
       // TODO: Decide whether to error on this or just treat the parameter list
       // as non-deduced. For now we treat it as non-deduced.

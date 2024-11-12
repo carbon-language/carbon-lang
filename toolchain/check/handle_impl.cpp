@@ -180,7 +180,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     return;
   }
   const SemIR::FacetTypeInfo& info =
-      context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+      context.facet_types().Get(facet_type->facet_type_id);
   for (auto interface_type : info.impls_constraints) {
     auto& interface = context.interfaces().Get(interface_type.interface_id);
     if (!interface.is_defined()) {

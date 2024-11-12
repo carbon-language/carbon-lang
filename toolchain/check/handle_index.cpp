@@ -65,7 +65,7 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
       continue;
     }
     const auto& facet_type_info =
-        context.sem_ir().facet_types().Get(facet_type->facet_type_id);
+        context.facet_types().Get(facet_type->facet_type_id);
     auto interface_type = facet_type_info.TryAsSingleInterface();
     if (!interface_type) {
       continue;

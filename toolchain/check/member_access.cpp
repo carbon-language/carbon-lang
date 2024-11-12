@@ -56,7 +56,7 @@ static auto GetAsLookupScope(Context& context, SemIR::LocId loc_id,
               loc_id, QualifiedExprInUndefinedInterfaceScope, base_id);
         });
     const auto& facet_type_info =
-        context.sem_ir().facet_types().Get(base_as_facet_type->facet_type_id);
+        context.facet_types().Get(base_as_facet_type->facet_type_id);
     auto base_as_interface = facet_type_info.TryAsSingleInterface();
     if (base_as_interface) {
       auto& interface_info =
@@ -184,7 +184,7 @@ static auto PerformImplLookup(
   auto facet_type =
       context.types().GetAs<SemIR::FacetType>(assoc_type.interface_type_id);
   const auto& facet_type_info =
-      context.sem_ir().facet_types().Get(facet_type.facet_type_id);
+      context.facet_types().Get(facet_type.facet_type_id);
   auto interface_type = facet_type_info.TryAsSingleInterface();
   if (!interface_type) {
     context.TODO(loc_id,
