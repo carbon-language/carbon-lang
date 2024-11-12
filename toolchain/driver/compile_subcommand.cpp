@@ -379,7 +379,10 @@ class CompilationUnit {
     auto start_time = std::chrono::steady_clock::now();
     LogCall("Lex::Lex",
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-    auto end_time = std::chrono::steady_clock::now();
+    if (timings_) {
+      auto end_time = std::chrono::steady_clock::now();
+      timings_->Add("lex", end_time - start_time);
+    }
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       tokens_->Print(driver_env_->output_stream,
@@ -387,9 +390,6 @@ class CompilationUnit {
     }
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);
-    }
-    if (timings_) {
-      timings_->Add("lex", end_time - start_time);
     }
     CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
     if (tokens_->has_errors()) {
@@ -405,7 +405,10 @@ class CompilationUnit {
     LogCall("Parse::Parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
     });
-    auto end_time = std::chrono::steady_clock::now();
+    if (timings_) {
+      auto end_time = std::chrono::steady_clock::now();
+      timings_->Add("parse", end_time - start_time);
+    }
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
       const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
@@ -417,9 +420,6 @@ class CompilationUnit {
     }
     if (mem_usage_) {
       mem_usage_->Collect("parse_tree_", *parse_tree_);
-    }
-    if (timings_) {
-      timings_->Add("parse", end_time - start_time);
     }
     CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
     if (parse_tree_->has_errors()) {
@@ -493,7 +493,10 @@ class CompilationUnit {
                                    converter, input_filename_, *sem_ir_,
                                    &inst_namer, vlog_stream_);
     });
-    auto end_time = std::chrono::steady_clock::now();
+    if (timings_) {
+      auto end_time = std::chrono::steady_clock::now();
+      timings_->Add("lower", end_time - start_time);
+    }
     if (vlog_stream_) {
       CARBON_VLOG("*** llvm::Module ***\n");
       module_->print(*vlog_stream_, /*AAW=*/nullptr,
@@ -503,9 +506,6 @@ class CompilationUnit {
     if (options_.dump_llvm_ir && IncludeInDumps()) {
       module_->print(driver_env_->output_stream, /*AAW=*/nullptr,
                      /*ShouldPreserveUseListOrder=*/true);
-    }
-    if (timings_) {
-      timings_->Add("lower", end_time - start_time);
     }
   }
 

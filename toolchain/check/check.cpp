@@ -957,7 +957,6 @@ static auto CheckParseTree(
     -> void {
   auto start_time = std::chrono::steady_clock::now();
   CheckParseTreeInner(node_converters, unit_info, total_ir_count, vlog_stream);
-  auto end_time = std::chrono::steady_clock::now();
   if (auto& timings = *(unit_info.unit->timings)) {
     auto end_time = std::chrono::steady_clock::now();
     timings->Add("check", end_time - start_time);
