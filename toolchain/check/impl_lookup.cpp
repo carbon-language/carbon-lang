@@ -62,6 +62,10 @@ static auto FindAssociatedImportIRs(Context& context,
           add_entity(context.classes().Get(SemIR::ClassId(arg)));
           break;
         }
+        case SemIR::IdKind::For<SemIR::InterfaceId>: {
+          add_entity(context.interfaces().Get(SemIR::InterfaceId(arg)));
+          break;
+        }
         case SemIR::IdKind::For<SemIR::FacetTypeId>: {
           const auto& facet_type_info =
               context.sem_ir().facet_types().Get(SemIR::FacetTypeId(arg));
@@ -75,8 +79,6 @@ static auto FindAssociatedImportIRs(Context& context,
           break;
         }
         default: {
-          // FIXME: delete
-          CARBON_CHECK(kind != SemIR::IdKind::For<SemIR::InterfaceId>);
           break;
         }
       }

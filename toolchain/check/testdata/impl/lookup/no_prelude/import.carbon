@@ -142,7 +142,7 @@ fn L() {
   obj.(PackageHasParam.Y.K)();
 }
 
-// --- use_generic_interface_as_param.carbon
+// --- fail_todo_use_generic_interface_as_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -152,7 +152,7 @@ import PackageGenericInterface;
 fn M() {
   var obj: PackageHasParam.AnyParam(
     PackageGenericInterface.GenericInterface) = {};
-  // CHECK:STDERR: use_generic_interface_as_param.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Y` in type `AnyParam` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_use_generic_interface_as_param.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Y` in type `AnyParam` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   obj.(PackageHasParam.Y.K)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   obj.(PackageHasParam.Y.K)();
@@ -1306,7 +1306,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.2(constants.%AnyParam.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_generic_interface_as_param.carbon
+// CHECK:STDOUT: --- fail_todo_use_generic_interface_as_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %M.type: type = fn_type @M [template]
