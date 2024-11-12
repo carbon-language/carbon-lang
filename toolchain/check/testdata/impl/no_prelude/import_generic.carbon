@@ -28,7 +28,7 @@ impl forall [T:! type] C as I(T) {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error: redefinition of `impl C as I` [ImplRedefinition]
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+7]]:1: error: redefinition of `impl C as I(T*)` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! type] C as I(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE-5]]:6: in import [InImport]

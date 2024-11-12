@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/stringify_type.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 
 namespace Carbon::SemIR {
 
@@ -31,20 +32,45 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
   struct Step {
     // The instruction's file.
     const File& sem_ir;
-    // The instruction to print.
-    InstId inst_id;
-    // The index into inst_id to print. Not used by all types.
+    enum Kind : uint8_t {
+      Inst,
+      FixedString,
+    };
+    // The kind of step to perform.
+    Kind kind;
+    union {
+      // The instruction to print, when kind is Inst.
+      InstId inst_id;
+      // The fixed string to print, when kind is FixedString.
+      const char* fixed_string;
+    };
+    // The index within the current step. Not used by all kinds of step.
     int index = 0;
 
     auto Next() const -> Step {
-      return {.sem_ir = sem_ir, .inst_id = inst_id, .index = index + 1};
+      Step next = *this;
+      ++next.index;
+      return next;
     }
   };
-  llvm::SmallVector<Step> steps = {
-      Step{.sem_ir = outer_sem_ir, .inst_id = outer_inst_id}};
+  llvm::SmallVector<Step> steps = {Step{
+      .sem_ir = outer_sem_ir, .kind = Step::Inst, .inst_id = outer_inst_id}};
+
+  auto push_string = [&](const char* string) {
+    steps.push_back({.sem_ir = outer_sem_ir,
+                     .kind = Step::FixedString,
+                     .fixed_string = string});
+  };
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
+
+    if (step.kind == Step::FixedString) {
+      out << step.fixed_string;
+      continue;
+    }
+
+    CARBON_CHECK(step.kind == Step::Inst);
     if (!step.inst_id.is_valid()) {
       out << "<invalid type>";
       continue;
@@ -59,7 +85,37 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
     const auto& sem_ir = step.sem_ir;
     // Helper for instructions with the current sem_ir.
     auto push_inst_id = [&](InstId inst_id) {
-      steps.push_back({.sem_ir = sem_ir, .inst_id = inst_id});
+      steps.push_back(
+          {.sem_ir = sem_ir, .kind = Step::Inst, .inst_id = inst_id});
+    };
+
+    auto push_specific_id = [&](const EntityWithParamsBase& entity,
+                                SpecificId specific_id) {
+      if (!entity.param_patterns_id.is_valid()) {
+        return;
+      }
+      int num_params =
+          sem_ir.inst_blocks().Get(entity.param_patterns_id).size();
+      if (!num_params) {
+        out << "()";
+        return;
+      }
+      if (!specific_id.is_valid()) {
+        // The name of the generic was used within the generic itself.
+        // TODO: Should we print the names of the generic parameters in this
+        // case?
+        return;
+      }
+      out << "(";
+      const auto& specific = sem_ir.specifics().Get(specific_id);
+      auto args =
+          sem_ir.inst_blocks().Get(specific.args_id).take_back(num_params);
+      bool last = true;
+      for (auto arg : llvm::reverse(args)) {
+        push_string(last ? ")" : ", ");
+        push_inst_id(arg);
+        last = false;
+      }
     };
 
     auto untyped_inst = sem_ir.insts().Get(step.inst_id);
@@ -98,8 +154,9 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ClassType inst): {
-        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
-        out << sem_ir.names().GetFormatted(class_name_id);
+        const auto& class_info = sem_ir.classes().Get(inst.class_id);
+        out << sem_ir.names().GetFormatted(class_info.name_id);
+        push_specific_id(class_info, inst.specific_id);
         break;
       }
       case CARBON_KIND(ConstType inst): {
@@ -126,15 +183,15 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (facet_type_info.impls_constraints.empty()) {
           out << "type";
         } else {
-          auto interface_id =
-              facet_type_info.impls_constraints[step.index].interface_id;
-          auto interface_name_id =
-              sem_ir.interfaces().Get(interface_id).name_id;
-          out << sem_ir.names().GetFormatted(interface_name_id);
+          const auto& impls = facet_type_info.impls_constraints[step.index];
+          const auto& interface_info =
+              sem_ir.interfaces().Get(impls.interface_id);
+          out << sem_ir.names().GetFormatted(interface_info.name_id);
+          push_specific_id(interface_info, impls.specific_id);
           if (step.index + 1 <
               static_cast<int>(facet_type_info.impls_constraints.size())) {
-            out << " & ";
             steps.push_back(step.Next());
+            push_string(" & ");
           }
         }
         // TODO: Also output other restrictions from facet_type_info.
