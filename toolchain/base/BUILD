@@ -87,7 +87,7 @@ cc_library(
     hdrs = ["int_store.h"],
     deps = [
         ":mem_usage",
-        ":value_ids",
+        ":index_base",
         ":value_store",
         ":yaml",
         "//common:check",
@@ -104,7 +104,6 @@ cc_test(
     srcs = ["int_store_test.cpp"],
     deps = [
         ":int_store",
-        ":value_ids",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",

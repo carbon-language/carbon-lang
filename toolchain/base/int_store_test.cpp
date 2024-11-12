@@ -9,8 +9,6 @@
 
 #include <limits>
 
-#include "toolchain/base/value_ids.h"
-
 namespace Carbon::Testing {
 
 struct IntStoreTestPeer {
