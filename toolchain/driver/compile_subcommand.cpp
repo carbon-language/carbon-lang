@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
@@ -238,6 +239,14 @@ Dumps the amount of memory used.
       [&](auto& arg_b) { arg_b.Set(&dump_mem_usage); });
   b.AddFlag(
       {
+          .name = "dump-timings",
+          .help = R"""(
+Dump timing information from each phase for each input source file.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&dump_timings); });
+  b.AddFlag(
+      {
           .name = "prelude-import",
           .help = R"""(
 Whether to use the implicit prelude import. Enabled by default.
@@ -346,6 +355,9 @@ class CompilationUnit {
     if (options_.dump_mem_usage && IncludeInDumps()) {
       mem_usage_ = MemUsage();
     }
+    if (options_.dump_timings && IncludeInDumps()) {
+      timings_ = Timings();
+    }
   }
 
   // Loads source and lexes it. Returns true on success.
@@ -364,8 +376,10 @@ class CompilationUnit {
     }
     CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
+    auto start_time = std::chrono::steady_clock::now();
     LogCall("Lex::Lex",
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
+    auto end_time = std::chrono::steady_clock::now();
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       tokens_->Print(driver_env_->output_stream,
@@ -373,6 +387,9 @@ class CompilationUnit {
     }
     if (mem_usage_) {
       mem_usage_->Collect("tokens_", *tokens_);
+    }
+    if (timings_) {
+      timings_->Add("lex", end_time - start_time);
     }
     CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
     if (tokens_->has_errors()) {
@@ -384,9 +401,11 @@ class CompilationUnit {
   auto RunParse() -> void {
     CARBON_CHECK(tokens_);
 
+    auto start_time = std::chrono::steady_clock::now();
     LogCall("Parse::Parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
     });
+    auto end_time = std::chrono::steady_clock::now();
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
       const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
@@ -399,6 +418,9 @@ class CompilationUnit {
     if (mem_usage_) {
       mem_usage_->Collect("parse_tree_", *parse_tree_);
     }
+    if (timings_) {
+      timings_->Add("parse", end_time - start_time);
+    }
     CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
     if (parse_tree_->has_errors()) {
       success_ = false;
@@ -410,6 +432,7 @@ class CompilationUnit {
     CARBON_CHECK(parse_tree_);
     return {
         .value_stores = &value_stores_,
+        .timings = &*timings_,
         .tokens = &*tokens_,
         .parse_tree = &*parse_tree_,
         .consumer = consumer_,
@@ -460,6 +483,7 @@ class CompilationUnit {
   auto RunLower(const Check::SemIRDiagnosticConverter& converter) -> void {
     CARBON_CHECK(sem_ir_);
 
+    auto start_time = std::chrono::steady_clock::now();
     LogCall("Lower::LowerToLLVM", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
@@ -469,6 +493,7 @@ class CompilationUnit {
                                    converter, input_filename_, *sem_ir_,
                                    &inst_namer, vlog_stream_);
     });
+    auto end_time = std::chrono::steady_clock::now();
     if (vlog_stream_) {
       CARBON_VLOG("*** llvm::Module ***\n");
       module_->print(*vlog_stream_, /*AAW=*/nullptr,
@@ -479,11 +504,19 @@ class CompilationUnit {
       module_->print(driver_env_->output_stream, /*AAW=*/nullptr,
                      /*ShouldPreserveUseListOrder=*/true);
     }
+    if (timings_) {
+      timings_->Add("lower", end_time - start_time);
+    }
   }
 
   auto RunCodeGen() -> void {
     CARBON_CHECK(module_);
+    auto start_time = std::chrono::steady_clock::now();
     LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
+    auto end_time = std::chrono::steady_clock::now();
+    if (timings_) {
+      timings_->Add("codegen", end_time - start_time);
+    }
   }
 
   // Runs post-compile logic. This is always called, and called after all other
@@ -497,6 +530,10 @@ class CompilationUnit {
       mem_usage_->Collect("value_stores_", value_stores_);
       Yaml::Print(driver_env_->output_stream,
                   mem_usage_->OutputYaml(input_filename_));
+    }
+    if (timings_) {
+      Yaml::Print(driver_env_->output_stream,
+                  timings_->OutputYaml(input_filename_));
     }
 
     // The diagnostics consumer must be flushed before compilation artifacts are
@@ -625,6 +662,8 @@ class CompilationUnit {
 
   // Tracks memory usage of the compile.
   std::optional<MemUsage> mem_usage_;
+  // Tracks timings of the compile.
+  std::optional<Timings> timings_;
 
   // These are initialized as steps are run.
   std::optional<SourceBuffer> source_;

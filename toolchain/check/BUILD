@@ -118,6 +118,7 @@ cc_library(
         "//toolchain/base:kind_switch",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/base:timings",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_index",

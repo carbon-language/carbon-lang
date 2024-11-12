@@ -50,6 +50,7 @@ struct CompileOptions {
   bool dump_llvm_ir = false;
   bool dump_asm = false;
   bool dump_mem_usage = false;
+  bool dump_timings = false;
   bool include_diagnostic_kind = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
