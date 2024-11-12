@@ -25,7 +25,7 @@ class Timings {
       map.Add("filename", filename);
       map.Add("nanoseconds",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map label_map) {
-                auto total_nanoseconds = std::chrono::nanoseconds(0);
+                std::chrono::nanoseconds total_nanoseconds(0);
                 for (const auto& entry : timings_) {
                   total_nanoseconds += entry.nanoseconds;
                   label_map.Add(entry.label, entry.nanoseconds.count());

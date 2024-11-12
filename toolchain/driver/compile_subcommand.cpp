@@ -432,7 +432,7 @@ class CompilationUnit {
     CARBON_CHECK(parse_tree_);
     return {
         .value_stores = &value_stores_,
-        .timings = &*timings_,
+        .timings = &timings_,
         .tokens = &*tokens_,
         .parse_tree = &*parse_tree_,
         .consumer = consumer_,
@@ -513,8 +513,8 @@ class CompilationUnit {
     CARBON_CHECK(module_);
     auto start_time = std::chrono::steady_clock::now();
     LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
-    auto end_time = std::chrono::steady_clock::now();
     if (timings_) {
+      auto end_time = std::chrono::steady_clock::now();
       timings_->Add("codegen", end_time - start_time);
     }
   }

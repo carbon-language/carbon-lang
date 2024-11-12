@@ -20,7 +20,7 @@ namespace Carbon::Check {
 // Checking information that's tracked per file.
 struct Unit {
   SharedValueStores* value_stores;
-  std::optional<Timings*> timings;
+  std::optional<Timings>* timings;
   const Lex::TokenizedBuffer* tokens;
   const Parse::Tree* parse_tree;
   DiagnosticConsumer* consumer;
