@@ -894,7 +894,7 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 }
 
 // Produces and checks the IR for the provided Parse::Tree.
-static auto CheckParseTree(
+static auto CheckParseTreeInner(
     llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
@@ -948,6 +948,19 @@ static auto CheckParseTree(
                  verify.error());
   }
 #endif
+}
+
+// Measures duration to produce and check the IR for the provided Parse::Tree.
+static auto CheckParseTree(
+    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
+    UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
+    -> void {
+  auto start_time = std::chrono::steady_clock::now();
+  CheckParseTreeInner(node_converters, unit_info, total_ir_count, vlog_stream);
+  if (auto& timings = *(unit_info.unit->timings)) {
+    auto end_time = std::chrono::steady_clock::now();
+    timings->Add("check", end_time - start_time);
+  }
 }
 
 // The package and library names, used as map keys.

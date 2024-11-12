@@ -66,6 +66,14 @@ static auto FindAssociatedImportIRs(Context& context,
           add_entity(context.interfaces().Get(SemIR::InterfaceId(arg)));
           break;
         }
+        case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+          const auto& facet_type_info =
+              context.sem_ir().facet_types().Get(SemIR::FacetTypeId(arg));
+          for (const auto& impl : facet_type_info.impls_constraints) {
+            add_entity(context.interfaces().Get(impl.interface_id));
+          }
+          break;
+        }
         case SemIR::IdKind::For<SemIR::FunctionId>: {
           add_entity(context.functions().Get(SemIR::FunctionId(arg)));
           break;

@@ -43,6 +43,15 @@ cc_library(
 )
 
 cc_library(
+    name = "timings",
+    hdrs = ["timings.h"],
+    deps = [
+        ":yaml",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "value_ids",
     hdrs = ["value_ids.h"],
     deps = [
