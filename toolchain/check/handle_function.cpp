@@ -341,7 +341,7 @@ static auto HandleFunctionDefinitionAfterSignature(
                           SemIR::SpecificId::Invalid);
 
   auto params_to_complete =
-      context.inst_blocks().GetOrEmpty(function.calling_convention_params_id);
+      context.inst_blocks().GetOrEmpty(function.call_params_id);
   if (function.return_slot_id.is_valid()) {
     // Exclude the return slot because it's diagnosed above.
     params_to_complete = params_to_complete.drop_back();

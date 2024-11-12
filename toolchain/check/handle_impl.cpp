@@ -209,8 +209,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     auto parameter_blocks =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
-    CARBON_CHECK(parameter_blocks.calling_convention_params_id ==
-                 SemIR::InstBlockId::Empty);
+    CARBON_CHECK(parameter_blocks.call_params_id == SemIR::InstBlockId::Empty);
     CARBON_CHECK(parameter_blocks.return_slot_id == SemIR::InstId::Invalid);
   }
 
@@ -228,7 +227,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
       .param_patterns_id = SemIR::InstBlockId::Invalid,
-      .calling_convention_params_id = SemIR::InstBlockId::Invalid,
+      .call_params_id = SemIR::InstBlockId::Invalid,
       .return_slot_pattern_id = SemIR::InstId::Invalid,
       .return_slot_id = SemIR::InstId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),

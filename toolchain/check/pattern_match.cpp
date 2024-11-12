@@ -297,7 +297,7 @@ auto CalleePatternMatch(Context& context,
     -> ParameterBlocks {
   if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
       !implicit_param_patterns_id.is_valid()) {
-    return {.calling_convention_params_id = SemIR::InstBlockId::Invalid,
+    return {.call_params_id = SemIR::InstBlockId::Invalid,
             .return_slot_id = SemIR::InstId::Invalid};
   }
 
@@ -326,7 +326,7 @@ auto CalleePatternMatch(Context& context,
     }
   }
 
-  return {.calling_convention_params_id = match.DoWork(context),
+  return {.call_params_id = match.DoWork(context),
           .return_slot_id = match.return_slot_id()};
 }
 

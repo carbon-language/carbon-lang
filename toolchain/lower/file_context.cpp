@@ -325,8 +325,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
-  auto calling_convention_param_ids =
-      sem_ir().inst_blocks().GetOrEmpty(function.calling_convention_params_id);
+  auto call_param_ids =
+      sem_ir().inst_blocks().GetOrEmpty(function.call_params_id);
   int param_index = 0;
 
   // TODO: find a way to ensure this code and the function-call lowering use
@@ -348,7 +348,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of calling_convention_param_ids that is in sequential order.
+  // The subset of call_param_ids that is in sequential order.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
   if (function.return_slot_id.is_valid()) {
     // The LLVM calling convention has the return slot first rather than last.
@@ -357,11 +357,11 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // return slot at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
             .has_return_slot()) {
-      lower_param(calling_convention_param_ids.back());
+      lower_param(call_param_ids.back());
     }
-    sequential_param_ids = calling_convention_param_ids.drop_back();
+    sequential_param_ids = call_param_ids.drop_back();
   } else {
-    sequential_param_ids = calling_convention_param_ids;
+    sequential_param_ids = call_param_ids;
   }
 
   for (auto param_id : sequential_param_ids) {

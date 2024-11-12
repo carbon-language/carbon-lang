@@ -34,9 +34,11 @@ struct NameComponent {
   Parse::NodeId params_loc_id;
   SemIR::InstBlockId param_patterns_id;
 
-  // The calling convention parameters of the function. These will all be
-  // instances of AnyParam.
-  SemIR::InstBlockId calling_convention_params_id;
+  // The call parameters of the entity, if it's a function (see the
+  // corresponding member of SemIR::EntityWithParamsBase).
+  // TODO: This is only used for function declarations. Should it go somewhere
+  // else?
+  SemIR::InstBlockId call_params_id;
 
   // The return slot.
   // TODO: These are only used for function declarations. Should they go

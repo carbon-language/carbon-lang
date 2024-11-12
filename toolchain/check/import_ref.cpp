@@ -941,7 +941,7 @@ class ImportRefResolver {
         .param_patterns_id = import_base.param_patterns_id.is_valid()
                                  ? SemIR::InstBlockId::Empty
                                  : SemIR::InstBlockId::Invalid,
-        .calling_convention_params_id = SemIR::InstBlockId::Invalid,
+        .call_params_id = SemIR::InstBlockId::Invalid,
         .is_extern = import_base.is_extern,
         .extern_library_id = extern_library_id,
         .non_owning_decl_id = import_base.non_owning_decl_id.is_valid()

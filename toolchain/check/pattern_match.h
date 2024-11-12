@@ -13,8 +13,8 @@ namespace Carbon::Check {
 // The outputs of CalleePatternMatch.
 // TODO: rename or remove this struct.
 struct ParameterBlocks {
-  // The calling convention parameters of the function.
-  SemIR::InstBlockId calling_convention_params_id;
+  // The call parameters of the function.
+  SemIR::InstBlockId call_params_id;
 
   // The return slot.
   // TODO: drop this and just use the last element of above?
@@ -29,15 +29,14 @@ struct ParameterBlocks {
 // are matched by the callee, and pattern insts that have a `ParamPattern`
 // as a descendant are matched by the caller.
 //
-// "Calling convention arguments" are the values actually passed from caller to
-// callee at the semantic IR level, and "calling convention parameters" are
-// the corresponding semantic placeholders that they bind to.
+// See EntityWithParamsBase::call_params for a discussion of "call parameters"
 
 // Emits the pattern-match IR for the declaration of a parameterized entity with
 // the given implicit and explicit parameter patterns, and the given return slot
 // pattern (any of which may be invalid if not applicable). This IR performs the
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
-// matching them against the corresponding calling-convention parameters.
+// matching them against the corresponding call parameters (see
+// entity_with_params_base.h for the definition of that term).
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
@@ -45,9 +44,8 @@ auto CalleePatternMatch(Context& context,
     -> ParameterBlocks;
 
 // Emits the pattern-match IR for matching the given arguments with the given
-// parameter patterns, and returns an inst block with one inst for each
-// calling convention argument. This IR performs the caller side of pattern
-// matching.
+// parameter patterns, and returns an inst block of the arguments that should
+// be passed to the `Call` inst.
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,

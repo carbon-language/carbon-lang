@@ -43,7 +43,7 @@ auto GlobalInit::Finalize() -> void {
         .pattern_block_id = SemIR::InstBlockId::Empty,
         .implicit_param_patterns_id = SemIR::InstBlockId::Invalid,
         .param_patterns_id = SemIR::InstBlockId::Empty,
-        .calling_convention_params_id = SemIR::InstBlockId::Empty,
+        .call_params_id = SemIR::InstBlockId::Empty,
         .is_extern = false,
         .extern_library_id = SemIR::LibraryNameId::Invalid,
         .non_owning_decl_id = SemIR::InstId::Invalid,

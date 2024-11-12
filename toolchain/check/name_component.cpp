@@ -43,7 +43,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  auto [calling_convention_params_id, return_slot_id] =
+  auto [call_params_id, return_slot_id] =
       CalleePatternMatch(context, *implicit_param_patterns_id,
                          *param_patterns_id, return_slot_pattern_id);
 
@@ -57,7 +57,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       .implicit_param_patterns_id = *implicit_param_patterns_id,
       .params_loc_id = params_loc_id,
       .param_patterns_id = *param_patterns_id,
-      .calling_convention_params_id = calling_convention_params_id,
+      .call_params_id = call_params_id,
       .return_slot_pattern_id = return_slot_pattern_id,
       .return_slot_id = return_slot_id,
       .pattern_block_id = context.pattern_block_stack().Pop(),
@@ -69,7 +69,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
 auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
     -> NameComponent {
   NameComponent name = PopNameComponent(context);
-  if (name.calling_convention_params_id.is_valid()) {
+  if (name.call_params_id.is_valid()) {
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
                       "`{0}` declaration cannot have parameters",
                       Lex::TokenKind);
@@ -79,7 +79,7 @@ auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
                                : name.params_loc_id,
                            UnexpectedDeclNameParams, introducer);
 
-    name.calling_convention_params_id = SemIR::InstBlockId::Invalid;
+    name.call_params_id = SemIR::InstBlockId::Invalid;
   }
   return name;
 }
