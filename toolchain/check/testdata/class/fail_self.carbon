@@ -46,7 +46,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `WrongSelf` to `Class` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:3: note: type `WrongSelf` does not implement interface `ImplicitAs(Class)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:8: note: initializing function parameter [InCallToFunctionParam]

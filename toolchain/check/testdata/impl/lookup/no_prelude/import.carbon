@@ -99,7 +99,7 @@ import HasExtraInterfaces;
 fn Test(c: HasExtraInterfaces.C(type)) {
   // This triggers the import of a bunch more interfaces, which reallocates the
   // interface ValueStore. Ensure that doesn't result in a use-after-free crash.
-  // CHECK:STDERR: fail_use_has_extra_interfaces.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_use_has_extra_interfaces.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C(type)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   c.(HasExtraInterfaces.I.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   c.(HasExtraInterfaces.I.F)();

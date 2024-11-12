@@ -19,7 +19,7 @@ var v: NoParams;
 // CHECK:STDERR: fail_empty_params.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `NoParams` to `EmptyParams()` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var w: EmptyParams() = v;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+4]]:1: note: type `NoParams` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+4]]:1: note: type `NoParams` does not implement interface `ImplicitAs(EmptyParams())` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var w: EmptyParams() = v;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,7 +40,7 @@ var v: Outer({}*);
 // CHECK:STDERR: fail_nested.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `Outer({}*)` to `Inner({.a: i32}*)` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+3]]:1: note: type `Outer({}*)` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+3]]:1: note: type `Outer({}*)` does not implement interface `ImplicitAs(Inner({.a: i32}*))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var w: Outer({}*).Inner({.a: i32}*) = v;
@@ -154,7 +154,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %NoParams = name_ref v, file.%v
-// CHECK:STDOUT:   %.loc17: %EmptyParams.2 = converted %v.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15: %EmptyParams.2 = converted %v.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

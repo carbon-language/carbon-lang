@@ -58,7 +58,7 @@ class Class(T:! type, N:! i32) {}
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+9]]:8: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var a: Class(5, i32*);
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

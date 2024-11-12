@@ -110,7 +110,7 @@ interface I {
   // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+7]]:13: error: cannot implicitly convert from `<associated type in I>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
-  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+4]]:13: note: type `<associated type in I>` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_return_in_interface.carbon:[[@LINE+4]]:13: note: type `<associated type in I>` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F() -> T;
   // CHECK:STDERR:             ^
   // CHECK:STDERR:

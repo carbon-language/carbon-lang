@@ -12,7 +12,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `const {}*` to `const ({}*)` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: note: type `const {}*` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: note: type `const {}*` does not implement interface `ImplicitAs(const ({}*))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
