@@ -207,16 +207,14 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id,
                                     llvm::ArrayRef<LookupScope> lookup_scopes)
     -> SemIR::InstId {
-  LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
-                         .inst_id = SemIR::InstId::BuiltinError};
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
       .highest_allowed_access =
           GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
   };
-
-  result = context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
-                                       /*required=*/true, access_info);
+  LookupResult result =
+      context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
+                                  /*required=*/true, access_info);
 
   if (!result.inst_id.is_valid()) {
     return SemIR::InstId::BuiltinError;
