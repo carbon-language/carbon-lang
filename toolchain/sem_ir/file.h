@@ -38,7 +38,7 @@ class File : public Printable<File> {
   // Used to return information about an integer type in `GetIntTypeInfo`.
   struct IntTypeInfo {
     bool is_signed;
-    IntId bit_width = IntId::Invalid;
+    IntId bit_width;
   };
 
   // Starts a new file for Check::CheckParseTree.
@@ -79,7 +79,8 @@ class File : public Printable<File> {
 
   // Returns integer type information from a type ID. Abstracts away the
   // difference between an `IntType` instruction defined type and a builtin
-  // instruction defined type.
+  // instruction defined type. Uses IntId::Invalid for types that have an
+  // invalid width.
   //
   // TODO: When we don't have a builtin int type mixed with actual `IntType`
   // instructions, clients should directly query the `IntType` instruction to

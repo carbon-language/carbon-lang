@@ -111,6 +111,7 @@ class IntId : public Printable<IntId> {
     return ZeroIndexId - id_;
   }
 
+  // Returns the ID formatted as a lex token payload.
   constexpr auto AsTokenPayload() const -> uint32_t {
     uint32_t payload = id_;
     // Ensure this ID round trips as the token payload.
@@ -155,10 +156,12 @@ class IntId : public Printable<IntId> {
   // The ID value that represents an index of `0`. This is the first ID value
   // representing an index, and all indices are `<=` to this.
   //
-  // Because this is the first index ID, and we encoded indices as successive
-  // negative numbers counting downwards, we can both use a comparison with
+  // ZeroIndexId is the first index ID, and we encode indices as successive
+  // negative numbers counting downwards. The setup allows us to both use a comparison with
   // this ID to distinguish value and index IDs, and to compute the actual index
-  // from the ID. The computation of an index in fact is just a subtraction:
+  // from the ID.
+  //
+  // The computation of an index in fact is just a subtraction:
   // `ZeroIndexId - id_`. Subtraction is *also* how most CPUs implement the
   // comparison, and so all of this ends up carefully constructed to enable very
   // small code size when testing for an embedded value and when that test fails
@@ -184,10 +187,10 @@ class IntId : public Printable<IntId> {
   // Document the specific values of some of these constants to help visualize
   // how the bit patterns map from the above computations.
   //
+  // clang-format off: visualizing bit positions
+  //
   // Each bit is either `T` for part of the token or `P` as part
   // of the available payload that we use for the ID:
-  //
-  // clang-format off: visualizing bit positions
   //
   //                           0bTTTT'TTTT'TPPP'PPPP'PPPP'PPPP'PPPP'PPPP
   static_assert(MaxValue    == 0b0000'0000'0011'1111'1111'1111'1111'1111);
@@ -217,8 +220,8 @@ constexpr int32_t IntId::InvalidIndex = Invalid.AsIndex();
 // optimized paths for adding integer values representable using native integer
 // types.
 //
-// Because the integers in the store are canonicalized without a specific bit
-// width there are helper functions to coerce them to a specific desired bit
+// Because the integers in the store are canonicalized with only a minimum bit
+// width, there are helper functions to coerce them to a specific desired bit
 // width for use.
 //
 // This leverages a significant optimization for small integer values -- rather
@@ -345,6 +348,7 @@ class IntStore {
  private:
   friend struct Testing::IntStoreTestPeer;
 
+  // Used for `values_`; tracked using `IntId`'s index range.
   struct APIntId : IdBase, Printable<APIntId> {
     using ValueType = llvm::APInt;
     static const APIntId Invalid;
@@ -403,14 +407,14 @@ class IntStore {
 
   // Helper functions for handling values that are large enough to require an
   // allocated `APInt` for storage. Creating or manipulating that storage is
-  // only a few lines of code, but it ends up expensive and a lot of code so we
-  // move these out-of-line.
+  // only a few lines of code, but we move these out-of-line because the generated code is big and harms performance for the non-`Large` common case.
   auto AddLarge(int64_t value) -> IntId;
   auto AddSignedLarge(llvm::APInt value) -> IntId;
   auto AddUnsignedLarge(llvm::APInt value) -> IntId;
   auto LookupLarge(int64_t value) const -> IntId;
   auto LookupSignedLarge(llvm::APInt value) const -> IntId;
 
+  // Stores values which don't fit in an IntId. These are always signed.
   CanonicalValueStore<APIntId> values_;
 };
 
