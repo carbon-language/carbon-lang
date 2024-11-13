@@ -22,7 +22,8 @@ fn Int32ToInt32(a: i32) -> i32 = "int.convert_checked";
 fn Int32ToUint32(a: i32) -> u32 = "int.convert_checked";
 fn Uint32ToInt32(a: u32) -> i32 = "int.convert_checked";
 fn Uint32ToUint32(a: u32) -> u32 = "int.convert_checked";
-fn IntLiteralToIntLiteral(a: IntLiteral()) -> IntLiteral() = "int.convert_checked";
+fn IntLiteralToIntLiteral(a: IntLiteral()) -> IntLiteral() =
+    "int.convert_checked";
 
 // Narrowing
 fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
@@ -81,7 +82,7 @@ let lit_i16_max: i16 = IntLiteralToInt16(Int32ToIntLiteral(0x7FFF));
 let lit_u16_min: u16 = IntLiteralToUint16(Int32ToIntLiteral(0));
 let lit_u16_max: u16 = IntLiteralToUint16(Int32ToIntLiteral(0xFFFF));
 
-// --- zext.carbon
+// --- zero_extend.carbon
 
 library "[[@TEST_NAME]]";
 import library "int_ops";
@@ -98,7 +99,7 @@ let d: i64 = Uint32ToInt64(
     AddU32(Int32ToUint32(0x7FFF_FFFF), Int32ToUint32(0x7FFF_FFFF)),
     Int32ToUint32(1)));
 
-// --- sext.carbon
+// --- sign_extend.carbon
 
 library "[[@TEST_NAME]]";
 import library "int_ops";
