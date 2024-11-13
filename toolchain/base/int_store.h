@@ -407,7 +407,9 @@ class IntStore {
 
   // Helper functions for handling values that are large enough to require an
   // allocated `APInt` for storage. Creating or manipulating that storage is
-  // only a few lines of code, but we move these out-of-line because the generated code is big and harms performance for the non-`Large` common case.
+  // only a few lines of code, but we move these out-of-line because the
+  // generated code is big and harms performance for the non-`Large` common
+  // case.
   auto AddLarge(int64_t value) -> IntId;
   auto AddSignedLarge(llvm::APInt value) -> IntId;
   auto AddUnsignedLarge(llvm::APInt value) -> IntId;
