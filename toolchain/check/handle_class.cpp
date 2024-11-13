@@ -296,6 +296,8 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
   context.struct_type_fields_stack().PushArray();
+  context.struct_type_fields_stack().AppendToTop(
+      {.name_id = SemIR::NameId::Vptr, .type_id = context.GetTupleType({})});
 
   // TODO: Handle the case where there's control flow in the class body. For
   // example:
@@ -668,10 +670,9 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   }
 
   if (defining_vtable_ptr) {
-    context.struct_type_fields_stack().PrependToTop(
-        {.name_id = SemIR::NameId::Vptr,
-         .type_id = context.GetPointerType(
-             context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))});
+    context.struct_type_fields_stack().PeekMutableArray().front().type_id =
+        context.GetPointerType(
+            context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType));
   }
 
   auto fields_id = context.struct_type_fields().AddCanonical(

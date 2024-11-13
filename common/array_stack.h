@@ -47,6 +47,13 @@ class ArrayStack {
     return llvm::ArrayRef(values_).slice(array_offsets_.back());
   }
 
+  // Returns the top array from the stack in such a way that the array's
+  // contents can be modified by the caller.
+  auto PeekMutableArray() -> llvm::MutableArrayRef<ValueT> {
+    CARBON_CHECK(!array_offsets_.empty());
+    return llvm::MutableArrayRef(values_).slice(array_offsets_.back());
+  }
+
   // Returns the array at a specific index.
   auto PeekArrayAt(int index) const -> llvm::ArrayRef<ValueT> {
     auto ref = llvm::ArrayRef(values_).slice(array_offsets_[index]);
