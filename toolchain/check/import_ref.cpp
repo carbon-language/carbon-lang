@@ -965,7 +965,7 @@ class ImportRefResolver {
       }
       case CARBON_KIND(SemIR::FacetType inst): {
         const SemIR::FacetTypeInfo& facet_type_info =
-            context_.sem_ir().facet_types().Get(inst.facet_type_id);
+            context_.facet_types().Get(inst.facet_type_id);
         // This is specifically the facet type produced by an interface
         // declaration, and so should consist of a single interface.
         // TODO: Will also have to handle named constraints here, once those are
@@ -2014,7 +2014,7 @@ class ImportRefResolver {
           context_.constant_values().GetInstId(interface_const_id));
       if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
         const SemIR::FacetTypeInfo& facet_type_info =
-            context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
+            context_.facet_types().Get(facet_type->facet_type_id);
         auto interface_type = facet_type_info.TryAsSingleInterface();
         CARBON_CHECK(interface_type);
         interface_id = interface_type->interface_id;
@@ -2094,7 +2094,7 @@ class ImportRefResolver {
           context_.constant_values().GetInstId(interface_const_id));
       if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
         const SemIR::FacetTypeInfo& new_facet_type_info =
-            context_.sem_ir().facet_types().Get(facet_type->facet_type_id);
+            context_.facet_types().Get(facet_type->facet_type_id);
         impls_constraints.append(new_facet_type_info.impls_constraints);
       } else {
         auto generic_interface_type =
@@ -2108,7 +2108,7 @@ class ImportRefResolver {
     }
     // TODO: Also process the other requirements.
     SemIR::FacetTypeId facet_type_id =
-        context_.sem_ir().facet_types().Add(SemIR::FacetTypeInfo{
+        context_.facet_types().Add(SemIR::FacetTypeInfo{
             .impls_constraints = impls_constraints,
             .requirement_block_id = SemIR::InstBlockId::Invalid});
     return ResolveAs<SemIR::FacetType>(
@@ -2134,9 +2134,16 @@ class ImportRefResolver {
       return Retry();
     }
 
+    // We can directly reuse the value IDs across file IRs. Otherwise, we need
+    // to add a new canonical int in this IR.
+    auto int_id =
+        inst.int_id.is_value()
+            ? inst.int_id
+            : context_.ints().AddSigned(import_ir_.ints().Get(inst.int_id));
+
     return ResolveAs<SemIR::IntValue>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_id),
-         .int_id = context_.ints().Add(import_ir_.ints().Get(inst.int_id))});
+         .int_id = int_id});
   }
 
   auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {

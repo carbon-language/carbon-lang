@@ -104,8 +104,41 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_wrong_real_exponent.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_wrong_real_exponent.carbon:[[@LINE+3]]:4: error: expected 'e' to introduce exponent [WrongRealLiteralExponent]
+// CHECK:STDERR: fail_wrong_real_exponent.carbon:[[@LINE+4]]:4: error: expected 'e' to introduce exponent [WrongRealLiteralExponent]
 // CHECK:STDERR: 1.0r3
 // CHECK:STDERR:    ^
+// CHECK:STDERR:
 1.0r3
-// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '1.0r3', has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: '1.0r3', has_leading_space: true }
+
+// --- fail_invalid_digit.carbon
+// CHECK:STDOUT: - filename: fail_invalid_digit.carbon
+// CHECK:STDOUT:   tokens:
+
+// CHECK:STDERR: fail_invalid_digit.carbon:[[@LINE+4]]:4: error: invalid digit 'a' in hexadecimal numeric literal [InvalidDigit]
+// CHECK:STDERR: 0x1a
+// CHECK:STDERR:    ^
+// CHECK:STDERR:
+0x1a
+// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: '0x1a', has_leading_space: true }
+
+// --- fail_invalid_separator.carbon
+// CHECK:STDOUT: - filename: fail_invalid_separator.carbon
+// CHECK:STDOUT:   tokens:
+
+// CHECK:STDERR: fail_invalid_separator.carbon:[[@LINE+4]]:2: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
+// CHECK:STDERR: 1__2
+// CHECK:STDERR:  ^
+// CHECK:STDERR:
+1__2
+// CHECK:STDOUT:   - { index: 1, kind: 'IntLiteral', line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: '1__2', value: `12`, has_leading_space: true }
+
+// --- fail_unknown_base.carbon
+// CHECK:STDOUT: - filename: fail_unknown_base.carbon
+// CHECK:STDOUT:   tokens:
+
+// CHECK:STDERR: fail_unknown_base.carbon:[[@LINE+3]]:1: error: unknown base specifier in numeric literal [UnknownBaseSpecifier]
+// CHECK:STDERR: 05
+// CHECK:STDERR: ^
+05
+// CHECK:STDOUT:   - { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '05', has_leading_space: true }

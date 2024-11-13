@@ -312,7 +312,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                     kind() == TokenKind::IntTypeLiteral ||
                     kind() == TokenKind::UnsignedIntTypeLiteral ||
                     kind() == TokenKind::FloatTypeLiteral);
-      return IntId(token_payload_);
+      return IntId::MakeFromTokenPayload(token_payload_);
     }
 
     auto real_id() const -> RealId {
@@ -362,6 +362,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     friend class Lexer;
 
     static constexpr int PayloadBits = 23;
+
+    // Make sure we have enough payload bits to represent token-associated IDs.
+    static_assert(PayloadBits >= IntId::TokenIdBits);
 
     // Constructor for a TokenKind that carries no payload, or where the payload
     // will be set later.

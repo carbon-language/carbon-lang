@@ -10,6 +10,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -35,6 +36,12 @@ namespace Carbon::SemIR {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
+  // Used to return information about an integer type in `GetIntTypeInfo`.
+  struct IntTypeInfo {
+    bool is_signed;
+    IntId bit_width;
+  };
+
   // Starts a new file for Check::CheckParseTree.
   explicit File(CheckIRId check_ir_id, IdentifierId package_id,
                 LibraryNameId library_id, SharedValueStores& value_stores,
@@ -69,6 +76,26 @@ class File : public Printable<File> {
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
+  }
+
+  // Returns integer type information from a type ID. Abstracts away the
+  // difference between an `IntType` instruction defined type and a builtin
+  // instruction defined type. Uses IntId::Invalid for types that have an
+  // invalid width.
+  //
+  // TODO: When we don't have a builtin int type mixed with actual `IntType`
+  // instructions, clients should directly query the `IntType` instruction to
+  // compute this information.
+  auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
+    auto inst_id = types().GetInstId(int_type_id);
+    if (inst_id == InstId::BuiltinIntType) {
+      return {.is_signed = true, .bit_width = ints().Lookup(32)};
+    }
+    auto int_type = insts().GetAs<IntType>(inst_id);
+    auto bit_width_inst = insts().TryGetAs<IntValue>(int_type.bit_width_id);
+    return {
+        .is_signed = int_type.int_kind.is_signed(),
+        .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }

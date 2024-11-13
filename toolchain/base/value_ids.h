@@ -41,21 +41,6 @@ class Real : public Printable<Real> {
   bool is_decimal;
 };
 
-// Corresponds to an integer value represented by an APInt. This is used both
-// for integer literal tokens, which are unsigned and have an unspecified
-// bit-width, and integer values in SemIR, which have a signedness and bit-width
-// matching their type.
-struct IntId : public IdBase, public Printable<IntId> {
-  using ValueType = llvm::APInt;
-  static const IntId Invalid;
-  using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "int";
-    IdBase::Print(out);
-  }
-};
-constexpr IntId IntId::Invalid(IntId::InvalidIndex);
-
 // Corresponds to a float value represented by an APFloat. This is used for
 // floating-point values in SemIR.
 struct FloatId : public IdBase, public Printable<FloatId> {

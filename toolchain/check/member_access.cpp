@@ -134,7 +134,7 @@ static auto PerformImplLookup(
   auto facet_type =
       context.types().GetAs<SemIR::FacetType>(assoc_type.interface_type_id);
   const auto& facet_type_info =
-      context.sem_ir().facet_types().Get(facet_type.facet_type_id);
+      context.facet_types().Get(facet_type.facet_type_id);
   auto interface_type = facet_type_info.TryAsSingleInterface();
   if (!interface_type) {
     context.TODO(loc_id,
@@ -319,8 +319,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
 static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId operand_inst_id,
                                SemIR::IntValue index_inst, int size)
-    -> const llvm::APInt* {
-  const auto& index_val = context.ints().Get(index_inst.int_id);
+    -> std::optional<llvm::APInt> {
+  llvm::APInt index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(TupleIndexOutOfBounds, Error,
                       "tuple element index `{0}` is past the end of type {1}",
@@ -328,9 +328,9 @@ static auto ValidateTupleIndex(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, TupleIndexOutOfBounds,
                            {.type = index_inst.type_id, .value = index_val},
                            operand_inst_id);
-    return nullptr;
+    return std::nullopt;
   }
-  return &index_val;
+  return index_val;
 }
 
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
@@ -485,8 +485,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_literal = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(index_const_id));
   auto type_block = context.type_blocks().Get(tuple_type->elements_id);
-  const auto* index_val = ValidateTupleIndex(context, loc_id, tuple_inst_id,
-                                             index_literal, type_block.size());
+  std::optional<llvm::APInt> index_val = ValidateTupleIndex(
+      context, loc_id, tuple_inst_id, index_literal, type_block.size());
   if (!index_val) {
     return SemIR::InstId::BuiltinError;
   }

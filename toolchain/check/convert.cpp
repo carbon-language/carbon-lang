@@ -155,7 +155,7 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     auto index_id = block.template AddInst<SemIR::IntValue>(
         loc_id,
         {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-         .int_id = context.ints().Add(llvm::APInt(32, i))});
+         .int_id = context.ints().AddUnsigned(llvm::APInt(32, i))});
     return block.template AddInst<AccessInstT>(
         loc_id, {elem_type_id, aggregate_id, index_id});
   } else {

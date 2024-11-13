@@ -15,19 +15,6 @@ namespace {
 using ::testing::Eq;
 using ::testing::Not;
 
-TEST(ValueStore, Int) {
-  CanonicalValueStore<IntId> ints;
-  IntId id1 = ints.Add(llvm::APInt(64, 1));
-  IntId id2 = ints.Add(llvm::APInt(64, 2));
-
-  ASSERT_TRUE(id1.is_valid());
-  ASSERT_TRUE(id2.is_valid());
-  EXPECT_THAT(id1, Not(Eq(id2)));
-
-  EXPECT_THAT(ints.Get(id1), Eq(1));
-  EXPECT_THAT(ints.Get(id2), Eq(2));
-}
-
 TEST(ValueStore, Real) {
   Real real1{.mantissa = llvm::APInt(64, 1),
              .exponent = llvm::APInt(64, 11),

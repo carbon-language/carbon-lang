@@ -33,20 +33,23 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
 static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
   auto val = context.ints().Get(int_id);
-  if (val.getActiveBits() > 31) {
+  CARBON_CHECK(val.isNonNegative(),
+               "Unexpected negative literal from the lexer: {0}", val);
+
+  // Make sure the value fits in an `i32`.
+  if (val.getSignificantBits() > 32) {
     CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
                       "integer literal with value {0} does not fit in i32",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, IntLiteralTooLargeForI32,
-                           llvm::APSInt(val, /*isUnsigned=*/true));
+                      llvm::APInt);
+    context.emitter().Emit(node_id, IntLiteralTooLargeForI32, val);
     return SemIR::InstId::BuiltinError;
   }
-  // Literals are always represented as unsigned, so zero-extend if needed.
-  auto i32_val = val.zextOrTrunc(32);
+
+  // We directly reuse the integer ID as it represents the canonical value.
   return context.AddInst<SemIR::IntValue>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-       .int_id = context.ints().Add(i32_val)});
+       .int_id = int_id});
 }
 
 // Forms an IntValue instruction with type `IntLiteral` for a given literal

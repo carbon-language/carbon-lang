@@ -33,30 +33,14 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     // should be tested.
     DiagnosticKind::ArrayBoundTooLarge,
 
-    // This isn't feasible to test with a normal testcase, but is tested in
+    // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
     DiagnosticKind::TooManyTokens,
-
-    // TODO: Should look closer at these, but adding tests is a high risk of
-    // loss in merge conflicts due to the amount of tests being changed right
-    // now.
-    DiagnosticKind::ExternLibraryInImporter,
-    DiagnosticKind::ExternLibraryOnDefinition,
-    DiagnosticKind::HexadecimalEscapeMissingDigits,
-    DiagnosticKind::IncompleteTypeInFunctionParam,
-    DiagnosticKind::InvalidDigit,
-    DiagnosticKind::InvalidDigitSeparator,
-    DiagnosticKind::InvalidHorizontalWhitespaceInString,
-    DiagnosticKind::MismatchedIndentInString,
-    DiagnosticKind::ModifierPrivateNotAllowed,
-    DiagnosticKind::MultiLineStringWithDoubleQuotes,
-    DiagnosticKind::TooManyDigits,
-    DiagnosticKind::UnaryOperatorRequiresWhitespace,
-    DiagnosticKind::UnicodeEscapeSurrogate,
-    DiagnosticKind::UnicodeEscapeTooLarge,
-    DiagnosticKind::UnknownBaseSpecifier,
     DiagnosticKind::UnsupportedCRLineEnding,
     DiagnosticKind::UnsupportedLFCRLineEnding,
+
+    // This is a little long but is tested in lex/numeric_literal_test.cpp.
+    DiagnosticKind::TooManyDigits,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

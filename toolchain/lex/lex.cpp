@@ -1013,10 +1013,11 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   return VariantMatch(
       literal->ComputeValue(emitter_),
       [&](NumericLiteral::IntValue&& value) {
-        return LexTokenWithPayload(
-            TokenKind::IntLiteral,
-            buffer_.value_stores_->ints().Add(std::move(value.value)).index,
-            byte_offset);
+        return LexTokenWithPayload(TokenKind::IntLiteral,
+                                   buffer_.value_stores_->ints()
+                                       .AddUnsigned(std::move(value.value))
+                                       .AsTokenPayload(),
+                                   byte_offset);
       },
       [&](NumericLiteral::RealValue&& value) {
         auto real_id = buffer_.value_stores_->reals().Add(Real{
@@ -1222,10 +1223,13 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     suffix_value = suffix_value * 10 + (c - '0');
   }
 
-  return LexTokenWithPayload(
-      kind,
-      buffer_.value_stores_->ints().Add(llvm::APInt(64, suffix_value)).index,
-      byte_offset);
+  // Add the bit width to our integer store and get its index. We treat it as
+  // unsigned as that's less expensive and it can't be negative.
+  CARBON_CHECK(suffix_value >= 0);
+  auto bit_width_payload =
+      buffer_.value_stores_->ints().Add(suffix_value).AsTokenPayload();
+
+  return LexTokenWithPayload(kind, bit_width_payload, byte_offset);
 }
 
 auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,

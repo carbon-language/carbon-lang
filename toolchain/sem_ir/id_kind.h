@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {

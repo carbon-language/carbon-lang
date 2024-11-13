@@ -13,16 +13,26 @@ import sys
 _SCRIPT_LOCATION = "{0}"
 _TOOL_LOCATION = "{1}"
 
+# Drop shared parent portions so that we're working with a minimum suffix.
+# This is so that both `bazel-out` and manual `bazel-bin` invocations work.
+script_parts = _SCRIPT_LOCATION.split('/')
+tool_parts = _TOOL_LOCATION.split('/')
+while script_parts and tool_parts and script_parts[0] == tool_parts[0]:
+    del script_parts[0]
+    del tool_parts[0]
+script_suffix = '/' + '/'.join(script_parts)
+tool_suffix = '/' + '/'.join(tool_parts)
+
 # Make sure we have the expected structure.
-if not __file__.endswith(_SCRIPT_LOCATION):
+if not __file__.endswith(script_suffix):
     exit(
         "Unable to figure out path:\\n"
         f"  __file__: {{__file__}}\\n"
-        f"  script: {{_SCRIPT_LOCATION}}\\n"
+        f"  script: {{script_suffix}}\\n"
     )
 
 # Run the tool using the absolute path, forwarding arguments.
-tool_path = __file__.removesuffix(_SCRIPT_LOCATION) + _TOOL_LOCATION
+tool_path = __file__.removesuffix(script_suffix) + tool_suffix
 os.execv(tool_path, [tool_path] + sys.argv[1:])
 """
 

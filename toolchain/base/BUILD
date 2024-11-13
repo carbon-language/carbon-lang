@@ -56,6 +56,7 @@ cc_library(
     hdrs = ["value_ids.h"],
     deps = [
         ":index_base",
+        "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -90,9 +91,40 @@ cc_test(
 )
 
 cc_library(
+    name = "int",
+    srcs = ["int.cpp"],
+    hdrs = ["int.h"],
+    deps = [
+        ":index_base",
+        ":mem_usage",
+        ":value_store",
+        ":yaml",
+        "//common:check",
+        "//common:hashtable_key_context",
+        "//common:ostream",
+        "//common:set",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "int_test",
+    size = "small",
+    srcs = ["int_test.cpp"],
+    deps = [
+        ":int",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "//toolchain/testing:yaml_test_helpers",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "shared_value_stores",
     hdrs = ["shared_value_stores.h"],
     deps = [
+        ":int",
         ":mem_usage",
         ":value_ids",
         ":value_store",

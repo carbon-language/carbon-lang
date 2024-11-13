@@ -210,13 +210,18 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
 
   // IntLiteral is represented as an empty struct. All other integer types are
   // represented as an LLVM integer type.
-  if (!llvm::isa<llvm::IntegerType>(type)) {
+  auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
+  if (!int_type) {
     auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
     CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
     return llvm::ConstantStruct::get(struct_type);
   }
 
-  return llvm::ConstantInt::get(type, context.sem_ir().ints().Get(inst.int_id));
+  auto val = context.sem_ir().ints().Get(inst.int_id);
+  int bit_width = int_type->getBitWidth();
+  bool is_signed = context.sem_ir().GetIntTypeInfo(inst.type_id).is_signed;
+  return llvm::ConstantInt::get(type, is_signed ? val.sextOrTrunc(bit_width)
+                                                : val.zextOrTrunc(bit_width));
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
