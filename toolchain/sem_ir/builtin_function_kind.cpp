@@ -202,6 +202,10 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
 
+// Converts between integer types, with a diagnostic if the value doesn't fit.
+constexpr BuiltinInfo IntConvertChecked = {
+    "int.convert_checked", ValidateSignature<auto(AnyInt)->AnyInt>};
+
 // "int.snegate": integer negation.
 constexpr BuiltinInfo IntSNegate = {"int.snegate",
                                     ValidateSignature<auto(IntT)->IntT>};
@@ -371,6 +375,10 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 #include "toolchain/sem_ir/builtin_function_kind.def"
   };
   return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
+}
+
+auto BuiltinFunctionKind::IsCompTimeOnly() const -> bool {
+  return *this == BuiltinFunctionKind::IntConvertChecked;
 }
 
 }  // namespace Carbon::SemIR

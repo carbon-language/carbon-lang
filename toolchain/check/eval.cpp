@@ -243,8 +243,11 @@ static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
 
 // Converts an APInt value into a ConstantId.
 static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
-                          llvm::APInt value) -> SemIR::ConstantId {
-  auto result = context.ints().AddSigned(std::move(value));
+                          bool is_signed, llvm::APInt value)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(is_signed == context.types().IsSignedInt(type_id));
+  auto result = is_signed ? context.ints().AddSigned(std::move(value))
+                          : context.ints().AddUnsigned(std::move(value));
   return MakeConstantResult(
       context, SemIR::IntValue{.type_id = type_id, .int_id = result},
       Phase::Template);
@@ -662,6 +665,46 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
   return ValidateFloatBitWidth(context, loc, result.bit_width_id);
 }
 
+// Performs a conversion between integer types, diagnosing if the value doesn't
+// fit in the destination type.
+static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
+                                     SemIR::InstId arg_id,
+                                     SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
+  auto arg_val = context.ints().Get(arg.int_id);
+
+  auto [is_signed, bit_width_id] =
+      context.sem_ir().GetIntTypeInfo(dest_type_id);
+  auto width = bit_width_id.is_valid()
+                   ? context.ints().Get(bit_width_id).getZExtValue()
+                   : arg_val.getBitWidth();
+
+  if (!is_signed && arg_val.isNegative()) {
+    CARBON_DIAGNOSTIC(
+        NegativeIntInUnsignedType, Error,
+        "negative integer value {0} converted to unsigned type {1}", TypedInt,
+        SemIR::TypeId);
+    context.emitter().Emit(loc, NegativeIntInUnsignedType,
+                           {.type = arg.type_id, .value = arg_val},
+                           dest_type_id);
+  }
+
+  unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
+  if (arg_non_sign_bits + is_signed > width) {
+    CARBON_DIAGNOSTIC(IntTooLargeForType, Error,
+                      "integer value {0} too large for type {1}", TypedInt,
+                      SemIR::TypeId);
+    context.emitter().Emit(loc, IntTooLargeForType,
+                           {.type = arg.type_id, .value = arg_val},
+                           dest_type_id);
+  }
+
+  return MakeConstantResult(
+      context, SemIR::IntValue{.type_id = dest_type_id, .int_id = arg.int_id},
+      Phase::Template);
+}
+
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");
@@ -699,7 +742,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
       CARBON_FATAL("Unexpected builtin kind");
   }
 
-  return MakeIntResult(context, op.type_id, std::move(op_val));
+  return MakeIntResult(context, op.type_id, is_signed, std::move(op_val));
 }
 
 // Performs a builtin binary integer -> integer operation.
@@ -761,7 +804,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       } else {
         result_val = lhs_val.lshr(rhs_orig_val);
       }
-      return MakeIntResult(context, lhs.type_id, std::move(result_val));
+      return MakeIntResult(context, lhs.type_id, lhs_is_signed,
+                           std::move(result_val));
     }
 
     default:
@@ -855,7 +899,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                            {.type = rhs.type_id, .value = rhs_val});
   }
 
-  return MakeIntResult(context, lhs.type_id, std::move(result_val));
+  return MakeIntResult(context, lhs.type_id, lhs_is_signed,
+                       std::move(result_val));
 }
 
 // Performs a builtin integer comparison.
@@ -1041,6 +1086,11 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
       return context.constant_values().Get(SemIR::InstId::BuiltinBoolType);
     }
 
+    // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+      return PerformCheckedIntConvert(context, loc, arg_ids[0], call.type_id);
+    }
+
     // Unary integer -> integer operations.
     case SemIR::BuiltinFunctionKind::IntSNegate:
     case SemIR::BuiltinFunctionKind::IntUNegate:
@@ -1140,13 +1190,9 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
     return SemIR::ConstantId::Error;
   }
 
-  // If the callee or return type isn't constant, this is not a constant call.
-  if (!ReplaceFieldWithConstantValue(eval_context, &call,
-                                     &SemIR::Call::callee_id, &phase) ||
-      !ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::type_id,
-                                     &phase)) {
-    return SemIR::ConstantId::NotConstant;
-  }
+  // Find the constant value of the callee.
+  bool has_constant_callee = ReplaceFieldWithConstantValue(
+      eval_context, &call, &SemIR::Call::callee_id, &phase);
 
   auto callee_function =
       SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
@@ -1166,13 +1212,34 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
     // constant.
   }
 
-  // If the arguments aren't constant, this is not a constant call.
-  if (!ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::args_id,
-                                     &phase)) {
-    return SemIR::ConstantId::NotConstant;
-  }
+  // Find the argument values and the return type.
+  bool has_constant_operands =
+      has_constant_callee &&
+      ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::type_id,
+                                    &phase) &&
+      ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::args_id,
+                                    &phase);
   if (phase == Phase::UnknownDueToError) {
     return SemIR::ConstantId::Error;
+  }
+
+  // If any operand of the call is non-constant, the call is non-constant.
+  // TODO: Some builtin calls might allow some operands to be non-constant.
+  if (!has_constant_operands) {
+    if (builtin_kind.IsCompTimeOnly()) {
+      CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
+                        "non-constant call to compile-time-only function");
+      CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
+                        "compile-time-only function declared here");
+      eval_context.emitter()
+          .Build(loc, NonConstantCallToCompTimeOnlyFunction)
+          .Note(eval_context.functions()
+                    .Get(callee_function.function_id)
+                    .latest_decl_id(),
+                CompTimeOnlyFunctionHere)
+          .Emit();
+    }
+    return SemIR::ConstantId::NotConstant;
   }
 
   // Handle calls to builtins.

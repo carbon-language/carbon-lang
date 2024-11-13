@@ -91,6 +91,9 @@ class File : public Printable<File> {
     if (inst_id == InstId::BuiltinIntType) {
       return {.is_signed = true, .bit_width = ints().Lookup(32)};
     }
+    if (inst_id == InstId::BuiltinIntLiteralType) {
+      return {.is_signed = true, .bit_width = IntId::Invalid};
+    }
     auto int_type = insts().GetAs<IntType>(inst_id);
     auto bit_width_inst = insts().TryGetAs<IntValue>(int_type.bit_width_id);
     return {
