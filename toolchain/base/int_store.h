@@ -156,10 +156,10 @@ class IntId : public Printable<IntId> {
   // The ID value that represents an index of `0`. This is the first ID value
   // representing an index, and all indices are `<=` to this.
   //
-  // ZeroIndexId is the first index ID, and we encode indices as successive
-  // negative numbers counting downwards. The setup allows us to both use a comparison with
-  // this ID to distinguish value and index IDs, and to compute the actual index
-  // from the ID.
+  // `ZeroIndexId` is the first index ID, and we encode indices as successive
+  // negative numbers counting downwards. The setup allows us to both use a
+  // comparison with this ID to distinguish value and index IDs, and to compute
+  // the actual index from the ID.
   //
   // The computation of an index in fact is just a subtraction:
   // `ZeroIndexId - id_`. Subtraction is *also* how most CPUs implement the
