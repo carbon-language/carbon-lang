@@ -120,7 +120,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Child
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
@@ -188,7 +188,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   .base = imports.%import_ref.9
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend constants.%Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

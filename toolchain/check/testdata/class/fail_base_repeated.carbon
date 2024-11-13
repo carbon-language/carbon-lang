@@ -97,7 +97,7 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc15
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -109,6 +109,6 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc28
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B1.ref.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

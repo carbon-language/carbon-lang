@@ -228,8 +228,7 @@ class Context {
   // Returns the lookup scopes corresponding to `base_const_id`, or `nullopt` if
   // not a scope. On invalid scopes, prints a diagnostic and still returns the
   // scopes.
-  auto LookupScopesForConstant(SemIR::LocId loc_id,
-                               SemIR::ConstantId base_const_id)
+  auto LookupScopesForConstant(SemIRLoc loc, SemIR::ConstantId base_const_id)
       -> std::optional<llvm::SmallVector<LookupScope, 1>>;
 
   // Performs a qualified name lookup in a specified scopes and in scopes that

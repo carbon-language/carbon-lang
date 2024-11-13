@@ -83,7 +83,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

@@ -100,18 +100,20 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
 
 // Returns whether `scope` is a scope for which impl lookup should be performed
 // if we find an associated entity.
-static auto ScopeNeedsImplLookup(Context& context, LookupScope scope) -> bool {
-  auto [_, inst] = context.name_scopes().GetInstIfValid(scope.name_scope_id);
-  if (!inst) {
-    return false;
-  }
+static auto ScopeNeedsImplLookup(Context& context,
+                                 SemIR::ConstantId name_scope_const_id)
+    -> bool {
+  SemIR::InstId inst_id =
+      context.constant_values().GetInstId(name_scope_const_id);
+  CARBON_CHECK(inst_id.is_valid());
+  SemIR::Inst inst = context.insts().Get(inst_id);
 
-  if (inst->Is<SemIR::InterfaceDecl>()) {
+  if (inst.Is<SemIR::FacetType>()) {
     // Don't perform impl lookup if an associated entity is named as a member of
     // a facet type.
     return false;
   }
-  if (inst->Is<SemIR::Namespace>()) {
+  if (inst.Is<SemIR::Namespace>()) {
     // Don't perform impl lookup if an associated entity is named as a namespace
     // member.
     // TODO: This case is not yet listed in the design.
@@ -250,7 +252,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   // impl member is not supposed to be treated as ambiguous.
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
-    if (ScopeNeedsImplLookup(context, lookup_scope)) {
+    if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
                                     *assoc_type, member_id);
     }

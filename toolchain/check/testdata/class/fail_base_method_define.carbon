@@ -103,7 +103,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .F = file.%F.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

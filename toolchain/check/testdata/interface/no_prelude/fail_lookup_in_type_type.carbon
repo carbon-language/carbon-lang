@@ -22,7 +22,7 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+3]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+3]]:8: error: name `missing` not found [NameNotFound]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let U: (type where .Self impls type).missing = {};
@@ -64,6 +64,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   %.loc7: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:     requirement_impls %.Self.ref, type
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %missing.ref: <error> = name_ref missing, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

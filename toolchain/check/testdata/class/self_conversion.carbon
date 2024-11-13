@@ -169,7 +169,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .SelfBase = %SelfBase.decl
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

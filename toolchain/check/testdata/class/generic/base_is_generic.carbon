@@ -35,12 +35,6 @@ library "[[@TEST_NAME]]";
 import library "extend_generic_base";
 
 fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
-  // CHECK:STDERR: fail_todo_import.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Derived` to `Base` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   return d.x.y;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_import.carbon:[[@LINE+3]]:10: note: type `Derived` does not implement interface `ImplicitAs` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return d.x.y;
-  // CHECK:STDERR:          ^~~
   return d.x.y;
 }
 
@@ -166,7 +160,7 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend name_scope2, specific2
+// CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -235,23 +229,8 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %.12: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %.13: type = struct_type {.base: %.12} [symbolic]
 // CHECK:STDOUT:   %.14: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.15: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %.16: %.15 = assoc_entity element0, imports.%import_ref.16 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%Base.2)> [symbolic]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert, @ImplicitAs(%Base.2) [symbolic]
-// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.17: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.2 [symbolic]
-// CHECK:STDOUT:   %.18: %.17 = assoc_entity element0, imports.%import_ref.16 [symbolic]
-// CHECK:STDOUT:   %.19: %.15 = assoc_entity element0, imports.%import_ref.17 [symbolic]
+// CHECK:STDOUT:   %.15: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.16: type = unbound_element_type %Param, i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -261,23 +240,16 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+72, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.11
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//extend_generic_base, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.16 = import_ref Main//extend_generic_base, inst+39, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extend_generic_base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.8: @Base.%.1 (%.8) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8: @Base.%.1 (%.8) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.2]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+44, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_base, inst+56, unloaded
 // CHECK:STDOUT:   %import_ref.11: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.12: %ImplicitAs.type.1 = import_ref Core//prelude/operators/as, inst+48, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//prelude/operators/as, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.14: @ImplicitAs.%.1 (%.15) = import_ref Core//prelude/operators/as, inst+76, loaded [symbolic = @ImplicitAs.%.2 (constants.%.19)]
-// CHECK:STDOUT:   %import_ref.15 = import_ref Core//prelude/operators/as, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/as, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Core//prelude/operators/as, inst+69, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -308,31 +280,11 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %.1 (constants.%.15)]
-// CHECK:STDOUT:   %.2: @ImplicitAs.%.1 (%.15) = assoc_entity element0, imports.%import_ref.16 [symbolic = %.2 (constants.%.16)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.13
-// CHECK:STDOUT:     .Convert = imports.%import_ref.14
-// CHECK:STDOUT:     witness = (imports.%import_ref.15)
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.9
 // CHECK:STDOUT:   .base = imports.%import_ref.10
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend constants.%Base.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
@@ -363,29 +315,19 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %.8 = name_ref x, imports.%import_ref.8 [template = imports.%.1]
-// CHECK:STDOUT:   %.loc13_11.1: %Base.2 = converted %d.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc13_11.2: %T = class_element_access <error>, element0 [template = <error>]
-// CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self (%Self.2)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   %x.ref: %.9 = name_ref x, imports.%import_ref.8 [template = imports.%.2]
+// CHECK:STDOUT:   %.loc7_11.1: ref %Base.3 = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc7_11.2: ref %Base.3 = converted %d.ref, %.loc7_11.1
+// CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
+// CHECK:STDOUT:   %y.ref: %.16 = name_ref y, imports.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc7_13.1: ref i32 = class_element_access %.loc7_11.3, element0
+// CHECK:STDOUT:   %.loc7_13.2: i32 = bind_value %.loc7_13.1
+// CHECK:STDOUT:   return %.loc7_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base => constants.%Base.2
-// CHECK:STDOUT:   %.1 => constants.%.8
-// CHECK:STDOUT:   %.2 => constants.%.3
-// CHECK:STDOUT:   %.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%Param) {
@@ -402,39 +344,5 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 // CHECK:STDOUT: specific @Base(@Base.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.1) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Base.2) {
-// CHECK:STDOUT:   %Dest => constants.%Base.2
-// CHECK:STDOUT:   %Dest.patt => constants.%Base.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
-// CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
-// CHECK:STDOUT:   %Convert => constants.%Convert.2
-// CHECK:STDOUT:   %.1 => constants.%.17
-// CHECK:STDOUT:   %.2 => constants.%.18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

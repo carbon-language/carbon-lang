@@ -449,7 +449,7 @@ struct ProhibitedAccessInfo {
 //                               SemIR::ConstantId base_const_id,
 //                               llvm::SmallVector<LookupScope, 1>* scopes)
 //   -> bool
-auto Context::LookupScopesForConstant(SemIR::LocId loc_id,
+auto Context::LookupScopesForConstant(SemIRLoc loc,
                                       SemIR::ConstantId base_const_id)
     -> std::optional<llvm::SmallVector<LookupScope, 1>> {
   auto base_id = constant_values().GetInstId(base_const_id);
@@ -466,8 +466,7 @@ auto Context::LookupScopesForConstant(SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
-      return emitter().Build(loc_id, QualifiedExprInIncompleteClassScope,
-                             base_id);
+      return emitter().Build(loc, QualifiedExprInIncompleteClassScope, base_id);
     });
     auto& class_info = classes().Get(base_as_class->class_id);
     llvm::SmallVector<LookupScope, 1> scopes;
@@ -480,7 +479,7 @@ auto Context::LookupScopesForConstant(SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                         "member access into undefined interface {0}",
                         InstIdAsType);
-      return emitter().Build(loc_id, QualifiedExprInUndefinedInterfaceScope,
+      return emitter().Build(loc, QualifiedExprInUndefinedInterfaceScope,
                              base_id);
     });
     const auto& facet_type_info =
@@ -551,9 +550,13 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
         // determine its corresponding specific.
         SemIR::ConstantId const_id =
             GetConstantValueInSpecific(sem_ir(), specific_id, extended_id);
-        // FIXME: what do we do on error?
+        // FIXME: add a diagnosticannotationscope to include the extended_id as
+        // a note.
         if (auto extended_scopes = LookupScopesForConstant(loc, const_id)) {
-          scopes.append(extended_scopes);
+          scopes.append(*extended_scopes);
+        } else {
+          // TODO: Handle case where we have a symbolic type and instead should
+          // look in its type.
         }
       }
       is_parent_access |= !extended.empty();

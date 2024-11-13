@@ -214,7 +214,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .b = %.loc21_8
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend %A2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

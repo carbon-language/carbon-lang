@@ -173,30 +173,20 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(constraint_id);
-  if (!facet_type) {
+  if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
     parent_scope.has_error = true;
     return;
   }
-  const SemIR::FacetTypeInfo& info =
-      context.sem_ir().facet_types().Get(facet_type->facet_type_id);
-  for (auto interface_type : info.impls_constraints) {
-    auto& interface = context.interfaces().Get(interface_type.interface_id);
-    if (!interface.is_defined()) {
-      CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                        "`extend impl` requires a definition for interface {0}",
-                        InstIdAsType);
-      auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                          constraint_inst_id);
-      context.NoteUndefinedInterface(interface_type.interface_id, diag);
-      diag.Emit();
-      parent_scope.has_error = true;
-      return;
-    }
+  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
+    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
+                      "`extend impl` requires a definition for facet type {0}",
+                      InstIdAsType);
+    return context.emitter().Build(node_id, ExtendUndefinedInterface,
+                                   constraint_inst_id);
+  });
 
-    parent_scope.extended_scopes.push_back(interface.scope_id);
-  }
+  parent_scope.extended_scopes.push_back(constraint_inst_id);
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no

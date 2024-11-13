@@ -174,7 +174,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   extend name_scope4
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

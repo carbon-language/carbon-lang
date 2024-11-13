@@ -420,7 +420,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     }
 
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (extended_scope_id.is_valid()) {
+    if (extended_scope_inst_id.is_valid()) {
       class_scope.extended_scopes.push_back(extended_scope_inst_id);
     } else {
       class_scope.has_error = true;
@@ -448,9 +448,11 @@ struct BaseInfo {
 
   SemIR::TypeId type_id;
   SemIR::NameScopeId scope_id;
+  SemIR::InstId inst_id;
 };
 constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
-                                      .scope_id = SemIR::NameScopeId::Invalid};
+                                      .scope_id = SemIR::NameScopeId::Invalid,
+                                      .inst_id = SemIR::InstId::Invalid};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -496,7 +498,9 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
 
   CARBON_CHECK(base_class_info->scope_id.is_valid(),
                "Complete class should have a scope");
-  return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
+  return {.type_id = base_type_id,
+          .scope_id = base_class_info->scope_id,
+          .inst_id = base_type_inst_id};
 }
 
 auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
@@ -560,7 +564,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(base_type_expr_id);
+      class_scope.extended_scopes.push_back(base_info.inst_id);
     } else {
       class_scope.has_error = true;
     }

@@ -212,7 +212,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17_8
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -228,7 +228,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .c = %.loc22_8
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

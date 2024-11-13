@@ -51,13 +51,13 @@ fn G(c: C) {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %HasF.type.3: type = facet_type <@HasF, @HasF(%Param)> [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @HasF(%Param) [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @HasF(%Param) [template]
-// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type %HasF.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type %HasF.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @HasF.%F.decl [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %.9: type = struct_type {} [template]
 // CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %.11: type = ptr_type %.4 [template]
@@ -137,7 +137,7 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasF.type {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.2 [template = constants.%F.3] {
 // CHECK:STDOUT:     %return.patt: %Param = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Param = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -175,7 +175,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   extend name_scope2, specific3
+// CHECK:STDOUT:   extend @impl.%HasF.type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%T.loc11_16.1: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.2)) {
@@ -205,7 +205,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc28_17.1: %.6 = specific_constant @HasF.%.loc12_14.1, @HasF(constants.%Param) [template = constants.%.7]
 // CHECK:STDOUT:   %F.ref.loc28: %.6 = name_ref F, %.loc28_17.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc28_17.2: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc28_17.2: %F.type.2 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc28_19.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc28: init %Param = call %.loc28_17.2() to %.loc28_19.1
 // CHECK:STDOUT:   %.loc28_19.2: ref %Param = temporary %.loc28_19.1, %F.call.loc28
@@ -221,7 +221,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc29_17.1: %.6 = specific_constant @HasF.%.loc12_14.1, @HasF(constants.%Param) [template = constants.%.7]
 // CHECK:STDOUT:   %F.ref.loc29: %.6 = name_ref F, %.loc29_17.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc29_17.2: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc29_17.2: %F.type.2 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc29_19.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc29: init %Param = call %.loc29_17.2() to %.loc29_19.1
 // CHECK:STDOUT:   %.loc29_19.2: ref %Param = temporary %.loc29_19.1, %F.call.loc29
@@ -253,8 +253,8 @@ fn G(c: C) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.3
-// CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT:   %.loc12_14.2 => constants.%.6
 // CHECK:STDOUT:   %.loc12_14.3 => constants.%.7
 // CHECK:STDOUT: }
