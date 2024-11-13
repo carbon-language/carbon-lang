@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 
-#include "toolchain/base/int_store.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/base/value_store.h"

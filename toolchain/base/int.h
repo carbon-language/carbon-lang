@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_BASE_INT_STORE_H_
-#define CARBON_TOOLCHAIN_BASE_INT_STORE_H_
+#ifndef CARBON_TOOLCHAIN_BASE_INT_H_
+#define CARBON_TOOLCHAIN_BASE_INT_H_
 
 #include "common/check.h"
 #include "llvm/ADT/APFloat.h"
@@ -425,4 +425,4 @@ constexpr IntStore::APIntId IntStore::APIntId::Invalid(
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_BASE_INT_STORE_H_
+#endif  // CARBON_TOOLCHAIN_BASE_INT_H_

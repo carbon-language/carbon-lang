@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
-#include "toolchain/base/int_store.h"
+#include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"

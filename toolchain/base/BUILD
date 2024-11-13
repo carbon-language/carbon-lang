@@ -91,9 +91,9 @@ cc_test(
 )
 
 cc_library(
-    name = "int_store",
-    srcs = ["int_store.cpp"],
-    hdrs = ["int_store.h"],
+    name = "int",
+    srcs = ["int.cpp"],
+    hdrs = ["int.h"],
     deps = [
         ":index_base",
         ":mem_usage",
@@ -108,11 +108,11 @@ cc_library(
 )
 
 cc_test(
-    name = "int_store_test",
+    name = "int_test",
     size = "small",
-    srcs = ["int_store_test.cpp"],
+    srcs = ["int_test.cpp"],
     deps = [
-        ":int_store",
+        ":int",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
@@ -124,7 +124,7 @@ cc_library(
     name = "shared_value_stores",
     hdrs = ["shared_value_stores.h"],
     deps = [
-        ":int_store",
+        ":int",
         ":mem_usage",
         ":value_ids",
         ":value_store",
