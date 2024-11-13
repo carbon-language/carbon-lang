@@ -75,20 +75,20 @@ fn F() {
 }
 
 
-// --- import_extend_generic_symbolic_base.carbon
+// --- fail_todo_import_extend_generic_symbolic_base.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "extend_generic_symbolic_base";
 
 fn H() {
-  // CHECK:STDERR: import_extend_generic_symbolic_base.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   let i: i32 = C(i32).G();
+  // CHECK:STDERR: fail_todo_import_extend_generic_symbolic_base.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   let j: i32 = C(i32).G();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: import_extend_generic_symbolic_base.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let i: i32 = C(i32).G();
+  // CHECK:STDERR: fail_todo_import_extend_generic_symbolic_base.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let j: i32 = C(i32).G();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  let i: i32 = C(i32).G();
+  let j: i32 = C(i32).G();
 }
 
 // CHECK:STDOUT: --- extend_generic_base.carbon
@@ -751,7 +751,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc5_24.3 => constants.%.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_extend_generic_symbolic_base.carbon
+// CHECK:STDOUT: --- fail_todo_import_extend_generic_symbolic_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -913,7 +913,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc13_22.2: <specific function> = specific_function %G.ref, @G(constants.%T) [symbolic = constants.%.13]
 // CHECK:STDOUT:   %G.call: init %T = call %.loc13_22.2()
 // CHECK:STDOUT:   %.loc13_26: i32 = converted %G.call, <error> [template = <error>]
-// CHECK:STDOUT:   %i: i32 = bind_name i, <error>
+// CHECK:STDOUT:   %j: i32 = bind_name j, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

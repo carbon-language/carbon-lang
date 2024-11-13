@@ -550,8 +550,12 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
         // determine its corresponding specific.
         SemIR::ConstantId const_id =
             GetConstantValueInSpecific(sem_ir(), specific_id, extended_id);
-        // FIXME: add a diagnosticannotationscope to include the extended_id as
-        // a note.
+
+        DiagnosticAnnotationScope annotate_diagnostics(
+            &emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(FromExtendHere, Note, "from  here");
+              builder.Note(extended_id, FromExtendHere);
+            });
         if (auto extended_scopes = LookupScopesForConstant(loc, const_id)) {
           scopes.append(*extended_scopes);
         } else {

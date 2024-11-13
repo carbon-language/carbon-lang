@@ -272,6 +272,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclInIncompleteClassScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 
 // Name lookup.
+CARBON_DIAGNOSTIC_KIND(FromExtendHere)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
