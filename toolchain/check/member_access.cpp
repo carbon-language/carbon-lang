@@ -340,10 +340,11 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
-    if (auto lookup_scopes =
-            context.LookupScopesForConstant(loc_id, base_const_id)) {
+    llvm::SmallVector<LookupScope> lookup_scopes;
+    if (context.AppendLookupScopesForConstant(loc_id, base_const_id,
+                                              &lookup_scopes)) {
       return LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                     base_const_id, *lookup_scopes);
+                                     base_const_id, lookup_scopes);
     }
   }
 
@@ -365,9 +366,9 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
   // Find the scope corresponding to the base type.
-  auto lookup_scopes =
-      context.LookupScopesForConstant(loc_id, base_type_const_id);
-  if (!lookup_scopes) {
+  llvm::SmallVector<LookupScope> lookup_scopes;
+  if (!context.AppendLookupScopesForConstant(loc_id, base_type_const_id,
+                                             &lookup_scopes)) {
     // The base type is not a name scope. Try some fallback options.
     if (auto struct_type = context.insts().TryGetAs<SemIR::StructType>(
             context.constant_values().GetInstId(base_type_const_id))) {
@@ -402,7 +403,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // Perform lookup into the base type.
   auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                           base_type_const_id, *lookup_scopes);
+                                           base_type_const_id, lookup_scopes);
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);

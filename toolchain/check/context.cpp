@@ -441,25 +441,16 @@ struct ProhibitedAccessInfo {
   bool is_parent_access;
 };
 
-// Returns the lookup scopes corresponding to `base_const_id`, or `nullopt` if
-// not a scope. On invalid scopes, prints a diagnostic and still returns the
-// scope.
-// FIXME: Change this to
-// AppendLookupScopesForConstant(SemIR::LocId loc_id,
-//                               SemIR::ConstantId base_const_id,
-//                               llvm::SmallVector<LookupScope, 1>* scopes)
-//   -> bool
-auto Context::LookupScopesForConstant(SemIRLoc loc,
-                                      SemIR::ConstantId base_const_id)
-    -> std::optional<llvm::SmallVector<LookupScope, 1>> {
+auto Context::AppendLookupScopesForConstant(
+    SemIRLoc loc, SemIR::ConstantId base_const_id,
+    llvm::SmallVector<LookupScope>* scopes) -> bool {
   auto base_id = constant_values().GetInstId(base_const_id);
   auto base = insts().Get(base_id);
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
-    llvm::SmallVector<LookupScope, 1> scopes;
-    scopes.push_back(
+    scopes->push_back(
         LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
                     .specific_id = SemIR::SpecificId::Invalid});
-    return scopes;
+    return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
@@ -469,10 +460,9 @@ auto Context::LookupScopesForConstant(SemIRLoc loc,
       return emitter().Build(loc, QualifiedExprInIncompleteClassScope, base_id);
     });
     auto& class_info = classes().Get(base_as_class->class_id);
-    llvm::SmallVector<LookupScope, 1> scopes;
-    scopes.push_back(LookupScope{.name_scope_id = class_info.scope_id,
-                                 .specific_id = base_as_class->specific_id});
-    return scopes;
+    scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
+                                  .specific_id = base_as_class->specific_id});
+    return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
     TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
@@ -484,27 +474,26 @@ auto Context::LookupScopesForConstant(SemIRLoc loc,
     });
     const auto& facet_type_info =
         sem_ir().facet_types().Get(base_as_facet_type->facet_type_id);
-    llvm::SmallVector<LookupScope, 1> scopes;
     for (auto interface : facet_type_info.impls_constraints) {
       auto& interface_info = interfaces().Get(interface.interface_id);
-      scopes.push_back(LookupScope{.name_scope_id = interface_info.scope_id,
-                                   .specific_id = interface.specific_id});
+      scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
+                                    .specific_id = interface.specific_id});
     }
-    return scopes;
+    return true;
   }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
   // `(i32*).X` should fail because there's no name `X` in `i32*`, not because
   // there's no name `X` in `type`.
-  return std::nullopt;
+  return false;
 }
 
 auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                                  llvm::ArrayRef<LookupScope> scope,
+                                  llvm::ArrayRef<LookupScope> lookup_scopes,
                                   bool required,
                                   std::optional<AccessInfo> access_info)
     -> LookupResult {
-  llvm::SmallVector<LookupScope> scopes(scope);
+  llvm::SmallVector<LookupScope> scopes(lookup_scopes);
 
   // TODO: Support reporting of multiple prohibited access.
   llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
@@ -557,9 +546,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
               CARBON_DIAGNOSTIC(FromExtendHere, Note, "from  here");
               builder.Note(extended_id, FromExtendHere);
             });
-        if (auto extended_scopes = LookupScopesForConstant(loc, const_id)) {
-          scopes.append(*extended_scopes);
-        } else {
+        if (!AppendLookupScopesForConstant(loc, const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
           // look in its type.
         }
