@@ -62,7 +62,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 base class X(U:! type) {
-  fn G() -> U { return G(); };
+  fn G() -> U { return G(); }
 }
 
 class C(T:! type) {
