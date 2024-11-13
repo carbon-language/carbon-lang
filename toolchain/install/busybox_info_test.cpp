@@ -137,5 +137,20 @@ TEST_F(BusyboxInfoTest, RelativeSymlink) {
   EXPECT_THAT(info->mode, Eq("carbon"));
 }
 
+TEST_F(BusyboxInfoTest, NotBusyboxFile) {
+  auto target = MakeFile(dir_ / "file");
+
+  auto info = GetBusyboxInfo(target.string());
+  EXPECT_FALSE(info.ok());
+}
+
+TEST_F(BusyboxInfoTest, NotBusyboxSymlink) {
+  MakeFile(dir_ / "file");
+  auto target = MakeSymlink(dir_ / "carbon", "file");
+
+  auto info = GetBusyboxInfo(target.string());
+  EXPECT_FALSE(info.ok());
+}
+
 }  // namespace
 }  // namespace Carbon
