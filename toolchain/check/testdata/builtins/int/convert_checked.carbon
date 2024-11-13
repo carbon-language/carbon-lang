@@ -223,7 +223,7 @@ let not_constant: i32 = 0;
 // CHECK:STDERR: let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
 // CHECK:STDERR:                                        ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:17:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: int_ops.carbon:18:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -243,7 +243,7 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR: let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDERR:                                       ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_not_constant.carbon:[[@LINE-27]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:25:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: int_ops.carbon:26:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
@@ -522,12 +522,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.param_patt: %.4 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc17_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc17_20.2: type = converted %int.make_type_32, %.loc17_20.1 [template = i32]
-// CHECK:STDOUT:     %.loc17_28.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc17_28.1) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc17_28.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
-// CHECK:STDOUT:     %.loc17_28.3: type = converted %int.make_type_signed, %.loc17_28.2 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc18_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc18_20.2: type = converted %int.make_type_32, %.loc18_20.1 [template = i32]
+// CHECK:STDOUT:     %.loc18_28.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc18_28.1) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc18_28.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
+// CHECK:STDOUT:     %.loc18_28.3: type = converted %int.make_type_signed, %.loc18_28.2 [template = constants.%.4]
 // CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
@@ -540,12 +540,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc18_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc18_21.2: type = converted %int.make_type_32, %.loc18_21.1 [template = i32]
-// CHECK:STDOUT:     %.loc18_29.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc18_29.1) [template = constants.%.5]
-// CHECK:STDOUT:     %.loc18_29.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.5]
-// CHECK:STDOUT:     %.loc18_29.3: type = converted %int.make_type_unsigned, %.loc18_29.2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc19_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc19_21.2: type = converted %int.make_type_32, %.loc19_21.1 [template = i32]
+// CHECK:STDOUT:     %.loc19_29.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc19_29.1) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc19_29.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.5]
+// CHECK:STDOUT:     %.loc19_29.3: type = converted %int.make_type_unsigned, %.loc19_29.2 [template = constants.%.5]
 // CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
@@ -557,14 +557,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %.4 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %.4 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19_21.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc19_21.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc19_21.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
-// CHECK:STDOUT:     %.loc19_21.3: type = converted %int.make_type_unsigned, %.loc19_21.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc19_29.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc19_29.1) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc19_29.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
-// CHECK:STDOUT:     %.loc19_29.3: type = converted %int.make_type_signed, %.loc19_29.2 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc20_21.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc20_21.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_21.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_21.3: type = converted %int.make_type_unsigned, %.loc20_21.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc20_29.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc20_29.1) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc20_29.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
+// CHECK:STDOUT:     %.loc20_29.3: type = converted %int.make_type_signed, %.loc20_29.2 [template = constants.%.4]
 // CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
@@ -576,14 +576,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %.5 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc20_22.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc20_22: init type = call constants.%UInt(%.loc20_22.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc20_22.2: type = value_of_initializer %int.make_type_unsigned.loc20_22 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc20_22.3: type = converted %int.make_type_unsigned.loc20_22, %.loc20_22.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc20_30.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc20_30: init type = call constants.%UInt(%.loc20_30.1) [template = constants.%.5]
-// CHECK:STDOUT:     %.loc20_30.2: type = value_of_initializer %int.make_type_unsigned.loc20_30 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc20_30.3: type = converted %int.make_type_unsigned.loc20_30, %.loc20_30.2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc21_22.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc21_22: init type = call constants.%UInt(%.loc21_22.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_22.2: type = value_of_initializer %int.make_type_unsigned.loc21_22 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_22.3: type = converted %int.make_type_unsigned.loc21_22, %.loc21_22.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_30.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc21_30: init type = call constants.%UInt(%.loc21_30.1) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc21_30.2: type = value_of_initializer %int.make_type_unsigned.loc21_30 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc21_30.3: type = converted %int.make_type_unsigned.loc21_30, %.loc21_30.2 [template = constants.%.5]
 // CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
@@ -597,12 +597,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc21_36.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc21_36.2: type = converted %int_literal.make_type, %.loc21_36.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc21_42.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc21_42.1) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc21_42.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
-// CHECK:STDOUT:     %.loc21_42.3: type = converted %int.make_type_signed, %.loc21_42.2 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc22_36.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc22_36.2: type = converted %int_literal.make_type, %.loc22_36.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc22_42.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc22_42.1) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc22_42.2: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
+// CHECK:STDOUT:     %.loc22_42.3: type = converted %int.make_type_signed, %.loc22_42.2 [template = constants.%.4]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.4 = out_param runtime_param1
@@ -616,12 +616,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc22_37.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc22_37.2: type = converted %int_literal.make_type, %.loc22_37.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc22_43.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc22_43.1) [template = constants.%.5]
-// CHECK:STDOUT:     %.loc22_43.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.5]
-// CHECK:STDOUT:     %.loc22_43.3: type = converted %int.make_type_unsigned, %.loc22_43.2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc23_37.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc23_37.2: type = converted %int_literal.make_type, %.loc23_37.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc23_43.1: Core.IntLiteral = int_value 16 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc23_43.1) [template = constants.%.5]
+// CHECK:STDOUT:     %.loc23_43.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.5]
+// CHECK:STDOUT:     %.loc23_43.3: type = converted %int.make_type_unsigned, %.loc23_43.2 [template = constants.%.5]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param1
@@ -634,12 +634,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.param_patt: %.7 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc25_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc25_20.2: type = converted %int.make_type_32, %.loc25_20.1 [template = i32]
-// CHECK:STDOUT:     %.loc25_28.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc25_28.1) [template = constants.%.7]
-// CHECK:STDOUT:     %.loc25_28.2: type = value_of_initializer %int.make_type_signed [template = constants.%.7]
-// CHECK:STDOUT:     %.loc25_28.3: type = converted %int.make_type_signed, %.loc25_28.2 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc26_20.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc26_20.2: type = converted %int.make_type_32, %.loc26_20.1 [template = i32]
+// CHECK:STDOUT:     %.loc26_28.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc26_28.1) [template = constants.%.7]
+// CHECK:STDOUT:     %.loc26_28.2: type = value_of_initializer %int.make_type_signed [template = constants.%.7]
+// CHECK:STDOUT:     %.loc26_28.3: type = converted %int.make_type_signed, %.loc26_28.2 [template = constants.%.7]
 // CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.7 = out_param runtime_param1
@@ -652,12 +652,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.param_patt: %.8 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc26_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc26_21.2: type = converted %int.make_type_32, %.loc26_21.1 [template = i32]
-// CHECK:STDOUT:     %.loc26_29.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc26_29.1) [template = constants.%.8]
-// CHECK:STDOUT:     %.loc26_29.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.8]
-// CHECK:STDOUT:     %.loc26_29.3: type = converted %int.make_type_unsigned, %.loc26_29.2 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc27_21.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc27_21.2: type = converted %int.make_type_32, %.loc27_21.1 [template = i32]
+// CHECK:STDOUT:     %.loc27_29.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc27_29.1) [template = constants.%.8]
+// CHECK:STDOUT:     %.loc27_29.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.8]
+// CHECK:STDOUT:     %.loc27_29.3: type = converted %int.make_type_unsigned, %.loc27_29.2 [template = constants.%.8]
 // CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.8 = out_param runtime_param1
@@ -669,14 +669,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %.7 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %.7 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc27_21.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc27_21.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc27_21.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
-// CHECK:STDOUT:     %.loc27_21.3: type = converted %int.make_type_unsigned, %.loc27_21.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc27_29.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc27_29.1) [template = constants.%.7]
-// CHECK:STDOUT:     %.loc27_29.2: type = value_of_initializer %int.make_type_signed [template = constants.%.7]
-// CHECK:STDOUT:     %.loc27_29.3: type = converted %int.make_type_signed, %.loc27_29.2 [template = constants.%.7]
+// CHECK:STDOUT:     %.loc28_21.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc28_21.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc28_21.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
+// CHECK:STDOUT:     %.loc28_21.3: type = converted %int.make_type_unsigned, %.loc28_21.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc28_29.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc28_29.1) [template = constants.%.7]
+// CHECK:STDOUT:     %.loc28_29.2: type = value_of_initializer %int.make_type_signed [template = constants.%.7]
+// CHECK:STDOUT:     %.loc28_29.3: type = converted %int.make_type_signed, %.loc28_29.2 [template = constants.%.7]
 // CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.7 = out_param runtime_param1
@@ -688,14 +688,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %.8 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %.8 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc28_22.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc28_22: init type = call constants.%UInt(%.loc28_22.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc28_22.2: type = value_of_initializer %int.make_type_unsigned.loc28_22 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc28_22.3: type = converted %int.make_type_unsigned.loc28_22, %.loc28_22.2 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc28_30.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc28_30: init type = call constants.%UInt(%.loc28_30.1) [template = constants.%.8]
-// CHECK:STDOUT:     %.loc28_30.2: type = value_of_initializer %int.make_type_unsigned.loc28_30 [template = constants.%.8]
-// CHECK:STDOUT:     %.loc28_30.3: type = converted %int.make_type_unsigned.loc28_30, %.loc28_30.2 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc29_22.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc29_22: init type = call constants.%UInt(%.loc29_22.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc29_22.2: type = value_of_initializer %int.make_type_unsigned.loc29_22 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc29_22.3: type = converted %int.make_type_unsigned.loc29_22, %.loc29_22.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc29_30.1: Core.IntLiteral = int_value 64 [template = constants.%.6]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc29_30: init type = call constants.%UInt(%.loc29_30.1) [template = constants.%.8]
+// CHECK:STDOUT:     %.loc29_30.2: type = value_of_initializer %int.make_type_unsigned.loc29_30 [template = constants.%.8]
+// CHECK:STDOUT:     %.loc29_30.3: type = converted %int.make_type_unsigned.loc29_30, %.loc29_30.2 [template = constants.%.8]
 // CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %.8 = out_param runtime_param1
@@ -708,12 +708,12 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc29_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc29_25.2: type = converted %int.make_type_32, %.loc29_25.1 [template = i32]
+// CHECK:STDOUT:     %.loc30_25.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc30_25.2: type = converted %int.make_type_32, %.loc30_25.1 [template = i32]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc29_44.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc29_44.2: type = converted %int_literal.make_type, %.loc29_44.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc30_44.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc30_44.2: type = converted %int_literal.make_type, %.loc30_44.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
@@ -725,14 +725,14 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc30_27.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc30_27.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc30_27.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
-// CHECK:STDOUT:     %.loc30_27.3: type = converted %int.make_type_unsigned, %.loc30_27.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc31_27.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_unsigned: init type = call constants.%UInt(%.loc31_27.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc31_27.2: type = value_of_initializer %int.make_type_unsigned [template = constants.%.2]
+// CHECK:STDOUT:     %.loc31_27.3: type = converted %int.make_type_unsigned, %.loc31_27.2 [template = constants.%.2]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc30_46.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc30_46.2: type = converted %int_literal.make_type, %.loc30_46.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc31_46.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc31_46.2: type = converted %int_literal.make_type, %.loc31_46.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
@@ -1378,7 +1378,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- zext.carbon
+// CHECK:STDOUT: --- zero_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
@@ -1587,7 +1587,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- sext.carbon
+// CHECK:STDOUT: --- sign_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
