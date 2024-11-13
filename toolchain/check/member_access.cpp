@@ -203,22 +203,21 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
-                                    LookupScope lookup_scope) -> SemIR::InstId {
+                                    llvm::ArrayRef<LookupScope> lookup_scopes)
+    -> SemIR::InstId {
   LookupResult result = {.specific_id = SemIR::SpecificId::Invalid,
                          .inst_id = SemIR::InstId::BuiltinError};
-  if (lookup_scope.name_scope_id.is_valid()) {
-    AccessInfo access_info = {
-        .constant_id = name_scope_const_id,
-        .highest_allowed_access =
-            GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
-    };
+  AccessInfo access_info = {
+      .constant_id = name_scope_const_id,
+      .highest_allowed_access =
+          GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
+  };
 
-    result = context.LookupQualifiedName(loc_id, name_id, lookup_scope,
-                                         /*required=*/true, access_info);
+  result = context.LookupQualifiedName(loc_id, name_id, lookup_scopes,
+                                       /*required=*/true, access_info);
 
-    if (!result.inst_id.is_valid()) {
-      return SemIR::InstId::BuiltinError;
-    }
+  if (!result.inst_id.is_valid()) {
+    return SemIR::InstId::BuiltinError;
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.

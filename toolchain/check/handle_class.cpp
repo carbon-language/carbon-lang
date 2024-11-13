@@ -380,8 +380,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapted_type_id =
-      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
+  auto [adapted_inst_id, adapted_type_id] =
+      ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = context.AsCompleteType(
       adapted_type_id,
       [&] {
@@ -405,13 +405,13 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extended_scope_id = SemIR::NameScopeId::Invalid;
+    auto extended_scope_inst_id = SemIR::InstId::Invalid;
     if (adapted_type_id == SemIR::TypeId::Error) {
       // Recover by not extending any scope. We instead set has_error to true
       // below.
     } else if (auto* adapted_class_info =
                    TryGetAsClass(context, adapted_type_id)) {
-      extended_scope_id = adapted_class_info->scope_id;
+      extended_scope_inst_id = adapted_inst_id;
       CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
                    "Complete class should have a scope");
     } else {
@@ -421,7 +421,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (extended_scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(extended_scope_id);
+      class_scope.extended_scopes.push_back(extended_scope_inst_id);
     } else {
       class_scope.has_error = true;
     }
@@ -560,7 +560,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(base_info.scope_id);
+      class_scope.extended_scopes.push_back(base_type_expr_id);
     } else {
       class_scope.has_error = true;
     }

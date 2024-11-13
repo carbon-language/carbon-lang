@@ -1462,8 +1462,9 @@ class ImportRefResolver {
               .base_type_id);
       new_scope.extended_scopes.push_back(base_inst_id);
     }
-    CARBON_CHECK(new_scope.extended_scopes.size() ==
-                 import_scope.extended_scopes.size());
+    // TODO: `extended_scopes` from `extend impl` are currently not imported.
+    // CARBON_CHECK(new_scope.extended_scopes.size() ==
+    //              import_scope.extended_scopes.size());
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst,

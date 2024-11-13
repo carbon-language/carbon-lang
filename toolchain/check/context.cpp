@@ -518,6 +518,10 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
     auto [scope_id, specific_id] = scopes.pop_back_val();
+    if (!scope_id.is_valid()) {
+      has_error = true;
+      continue;
+    }
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error;
 
