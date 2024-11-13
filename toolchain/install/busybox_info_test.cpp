@@ -44,7 +44,7 @@ class BusyboxInfoTest : public ::testing::Test {
   }
 
   // Creates a symlink to the target. Returns the input file for easier use.
-  auto MakeSymlink(std::filesystem::path file, std::filesystem::path target)
+  auto MakeSymlink(std::filesystem::path file, auto target)
       -> std::filesystem::path {
     std::error_code ec;
     std::filesystem::create_symlink(target, file, ec);
@@ -65,7 +65,7 @@ class BusyboxInfoTest : public ::testing::Test {
 };
 
 TEST_F(BusyboxInfoTest, Direct) {
-  std::filesystem::path busybox = MakeFile(dir_ / "carbon-busybox");
+  auto busybox = MakeFile(dir_ / "carbon-busybox");
 
   auto info = GetBusyboxInfo(busybox.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -75,7 +75,7 @@ TEST_F(BusyboxInfoTest, Direct) {
 
 TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectory) {
   MakeFile(dir_ / "carbon-busybox");
-  std::filesystem::path target = MakeSymlink(dir_ / "carbon", "carbon-busybox");
+  auto target = MakeSymlink(dir_ / "carbon", "carbon-busybox");
 
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -85,8 +85,7 @@ TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectory) {
 
 TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectoryWithDot) {
   MakeFile(dir_ / "carbon-busybox");
-  std::filesystem::path target =
-      MakeSymlink(dir_ / "carbon", "./carbon-busybox");
+  auto target = MakeSymlink(dir_ / "carbon", "./carbon-busybox");
 
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -97,7 +96,7 @@ TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectoryWithDot) {
 TEST_F(BusyboxInfoTest, ExtraSymlink) {
   MakeFile(dir_ / "carbon-busybox");
   MakeSymlink(dir_ / "carbon", "carbon-busybox");
-  std::filesystem::path target = MakeSymlink(dir_ / "c", "carbon");
+  auto target = MakeSymlink(dir_ / "c", "carbon");
 
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -107,8 +106,7 @@ TEST_F(BusyboxInfoTest, ExtraSymlink) {
 
 TEST_F(BusyboxInfoTest, BusyboxIsSymlink) {
   MakeFile(dir_ / "actual-busybox");
-  std::filesystem::path target =
-      MakeSymlink(dir_ / "carbon-busybox", "actual-busybox");
+  auto target = MakeSymlink(dir_ / "carbon-busybox", "actual-busybox");
 
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -117,8 +115,7 @@ TEST_F(BusyboxInfoTest, BusyboxIsSymlink) {
 }
 
 TEST_F(BusyboxInfoTest, BusyboxIsSymlinkToNowhere) {
-  std::filesystem::path target =
-      MakeSymlink(dir_ / "carbon-busybox", "nonexistent");
+  auto target = MakeSymlink(dir_ / "carbon-busybox", "nonexistent");
 
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
@@ -131,7 +128,7 @@ TEST_F(BusyboxInfoTest, RelativeSymlink) {
   MakeDir(dir_ / "lib/carbon");
   MakeFile(dir_ / "lib/carbon/carbon-busybox");
   MakeDir(dir_ / "bin");
-  std::filesystem::path target =
+  auto target =
       MakeSymlink(dir_ / "bin/carbon", "../lib/carbon/carbon-busybox");
 
   auto info = GetBusyboxInfo(target.string());
