@@ -137,6 +137,7 @@ class C {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_23.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: type = specific_constant @impl.%GenericInterface.type.loc19_52.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.2]
 // CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -73,11 +73,12 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.2 [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc19: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
 // CHECK:STDOUT:     %.loc20: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
-// CHECK:STDOUT:     extend @impl.%I.ref
+// CHECK:STDOUT:     extend %.loc19
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

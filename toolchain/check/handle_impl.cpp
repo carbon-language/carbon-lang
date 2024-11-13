@@ -12,6 +12,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -323,6 +324,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
+    if (impl_info.generic_id.is_valid()) {
+      SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
+      constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
+          context.insts().GetLocId(constraint_inst_id),
+          {.type_id = type_id,
+           .inst_id = constraint_inst_id,
+           .specific_id =
+               context.generics().GetSelfSpecific(impl_info.generic_id)});
+    }
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
                name.implicit_params_loc_id, constraint_inst_id,
                constraint_type_id);

@@ -32,11 +32,12 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
     // TODO: extend this so it can represent named constraint requirements
     // and requirements on members, not just `.Self`.
+    // TODO: Add whether this is a lookup context. Those that are should sort
+    // first for easy access. Right now, all are assumed to be lookup contexts.
     InterfaceId interface_id;
     SpecificId specific_id;
   };
   llvm::SmallVector<ImplsConstraint> impls_constraints;
-  // TODO: Add lookup contexts.
   // TODO: Add rewrite constraints.
   // TODO: Add same-type constraints.
   // TODO: Remove `requirement_block_id`.
