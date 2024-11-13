@@ -28,7 +28,7 @@ fn F(c: C) {
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-17]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-10]]:18: note: from  here [FromExtendHere]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-10]]:18: note: declared as an extended scope here [FromExtendHere]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
@@ -39,7 +39,7 @@ fn F(c: C) {
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-28]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:18: note: from  here [FromExtendHere]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:18: note: declared as an extended scope here [FromExtendHere]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:                  ^
   c.F();

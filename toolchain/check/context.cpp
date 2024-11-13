@@ -543,7 +543,8 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
         DiagnosticAnnotationScope annotate_diagnostics(
             &emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(FromExtendHere, Note, "from  here");
+              CARBON_DIAGNOSTIC(FromExtendHere, Note,
+                                "declared as an extended scope here");
               builder.Note(extended_id, FromExtendHere);
             });
         if (!AppendLookupScopesForConstant(loc, const_id, &scopes)) {
