@@ -14,6 +14,8 @@
 
 namespace Carbon {
 
+constexpr const char* Argv0OverrideEnv = "CARBON_ARGV0_OVERRIDE";
+
 struct BusyboxInfo {
   // The path to `carbon-busybox`.
   std::filesystem::path bin_path;
@@ -24,21 +26,58 @@ struct BusyboxInfo {
 // Returns the busybox information, given argv[0]. This primarily handles
 // resolving symlinks that point at the busybox.
 inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
-  BusyboxInfo info = BusyboxInfo{argv0.str(), std::nullopt};
+  BusyboxInfo info;
+
+  // Check for an override of `argv[0]` from the environment and apply it.
+  if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
+    argv0 = argv0_override;
+  }
+
+  info.bin_path = argv0.str();
+  std::filesystem::path filename = info.bin_path.filename();
+  // The mode is set to the initial filename used for `argv[0]`.
+  if (filename != "carbon" && filename != "carbon-busybox") {
+    info.mode = filename;
+  }
+
+  // Now search through any symlinks to locate the installed busybox binary.
   while (true) {
-    std::string filename = info.bin_path.filename();
+    filename = info.bin_path.filename();
     if (filename == "carbon-busybox") {
       return info;
     }
+
+    // If we've not already reached the busybox, look for it relative to the
+    // current binary path. This can help more immediately locate an
+    // installation tree, and avoids walking through a final layer of symlinks
+    // which may point to content-addressed storage or other parts of a build
+    // output tree.
+    //
+    // We break this into two cases we need to handle:
+    // - Carbon's CLI will be: `<prefix>/bin/carbon`
+    // - Other tools will be: `<prefix>/lib/carbon/<group>/bin/<tool>`
     std::error_code ec;
+    auto parent_path = info.bin_path.parent_path();
+    auto lib_path = filename == "carbon" ? parent_path / ".." / "lib" / "carbon"
+                                         : parent_path / ".." / "..";
+    auto busybox_path = lib_path / "carbon-busybox";
+    if (std::filesystem::exists(busybox_path, ec)) {
+      info.bin_path = busybox_path;
+      return info;
+    }
+    // Errors for the relative busybox search aren't interesting.
+    ec.clear();
+
+    // Try to walk through another layer of symlinks and see if we can find the
+    // installation there or are linked directly to the busybox.
     auto symlink_target = std::filesystem::read_symlink(info.bin_path, ec);
     if (ec) {
       return ErrorBuilder()
              << "expected carbon-busybox symlink at `" << info.bin_path << "`";
     }
-    info.mode = filename;
+
     // Do a path join, to handle relative symlinks.
-    info.bin_path = info.bin_path.parent_path() / symlink_target;
+    info.bin_path = parent_path / symlink_target;
   }
 }
 
