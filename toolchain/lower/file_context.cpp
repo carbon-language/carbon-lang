@@ -348,7 +348,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of call_param_ids that is in sequential order.
+  // The subset of call_param_ids that is already in the order that the LLVM
+  // calling convention expects.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
   if (function.return_slot_id.is_valid()) {
     // The LLVM calling convention has the return slot first rather than last.

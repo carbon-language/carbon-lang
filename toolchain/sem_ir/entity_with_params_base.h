@@ -102,10 +102,10 @@ struct EntityWithParamsBase {
   // pattern insts pertaining to that parameter.
   InstBlockId param_patterns_id;
   // If this entity is a function, this block consists of references to the
-  // `AnyParam` insts that represent the function's call parameters. The "call
-  // parameters" are the parameters corresponding to the arguments that are
-  // passed to a `Call` inst, so they include `self` (if applicable) and the
-  // return slot, but do not include compile-time parameters.
+  // `AnyParam` insts that represent the function's `Call` parameters. The
+  // "`Call` parameters" are the parameters corresponding to the arguments that
+  // are passed to a `Call` inst, so they do not include compile-time
+  // parameters, but they do include the return slot.
   //
   // The parameters appear in declaration order: `self` (if present), then the
   // explicit runtime parameters, then the return slot (which is "declared" by

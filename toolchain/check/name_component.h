@@ -34,7 +34,7 @@ struct NameComponent {
   Parse::NodeId params_loc_id;
   SemIR::InstBlockId param_patterns_id;
 
-  // The call parameters of the entity, if it's a function (see the
+  // The `Call` parameters of the entity, if it's a function (see the
   // corresponding member of SemIR::EntityWithParamsBase).
   // TODO: This is only used for function declarations. Should it go somewhere
   // else?
