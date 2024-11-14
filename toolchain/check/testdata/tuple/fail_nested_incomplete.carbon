@@ -30,7 +30,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, %Incomplete) [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Incomplete [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,7 +72,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, file.%t
-// CHECK:STDOUT:   %.loc21_25: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_25: Core.IntLiteral = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc21_22: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return

@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_invalid_type.carbon
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:9: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:         ^
 var a: [1; 1];
@@ -19,7 +19,7 @@ var a: [1; 1];
 // CHECK:STDOUT: --- fail_invalid_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -99,11 +99,6 @@ var a: [1; 1];
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.10, @impl.12(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.15) [symbolic]
-// CHECK:STDOUT:   %Convert.type.16: type = fn_type @Convert.11 [template]
-// CHECK:STDOUT:   %Convert.16: %Convert.type.16 = struct_value () [template]
-// CHECK:STDOUT:   %.27: <witness> = interface_witness (%Convert.16) [template]
-// CHECK:STDOUT:   %.28: <bound method> = bound_method %.1, %Convert.16 [template]
-// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -130,7 +125,7 @@ var a: [1; 1];
 // CHECK:STDOUT:   %import_ref.16 = import_ref Core//prelude/operators/as, inst+260, unloaded
 // CHECK:STDOUT:   %import_ref.17: type = import_ref Core//prelude/operators/as, inst+267, loaded [template = i32]
 // CHECK:STDOUT:   %import_ref.18: type = import_ref Core//prelude/operators/as, inst+273, loaded [template = constants.%ImplicitAs.type.7]
-// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref Core//prelude/operators/as, inst+296, loaded [template = constants.%.27]
+// CHECK:STDOUT:   %import_ref.19 = import_ref Core//prelude/operators/as, inst+296, unloaded
 // CHECK:STDOUT:   %import_ref.20 = import_ref Core//prelude/operators/as, inst+76, unloaded
 // CHECK:STDOUT:   %import_ref.21: type = import_ref Core//prelude/operators/as, inst+309, loaded [symbolic = @impl.5.%.1 (constants.%.9)]
 // CHECK:STDOUT:   %import_ref.22: type = import_ref Core//prelude/operators/as, inst+315, loaded [template = constants.%ImplicitAs.type.7]
@@ -170,15 +165,10 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_9.1: i32 = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_12.1: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_9.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_12: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc17_9.2: type = converted %.loc17_9.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc17_12.2: %Convert.type.6 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.16]
-// CHECK:STDOUT:   %.loc17_12.3: <bound method> = bound_method %.loc17_12.1, %.loc17_12.2 [template = constants.%.28]
-// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %.loc17_12.3(%.loc17_12.1) [template = constants.%.29]
-// CHECK:STDOUT:   %.loc17_12.4: Core.IntLiteral = value_of_initializer %int.convert_checked [template = constants.%.29]
-// CHECK:STDOUT:   %.loc17_12.5: Core.IntLiteral = converted %.loc17_12.1, %.loc17_12.4 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc17_13: type = array_type %.loc17_12.5, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_13: type = array_type %.loc17_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
@@ -462,8 +452,6 @@ var a: [1; 1];
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.10.%.1 (%.11)]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.11[%self.param_patt: i32]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest

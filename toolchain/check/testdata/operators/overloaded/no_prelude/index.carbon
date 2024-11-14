@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 namespace Core;
 class Core.IndexWith {}
-// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+3]]:10: error: type `i32` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+3]]:10: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 fn F() { 0[1]; }
@@ -59,8 +59,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,8 +84,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_10: i32 = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_12: i32 = int_value 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_10: Core.IntLiteral = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_12: Core.IntLiteral = int_value 1 [template = constants.%.4]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,8 +95,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -108,8 +108,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_12: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_10: Core.IntLiteral = int_value 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_12: Core.IntLiteral = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

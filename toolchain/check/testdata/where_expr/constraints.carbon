@@ -71,10 +71,10 @@ import library "state_constraints";
 // `2` can't be converted to the type of `I.Member`
 // TODO: The diagnostics are wrong since member access into facets isn't
 // working properly yet.
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `i32` to `<associated type in I>` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `Core.IntLiteral` to `<associated type in I>` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `i32` does not implement interface `ImplicitAs(<associated type in I>)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(<associated type in I>)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
 // CHECK:STDERR:                                              ^
 // CHECK:STDERR:
@@ -84,10 +84,10 @@ fn RewriteTypeMismatch(X:! I where .Member = 2);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -97,10 +97,10 @@ fn NonTypeImpls(U:! type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -1915,7 +1915,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, imports.%import_ref.11 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -2090,7 +2090,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, imports.%import_ref.7 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_46.1: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc16_46.1: Core.IntLiteral = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:     %.loc16_46.2: %.1 = converted %.loc16_46.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
@@ -2695,7 +2695,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_value 7 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -2851,7 +2851,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_32.1: i32 = int_value 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_32.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %.loc11_32.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls <error>, type
@@ -3448,7 +3448,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_value 7 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -3605,7 +3605,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_44.1: i32 = int_value 7 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_44.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_44.2: type = converted %.loc11_44.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>

@@ -25,11 +25,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: %.1, .c: i32} [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.a: i32, .b: %.3, .c: i32} [template]
+// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: Core.IntLiteral, .b: %.1, .c: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.a: Core.IntLiteral, .b: %.3, .c: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,11 +84,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_16: i32 = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_16: Core.IntLiteral = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc14_25.1: ref %.1 = temporary_storage
 // CHECK:STDOUT:   %G.call: init %.1 = call %G.ref() to %.loc14_25.1
-// CHECK:STDOUT:   %.loc14_34: i32 = int_value 3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_34: Core.IntLiteral = int_value 3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_35.1: %.5 = struct_literal (%.loc14_16, %G.call, %.loc14_34)
 // CHECK:STDOUT:   %.loc14_25.2: ref %.1 = temporary %.loc14_25.1, %G.call
 // CHECK:STDOUT:   %.loc14_25.3: ref i32 = struct_access %.loc14_25.2, element0

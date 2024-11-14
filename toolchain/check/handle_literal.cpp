@@ -28,37 +28,11 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
-// Forms an IntValue instruction with type `i32` for a given literal integer
-// value, which is assumed to be unsigned.
-static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
-                           IntId int_id) -> SemIR::InstId {
-  auto val = context.ints().Get(int_id);
-  CARBON_CHECK(val.isNonNegative(),
-               "Unexpected negative literal from the lexer: {0}", val);
-
-  // Make sure the value fits in an `i32`.
-  if (val.getSignificantBits() > 32) {
-    CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
-                      "integer literal with value {0} does not fit in i32",
-                      llvm::APInt);
-    context.emitter().Emit(node_id, IntLiteralTooLargeForI32, val);
-    return SemIR::InstId::BuiltinError;
-  }
-
-  // We directly reuse the integer ID as it represents the canonical value.
-  return context.AddInst<SemIR::IntValue>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-       .int_id = int_id});
-}
-
 // Forms an IntValue instruction with type `IntLiteral` for a given literal
 // integer value, which is assumed to be unsigned.
 static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
-  // TODO: `IntId`s with different bit-widths are considered different values
-  // here. Decide how we want to canonicalize these. For now this is only used
-  // by type literals, so we rely on the lexer picking some consistent rule.
+  // We rely on the lexer having normalized the `int_id` to a canonical width.
   return context.AddInst<SemIR::IntValue>(
       node_id, {.type_id = context.GetBuiltinType(
                     SemIR::BuiltinInstKind::IntLiteralType),
@@ -66,9 +40,7 @@ static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
-  // Convert the literal to i32.
-  // TODO: Form an integer literal value and a corresponding type here instead.
-  auto int_literal_id = MakeI32Literal(
+  auto int_literal_id = MakeIntLiteral(
       context, node_id,
       context.tokens().GetIntLiteral(context.parse_tree().node_token(node_id)));
   context.node_stack().Push(node_id, int_literal_id);

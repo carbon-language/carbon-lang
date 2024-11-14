@@ -21,8 +21,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_38.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc11_38.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %.loc11_38.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc11_38.10.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.loc11_39, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }

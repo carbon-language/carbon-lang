@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: (1, );
 // CHECK:STDERR:        ^~~~~
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (1, );
 // CHECK:STDERR:        ^~~~~
 var x: (1, );
@@ -19,8 +19,8 @@ var x: (1, );
 // CHECK:STDOUT: --- fail_value_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -166,7 +166,7 @@ var x: (1, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_9: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_9: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc17_12.1: %tuple.type = tuple_literal (%.loc17_9)
 // CHECK:STDOUT:   %.loc17_12.2: type = converted %.loc17_9, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x

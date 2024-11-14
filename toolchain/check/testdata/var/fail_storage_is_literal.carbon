@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
   var x: 1 = 1;
@@ -24,7 +24,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -366,11 +366,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_10.1: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_10.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %.loc18_10.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc18_14: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_14: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

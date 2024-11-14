@@ -26,8 +26,8 @@ fn Make() -> C {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 123 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 123 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,7 +67,7 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_16: i32 = int_value 123 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_16: Core.IntLiteral = int_value 123 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc19_19: %.2 = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }

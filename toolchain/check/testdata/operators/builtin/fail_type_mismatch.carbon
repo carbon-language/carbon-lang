@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `i32` to `bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `Core.IntLiteral` to `bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: note: type `i32` does not implement interface `ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: bool = not 12;
   // CHECK:STDERR:                 ^~~~~~
   var x: bool = not 12;
@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -375,7 +375,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %bool.make_type, %.loc18_10.1 [template = bool]
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc18_21: i32 = int_value 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_21: Core.IntLiteral = int_value 12 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_17.1: bool = converted %.loc18_21, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18_17.2: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>

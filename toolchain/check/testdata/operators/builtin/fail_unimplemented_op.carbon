@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Add` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Add` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return 12 + 34;
   // CHECK:STDERR:          ^~~~~~~
   return 12 + 34;
@@ -23,8 +23,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 12 [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 34 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 12 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 34 [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
@@ -77,8 +77,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_10: i32 = int_value 12 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc15_15: i32 = int_value 34 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_10: Core.IntLiteral = int_value 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_15: Core.IntLiteral = int_value 34 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

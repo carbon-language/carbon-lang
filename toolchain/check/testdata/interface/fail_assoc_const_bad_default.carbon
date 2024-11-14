@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `i32` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `i32` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   let T:! type = 42;
@@ -23,7 +23,7 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_value 42 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
@@ -176,7 +176,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
-// CHECK:STDOUT:   %.loc18_18: i32 = int_value 42 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_18: Core.IntLiteral = int_value 42 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_20.1: type = converted %.loc18_18, <error> [template = <error>]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc18_20.2: %.27 = assoc_entity element0, %T [template = constants.%.28]

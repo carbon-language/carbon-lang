@@ -11,7 +11,7 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: error: cannot access member of interface `Add` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: error: cannot access member of interface `Add` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR:
@@ -29,7 +29,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %.2: f64 = float_literal 3.4000000000000004 [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
@@ -83,9 +83,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_10: i32 = int_value 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc21_10: Core.IntLiteral = int_value 12 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc21_15: f64 = float_literal 3.4000000000000004 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc21_21: i32 = int_value 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc21_21: Core.IntLiteral = int_value 12 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,10 +11,10 @@
 // TODO: Should this be valid?
 fn F(a: i32) -> i32 {
   let T:! type = i32;
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `i32` to `T` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `T` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `i32` does not implement interface `ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(T)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_value 5 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -404,7 +404,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_32.loc13, %.loc13_21.1 [template = i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %.loc13_21.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc21_14: i32 = int_value 5 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc21_14: Core.IntLiteral = int_value 5 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc21_15: %T = converted %.loc21_14, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x

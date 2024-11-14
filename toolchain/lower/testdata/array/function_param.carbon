@@ -19,7 +19,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'function_param.carbon'
 // CHECK:STDOUT: source_filename = "function_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.loc16_20.13 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK:STDOUT: @array.loc16_20.22 = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -30,12 +30,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_20.2.temp = alloca [3 x i32], align 4, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.2.temp, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.2.temp, ptr align 4 @array.loc16_20.13, i64 12, i1 false), !dbg !10
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc16_20.2.temp, i32 1), !dbg !11
+// CHECK:STDOUT:   %.loc16_20.5.temp = alloca [3 x i32], align 4, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.5.temp, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.13.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.5.temp, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.19.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.5.temp, i32 0, i32 2, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.5.temp, ptr align 4 @array.loc16_20.22, i64 12, i1 false), !dbg !10
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc16_20.5.temp, i32 1), !dbg !11
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

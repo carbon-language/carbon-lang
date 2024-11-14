@@ -461,10 +461,10 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %.8: type = struct_type {.base: %.3, .d: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %.10: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %.11: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.13: i32 = int_value 7 [template]
-// CHECK:STDOUT:   %.14: type = struct_type {.base: %.12, .d: i32} [template]
+// CHECK:STDOUT:   %.11: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %.12: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %.13: Core.IntLiteral = int_value 7 [template]
+// CHECK:STDOUT:   %.14: type = struct_type {.base: %.12, .d: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -523,9 +523,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_25: i32 = int_value 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc22_25: Core.IntLiteral = int_value 1 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc22_26: %.12 = struct_literal (%.loc22_25)
-// CHECK:STDOUT:   %.loc22_34: i32 = int_value 7 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc22_34: Core.IntLiteral = int_value 7 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc22_35: %.14 = struct_literal (%.loc22_26, %.loc22_34)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
