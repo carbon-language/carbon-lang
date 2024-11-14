@@ -26,7 +26,6 @@
 #include "llvm/Support/LLVMDriver.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
 
 // Defined in:
@@ -42,9 +41,11 @@ auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
 namespace Carbon {
 
 ClangRunner::ClangRunner(const InstallPaths* install_paths,
-                         llvm::StringRef target, llvm::raw_ostream* vlog_stream)
+                         llvm::StringRef target, llvm::vfs::FileSystem* fs,
+                         llvm::raw_ostream* vlog_stream)
     : installation_(install_paths),
       target_(target),
+      fs_(fs),
       vlog_stream_(vlog_stream),
       diagnostic_ids_(new clang::DiagnosticIDs()) {}
 
@@ -123,7 +124,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   clang::DiagnosticsEngine diagnostics(
       diagnostic_ids_, diagnostic_options.get(), &diagnostic_client,
       /*ShouldOwnClient=*/false);
-  clang::ProcessWarningOptions(diagnostics, *diagnostic_options);
+  clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
 
   clang::driver::Driver driver(clang_path, target_, diagnostics);
 
