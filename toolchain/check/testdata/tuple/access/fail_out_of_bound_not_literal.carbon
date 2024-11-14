@@ -110,8 +110,6 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %.32: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %.33: type = struct_type {.index: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct: %.33 = struct_value (%.32) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.32, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -506,12 +504,7 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %.loc15_28.1: %.33 = struct_literal (%.loc15_27)
 // CHECK:STDOUT:   %struct: %.33 = struct_value (%.loc15_27) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_28.2: %.33 = converted %.loc15_28.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_29.1: Core.IntLiteral = struct_access %.loc15_28.2, element0 [template = constants.%.32]
-// CHECK:STDOUT:   %.loc15_29.2: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc15_29.3: <bound method> = bound_method %.loc15_29.1, %.loc15_29.2 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init i32 = call %.loc15_29.3(%.loc15_29.1) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc15_29.4: i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%.35]
-// CHECK:STDOUT:   %.loc15_29.5: i32 = converted %.loc15_29.1, %.loc15_29.4 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc15_29: Core.IntLiteral = struct_access %.loc15_28.2, element0 [template = constants.%.32]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

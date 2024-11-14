@@ -39,13 +39,12 @@ interface I {}
 interface J {}
 
 impl forall [T:! I] T as J {}
-// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `impl T as J` [ImplRedefinition]
+// CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as J` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_same_self_and_interface_redefined.carbon:[[@LINE-4]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! I] T as J {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T:! I] T as J {}
 
 // --- same_type_different_spelling.carbon
@@ -62,9 +61,6 @@ interface I {}
 // TODO: Produce a warning or maybe an error when this happens in a non-generic
 // impl.
 impl C as I {}
-// CHECK:STDERR: same_type_different_spelling.carbon:[[@LINE+3]]:13: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
-// CHECK:STDERR: impl (C, C).0 as I {}
-// CHECK:STDERR:             ^
 impl (C, C).0 as I {}
 
 // CHECK:STDOUT: --- same_self_and_interface.carbon
@@ -403,13 +399,13 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref.loc15: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %T.ref.loc15: %I.type = name_ref T, %T.loc15 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc15_21.1: type = facet_type_access %T.ref.loc15 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc15_21.2: type = converted %T.ref.loc15, %.loc15_21.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %J.ref.loc15: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:     %T.param.loc15: %I.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc15: %I.type = bind_symbolic_name T, 0, %T.param.loc15 [symbolic = constants.%T]
+// CHECK:STDOUT:     %I.ref.loc14: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:     %T.ref.loc14: %I.type = name_ref T, %T.loc14 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc14_21.1: type = facet_type_access %T.ref.loc14 [symbolic = constants.%T]
+// CHECK:STDOUT:     %.loc14_21.2: type = converted %T.ref.loc14, %.loc14_21.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %J.ref.loc14: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:     %T.param.loc14: %I.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc14: %I.type = bind_symbolic_name T, 0, %T.param.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,13 +468,13 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %C.ref.loc17_7: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc17_10: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc17_11.1: %tuple.type = tuple_literal (%C.ref.loc17_7, %C.ref.loc17_10)
-// CHECK:STDOUT:     %.loc17_13.1: Core.IntLiteral = int_value 0 [template = constants.%.2]
-// CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc17_7, %C.ref.loc17_10) [template = constants.%tuple]
-// CHECK:STDOUT:     %.loc17_11.2: %tuple.type = converted %.loc17_11.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:     %.loc17_13.2: i32 = converted %.loc17_13.1, <error> [template = <error>]
+// CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc14_11.1: %tuple.type = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
+// CHECK:STDOUT:     %.loc14_13: Core.IntLiteral = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_11.2: %tuple.type = converted %.loc14_11.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:     %.loc14_12: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -498,11 +494,11 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: <error> as %I.ref {
-// CHECK:STDOUT:   %.loc17_20: <witness> = interface_witness () [template = constants.%.1]
+// CHECK:STDOUT: impl @impl.2: %.loc14_12 as %I.ref {
+// CHECK:STDOUT:   %.loc14_20: <witness> = interface_witness () [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc17_20
+// CHECK:STDOUT:   witness = %.loc14_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;

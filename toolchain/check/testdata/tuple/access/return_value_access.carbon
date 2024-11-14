@@ -501,14 +501,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %tuple.type.2 = call %F.ref()
-// CHECK:STDOUT:   %.loc14_14.1: Core.IntLiteral = int_value 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_14: Core.IntLiteral = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc14_11.1: ref %tuple.type.2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_11.2: ref %tuple.type.2 = temporary %.loc14_11.1, %F.call
-// CHECK:STDOUT:   %.loc14_14.2: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc14_14.3: <bound method> = bound_method %.loc14_14.1, %.loc14_14.2 [template = constants.%.26]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc14_14.3(%.loc14_14.1) [template = constants.%.27]
-// CHECK:STDOUT:   %.loc14_14.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.27]
-// CHECK:STDOUT:   %.loc14_14.5: i32 = converted %.loc14_14.1, %.loc14_14.4 [template = constants.%.27]
 // CHECK:STDOUT:   %.loc14_13.1: ref i32 = tuple_access %.loc14_11.2, element0
 // CHECK:STDOUT:   %.loc14_13.2: i32 = bind_value %.loc14_13.1
 // CHECK:STDOUT:   return %.loc14_13.2

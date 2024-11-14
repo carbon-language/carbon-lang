@@ -448,12 +448,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_29: %tuple.type.2 = converted %v.ref, %tuple
 // CHECK:STDOUT:   %w: %tuple.type.2 = bind_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %tuple.type.2 = name_ref w, %w
-// CHECK:STDOUT:   %.loc15_12.1: Core.IntLiteral = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_12.2: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc15_12.3: <bound method> = bound_method %.loc15_12.1, %.loc15_12.2 [template = constants.%.29]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init i32 = call %.loc15_12.3(%.loc15_12.1) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc15_12.4: i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc15_12.5: i32 = converted %.loc15_12.1, %.loc15_12.4 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc15_12: Core.IntLiteral = int_value 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_11: i32 = tuple_access %w.ref, element1
 // CHECK:STDOUT:   return %.loc15_11
 // CHECK:STDOUT: }

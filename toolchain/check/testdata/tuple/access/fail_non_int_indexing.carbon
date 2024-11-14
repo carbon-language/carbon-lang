@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_non_int_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+6]]:17: error: cannot implicitly convert from `f64` to `Core.IntLiteral` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: i32 = a.(2.6);
 // CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17: note: type `f64` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17: note: type `f64` does not implement interface `ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: i32 = a.(2.6);
 // CHECK:STDERR:                 ^~~
 var b: i32 = a.(2.6);
@@ -502,7 +502,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc18_17.1: f64 = float_literal 2.6000000000000001 [template = constants.%.32]
-// CHECK:STDOUT:   %.loc18_17.2: i32 = converted %.loc18_17.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_17.2: Core.IntLiteral = converted %.loc18_17.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

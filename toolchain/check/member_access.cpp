@@ -464,20 +464,29 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-  auto index_node_id = context.insts().GetLocId(index_inst_id);
-  index_inst_id = ConvertToValueOfType(
-      context, index_node_id, index_inst_id,
-      context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
-  auto index_const_id = context.constant_values().Get(index_inst_id);
-  if (index_const_id == SemIR::ConstantId::Error) {
-    return SemIR::InstId::BuiltinError;
-  } else if (!index_const_id.is_template()) {
+  auto diag_non_constant_index = [&] {
     // TODO: Decide what to do if the index is a symbolic constant.
     CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
                       "tuple index must be a constant");
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
     return SemIR::InstId::BuiltinError;
+  };
+  // Diagnose a non-constant index prior to conversion to IntLiteral, because
+  // the conversion will fail if the index is not constant.
+  if (!context.constant_values().Get(index_inst_id).is_template()) {
+    return diag_non_constant_index();
+  }
+
+  SemIR::TypeId element_type_id = SemIR::TypeId::Error;
+  auto index_node_id = context.insts().GetLocId(index_inst_id);
+  index_inst_id = ConvertToValueOfType(
+      context, index_node_id, index_inst_id,
+      context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
+  auto index_const_id = context.constant_values().Get(index_inst_id);
+  if (index_const_id == SemIR::ConstantId::Error) {
+    return SemIR::InstId::BuiltinError;
+  } else if (!index_const_id.is_template()) {
+    return diag_non_constant_index();
   }
 
   auto index_literal = context.insts().GetAs<SemIR::IntValue>(
