@@ -362,7 +362,7 @@ class CompilationUnit {
 
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> void {
-    LogCall("SourceBuffer::MakeFromFileOrStdin", [&] {
+    LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
       source_ = SourceBuffer::MakeFromFileOrStdin(driver_env_->fs,
                                                   input_filename_, *consumer_);
     });
@@ -376,13 +376,8 @@ class CompilationUnit {
     }
     CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
-    auto start_time = std::chrono::steady_clock::now();
-    LogCall("Lex::Lex",
+    LogCall("Lex::Lex", "lex",
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-    if (timings_) {
-      auto end_time = std::chrono::steady_clock::now();
-      timings_->Add("lex", end_time - start_time);
-    }
     if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       tokens_->Print(driver_env_->output_stream,
@@ -401,14 +396,9 @@ class CompilationUnit {
   auto RunParse() -> void {
     CARBON_CHECK(tokens_);
 
-    auto start_time = std::chrono::steady_clock::now();
-    LogCall("Parse::Parse", [&] {
+    LogCall("Parse::Parse", "parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
     });
-    if (timings_) {
-      auto end_time = std::chrono::steady_clock::now();
-      timings_->Add("parse", end_time - start_time);
-    }
     if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
       const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
@@ -483,8 +473,7 @@ class CompilationUnit {
   auto RunLower(const Check::SemIRDiagnosticConverter& converter) -> void {
     CARBON_CHECK(sem_ir_);
 
-    auto start_time = std::chrono::steady_clock::now();
-    LogCall("Lower::LowerToLLVM", [&] {
+    LogCall("Lower::LowerToLLVM", "lower", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
@@ -493,10 +482,6 @@ class CompilationUnit {
                                    converter, input_filename_, *sem_ir_,
                                    &inst_namer, vlog_stream_);
     });
-    if (timings_) {
-      auto end_time = std::chrono::steady_clock::now();
-      timings_->Add("lower", end_time - start_time);
-    }
     if (vlog_stream_) {
       CARBON_VLOG("*** llvm::Module ***\n");
       module_->print(*vlog_stream_, /*AAW=*/nullptr,
@@ -511,12 +496,7 @@ class CompilationUnit {
 
   auto RunCodeGen() -> void {
     CARBON_CHECK(module_);
-    auto start_time = std::chrono::steady_clock::now();
-    LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
-    if (timings_) {
-      auto end_time = std::chrono::steady_clock::now();
-      timings_->Add("codegen", end_time - start_time);
-    }
+    LogCall("CodeGen", "codegen", [&] { success_ = RunCodeGenHelper(); });
   }
 
   // Runs post-compile logic. This is always called, and called after all other
@@ -632,12 +612,16 @@ class CompilationUnit {
     return *parse_tree_and_subtrees_;
   }
 
-  // Wraps a call with log statements to indicate start and end.
-  auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
+  // Wraps a call with log statements to indicate start and end. Typically logs
+  // with the actual function name, but marks timings with the appropriate
+  // phase.
+  auto LogCall(llvm::StringLiteral logging_label,
+               llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
       -> void {
-    CARBON_VLOG("*** {0}: {1} ***\n", label, input_filename_);
+    CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
+    Timings::ScopedTiming timing(&timings_, timing_label);
     fn();
-    CARBON_VLOG("*** {0} done ***\n", label);
+    CARBON_VLOG("*** {0} done ***\n", logging_label);
   }
 
   // Returns true if the file can be dumped.
