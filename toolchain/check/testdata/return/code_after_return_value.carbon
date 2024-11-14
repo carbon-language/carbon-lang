@@ -13,12 +13,6 @@ fn F(b: bool) -> i32 {
 
   // Exercise various forms of control flow to check that we still consider the
   // end of the function unreachable after them.
-  // CHECK:STDERR: code_after_return_value.carbon:[[@LINE+6]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   var n: i32 = if b then 1 else 2;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: /usr/local/google/home/richardsmith/.cache/bazel/_bazel_richardsmith/6a55cebe9c704783710516afebb4acd9/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:23:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR:   fn Convert[self: Self]() -> i32 = "int.convert_checked";
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   var n: i32 = if b then 1 else 2;
   if (b and (b or b)) { }
   if (b) { } else { }
@@ -116,9 +110,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %.26: <bound method> = bound_method %.1, %Convert.15 [template]
 // CHECK:STDOUT:   %.27: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.28: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.30: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.31: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.29: <bound method> = bound_method %.28, %Convert.15 [template]
+// CHECK:STDOUT:   %.30: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.31: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.32: <bound method> = bound_method %.31, %Convert.15 [template]
+// CHECK:STDOUT:   %.33: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.34: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.35: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
