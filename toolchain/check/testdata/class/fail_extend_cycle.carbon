@@ -81,7 +81,7 @@ base class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
@@ -95,6 +95,6 @@ base class A {
 // CHECK:STDOUT:   .Self = constants.%.7
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .c = %.loc31
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -321,10 +321,11 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
-    if (auto non_lexical_result = LookupQualifiedName(
-            node_id, name_id,
-            {.name_scope_id = lookup_scope_id, .specific_id = specific_id},
-            /*required=*/false);
+    if (auto non_lexical_result =
+            LookupQualifiedName(node_id, name_id,
+                                LookupScope{.name_scope_id = lookup_scope_id,
+                                            .specific_id = specific_id},
+                                /*required=*/false);
         non_lexical_result.inst_id.is_valid()) {
       return non_lexical_result;
     }
@@ -440,11 +441,59 @@ struct ProhibitedAccessInfo {
   bool is_parent_access;
 };
 
+auto Context::AppendLookupScopesForConstant(
+    SemIRLoc loc, SemIR::ConstantId base_const_id,
+    llvm::SmallVector<LookupScope>* scopes) -> bool {
+  auto base_id = constant_values().GetInstId(base_const_id);
+  auto base = insts().Get(base_id);
+  if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
+    scopes->push_back(
+        LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
+                    .specific_id = SemIR::SpecificId::Invalid});
+    return true;
+  }
+  if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+      CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
+                        "member access into incomplete class {0}",
+                        InstIdAsType);
+      return emitter().Build(loc, QualifiedExprInIncompleteClassScope, base_id);
+    });
+    auto& class_info = classes().Get(base_as_class->class_id);
+    scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
+                                  .specific_id = base_as_class->specific_id});
+    return true;
+  }
+  if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
+                        "member access into undefined interface {0}",
+                        InstIdAsType);
+      return emitter().Build(loc, QualifiedExprInUndefinedInterfaceScope,
+                             base_id);
+    });
+    const auto& facet_type_info =
+        facet_types().Get(base_as_facet_type->facet_type_id);
+    for (auto interface : facet_type_info.impls_constraints) {
+      auto& interface_info = interfaces().Get(interface.interface_id);
+      scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
+                                    .specific_id = interface.specific_id});
+    }
+    return true;
+  }
+  // TODO: Per the design, if `base_id` is any kind of type, then lookup should
+  // treat it as a name scope, even if it doesn't have members. For example,
+  // `(i32*).X` should fail because there's no name `X` in `i32*`, not because
+  // there's no name `X` in `type`.
+  return false;
+}
+
 auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                                  LookupScope scope, bool required,
+                                  llvm::ArrayRef<LookupScope> lookup_scopes,
+                                  bool required,
                                   std::optional<AccessInfo> access_info)
     -> LookupResult {
-  llvm::SmallVector<LookupScope> scopes = {scope};
+  llvm::SmallVector<LookupScope> scopes(lookup_scopes);
 
   // TODO: Support reporting of multiple prohibited access.
   llvm::SmallVector<ProhibitedAccessInfo> prohibited_accesses;
@@ -457,6 +506,10 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
     auto [scope_id, specific_id] = scopes.pop_back_val();
+    if (!scope_id.is_valid()) {
+      has_error = true;
+      continue;
+    }
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error;
 
@@ -479,13 +532,25 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     if (!scope_result_id.is_valid() || is_access_prohibited) {
       // If nothing is found in this scope or if we encountered an invalid
       // access, look in its extended scopes.
-      auto extended = name_scope.extended_scopes;
+      const auto& extended = name_scope.extended_scopes;
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
-        // TODO: Track a constant describing the extended scope, and substitute
-        // into it to determine its corresponding specific.
-        scopes.push_back({.name_scope_id = extended_id,
-                          .specific_id = SemIR::SpecificId::Invalid});
+        // Substitute into the constant describing the extended scope to
+        // determine its corresponding specific.
+        CARBON_CHECK(extended_id.is_valid());
+        SemIR::ConstantId const_id =
+            GetConstantValueInSpecific(sem_ir(), specific_id, extended_id);
+
+        DiagnosticAnnotationScope annotate_diagnostics(
+            &emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(FromExtendHere, Note,
+                                "declared as an extended scope here");
+              builder.Note(extended_id, FromExtendHere);
+            });
+        if (!AppendLookupScopesForConstant(loc, const_id, &scopes)) {
+          // TODO: Handle case where we have a symbolic type and instead should
+          // look in its type.
+        }
       }
       is_parent_access |= !extended.empty();
       continue;

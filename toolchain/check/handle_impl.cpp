@@ -12,6 +12,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -173,30 +174,20 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(constraint_id);
-  if (!facet_type) {
+  if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
     parent_scope.has_error = true;
     return;
   }
-  const SemIR::FacetTypeInfo& info =
-      context.facet_types().Get(facet_type->facet_type_id);
-  for (auto interface_type : info.impls_constraints) {
-    auto& interface = context.interfaces().Get(interface_type.interface_id);
-    if (!interface.is_defined()) {
-      CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                        "`extend impl` requires a definition for interface {0}",
-                        InstIdAsType);
-      auto diag = context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                          constraint_inst_id);
-      context.NoteUndefinedInterface(interface_type.interface_id, diag);
-      diag.Emit();
-      parent_scope.has_error = true;
-      return;
-    }
+  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
+    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
+                      "`extend impl` requires a definition for facet type {0}",
+                      InstIdAsType);
+    return context.emitter().Build(node_id, ExtendUndefinedInterface,
+                                   constraint_inst_id);
+  });
 
-    parent_scope.extended_scopes.push_back(interface.scope_id);
-  }
+  parent_scope.extended_scopes.push_back(constraint_inst_id);
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
@@ -333,6 +324,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
+    if (impl_info.generic_id.is_valid()) {
+      SemIR::TypeId type_id = context.insts().Get(constraint_inst_id).type_id();
+      constraint_inst_id = context.AddInst<SemIR::SpecificConstant>(
+          context.insts().GetLocId(constraint_inst_id),
+          {.type_id = type_id,
+           .inst_id = constraint_inst_id,
+           .specific_id =
+               context.generics().GetSelfSpecific(impl_info.generic_id)});
+    }
     ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
                name.implicit_params_loc_id, constraint_inst_id,
                constraint_type_id);

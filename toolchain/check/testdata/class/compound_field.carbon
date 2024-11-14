@@ -196,7 +196,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT:   .e = %.loc21_8
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -75,22 +75,13 @@ struct NameScope : Printable<NameScope> {
   llvm::SmallVector<Entry> names;
   Map<NameId, int> name_map;
 
-  // Scopes extended by this scope.
-  //
-  // TODO: A `NameScopeId` is currently insufficient to describe an extended
-  // scope in general. For example:
-  //
-  //   class A(T:! type) {
-  //     extend base: B(T*);
-  //   }
-  //
-  // needs to describe the `T*` argument.
+  // Instructions returning values that are extended by this scope.
   //
   // Small vector size is set to 1: we expect that there will rarely be more
   // than a single extended scope.
   // TODO: Revisit this once we have more kinds of extended scope and data.
   // TODO: Consider using something like `TinyPtrVector` for this.
-  llvm::SmallVector<NameScopeId, 1> extended_scopes;
+  llvm::SmallVector<InstId, 1> extended_scopes;
 
   // The instruction which owns the scope.
   InstId inst_id;

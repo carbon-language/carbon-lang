@@ -316,7 +316,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%Circle
 // CHECK:STDOUT:   .base = %.loc10
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -426,7 +426,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F [private] = %F.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -452,7 +452,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
@@ -570,7 +570,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -675,7 +675,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%Square
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -852,7 +852,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -924,7 +924,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1146,7 +1146,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
@@ -1229,7 +1229,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

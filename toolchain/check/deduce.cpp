@@ -50,6 +50,9 @@ class DeductionWorklist {
   // Adds a single (param, arg) deduction of a specific.
   auto Add(SemIR::SpecificId param, SemIR::SpecificId arg,
            bool needs_substitution) -> void {
+    if (!param.is_valid() || !arg.is_valid()) {
+      return;
+    }
     auto& param_specific = context_.specifics().Get(param);
     auto& arg_specific = context_.specifics().Get(arg);
     if (param_specific.generic_id != arg_specific.generic_id) {

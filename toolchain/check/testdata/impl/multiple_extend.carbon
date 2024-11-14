@@ -271,8 +271,8 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   extend name_scope2
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend @impl.1.%HasF.ref
+// CHECK:STDOUT:   extend @impl.2.%HasG.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %HasF.type) {
@@ -436,8 +436,8 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   extend name_scope2
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend @impl.1.%HasA1.ref
+// CHECK:STDOUT:   extend @impl.2.%HasA2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(@HasA1.%Self: %HasA1.type) {
@@ -576,8 +576,8 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend name_scope3
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   extend @impl.%HasI.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.1(@HasI.%Self: %HasI.type) {
@@ -717,8 +717,8 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
 // CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend name_scope2
-// CHECK:STDOUT:   extend name_scope3
+// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   extend @impl.%HasK.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.1() {
@@ -887,9 +887,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   .Self = constants.%O
 // CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   extend name_scope2
-// CHECK:STDOUT:   extend name_scope3
-// CHECK:STDOUT:   extend name_scope4
+// CHECK:STDOUT:   extend %NBase.ref
+// CHECK:STDOUT:   extend @impl.1.%HasN1.ref
+// CHECK:STDOUT:   extend @impl.2.%HasN2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @N.1() {
