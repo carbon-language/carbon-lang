@@ -502,6 +502,9 @@ auto HandleParseNode(Context& context,
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
+      // Build an empty generic definition if this is a generic builtin.
+      StartGenericDefinition(context);
+      FinishGenericDefinition(context, function.generic_id);
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
                         "invalid signature for builtin function \"{0}\"",

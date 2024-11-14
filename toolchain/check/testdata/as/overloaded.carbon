@@ -503,12 +503,16 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic = %.1 (constants.%.19)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: Core.IntLiteral]() -> @Convert.5.%.1 (%.19) = "int.convert_checked";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.6(constants.%N: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type unsigned, %N [symbolic = %.1 (constants.%.21)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: Core.IntLiteral]() -> @Convert.6.%.1 (%.21) = "int.convert_checked";
 // CHECK:STDOUT: }
@@ -517,12 +521,16 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic = %.1 (constants.%.19)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.7.%.1 (%.19)]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.8(constants.%N: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type unsigned, %N [symbolic = %.1 (constants.%.21)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.8.%.1 (%.21)]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT: }
@@ -531,12 +539,16 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic = %.1 (constants.%.19)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: Core.IntLiteral]() -> @Convert.9.%.1 (%.19) = "int.convert_checked";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.10(constants.%N: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type unsigned, %N [symbolic = %.1 (constants.%.21)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: Core.IntLiteral]() -> @Convert.10.%.1 (%.21) = "int.convert_checked";
 // CHECK:STDOUT: }
@@ -545,12 +557,16 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type signed, %N [symbolic = %.1 (constants.%.19)]
 // CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.11.%.1 (%.19)]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.12(constants.%N: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %.1: type = int_type unsigned, %N [symbolic = %.1 (constants.%.21)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.12.%.1 (%.21)]() -> Core.IntLiteral = "int.convert_checked";
 // CHECK:STDOUT: }
