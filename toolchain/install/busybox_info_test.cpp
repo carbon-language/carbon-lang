@@ -23,9 +23,9 @@ class BusyboxInfoTest : public ::testing::Test {
   explicit BusyboxInfoTest() {
     const char* tmpdir = std::getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir);
-    dir_ = MakeDir(
+    dir_ = MakeDir(std::filesystem::absolute(
         std::filesystem::path(tmpdir) /
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+        ::testing::UnitTest::GetInstance()->current_test_info()->name()));
   }
 
   // Delete the test case's temp directory.
@@ -134,6 +134,20 @@ TEST_F(BusyboxInfoTest, RelativeSymlink) {
   auto info = GetBusyboxInfo(target.string());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "bin/../lib/carbon/carbon-busybox"));
+  EXPECT_THAT(info->mode, Eq("carbon"));
+}
+
+TEST_F(BusyboxInfoTest, AbsoluteSymlink) {
+  MakeDir(dir_ / "lib");
+  MakeDir(dir_ / "lib/carbon");
+  auto busybox = MakeFile(dir_ / "lib/carbon/carbon-busybox");
+  ASSERT_TRUE(busybox.is_absolute());
+  MakeDir(dir_ / "bin");
+  auto target = MakeSymlink(dir_ / "bin/carbon", busybox);
+
+  auto info = GetBusyboxInfo(target.string());
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path, Eq(busybox));
   EXPECT_THAT(info->mode, Eq("carbon"));
 }
 
