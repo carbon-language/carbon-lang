@@ -46,7 +46,7 @@ ClangRunner::ClangRunner(const InstallPaths* install_paths,
                          llvm::raw_ostream* vlog_stream)
     : installation_(install_paths),
       target_(target),
-      fs_(fs),
+      fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       diagnostic_ids_(new clang::DiagnosticIDs()) {}
 
