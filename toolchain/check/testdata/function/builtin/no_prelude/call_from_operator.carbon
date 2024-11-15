@@ -53,7 +53,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
@@ -450,7 +449,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@As.%T.loc11_14.2) {
+// CHECK:STDOUT: specific @As(%T.loc11_14.2) {
 // CHECK:STDOUT:   %T.loc11_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T
 // CHECK:STDOUT: }
@@ -471,7 +470,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self => constants.%Self.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%T.loc15_22.2) {
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc15_22.2) {
 // CHECK:STDOUT:   %T.loc15_22.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc15_22.2 => constants.%T
 // CHECK:STDOUT: }
@@ -541,11 +540,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
-// CHECK:STDOUT:   %As: %As.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %As.type.2: type = facet_type <@As, @As(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @As.%As.type (%As.type.2) = bind_symbolic_name Self, 1 [symbolic]
@@ -563,8 +559,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.6: %.2 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self.3: %Add.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.4: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(i32)> [template]
@@ -591,7 +585,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.17: <bound method> = bound_method %.16, %Convert.6 [template]
 // CHECK:STDOUT:   %.18: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.19: type = assoc_entity_type %Add.type, %Op.type.1 [template]
 // CHECK:STDOUT:   %.20: %.19 = assoc_entity element0, imports.%import_ref.30 [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
@@ -606,7 +599,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.26: <bound method> = bound_method %.23, %Convert.7 [template]
 // CHECK:STDOUT:   %.27: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %.28: type = array_type %.27, i32 [template]
-// CHECK:STDOUT:   %.29: type = ptr_type %.28 [template]
 // CHECK:STDOUT:   %.30: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %.31: <bound method> = bound_method %.27, %Convert.6 [template]
 // CHECK:STDOUT:   %.32: <bound method> = bound_method %.30, %Convert.6 [template]
@@ -631,13 +623,10 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.31
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %As.type.1 = import_ref Core//default, inst+54, loaded [template = constants.%As]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+60, unloaded
 // CHECK:STDOUT:   %import_ref.4: @As.%.1 (%.2) = import_ref Core//default, inst+82, loaded [symbolic = @As.%.2 (constants.%.6)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Core//default, inst+75, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+75, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Core//default, inst+75, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Core//default, inst+18, unloaded
 // CHECK:STDOUT:   %import_ref.9: %.19 = import_ref Core//default, inst+46, loaded [template = constants.%.20]
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//default, inst+41, unloaded
@@ -654,15 +643,9 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %import_ref.21: type = import_ref Core//default, inst+195, loaded [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %import_ref.22: <witness> = import_ref Core//default, inst+217, loaded [template = constants.%.37]
 // CHECK:STDOUT:   %import_ref.23 = import_ref Core//default, inst+115, unloaded
-// CHECK:STDOUT:   %import_ref.24 = import_ref Core//default, inst+115, unloaded
 // CHECK:STDOUT:   %import_ref.25: type = import_ref Core//default, inst+221, loaded [template = i32]
 // CHECK:STDOUT:   %import_ref.26: type = import_ref Core//default, inst+227, loaded [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   %import_ref.27: <witness> = import_ref Core//default, inst+250, loaded [template = constants.%.25]
-// CHECK:STDOUT:   %import_ref.28 = import_ref Core//default, inst+115, unloaded
-// CHECK:STDOUT:   %import_ref.29: type = import_ref Core//default, inst+16, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.30 = import_ref Core//default, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.31: %ImplicitAs.type.1 = import_ref Core//default, inst+94, loaded [template = constants.%ImplicitAs]
-// CHECK:STDOUT:   %import_ref.32 = import_ref Core//default, inst+115, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -860,7 +843,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@As.%T) {
+// CHECK:STDOUT: specific @As(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
@@ -907,7 +890,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.2 => constants.%.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%T) {
+// CHECK:STDOUT: specific @ImplicitAs(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }

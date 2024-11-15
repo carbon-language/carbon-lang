@@ -90,7 +90,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %WithAssocFn.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @WithAssocFn.%F.decl [template]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T.1 = symbolic_binding_pattern N, 1 [symbolic]
@@ -318,7 +317,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(@Simple.%T.loc4_18.2) {
+// CHECK:STDOUT: specific @Simple(%T.loc4_18.2) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -330,7 +329,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(@WithAssocFn.%T.loc8_23.2) {
+// CHECK:STDOUT: specific @WithAssocFn(%T.loc8_23.2) {
 // CHECK:STDOUT:   %T.loc8_23.2 => constants.%T.1
 // CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -389,7 +388,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.1: type = generic_interface_type @Generic [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic: %Generic.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Generic.type.2: type = facet_type <@Generic, @Generic(%T.1)> [symbolic]
 // CHECK:STDOUT:   %Self: %Generic.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -506,7 +504,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@Generic.%T.loc4_19.2) {
+// CHECK:STDOUT: specific @Generic(%T.loc4_19.2) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT: }

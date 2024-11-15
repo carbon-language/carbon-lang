@@ -123,7 +123,8 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   clang::DiagnosticsEngine diagnostics(
       diagnostic_ids_, diagnostic_options.get(), &diagnostic_client,
       /*ShouldOwnClient=*/false);
-  clang::ProcessWarningOptions(diagnostics, *diagnostic_options);
+  auto vfs = llvm::vfs::getRealFileSystem();
+  clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *vfs);
 
   clang::driver::Driver driver(clang_path, target_, diagnostics);
 

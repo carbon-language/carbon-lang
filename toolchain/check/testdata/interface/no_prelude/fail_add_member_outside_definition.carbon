@@ -37,7 +37,6 @@ interface Outer {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
 // CHECK:STDOUT:   %Self.1: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Outer.type: type = facet_type <@Outer> [template]
 // CHECK:STDOUT:   %Self.2: %Outer.type = bind_symbolic_name Self, 0 [symbolic]
@@ -131,7 +130,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Inner.%Self.2) {}
+// CHECK:STDOUT: specific @Inner(%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.2, constants.%Self.3) {}
 // CHECK:STDOUT:

@@ -38,7 +38,6 @@ export C.n;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: %.1} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
@@ -66,9 +65,6 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.n: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

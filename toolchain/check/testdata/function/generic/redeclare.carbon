@@ -96,7 +96,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT: }
@@ -171,7 +170,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.loc7_10.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc4_6.2) {
+// CHECK:STDOUT: specific @F(%T.loc4_6.2) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4 => constants.%T
 // CHECK:STDOUT:   %.loc4_20.2 => constants.%.1
@@ -186,7 +185,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = ptr_type %U [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
@@ -294,7 +292,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T.1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %U.2: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt.2: type = symbolic_binding_pattern U, 0 [symbolic]
@@ -406,7 +403,6 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.1: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T.1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %U.2: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt.2: type = symbolic_binding_pattern U, 0 [symbolic]

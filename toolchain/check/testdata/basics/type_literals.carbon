@@ -124,7 +124,6 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 8 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 16 [template]
@@ -139,7 +138,6 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int.type = import_ref Core//prelude/types, inst+30, loaded [template = constants.%Int]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -170,31 +168,18 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_i64: ref %.6 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_iN_bad_width.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 15 [template]
-// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
-// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 8 [template]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 16 [template]
@@ -209,7 +194,6 @@ var test_f128: f128;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %UInt.type = import_ref Core//prelude/types, inst+45, loaded [template = constants.%UInt]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -240,24 +224,12 @@ var test_f128: f128;
 // CHECK:STDOUT:   %test_u64: ref %.6 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_uN_bad_width.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 15 [template]
-// CHECK:STDOUT:   %.4: type = int_type unsigned, %.3 [template]
-// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%size.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_fN_bad_width.carbon
 // CHECK:STDOUT:

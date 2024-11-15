@@ -29,7 +29,6 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [template]
 // CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [template]
@@ -139,7 +138,6 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %AsIntLiteral.type: type = fn_type @AsIntLiteral [template]
 // CHECK:STDOUT:   %AsIntLiteral: %AsIntLiteral.type = struct_value () [template]
@@ -154,7 +152,6 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %.7: type = array_type %.6, i32 [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.7 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.9: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.7 = tuple_value (%.2, %.4, %.5) [template]
@@ -168,7 +165,6 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:     .AsI32 = %import_ref.4
 // CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//core, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %AsIntLiteral.type = import_ref Core//core, inst+55, loaded [template = constants.%AsIntLiteral]
 // CHECK:STDOUT:   %import_ref.3: %TestAdd.type = import_ref Core//core, inst+30, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT:   %import_ref.4: %AsI32.type = import_ref Core//core, inst+73, loaded [template = constants.%AsI32]

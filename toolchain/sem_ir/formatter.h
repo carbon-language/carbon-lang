@@ -16,8 +16,15 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
-                     const Parse::Tree& parse_tree, const File& sem_ir);
+  // A callback that indicates whether a specific entity, identified by its
+  // declaration, should be included in the output.
+  using ShouldFormatEntityFn =
+      llvm::function_ref<auto(InstId decl_inst_id)->bool>;
+
+  explicit Formatter(
+      const Lex::TokenizedBuffer& tokenized_buffer,
+      const Parse::Tree& parse_tree, const File& sem_ir,
+      ShouldFormatEntityFn should_format_entity = [](InstId) { return true; });
   ~Formatter();
 
   // Prints the full IR.
@@ -25,6 +32,7 @@ class Formatter {
 
  private:
   const File& sem_ir_;
+  ShouldFormatEntityFn should_format_entity_;
   // Caches naming between Print calls.
   InstNamer inst_namer_;
 };

@@ -47,7 +47,6 @@ fn Class.I() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type.1: type = fn_type @H.1 [template]
 // CHECK:STDOUT:   %H.1: %H.type.1 = struct_value () [template]

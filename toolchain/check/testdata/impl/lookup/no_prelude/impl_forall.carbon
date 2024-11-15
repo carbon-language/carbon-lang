@@ -38,7 +38,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %A.2, %T [symbolic]
@@ -68,7 +67,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.9: type = unbound_element_type %A.3, %V [symbolic]
 // CHECK:STDOUT:   %.10: type = struct_type {.n: %V} [symbolic]
 // CHECK:STDOUT:   %.11: <witness> = complete_type_witness %.10 [symbolic]
-// CHECK:STDOUT:   %.12: type = ptr_type %.10 [symbolic]
 // CHECK:STDOUT:   %W: type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: type = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %A.4: type = class_type @A, @A(%W) [symbolic]
@@ -77,7 +75,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.13: type = unbound_element_type %A.4, %W [symbolic]
 // CHECK:STDOUT:   %.14: type = struct_type {.n: %W} [symbolic]
 // CHECK:STDOUT:   %.15: <witness> = complete_type_witness %.14 [symbolic]
-// CHECK:STDOUT:   %.16: type = ptr_type %.14 [symbolic]
 // CHECK:STDOUT:   %I.type.4: type = facet_type <@I, @I(%W)> [symbolic]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.1, @I(%W) [symbolic]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [symbolic]
@@ -93,8 +90,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %.21: type = unbound_element_type %A.5, %.20 [template]
 // CHECK:STDOUT:   %.22: type = struct_type {.n: %.20} [template]
 // CHECK:STDOUT:   %.23: <witness> = complete_type_witness %.22 [template]
-// CHECK:STDOUT:   %.24: type = struct_type {.n: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.25: type = ptr_type %.22 [template]
 // CHECK:STDOUT:   %I.type.5: type = facet_type <@I, @I(%.20)> [template]
 // CHECK:STDOUT:   %F.type.6: type = fn_type @F.1, @I(%.20) [template]
 // CHECK:STDOUT:   %F.6: %F.type.6 = struct_value () [template]
@@ -352,7 +347,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(@A.%T.loc2_9.2) {
+// CHECK:STDOUT: specific @A(%T.loc2_9.2) {
 // CHECK:STDOUT:   %T.loc2_9.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%T
 // CHECK:STDOUT: }
@@ -373,7 +368,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@I.%U.loc6_13.2) {
+// CHECK:STDOUT: specific @I(%U.loc6_13.2) {
 // CHECK:STDOUT:   %U.loc6_13.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc6_13.2 => constants.%U
 // CHECK:STDOUT: }
@@ -440,7 +435,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %Self => constants.%A.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%V.loc10_14.2) {
+// CHECK:STDOUT: specific @impl(%V.loc10_14.2) {
 // CHECK:STDOUT:   %V.loc10_14.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc10_14.2 => constants.%V
 // CHECK:STDOUT:   %A.loc10_25.2 => constants.%A.3

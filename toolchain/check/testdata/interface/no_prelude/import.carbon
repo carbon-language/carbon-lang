@@ -58,7 +58,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Basic.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Basic.%T [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %Basic.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @Basic.%F.decl [template]
@@ -71,7 +70,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %ForwardDeclared.type, %F.type.2 [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, @ForwardDeclared.%F.decl [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.f: %ForwardDeclared.type} [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.f: %empty_tuple.type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,9 +142,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [template]
-// CHECK:STDOUT:   %Self.1: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [template]
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [template]
 // CHECK:STDOUT:   %Self.2: %Basic.type = bind_symbolic_name Self, 0 [symbolic]
@@ -159,18 +155,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Basic.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, imports.%import_ref.16 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %Basic.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, imports.%import_ref.17 [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %ForwardDeclared.type, type [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.18 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type %ForwardDeclared.type, %F.type.2 [template]
 // CHECK:STDOUT:   %.8: %.7 = assoc_entity element1, imports.%import_ref.19 [template]
 // CHECK:STDOUT:   %.9: type = ptr_type %ForwardDeclared.type [template]
 // CHECK:STDOUT:   %.10: type = struct_type {.f: %ForwardDeclared.type} [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.f: %empty_tuple.type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -189,10 +182,6 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %import_ref.13: %.7 = import_ref Main//a, inst+32, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst+24, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//a, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//a, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//a, inst+28, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
