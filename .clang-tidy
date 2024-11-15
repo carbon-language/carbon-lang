@@ -29,6 +29,9 @@ WarningsAsErrors: '*'
 #   not non-const, which yields distracting results on accessors.
 # - performance-unnecessary-value-param is disabled because it duplicate
 #   modernize-pass-by-value.
+# - readability-enum-initial-value is disabled because it warns on enums which
+#   use the `LastValue = Value` pattern if all the other discriminants aren't
+#   given an explicit value.
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape, -bugprone-macro-parentheses,
