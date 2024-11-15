@@ -22,7 +22,7 @@ class FileTestBaseTest : public FileTestBase {
       : FileTestBase(output_mutex, test_name) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs,
+           llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
       -> ErrorOr<RunResult> override;
 
@@ -220,7 +220,7 @@ static auto EchoFileContent(TestParams& params)
 
 auto FileTestBaseTest::Run(
     const llvm::SmallVector<llvm::StringRef>& test_args,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
     -> ErrorOr<RunResult> {
   PrintArgs(test_args, stdout);

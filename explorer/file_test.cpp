@@ -28,7 +28,7 @@ class ExplorerFileTest : public FileTestBase {
   }
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs,
+           llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
       -> ErrorOr<RunResult> override {
     // Add the prelude.
