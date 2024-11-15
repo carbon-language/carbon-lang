@@ -143,8 +143,8 @@ TEST(SourceGenTest, UniqueIdentifiers) {
 
 // Check that the source code doesn't have compiler errors.
 auto TestCompile(llvm::StringRef source) -> bool {
-  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs(
-      new llvm::vfs::InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
