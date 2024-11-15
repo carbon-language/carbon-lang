@@ -5,6 +5,7 @@
 #include "toolchain/driver/compile_subcommand.h"
 
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/timings.h"
@@ -787,8 +788,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Unlike previous steps, errors block further progress.
-  if (std::ranges::any_of(units,
-                          [&](const auto& unit) { return !unit->success(); })) {
+  if (llvm::any_of(units, [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG_TO(driver_env.vlog_stream,
                    "*** Stopping before lowering due to errors ***");
     return make_result();
