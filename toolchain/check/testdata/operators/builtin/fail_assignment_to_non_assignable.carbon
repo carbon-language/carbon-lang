@@ -60,7 +60,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -71,13 +70,11 @@ fn Main() {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 4 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %tuple.type [template]
 // CHECK:STDOUT:   %tuple.1: %tuple.type = tuple_value (%.3, %.4) [template]
 // CHECK:STDOUT:   %tuple.2: %tuple.type = tuple_value (%.1, %.2) [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.x: i32, .y: i32} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %struct.1: %.8 = struct_value (%.3, %.4) [template]
 // CHECK:STDOUT:   %struct.2: %.8 = struct_value (%.1, %.2) [template]
 // CHECK:STDOUT:   %.10: bool = bool_literal true [template]
@@ -90,7 +87,6 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,8 +108,6 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32;
 // CHECK:STDOUT:

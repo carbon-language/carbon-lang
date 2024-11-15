@@ -21,22 +21,25 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %.2: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%.1, %.2) [symbolic]
-// CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%.1, %T) [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type.3 [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %.5: i32 = int_value 5 [template]
-// CHECK:STDOUT:   %.6: type = array_type %.5, %T [symbolic]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [symbolic]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
+// CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.5, %Convert.15 [template]
+// CHECK:STDOUT:   %.31: Core.IntLiteral = int_value 5 [template]
+// CHECK:STDOUT:   %.32: type = array_type %.31, %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -66,7 +69,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_15.2 (constants.%.2)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%.loc13_12.2 (%.1), @F.%.loc13_15.2 (%.2)) [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:   %.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %.loc14_16.2 (constants.%.4)]
-// CHECK:STDOUT:   %.loc15_15.2: type = array_type constants.%.5, @F.%T.loc12_6.2 (%T) [symbolic = %.loc15_15.2 (constants.%.6)]
+// CHECK:STDOUT:   %.loc15_15.2: type = array_type constants.%.31, @F.%T.loc12_6.2 (%T) [symbolic = %.loc15_15.2 (constants.%.32)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -83,10 +86,15 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %v.var: ref @F.%.loc14_16.2 (%.4) = var v
 // CHECK:STDOUT:     %v: ref @F.%.loc14_16.2 (%.4) = bind_name v, %v.var
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc15_14: i32 = int_value 5 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc15_15.1: type = array_type %.loc15_14, %T [symbolic = %.loc15_15.2 (constants.%.6)]
-// CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.6) = var w
-// CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.6) = bind_name w, %w.var
+// CHECK:STDOUT:     %.loc15_14.1: i32 = int_value 5 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc15_14.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:     %.loc15_14.3: <bound method> = bound_method %.loc15_14.1, %.loc15_14.2 [template = constants.%.30]
+// CHECK:STDOUT:     %int.convert_checked: init Core.IntLiteral = call %.loc15_14.3(%.loc15_14.1) [template = constants.%.31]
+// CHECK:STDOUT:     %.loc15_14.4: Core.IntLiteral = value_of_initializer %int.convert_checked [template = constants.%.31]
+// CHECK:STDOUT:     %.loc15_14.5: Core.IntLiteral = converted %.loc15_14.1, %.loc15_14.4 [template = constants.%.31]
+// CHECK:STDOUT:     %.loc15_15.1: type = array_type %.loc15_14.5, %T [symbolic = %.loc15_15.2 (constants.%.32)]
+// CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.32) = var w
+// CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.32) = bind_name w, %w.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

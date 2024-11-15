@@ -61,7 +61,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -161,7 +160,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%T.loc7_22.2) {
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc7_22.2) {
 // CHECK:STDOUT:   %T.loc7_22.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_22.2 => constants.%T
 // CHECK:STDOUT: }
@@ -170,7 +169,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
@@ -185,7 +183,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct: %D = struct_value (%.7, %.7) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.7) [template]
@@ -208,7 +205,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.10: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.3 [template]
 // CHECK:STDOUT:   %.11: %.10 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %.12: <witness> = interface_witness (%Convert.2) [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.14: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%.14) [template]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
@@ -252,7 +248,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %ImplicitAs.type.1 = import_ref Core//default, inst+15, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Core//default, inst+43, unloaded
@@ -685,7 +680,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%T) {
+// CHECK:STDOUT: specific @ImplicitAs(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
@@ -815,28 +810,19 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.n: i32, .m: i32} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %F0.type: type = fn_type @F0 [template]
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%N) [symbolic]
 // CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.7: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%.7) [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct.1: %C.3 = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
@@ -913,19 +899,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref P//library, inst+29, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.3 = import_ref P//library, inst+30, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref P//library, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref P//library, inst+39, unloaded
 // CHECK:STDOUT:   %import_ref.6: %C.type = import_ref P//library, inst+20, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref P//library, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.8: %ImplicitAs.type.1 = import_ref Core//default, inst+15, loaded [template = constants.%ImplicitAs]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//default, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.10: @ImplicitAs.%.1 (%.9) = import_ref Core//default, inst+43, loaded [symbolic = @ImplicitAs.%.2 (constants.%.13)]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Core//default, inst+36, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Core//default, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Core//default, inst+36, unloaded
 // CHECK:STDOUT:   %import_ref.14: type = import_ref P//library, inst+66, loaded [template = constants.%C.3]
 // CHECK:STDOUT:   %import_ref.15: type = import_ref P//library, inst+111, loaded [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %import_ref.16: <witness> = import_ref P//library, inst+131, loaded [template = constants.%.21]
@@ -1288,7 +1271,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@ImplicitAs.%T) {
+// CHECK:STDOUT: specific @ImplicitAs(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }

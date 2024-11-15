@@ -36,7 +36,6 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Add.type, %Op.type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Add.%Op.decl [template]
@@ -116,7 +115,6 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.3: %.2 = import_ref Main//a, inst+32, loaded [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+26, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

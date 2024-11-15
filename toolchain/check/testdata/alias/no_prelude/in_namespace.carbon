@@ -27,7 +27,6 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.v: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]

@@ -8,30 +8,61 @@ UseColor: true
 # This is necessary for `--config=clang-tidy` to catch errors.
 WarningsAsErrors: '*'
 
-# - bugprone-exception-escape finds issues like out-of-memory in main(). We
+# We turn on all `bugprone`, `google`, `modernize`, `performance`, and
+# `readability` by default. A few `misc` are selectively enabled, and a few
+# other checks are selectively disabled.
+#
+# Checks with nuanced reasons for disabling are:
+#
+# - `bugprone-branch-clone` warns when we have multiple empty cases in switches,
+#    which we do for comment reasons.
+# - `bugprone-easily-swappable-parameters` frequently warns on multiple
+#   parameters of the same type.
+# - `bugprone-exception-escape` finds issues like out-of-memory in main(). We
 #   don't use exceptions, so it's unlikely to find real issues.
-# - bugprone-macro-parentheses has false positives in places such as using an
+# - `bugprone-macro-parentheses` has false positives in places such as using an
 #   argument to declare a name, which cannot have parentheses. For our limited
 #   use of macros, this is a common conflict.
-# - bugprone-switch-missing-default-case has false positives for `enum_base.h`.
-#   Clang's built-in switch warnings cover most of our risk of bugs here.
-# - bugprone-unchecked-optional-access in clang-tidy 16 has false positives on
+# - `bugprone-narrowing-conversions` conflicts with integer type C++ style.
+# - `google-readability-todo` suggests usernames on TODOs, which we don't want.
+# - `bugprone-switch-missing-default-case` has false positives for
+#   `enum_base.h`. Clang's built-in switch warnings cover most of our risk of
+#   bugs here.
+# - `bugprone-unchecked-optional-access` in clang-tidy 16 has false positives on
 #   code like:
 #     while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
 #       inst_id = name_ref->value_id;
 #                 ^ unchecked access to optional value
 #     }
-# - google-readability-function-size overlaps with readability-function-size.
-# - modernize-use-designated-initializers is disabled because it fires on
-#   creation of SemIR typed insts, for which we do not currently want to use
-#   designated initialization.
-# - modernize-use-nodiscard is disabled because it only fixes const methods,
+# - `google-readability-function-size` overlaps with
+#   `readability-function-size`.
+# - `modernize-avoid-c-arrays` suggests `std::array`, which we could migrate to,
+#   but conflicts with the status quo.
+# - `modernize-use-designated-initializers` fires on creation of SemIR typed
+#   insts, for which we do not currently want to use designated initialization.
+# - `modernize-use-nodiscard` is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.
-# - performance-unnecessary-value-param is disabled because it duplicate
-#   modernize-pass-by-value.
-# - readability-enum-initial-value is disabled because it warns on enums which
-#   use the `LastValue = Value` pattern if all the other discriminants aren't
-#   given an explicit value.
+# - `performance-unnecessary-value-param` duplicates `modernize-pass-by-value`.
+# - `readability-enum-initial-value` warns on enums which use the
+#   `LastValue = Value` pattern if all the other discriminants aren't given an
+#   explicit value.
+# - `readability-function-cognitive-complexity` warns too frequently.
+# - `readability-magic-numbers` warns in reasonably documented situations.
+# - `readability-suspicious-call-argument` warns when callers use similar names
+#   as different parameters.
+#
+# Checks that are essentially style choices we don't apply are:
+#
+# - `modernize-return-braced-init-list`
+# - `modernize-use-default-member-init`
+# - `modernize-use-emplace`
+# - `readability-convert-member-functions-to-static`
+# - `readability-else-after-return`
+# - `readability-identifier-length`
+# - `readability-implicit-bool-conversion`
+# - `readability-make-member-function-const`
+# - `readability-static-definition-in-anonymous-namespace`
+# - `readability-use-anyofallof`
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape, -bugprone-macro-parentheses,

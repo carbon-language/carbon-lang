@@ -64,26 +64,31 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mod.type: type = fn_type @Mod [template]
 // CHECK:STDOUT:   %Mod: %Mod.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
+// CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
+// CHECK:STDOUT:   %.27: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.28: <bound method> = bound_method %.3, %Convert.15 [template]
+// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.30: type = array_type %.29, i32 [template]
+// CHECK:STDOUT:   %.31: type = ptr_type %.30 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -126,15 +131,27 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod: init i32 = call %Mod.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %int.smod, i32 [template = constants.%.4]
-// CHECK:STDOUT:   %arr.var: ref %.4 = var arr
-// CHECK:STDOUT:   %arr: ref %.4 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc4_19.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_19.2: <bound method> = bound_method %int.smod, %.loc4_19.1 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc4_19.3: i32 = value_of_initializer %int.smod [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_19.4: i32 = converted %int.smod, %.loc4_19.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.convert_checked.loc4: init Core.IntLiteral = call %.loc4_19.2(%.loc4_19.4) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_19.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_19.6: Core.IntLiteral = converted %int.smod, %.loc4_19.5 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_19.6, i32 [template = constants.%.30]
+// CHECK:STDOUT:   %arr.var: ref %.30 = var arr
+// CHECK:STDOUT:   %arr: ref %.30 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_18.1: i32 = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc5_18.2: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc5_18.3: <bound method> = bound_method %.loc5_18.1, %.loc5_18.2 [template = constants.%.28]
+// CHECK:STDOUT:   %int.convert_checked.loc5: init Core.IntLiteral = call %.loc5_18.3(%.loc5_18.1) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_18.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc5 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_18.5: Core.IntLiteral = converted %.loc5_18.1, %.loc5_18.4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18.5, i32 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.30 [template = constants.%.31]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: i32 = value_param_pattern %a.patt, runtime_param0
@@ -161,8 +178,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mod(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
@@ -178,9 +193,9 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: ref %.4 = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc5: %.5 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.5 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %arr.ref: ref %.30 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc5: %.31 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.31 = bind_name arr_p, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,7 +203,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mod.type: type = fn_type @Mod [template]
 // CHECK:STDOUT:   %Mod: %Mod.type = struct_value () [template]
@@ -210,7 +224,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -300,8 +313,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %.loc20_8.2: type = converted %int.make_type_32.loc20, %.loc20_8.1 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mod(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sub(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.ssub";
@@ -368,7 +379,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Mod.type: type = fn_type @Mod [template]
 // CHECK:STDOUT:   %Mod: %Mod.type = struct_value () [template]
@@ -382,7 +392,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -424,8 +433,6 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %.loc17_8.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:   %.loc17_8.2: type = converted %int.make_type_32.loc17, %.loc17_8.1 [template = i32]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mod(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:

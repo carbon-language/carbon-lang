@@ -1088,6 +1088,9 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     // Integer conversions.
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+      if (phase == Phase::Symbolic) {
+        return MakeConstantResult(context, call, phase);
+      }
       return PerformCheckedIntConvert(context, loc, arg_ids[0], call.type_id);
     }
 

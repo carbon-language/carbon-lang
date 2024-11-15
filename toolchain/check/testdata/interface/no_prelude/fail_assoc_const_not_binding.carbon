@@ -18,12 +18,6 @@ interface I {
 // CHECK:STDOUT: --- fail_assoc_const_not_binding.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T [symbolic]
-// CHECK:STDOUT:   %U: type = bind_symbolic_name U [symbolic]
-// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

@@ -5,6 +5,7 @@
 #include "toolchain/driver/compile_subcommand.h"
 
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/timings.h"
@@ -455,7 +456,22 @@ class CompilationUnit {
 
     bool print = options_.dump_sem_ir && IncludeInDumps();
     if (vlog_stream_ || print) {
-      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+      // Omit entities imported from files that we are not dumping.
+      auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
+        auto loc_id = sem_ir_->insts().GetLocId(entity_inst_id);
+        if (!loc_id.is_import_ir_inst_id()) {
+          return true;
+        }
+        auto import_ir_id =
+            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
+        const auto* import_file =
+            sem_ir_->import_irs().Get(import_ir_id).sem_ir;
+        CARBON_CHECK(import_file);
+        return IncludeInDumps(import_file->filename());
+      };
+
+      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
+                                 should_format_entity);
       if (vlog_stream_) {
         CARBON_VLOG("*** SemIR::File ***\n");
         formatter.Print(*vlog_stream_);
@@ -624,10 +640,15 @@ class CompilationUnit {
     CARBON_VLOG("*** {0} done ***\n", logging_label);
   }
 
-  // Returns true if the file can be dumped.
+  // Returns true if the current input file can be dumped.
   auto IncludeInDumps() const -> bool {
+    return IncludeInDumps(input_filename_);
+  }
+
+  // Returns true if the specified input file can be dumped.
+  auto IncludeInDumps(llvm::StringRef filename) const -> bool {
     return options_.exclude_dump_file_prefix.empty() ||
-           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
+           !filename.starts_with(options_.exclude_dump_file_prefix);
   }
 
   DriverEnv* driver_env_;
@@ -787,8 +808,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Unlike previous steps, errors block further progress.
-  if (std::ranges::any_of(units,
-                          [&](const auto& unit) { return !unit->success(); })) {
+  if (llvm::any_of(units, [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG_TO(driver_env.vlog_stream,
                    "*** Stopping before lowering due to errors ***");
     return make_result();

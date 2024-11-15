@@ -24,7 +24,6 @@ fn Make() -> C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 123 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]

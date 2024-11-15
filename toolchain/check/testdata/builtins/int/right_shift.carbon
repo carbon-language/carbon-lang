@@ -68,26 +68,31 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [template]
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 22 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 5 [template]
-// CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
+// CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
+// CHECK:STDOUT:   %.27: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.28: <bound method> = bound_method %.3, %Convert.15 [template]
+// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 5 [template]
+// CHECK:STDOUT:   %.30: type = array_type %.29, i32 [template]
+// CHECK:STDOUT:   %.31: type = ptr_type %.30 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -130,15 +135,27 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %int.right_shift: init i32 = call %RightShift.ref(%.loc4_27, %.loc4_31) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_32.loc4 [template = i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_32.loc4, %.loc4_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc4_33: type = array_type %int.right_shift, i32 [template = constants.%.4]
-// CHECK:STDOUT:   %arr.var: ref %.4 = var arr
-// CHECK:STDOUT:   %arr: ref %.4 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc4_26.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_26.2: <bound method> = bound_method %int.right_shift, %.loc4_26.1 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc4_26.3: i32 = value_of_initializer %int.right_shift [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_26.4: i32 = converted %int.right_shift, %.loc4_26.3 [template = constants.%.3]
+// CHECK:STDOUT:   %int.convert_checked.loc4: init Core.IntLiteral = call %.loc4_26.2(%.loc4_26.4) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_26.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_26.6: Core.IntLiteral = converted %int.right_shift, %.loc4_26.5 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_33: type = array_type %.loc4_26.6, i32 [template = constants.%.30]
+// CHECK:STDOUT:   %arr.var: ref %.30 = var arr
+// CHECK:STDOUT:   %arr: ref %.30 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_18: i32 = int_value 5 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_18.1: i32 = int_value 5 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_32.loc5, %.loc5_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc5_18.2: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc5_18.3: <bound method> = bound_method %.loc5_18.1, %.loc5_18.2 [template = constants.%.28]
+// CHECK:STDOUT:   %int.convert_checked.loc5: init Core.IntLiteral = call %.loc5_18.3(%.loc5_18.1) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_18.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc5 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_18.5: Core.IntLiteral = converted %.loc5_18.1, %.loc5_18.4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18.5, i32 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc5_20: type = ptr_type %.30 [template = constants.%.31]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: i32 = value_param_pattern %a.patt, runtime_param0
@@ -165,8 +182,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
@@ -182,9 +197,9 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: ref %.4 = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc5: %.5 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.5 = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %arr.ref: ref %.30 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %.loc5: %.31 = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %.31 = bind_name arr_p, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -192,7 +207,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [template]
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
@@ -200,24 +214,32 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value -1 [template]
-// CHECK:STDOUT:   %.3: type = array_type %.1, i32 [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.5: i32 = int_value 10 [template]
-// CHECK:STDOUT:   %.6: i32 = int_value -10 [template]
-// CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.8: i32 = int_value -3 [template]
-// CHECK:STDOUT:   %.9: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.10: type = array_type %.9, i32 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.10 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
+// CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.28: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %.29: type = array_type %.28, i32 [template]
+// CHECK:STDOUT:   %.30: type = ptr_type %.29 [template]
+// CHECK:STDOUT:   %.31: i32 = int_value 10 [template]
+// CHECK:STDOUT:   %.32: i32 = int_value -10 [template]
+// CHECK:STDOUT:   %.33: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.34: i32 = int_value -3 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.35, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %.38: type = array_type %.37, i32 [template]
+// CHECK:STDOUT:   %.39: type = ptr_type %.38 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -287,42 +309,64 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %int.snegate.loc10_23: init i32 = call %Negate.ref.loc10_17(%.loc10_34.2) [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_32.loc10, %.loc10_12.1 [template = i32]
-// CHECK:STDOUT:   %.loc10_49: type = array_type %int.snegate.loc10_23, i32 [template = constants.%.3]
-// CHECK:STDOUT:   %arr1.var: ref %.3 = var arr1
-// CHECK:STDOUT:   %arr1: ref %.3 = bind_name arr1, %arr1.var
+// CHECK:STDOUT:   %.loc10_23.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc10_23.2: <bound method> = bound_method %int.snegate.loc10_23, %.loc10_23.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc10_23.3: i32 = value_of_initializer %int.snegate.loc10_23 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_23.4: i32 = converted %int.snegate.loc10_23, %.loc10_23.3 [template = constants.%.1]
+// CHECK:STDOUT:   %int.convert_checked.loc10: init Core.IntLiteral = call %.loc10_23.2(%.loc10_23.4) [template = constants.%.28]
+// CHECK:STDOUT:   %.loc10_23.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc10_23.6: Core.IntLiteral = converted %int.snegate.loc10_23, %.loc10_23.5 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc10_49: type = array_type %.loc10_23.6, i32 [template = constants.%.29]
+// CHECK:STDOUT:   %arr1.var: ref %.29 = var arr1
+// CHECK:STDOUT:   %arr1: ref %.29 = bind_name arr1, %arr1.var
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc11_19: i32 = int_value 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_19.1: i32 = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %int.make_type_32.loc11, %.loc11_14.1 [template = i32]
-// CHECK:STDOUT:   %.loc11_20: type = array_type %.loc11_19, i32 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_21: type = ptr_type %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_19.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc11_19.3: <bound method> = bound_method %.loc11_19.1, %.loc11_19.2 [template = constants.%.27]
+// CHECK:STDOUT:   %int.convert_checked.loc11: init Core.IntLiteral = call %.loc11_19.3(%.loc11_19.1) [template = constants.%.28]
+// CHECK:STDOUT:   %.loc11_19.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc11 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc11_19.5: Core.IntLiteral = converted %.loc11_19.1, %.loc11_19.4 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc11_20: type = array_type %.loc11_19.5, i32 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc11_21: type = ptr_type %.29 [template = constants.%.30]
 // CHECK:STDOUT:   %int.make_type_32.loc14: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %Negate.ref.loc14_17: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %RightShift.ref.loc14: %RightShift.type = name_ref RightShift, %RightShift.decl [template = constants.%RightShift]
 // CHECK:STDOUT:   %Negate.ref.loc14_35: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %.loc14_42: i32 = int_value 10 [template = constants.%.5]
-// CHECK:STDOUT:   %int.snegate.loc14_41: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_47: i32 = int_value 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_41.1: i32 = value_of_initializer %int.snegate.loc14_41 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_41.2: i32 = converted %int.snegate.loc14_41, %.loc14_41.1 [template = constants.%.6]
-// CHECK:STDOUT:   %int.right_shift.loc14: init i32 = call %RightShift.ref.loc14(%.loc14_41.2, %.loc14_47) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_34.1: i32 = value_of_initializer %int.right_shift.loc14 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_34.2: i32 = converted %int.right_shift.loc14, %.loc14_34.1 [template = constants.%.8]
-// CHECK:STDOUT:   %int.snegate.loc14_23: init i32 = call %Negate.ref.loc14_17(%.loc14_34.2) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14_42: i32 = int_value 10 [template = constants.%.31]
+// CHECK:STDOUT:   %int.snegate.loc14_41: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.32]
+// CHECK:STDOUT:   %.loc14_47: i32 = int_value 2 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc14_41.1: i32 = value_of_initializer %int.snegate.loc14_41 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc14_41.2: i32 = converted %int.snegate.loc14_41, %.loc14_41.1 [template = constants.%.32]
+// CHECK:STDOUT:   %int.right_shift.loc14: init i32 = call %RightShift.ref.loc14(%.loc14_41.2, %.loc14_47) [template = constants.%.34]
+// CHECK:STDOUT:   %.loc14_34.1: i32 = value_of_initializer %int.right_shift.loc14 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc14_34.2: i32 = converted %int.right_shift.loc14, %.loc14_34.1 [template = constants.%.34]
+// CHECK:STDOUT:   %int.snegate.loc14_23: init i32 = call %Negate.ref.loc14_17(%.loc14_34.2) [template = constants.%.35]
 // CHECK:STDOUT:   %.loc14_12.1: type = value_of_initializer %int.make_type_32.loc14 [template = i32]
 // CHECK:STDOUT:   %.loc14_12.2: type = converted %int.make_type_32.loc14, %.loc14_12.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_50: type = array_type %int.snegate.loc14_23, i32 [template = constants.%.10]
-// CHECK:STDOUT:   %arr2.var: ref %.10 = var arr2
-// CHECK:STDOUT:   %arr2: ref %.10 = bind_name arr2, %arr2.var
+// CHECK:STDOUT:   %.loc14_23.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc14_23.2: <bound method> = bound_method %int.snegate.loc14_23, %.loc14_23.1 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc14_23.3: i32 = value_of_initializer %int.snegate.loc14_23 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc14_23.4: i32 = converted %int.snegate.loc14_23, %.loc14_23.3 [template = constants.%.35]
+// CHECK:STDOUT:   %int.convert_checked.loc14: init Core.IntLiteral = call %.loc14_23.2(%.loc14_23.4) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc14_23.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc14_23.6: Core.IntLiteral = converted %int.snegate.loc14_23, %.loc14_23.5 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc14_50: type = array_type %.loc14_23.6, i32 [template = constants.%.38]
+// CHECK:STDOUT:   %arr2.var: ref %.38 = var arr2
+// CHECK:STDOUT:   %arr2: ref %.38 = bind_name arr2, %arr2.var
 // CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_19: i32 = int_value 3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc15_19.1: i32 = int_value 3 [template = constants.%.35]
 // CHECK:STDOUT:   %.loc15_14.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
 // CHECK:STDOUT:   %.loc15_14.2: type = converted %int.make_type_32.loc15, %.loc15_14.1 [template = i32]
-// CHECK:STDOUT:   %.loc15_20: type = array_type %.loc15_19, i32 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc15_21: type = ptr_type %.10 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc15_19.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc15_19.3: <bound method> = bound_method %.loc15_19.1, %.loc15_19.2 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init Core.IntLiteral = call %.loc15_19.3(%.loc15_19.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc15_19.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc15 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc15_19.5: Core.IntLiteral = converted %.loc15_19.1, %.loc15_19.4 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc15_20: type = array_type %.loc15_19.5, i32 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc15_21: type = ptr_type %.38 [template = constants.%.39]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
@@ -330,12 +374,12 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr1.ref: ref %.3 = name_ref arr1, file.%arr1
-// CHECK:STDOUT:   %.loc11: %.4 = addr_of %arr1.ref
-// CHECK:STDOUT:   %arr1_p: %.4 = bind_name arr1_p, %.loc11
-// CHECK:STDOUT:   %arr2.ref: ref %.10 = name_ref arr2, file.%arr2
-// CHECK:STDOUT:   %.loc15: %.11 = addr_of %arr2.ref
-// CHECK:STDOUT:   %arr2_p: %.11 = bind_name arr2_p, %.loc15
+// CHECK:STDOUT:   %arr1.ref: ref %.29 = name_ref arr1, file.%arr1
+// CHECK:STDOUT:   %.loc11: %.30 = addr_of %arr1.ref
+// CHECK:STDOUT:   %arr1_p: %.30 = bind_name arr1_p, %.loc11
+// CHECK:STDOUT:   %arr2.ref: ref %.38 = name_ref arr2, file.%arr2
+// CHECK:STDOUT:   %.loc15: %.39 = addr_of %arr2.ref
+// CHECK:STDOUT:   %arr2_p: %.39 = bind_name arr2_p, %.loc15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,7 +387,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [template]
 // CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [template]
@@ -363,7 +406,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -431,8 +473,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc24_15.1: type = value_of_initializer %int.make_type_32.loc24 [template = i32]
 // CHECK:STDOUT:   %.loc24_15.2: type = converted %int.make_type_32.loc24, %.loc24_15.1 [template = i32]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
