@@ -25,9 +25,9 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class FormatterImpl {
  public:
-  explicit FormatterImpl(
-      const File& sem_ir, InstNamer* inst_namer,
-      Formatter::ShouldFormatEntityCallback should_format_entity, int indent)
+  explicit FormatterImpl(const File& sem_ir, InstNamer* inst_namer,
+                         Formatter::ShouldFormatEntityFn should_format_entity,
+                         int indent)
       : sem_ir_(sem_ir),
         inst_namer_(inst_namer),
         should_format_entity_(should_format_entity),
@@ -46,11 +46,10 @@ class FormatterImpl {
   auto Format() -> void {
     out_ << "--- " << sem_ir_.filename() << "\n\n";
 
-    FormatScope(InstNamer::ScopeId::Constants, sem_ir_.constants().array_ref(),
-                /*tentative=*/true);
-    FormatScope(InstNamer::ScopeId::ImportRefs,
-                sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs),
-                /*tentative=*/true);
+    FormatScopeIfUsed(InstNamer::ScopeId::Constants,
+                      sem_ir_.constants().array_ref());
+    FormatScopeIfUsed(InstNamer::ScopeId::ImportRefs,
+                      sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs));
 
     out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
@@ -119,10 +118,6 @@ class FormatterImpl {
   // whether to include it in the final formatted SemIR.
   struct TentativeOutputScope {
     explicit TentativeOutputScope(FormatterImpl& f) : formatter(f) {
-      if (formatter.after_open_brace_) {
-        formatter.out_ << '\n';
-        formatter.after_open_brace_ = false;
-      }
       index = formatter.AddChunk(false);
     }
     ~TentativeOutputScope() {
@@ -231,19 +226,26 @@ class FormatterImpl {
     Indent(-2);
   }
 
-  // Formats a top-level scope, particularly Constants and ImportRefs.
-  auto FormatScope(InstNamer::ScopeId scope_id, llvm::ArrayRef<InstId> block,
-                   bool tentative = false) -> void {
+  // Formats a top-level scope, and any of the instructions in that scope that
+  // are used.
+  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
+                         llvm::ArrayRef<InstId> block) -> void {
     if (block.empty()) {
       return;
     }
 
     llvm::SaveAndRestore scope(scope_, scope_id);
-    out_ << inst_namer_->GetScopeName(scope_id) << " ";
-    OpenBrace();
-    FormatCodeBlock(block, tentative);
-    CloseBrace();
-    out_ << "\n\n";
+    // Note, we don't use OpenBrace() / CloseBrace() here because we always want
+    // a newline to avoid misformatting if the first instruction is omitted.
+    out_ << inst_namer_->GetScopeName(scope_id) << " {\n";
+    indent_ += 2;
+    for (const InstId inst_id : block) {
+      TentativeOutputScope scope(*this);
+      tentative_inst_chunks_[inst_id.index] = scope.index;
+      FormatInst(inst_id);
+    }
+    out_ << "}\n\n";
+    indent_ -= 2;
   }
 
   // Formats a full class.
@@ -565,22 +567,8 @@ class FormatterImpl {
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void {
-    if (block_id.is_valid()) {
-      FormatCodeBlock(sem_ir_.inst_blocks().Get(block_id));
-    }
-  }
-
-  // Prints instructions for a code block.
-  auto FormatCodeBlock(llvm::ArrayRef<InstId> block, bool tentative = false)
-      -> void {
-    for (const InstId inst_id : block) {
-      if (tentative) {
-        TentativeOutputScope scope(*this);
-        tentative_inst_chunks_[inst_id.index] = scope.index;
-        FormatInst(inst_id);
-      } else {
-        FormatInst(inst_id);
-      }
+    for (const InstId inst_id : sem_ir_.inst_blocks().GetOrEmpty(block_id)) {
+      FormatInst(inst_id);
     }
   }
 
@@ -1256,7 +1244,7 @@ class FormatterImpl {
 
   const File& sem_ir_;
   InstNamer* const inst_namer_;
-  Formatter::ShouldFormatEntityCallback should_format_entity_;
+  Formatter::ShouldFormatEntityFn should_format_entity_;
 
   // The output stream buffer.
   std::string buffer_;
@@ -1301,10 +1289,10 @@ class FormatterImpl {
 
 Formatter::Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
                      const Parse::Tree& parse_tree, const File& sem_ir,
-                     ShouldFormatEntityCallback should_format_entity)
+                     ShouldFormatEntityFn should_format_entity)
     : sem_ir_(sem_ir),
-      inst_namer_(tokenized_buffer, parse_tree, sem_ir),
-      should_format_entity_(should_format_entity) {}
+      should_format_entity_(should_format_entity),
+      inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
 Formatter::~Formatter() = default;
 
