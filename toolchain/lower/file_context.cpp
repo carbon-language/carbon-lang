@@ -228,7 +228,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   param_inst_ids.reserve(max_llvm_params);
   auto return_param_id = SemIR::InstId::Invalid;
   if (return_info.has_return_slot()) {
-    param_types.push_back(return_type->getPointerTo());
+    param_types.push_back(
+        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
     return_param_id = sem_ir()
                           .insts()
                           .GetAs<SemIR::ReturnSlot>(function.return_slot_id)

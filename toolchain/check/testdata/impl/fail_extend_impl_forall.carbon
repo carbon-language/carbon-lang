@@ -27,7 +27,6 @@ class C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.1: type = generic_interface_type @GenericInterface [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %GenericInterface: %GenericInterface.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %GenericInterface.type.2: type = facet_type <@GenericInterface, @GenericInterface(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -179,7 +178,7 @@ class C {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(@GenericInterface.%T.loc11_28.2) {
+// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {
 // CHECK:STDOUT:   %T.loc11_28.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T
 // CHECK:STDOUT: }
@@ -208,7 +207,7 @@ class C {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@impl.%T.loc19_23.2) {
+// CHECK:STDOUT: specific @impl(%T.loc19_23.2) {
 // CHECK:STDOUT:   %T.loc19_23.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc19_23.2 => constants.%T
 // CHECK:STDOUT:   %GenericInterface.type.loc19_52.2 => constants.%GenericInterface.type.2

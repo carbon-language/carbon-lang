@@ -77,7 +77,6 @@ interface Class { }
 // CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
 // CHECK:STDOUT:   %Self.2: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %.type, %F.type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @.1.%F.decl [template]
@@ -125,7 +124,6 @@ interface Class { }
 // CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
 // CHECK:STDOUT:   %Self.2: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %.type, %F.type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @.1.%F.decl [template]
@@ -181,7 +179,6 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
 // CHECK:STDOUT: }

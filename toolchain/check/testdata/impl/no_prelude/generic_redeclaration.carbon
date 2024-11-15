@@ -84,7 +84,6 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T.patt.3: %K.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.4: %L.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.4: %L.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -372,8 +371,6 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %Self.2: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %I.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -448,11 +445,9 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type [template]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

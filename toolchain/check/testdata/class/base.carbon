@@ -31,22 +31,17 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Base, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.b: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, i32 [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.base: %Base, .d: i32} [template]
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: %.4, .d: i32} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.7 [template]
 // CHECK:STDOUT:   %.12: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.13: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %.14: type = struct_type {.base: %.2, .d: i32} [template]
@@ -56,7 +51,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [template]
-// CHECK:STDOUT:   %.15: type = ptr_type %tuple.type.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,7 +59,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -136,8 +129,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   .d = %.loc18_8
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:

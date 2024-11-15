@@ -210,7 +210,6 @@ class C {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %CallIncompleteAddrSelf.type: type = fn_type @CallIncompleteAddrSelf [template]
 // CHECK:STDOUT:   %CallIncompleteAddrSelf: %CallIncompleteAddrSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -219,7 +218,6 @@ class C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -385,8 +383,6 @@ class C {
 // CHECK:STDOUT:   %.loc42_43: %.2 = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param_patt: %.3) -> i32 {
 // CHECK:STDOUT: !entry:

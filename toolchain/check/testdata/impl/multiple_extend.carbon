@@ -186,7 +186,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -330,7 +329,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasA1.type: type = facet_type <@HasA1> [template]
 // CHECK:STDOUT:   %Self.1: %HasA1.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %A.type.1: type = fn_type @A.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A.1: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %HasA1.type, %A.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @HasA1.%A.decl [template]
@@ -351,7 +349,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -493,7 +490,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %E, %B [template]
 // CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
 // CHECK:STDOUT:   %I.2: %I.type.2 = struct_value () [template]
@@ -502,8 +498,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.base: %.5} [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -623,7 +617,6 @@ fn P(o: O) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %K.type.1: type = fn_type @K.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %K.1: %K.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
@@ -634,7 +627,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %HasK.type, %K.type.2 [template]
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @HasK.%K.decl [template]
 // CHECK:STDOUT:   %L: type = class_type @L [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %L, %Base [template]
 // CHECK:STDOUT:   %K.type.3: type = fn_type @K.3 [template]
 // CHECK:STDOUT:   %K.3: %K.type.3 = struct_value () [template]
@@ -643,8 +635,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
 // CHECK:STDOUT:   %M.type: type = fn_type @M [template]
 // CHECK:STDOUT:   %M: %M.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = struct_type {.base: %.5} [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.8 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -771,7 +761,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %HasN2.type, %N.type.3 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @HasN2.%N.decl [template]
 // CHECK:STDOUT:   %O: type = class_type @O [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.8: type = unbound_element_type %O, %NBase [template]
 // CHECK:STDOUT:   %N.type.4: type = fn_type @N.4 [template]
 // CHECK:STDOUT:   %N.4: %N.type.4 = struct_value () [template]
@@ -785,8 +774,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
 // CHECK:STDOUT:   %P.type: type = fn_type @P [template]
 // CHECK:STDOUT:   %P: %P.type = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = struct_type {.base: %.7} [template]
-// CHECK:STDOUT:   %.14: type = ptr_type %.11 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

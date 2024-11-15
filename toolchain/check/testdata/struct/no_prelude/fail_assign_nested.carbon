@@ -18,8 +18,6 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: %.1} [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.b: %.1} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

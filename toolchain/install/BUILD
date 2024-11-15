@@ -71,6 +71,26 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "busybox_info",
+    hdrs = ["busybox_info.h"],
+    deps = [
+        "//common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "busybox_info_test",
+    srcs = ["busybox_info_test.cpp"],
+    deps = [
+        ":busybox_info",
+        "//common:check",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
 # This target doesn't include prelude libraries. To get a target that has the
 # prelude available, use //toolchain.
 cc_binary(
@@ -78,6 +98,7 @@ cc_binary(
     srcs = ["busybox_main.cpp"],
     env = cc_env(),
     deps = [
+        ":busybox_info",
         ":install_paths",
         "//common:all_llvm_targets",
         "//common:bazel_working_dir",

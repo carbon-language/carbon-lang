@@ -43,21 +43,16 @@ fn ConvertInit() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %B, i32 [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.base: %A, .b: i32} [template]
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: %.4, .b: i32} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.7 [template]
 // CHECK:STDOUT:   %.12: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %.13: type = unbound_element_type %C, i32 [template]
 // CHECK:STDOUT:   %.14: type = struct_type {.base: %B, .c: i32} [template]
@@ -66,9 +61,6 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.17: type = ptr_type %B [template]
 // CHECK:STDOUT:   %ConvertCToB.type: type = fn_type @ConvertCToB [template]
 // CHECK:STDOUT:   %ConvertCToB: %ConvertCToB.type = struct_value () [template]
-// CHECK:STDOUT:   %.18: type = struct_type {.base: %.11, .c: i32} [template]
-// CHECK:STDOUT:   %.19: type = ptr_type %.18 [template]
-// CHECK:STDOUT:   %.20: type = ptr_type %.14 [template]
 // CHECK:STDOUT:   %.21: type = ptr_type %A [template]
 // CHECK:STDOUT:   %ConvertBToA.type: type = fn_type @ConvertBToA [template]
 // CHECK:STDOUT:   %ConvertBToA: %ConvertBToA.type = struct_value () [template]
@@ -96,7 +88,6 @@ fn ConvertInit() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -230,8 +221,6 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .c = %.loc22_8
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %.16) -> %.17 {
 // CHECK:STDOUT: !entry:

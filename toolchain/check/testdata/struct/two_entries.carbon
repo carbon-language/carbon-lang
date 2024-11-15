@@ -18,10 +18,8 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value (%.3, %.4) [template]
@@ -33,7 +31,6 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,8 +75,6 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %y.var: ref %.1 = var y
 // CHECK:STDOUT:   %y: ref %.1 = bind_name y, %y.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
