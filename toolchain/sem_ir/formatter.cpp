@@ -144,7 +144,7 @@ class FormatterImpl {
   // only be called if there is no buffered output.
   auto AddChunkNoFlush(bool include_in_output) -> size_t {
     CARBON_CHECK(buffer_.empty());
-    output_chunks_.push_back({include_in_output});
+    output_chunks_.push_back({.include_in_output = include_in_output});
     return output_chunks_.size() - 1;
   }
 
@@ -161,8 +161,9 @@ class FormatterImpl {
       return;
     }
 
-    if (!output_chunks_.back().include_in_output) {
-      output_chunks_.back().dependencies.push_back(chunk);
+    if (auto& current_chunk = output_chunks_.back();
+        !current_chunk.include_in_output) {
+     current_chunk.dependencies.push_back(chunk);
       return;
     }
 

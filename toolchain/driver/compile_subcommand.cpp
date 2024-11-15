@@ -475,7 +475,8 @@ class CompilationUnit {
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
         const auto* import_file =
             sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-        return !import_file || IncludeInDumps(import_file->filename());
+        CARBON_CHECK(import_file);
+        return IncludeInDumps(import_file->filename());
       };
 
       SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
