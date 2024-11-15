@@ -29,7 +29,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [template]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Simple.type, %G.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Simple.%G.decl [template]
@@ -47,7 +46,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -117,8 +115,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.1.%Self (%Self)]();
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.2[%self.param_patt: <error>]();
 // CHECK:STDOUT:

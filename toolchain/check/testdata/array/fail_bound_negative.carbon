@@ -19,7 +19,6 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [template]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [template]
@@ -33,7 +32,6 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,8 +68,6 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%n.param_patt: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:

@@ -231,13 +231,11 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Shape: type = class_type @Shape [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Shape, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: i32, .y: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Circle: type = class_type @Circle [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %Circle, %Shape [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
@@ -245,9 +243,6 @@ class B {
 // CHECK:STDOUT:   %GetPosition: %GetPosition.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.base: %Shape} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %tuple.type.2 [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -256,7 +251,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -319,8 +313,6 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
@@ -355,7 +347,6 @@ class B {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
@@ -364,15 +355,11 @@ class B {
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %.9: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %.11: <witness> = complete_type_witness %.10 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.base: %.8} [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %.10 [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,7 +369,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -457,8 +443,6 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[%self.param_patt: %C]() -> %empty_tuple.type {
@@ -478,7 +462,6 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %SomeProtectedFunction.type: type = fn_type @SomeProtectedFunction [template]
@@ -486,7 +469,6 @@ class B {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -502,7 +484,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -573,8 +554,6 @@ class B {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeProtectedFunction() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: i32 = int_value 5 [template = constants.%.1]
@@ -603,20 +582,16 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Shape: type = class_type @Shape [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Shape, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.y: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Square: type = class_type @Square [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %Square, %Shape [template]
 // CHECK:STDOUT:   %GetPosition.type: type = fn_type @GetPosition [template]
 // CHECK:STDOUT:   %GetPosition: %GetPosition.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.base: %Shape} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -625,7 +600,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -678,8 +652,6 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Square]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
@@ -698,7 +670,6 @@ class B {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -752,7 +723,6 @@ class B {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -800,19 +770,15 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -877,14 +843,11 @@ class B {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %.3} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -945,14 +908,12 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %Internal: type = class_type @Internal [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %Internal [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -960,8 +921,6 @@ class B {
 // CHECK:STDOUT:   %SomeFunc: %SomeFunc.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.internal: %Internal} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.internal: %.4} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -970,7 +929,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1055,8 +1013,6 @@ class B {
 // CHECK:STDOUT:   .SomeFunc = %SomeFunc.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
@@ -1081,20 +1037,16 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1103,7 +1055,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1149,8 +1100,6 @@ class B {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
@@ -1164,20 +1113,16 @@ class B {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1186,7 +1131,6 @@ class B {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1231,8 +1175,6 @@ class B {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
 // CHECK:STDOUT: !entry:

@@ -93,7 +93,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
@@ -112,7 +111,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,8 +188,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: i32, %b.param_patt: i32) -> i32 {
@@ -217,7 +213,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %TooFew.type: type = fn_type @TooFew [template]
 // CHECK:STDOUT:   %TooFew: %TooFew.type = struct_value () [template]
@@ -247,8 +242,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -468,13 +461,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew(%a.param_patt: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany(%a.param_patt: i32, %b.param_patt: i32, %c.param_patt: i32) -> i32;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a.param_patt: i32, %b.param_patt: i32) -> bool;
 // CHECK:STDOUT:
@@ -517,7 +506,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
@@ -533,7 +521,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -575,8 +562,6 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
 // CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_32.loc10, %.loc10_8.1 [template = i32]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

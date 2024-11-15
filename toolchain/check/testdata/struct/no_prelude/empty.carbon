@@ -15,7 +15,6 @@ var y: {} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

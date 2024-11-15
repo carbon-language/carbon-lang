@@ -28,7 +28,6 @@ class A {
 // CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [template]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
@@ -39,7 +38,6 @@ class A {
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Make.2) [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

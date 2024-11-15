@@ -17,7 +17,6 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
@@ -37,7 +36,6 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,8 +87,6 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc14_15: type = array_type %.loc14_14, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_16: type = ptr_type %.4 [template = constants.%.5]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

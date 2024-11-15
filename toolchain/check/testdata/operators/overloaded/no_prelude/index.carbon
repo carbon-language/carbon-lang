@@ -57,7 +57,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
@@ -93,7 +92,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
@@ -287,7 +285,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@IndexWith.%SubscriptType.loc5_26.2) {
+// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc5_26.2) {
 // CHECK:STDOUT:   %SubscriptType.loc5_26.2 => constants.%SubscriptType
 // CHECK:STDOUT:   %SubscriptType.patt.loc5_26.2 => constants.%SubscriptType
 // CHECK:STDOUT: }

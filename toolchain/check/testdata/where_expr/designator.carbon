@@ -229,7 +229,6 @@ class D {
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @J.%Member [template]
 // CHECK:STDOUT:   %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
 // CHECK:STDOUT:   %W: %J.type.2 = bind_symbolic_name W, 0 [symbolic]
@@ -378,11 +377,9 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -428,7 +425,6 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]

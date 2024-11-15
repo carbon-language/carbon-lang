@@ -72,7 +72,6 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -189,8 +188,6 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.1.%Self (%Self)]();
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:

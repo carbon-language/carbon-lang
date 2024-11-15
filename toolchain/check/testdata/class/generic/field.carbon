@@ -30,7 +30,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
@@ -44,10 +43,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Class.3, i32 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.2 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %Class.4: type = class_type @Class, @Class(%U) [symbolic]
@@ -56,7 +53,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %.9: type = unbound_element_type %Class.4, %U [symbolic]
 // CHECK:STDOUT:   %.10: type = struct_type {.x: %U} [symbolic]
 // CHECK:STDOUT:   %.11: <witness> = complete_type_witness %.10 [symbolic]
-// CHECK:STDOUT:   %.12: type = ptr_type %.10 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,7 +61,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,8 +159,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %Class.3) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.3 = name_ref c, %c
@@ -222,7 +215,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %.loc13_1.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T.loc11_13.2) {
+// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }

@@ -97,8 +97,6 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -125,8 +123,6 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -154,9 +150,6 @@ var d: D* = &c;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,9 +216,6 @@ var d: D* = &c;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type %C [template]
 // CHECK:STDOUT: }

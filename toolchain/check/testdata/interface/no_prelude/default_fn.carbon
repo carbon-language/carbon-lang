@@ -39,7 +39,6 @@ class C {
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -16,7 +16,6 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [template]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
@@ -24,7 +23,6 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -33,7 +31,6 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,8 +75,6 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %arr.var: ref %.4 = var arr
 // CHECK:STDOUT:   %arr: ref %.4 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

@@ -200,9 +200,6 @@ private class Redecl {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def: type = class_type @Def [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %Def = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,9 +293,6 @@ private class Redecl {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef: type = class_type @ForwardWithDef [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %ForwardWithDef = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -393,7 +387,6 @@ private class Redecl {}
 // CHECK:STDOUT:   %Forward: type = class_type @Forward [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Forward [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
@@ -438,7 +431,6 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,7 +459,6 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

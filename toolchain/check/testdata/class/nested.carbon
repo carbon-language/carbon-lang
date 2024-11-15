@@ -54,7 +54,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Inner [template]
@@ -71,8 +70,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.8: type = unbound_element_type %Outer, %.1 [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.po: %.3, .qo: %.3, .pi: %.1} [template]
 // CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.9 [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT: }

@@ -17,15 +17,11 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%tuple.type.1, %tuple.type.1) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%tuple.type.3, %tuple.type.3) [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %tuple.type.3 [template]
-// CHECK:STDOUT:   %tuple.type.5: type = tuple_type (%.1, %.1) [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %tuple.type.5 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.5: i32 = int_value 3 [template]
@@ -42,7 +38,6 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,8 +67,6 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %x.var: ref %tuple.type.4 = var x
 // CHECK:STDOUT:   %x: ref %tuple.type.4 = bind_name x, %x.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -78,16 +78,12 @@ class A {
 // CHECK:STDOUT:   %.10: type = unbound_element_type %A, i32 [template]
 // CHECK:STDOUT:   %.11: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %.11 [template]
 // CHECK:STDOUT:   %.14: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.1: %A = struct_value (%.14) [template]
-// CHECK:STDOUT:   %.15: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.16: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct.2: %B = struct_value (%.16) [template]
-// CHECK:STDOUT:   %.17: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %.18: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %struct.3: %C = struct_value (%.18) [template]
-// CHECK:STDOUT:   %.19: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %.20: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %struct.4: %D = struct_value (%.20) [template]
 // CHECK:STDOUT: }
@@ -98,7 +94,6 @@ class A {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,8 +172,6 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BF();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

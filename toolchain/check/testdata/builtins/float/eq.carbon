@@ -38,7 +38,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -50,7 +49,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.6: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.7: f64 = float_literal 2 [template]
@@ -66,8 +64,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -163,10 +159,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Eq(%a.param_patt: f64, %b.param_patt: f64) -> bool = "float.eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
@@ -228,7 +220,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %WrongResult.type: type = fn_type @WrongResult [template]
 // CHECK:STDOUT:   %WrongResult: %WrongResult.type = struct_value () [template]
@@ -240,7 +231,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -277,8 +267,6 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongResult(%a.param_patt: f64, %b.param_patt: f64) -> f64;
 // CHECK:STDOUT:

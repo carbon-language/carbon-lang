@@ -36,7 +36,6 @@ fn D.C.F() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -44,7 +43,6 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %D, %B [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]

@@ -57,7 +57,6 @@ fn Run() {
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %Field: type = class_type @Field [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Field, i32 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.x: i32} [template]
@@ -77,7 +76,6 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,8 +142,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %.6]();
@@ -158,13 +154,9 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct.1: %Empty = struct_value () [template]
 // CHECK:STDOUT:   %Field: type = class_type @Field [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.x: i32} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.2: %Field = struct_value (%.7) [template]
 // CHECK:STDOUT:   %.8: type = unbound_element_type %Field, i32 [template]
@@ -173,7 +165,6 @@ fn Run() {
 // CHECK:STDOUT:   %struct.3: %ForwardDeclared.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %ForwardDeclared.2: type = class_type @ForwardDeclared.2 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.10: type = ptr_type %ForwardDeclared.1 [template]

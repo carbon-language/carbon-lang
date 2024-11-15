@@ -20,7 +20,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [template]
 // CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
@@ -31,7 +30,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,6 +61,4 @@ impl i32 as Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc14_19
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

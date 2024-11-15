@@ -14,9 +14,33 @@ namespace Carbon {
 // Helps track timings for a compile.
 class Timings {
  public:
+  // Records a timing for a scope, if the timings object is valid.
+  class ScopedTiming {
+   public:
+    explicit ScopedTiming(std::optional<Timings>* timings,
+                          llvm::StringRef label)
+        : timings(timings),
+          label(label),
+          start(*timings ? std::chrono::steady_clock::now()
+                         : std::chrono::steady_clock::time_point::min()) {}
+
+    ~ScopedTiming() {
+      if (*timings) {
+        (*timings)->Add(label, std::chrono::steady_clock::now() - start);
+      }
+    }
+
+   private:
+    std::optional<Timings>* timings;
+    llvm::StringRef label;
+    std::chrono::steady_clock::time_point start;
+  };
+
   // Adds tracking for nanoseconds, paired with the given label.
-  auto Add(std::string label, std::chrono::nanoseconds nanoseconds) -> void {
-    timings_.push_back({.label = std::move(label), .nanoseconds = nanoseconds});
+  auto Add(llvm::StringRef label, std::chrono::nanoseconds nanoseconds)
+      -> void {
+    timings_.push_back(
+        {.label = std::string(label), .nanoseconds = nanoseconds});
   }
 
   auto OutputYaml(llvm::StringRef filename) const -> Yaml::OutputMapping {

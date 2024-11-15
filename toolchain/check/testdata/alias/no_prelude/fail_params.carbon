@@ -21,7 +21,6 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -49,14 +49,11 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: %A} [template]
 // CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.a: %.4} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

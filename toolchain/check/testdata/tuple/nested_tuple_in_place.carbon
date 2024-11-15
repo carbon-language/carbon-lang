@@ -22,7 +22,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32, i32) [template]
@@ -32,15 +31,10 @@ fn H() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%tuple.type.1, %tuple.type.1) [template]
 // CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%tuple.type.2, %tuple.type.2) [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %tuple.type.2 [template]
-// CHECK:STDOUT:   %tuple.type.5: type = tuple_type (%.1, %.1) [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %tuple.type.5 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.6: type = tuple_type (type, %tuple.type.1, type) [template]
 // CHECK:STDOUT:   %tuple.type.7: type = tuple_type (i32, %tuple.type.2, i32) [template]
-// CHECK:STDOUT:   %tuple.type.8: type = tuple_type (i32, %.1, i32) [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type.8 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
@@ -51,7 +45,6 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,8 +76,6 @@ fn H() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %tuple.type.2;
 // CHECK:STDOUT:

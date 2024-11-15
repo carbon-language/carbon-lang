@@ -58,7 +58,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [template]
 // CHECK:STDOUT:   %CallGeneric: %CallGeneric.type = struct_value () [template]
@@ -72,7 +71,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %CallSpecific.type: type = fn_type @CallSpecific [template]
 // CHECK:STDOUT:   %CallSpecific: %CallSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: <specific function> = specific_function %Function, @Function(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,7 +272,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [template]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [template]
 // CHECK:STDOUT:   %CallGeneric: %CallGeneric.type = struct_value () [template]
@@ -288,7 +285,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %CallSpecific.type: type = fn_type @CallSpecific [template]
 // CHECK:STDOUT:   %CallSpecific: %CallSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: <specific function> = specific_function %Function, @Function(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

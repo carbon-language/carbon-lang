@@ -60,7 +60,6 @@ base class BaseClass {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
 // CHECK:STDOUT:   %Abstract.type.1: type = fn_type @Abstract.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Abstract.1: %Abstract.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Virtual.type: type = fn_type @Virtual [template]
 // CHECK:STDOUT:   %Virtual: %Virtual.type = struct_value () [template]

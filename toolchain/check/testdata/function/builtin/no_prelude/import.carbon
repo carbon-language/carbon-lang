@@ -25,7 +25,6 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [template]
 // CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [template]
@@ -77,7 +76,6 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [template]
 // CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [template]
@@ -85,7 +83,6 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %.2: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.4: type = array_type %.3, i32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.4 = tuple_value (%.1, %.2, %.3) [template]
@@ -97,7 +94,6 @@ var arr: [i32; Core.TestAdd(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     .TestAdd = %import_ref.2
 // CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//core, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: %TestAdd.type = import_ref Core//core, inst+30, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -21,7 +21,6 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
@@ -35,7 +34,6 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,8 +71,6 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   .T = %.loc11
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotGenericF(%U.param_patt: %I.type.2) {
 // CHECK:STDOUT: !entry:

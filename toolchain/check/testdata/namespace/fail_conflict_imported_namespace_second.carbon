@@ -43,7 +43,6 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +68,6 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]

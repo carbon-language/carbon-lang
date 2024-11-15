@@ -53,7 +53,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %NotGenericNoParams.type: type = facet_type <@NotGenericNoParams> [template]
 // CHECK:STDOUT:   %Self.1: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %NotGenericButParams.type.1: type = generic_interface_type @NotGenericButParams [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %NotGenericButParams: %NotGenericButParams.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericButParams.type.2: type = facet_type <@NotGenericButParams> [template]
 // CHECK:STDOUT:   %Self.2: %NotGenericButParams.type.2 = bind_symbolic_name Self, 0 [symbolic]
@@ -83,7 +82,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.type.6: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.3: %GenericAndParams.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %GenericAndParams.type.7: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%X, %X)> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,7 +283,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc6_28.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.1(@GenericAndParams.1.%T.loc6_28.2) {
+// CHECK:STDOUT: specific @GenericAndParams.1(%T.loc6_28.2) {
 // CHECK:STDOUT:   %T.loc6_28.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_28.2 => constants.%T
 // CHECK:STDOUT: }
@@ -297,19 +295,19 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(@GenericNoParams.%T) {}
+// CHECK:STDOUT: specific @GenericNoParams(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc10_30.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc10_30.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(@GenericAndParams.2.%T, @GenericAndParams.2.%U.loc10_30.2) {
+// CHECK:STDOUT: specific @GenericAndParams.2(%T, %U.loc10_30.2) {
 // CHECK:STDOUT:   %U.loc10_30.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc10_30.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@C.%T.loc8_9.2) {
+// CHECK:STDOUT: specific @C(%T.loc8_9.2) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T
 // CHECK:STDOUT: }
@@ -346,7 +344,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.1: type = generic_interface_type @A [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %A.type.2: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self: %A.type.2 = bind_symbolic_name Self, 0 [symbolic]
@@ -371,7 +368,6 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.1: type = generic_interface_type @A [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %A.type.2: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self: %A.type.2 = bind_symbolic_name Self, 0 [symbolic]

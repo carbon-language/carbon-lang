@@ -39,7 +39,6 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
@@ -54,7 +53,6 @@ class Class {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -94,6 +92,4 @@ class Class {
 // CHECK:STDOUT:   .l = %l
 // CHECK:STDOUT:   .m = %m
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

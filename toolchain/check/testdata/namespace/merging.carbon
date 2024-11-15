@@ -50,7 +50,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,7 +81,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B1.type: type = fn_type @B1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %B1: %B1.type = struct_value () [template]
 // CHECK:STDOUT:   %B2.type: type = fn_type @B2 [template]
 // CHECK:STDOUT:   %B2: %B2.type = struct_value () [template]

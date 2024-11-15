@@ -21,7 +21,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
@@ -29,7 +28,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [symbolic]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -143,7 +141,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T.loc11_13.2) {
+// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }

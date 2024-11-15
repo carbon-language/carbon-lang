@@ -32,7 +32,6 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.2: type = array_type %.1, i32 [template]
@@ -40,7 +39,6 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (i32, i32, i32) [template]
@@ -58,7 +56,6 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,8 +103,6 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:     %b: %.2 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %.2;
 // CHECK:STDOUT:

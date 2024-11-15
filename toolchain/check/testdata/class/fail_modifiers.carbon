@@ -111,7 +111,6 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
 // CHECK:STDOUT:   %AbstractWithDefinition: type = class_type @AbstractWithDefinition [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]

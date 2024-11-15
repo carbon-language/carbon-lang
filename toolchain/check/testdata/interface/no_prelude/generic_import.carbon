@@ -33,7 +33,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.1: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %AddWith.type.2: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -92,7 +91,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(@AddWith.%T.loc4_19.2) {
+// CHECK:STDOUT: specific @AddWith(%T.loc4_19.2) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T
 // CHECK:STDOUT: }
@@ -104,7 +103,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AddWith.type.1: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.2: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
@@ -199,7 +197,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AddWith(@AddWith.%T) {
+// CHECK:STDOUT: specific @AddWith(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }

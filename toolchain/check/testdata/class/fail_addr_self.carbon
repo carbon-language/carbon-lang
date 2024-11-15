@@ -48,7 +48,6 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

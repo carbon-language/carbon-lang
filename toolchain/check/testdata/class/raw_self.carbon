@@ -28,7 +28,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -39,8 +38,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %tuple.type.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -49,7 +46,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -162,8 +158,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .n = %.loc14_8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt.loc17_21: %.1](%self.param_patt.loc17_36: i32) {
 // CHECK:STDOUT: !entry:

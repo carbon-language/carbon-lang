@@ -28,12 +28,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
 // CHECK:STDOUT:   %Self: type = class_type @Self [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]

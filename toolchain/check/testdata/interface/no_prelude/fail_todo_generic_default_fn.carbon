@@ -27,7 +27,6 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -162,7 +161,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@I.%T.loc11_13.2) {
+// CHECK:STDOUT: specific @I(%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }

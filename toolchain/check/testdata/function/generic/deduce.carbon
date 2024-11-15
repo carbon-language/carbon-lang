@@ -197,7 +197,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.type: type = fn_type @ExplicitGenericParam [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ExplicitGenericParam: %ExplicitGenericParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -219,7 +218,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -290,8 +288,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallExplicitGenericParam() -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ExplicitGenericParam.ref: %ExplicitGenericParam.type = name_ref ExplicitGenericParam, file.%ExplicitGenericParam.decl [template = constants.%ExplicitGenericParam]
@@ -336,7 +332,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc4_50.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@ExplicitGenericParam.%T.loc4_25.2) {
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %.loc4_39.2 => constants.%.1
@@ -380,7 +376,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.type: type = fn_type @ExplicitGenericParam [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ExplicitGenericParam: %ExplicitGenericParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %CallExplicitGenericParamConst.type: type = fn_type @CallExplicitGenericParamConst [template]
@@ -487,7 +482,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc4_50.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@ExplicitGenericParam.%T.loc4_25.2) {
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %.loc4_39.2 => constants.%.1
@@ -514,14 +509,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced: %ExplicitAndAlsoDeduced.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T) [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type %A [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced.type: type = fn_type @CallExplicitAndAlsoDeduced [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced: %CallExplicitAndAlsoDeduced.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%A) [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -624,7 +617,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_10.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(@ExplicitAndAlsoDeduced.%T.loc6_27.2) {
+// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T
 // CHECK:STDOUT:   %.loc6_47.2 => constants.%.3
@@ -646,7 +639,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.type: type = fn_type @ImplicitGenericParam [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitGenericParam: %ImplicitGenericParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <specific function> = specific_function %ImplicitGenericParam, @ImplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
@@ -663,7 +655,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -731,8 +722,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallImplicitGenericParam(%n.param_patt: i32) -> %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ImplicitGenericParam.ref: %ImplicitGenericParam.type = name_ref ImplicitGenericParam, file.%ImplicitGenericParam.decl [template = constants.%ImplicitGenericParam]
@@ -753,7 +742,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc4_56.2 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitGenericParam(@ImplicitGenericParam.%T.loc4_25.2) {
+// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
 // CHECK:STDOUT:   %.loc4_45.2 => constants.%.1
@@ -780,14 +769,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%T, i32) [symbolic]
 // CHECK:STDOUT:   %TupleParam.type: type = fn_type @TupleParam [template]
 // CHECK:STDOUT:   %TupleParam: %TupleParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %tuple.type.2 [symbolic]
 // CHECK:STDOUT:   %CallTupleParam.type: type = fn_type @CallTupleParam [template]
 // CHECK:STDOUT:   %CallTupleParam: %CallTupleParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %TupleParam, @TupleParam(i32) [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %tuple.type.3 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.3 = tuple_value (%.2, %.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -797,7 +784,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -826,8 +812,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTupleParam.decl: %CallTupleParam.type = fn_decl @CallTupleParam [template = constants.%CallTupleParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TupleParam(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
@@ -880,14 +864,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.1: type = struct_type {.a: %T, .b: i32} [symbolic]
 // CHECK:STDOUT:   %StructParam.type: type = fn_type @StructParam [template]
 // CHECK:STDOUT:   %StructParam: %StructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %CallStructParam.type: type = fn_type @CallStructParam [template]
 // CHECK:STDOUT:   %CallStructParam: %CallStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.6: <specific function> = specific_function %StructParam, @StructParam(i32) [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %struct: %.5 = struct_value (%.3, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -897,7 +879,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -925,8 +906,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallStructParam.decl: %CallStructParam.type = fn_decl @CallStructParam [template = constants.%CallStructParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @StructParam(%T.loc4_16.1: type) {
 // CHECK:STDOUT:   %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.2 (constants.%T)]
@@ -974,12 +953,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.c: %T, .d: i32, .e: i32} [symbolic]
 // CHECK:STDOUT:   %BigStructParam.type: type = fn_type @BigStructParam [template]
 // CHECK:STDOUT:   %BigStructParam: %BigStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %CallBigStructParam.type: type = fn_type @CallBigStructParam [template]
 // CHECK:STDOUT:   %CallBigStructParam: %CallBigStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 3 [template]
@@ -993,7 +970,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1024,8 +1000,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallBigStructParam.decl: %CallBigStructParam.type = fn_decl @CallBigStructParam [template = constants.%CallBigStructParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BigStructParam(%T.loc4_19.1: type) {
 // CHECK:STDOUT:   %T.loc4_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.2 (constants.%T)]
@@ -1061,12 +1035,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.f: %T, .g: i32} [symbolic]
 // CHECK:STDOUT:   %SmallStructParam.type: type = fn_type @SmallStructParam [template]
 // CHECK:STDOUT:   %SmallStructParam: %SmallStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %CallSmallStructParam.type: type = fn_type @CallSmallStructParam [template]
 // CHECK:STDOUT:   %CallSmallStructParam: %CallSmallStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 5 [template]
@@ -1081,7 +1053,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1109,8 +1080,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallSmallStructParam.decl: %CallSmallStructParam.type = fn_decl @CallSmallStructParam [template = constants.%CallSmallStructParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @SmallStructParam(%T.loc4_21.1: type) {
 // CHECK:STDOUT:   %T.loc4_21.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_21.2 (constants.%T)]
@@ -1147,12 +1116,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.i: %T, .different: i32} [symbolic]
 // CHECK:STDOUT:   %WrongNameStructParam.type: type = fn_type @WrongNameStructParam [template]
 // CHECK:STDOUT:   %WrongNameStructParam: %WrongNameStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %CallWrongNameStructParam.type: type = fn_type @CallWrongNameStructParam [template]
 // CHECK:STDOUT:   %CallWrongNameStructParam: %CallWrongNameStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 8 [template]
@@ -1166,7 +1133,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1194,8 +1160,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallWrongNameStructParam.decl: %CallWrongNameStructParam.type = fn_decl @CallWrongNameStructParam [template = constants.%CallWrongNameStructParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @WrongNameStructParam(%T.loc4_25.1: type) {
 // CHECK:STDOUT:   %T.loc4_25.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_25.2 (constants.%T)]
@@ -1231,12 +1195,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.first: %T, .second: i32} [symbolic]
 // CHECK:STDOUT:   %WrongOrderStructParam.type: type = fn_type @WrongOrderStructParam [template]
 // CHECK:STDOUT:   %WrongOrderStructParam: %WrongOrderStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [symbolic]
 // CHECK:STDOUT:   %CallWrongOrderStructParam.type: type = fn_type @CallWrongOrderStructParam [template]
 // CHECK:STDOUT:   %CallWrongOrderStructParam: %CallWrongOrderStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 11 [template]
@@ -1250,7 +1212,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1278,8 +1239,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallWrongOrderStructParam.decl: %CallWrongOrderStructParam.type = fn_decl @CallWrongOrderStructParam [template = constants.%CallWrongOrderStructParam] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @WrongOrderStructParam(%T.loc4_26.1: type) {
 // CHECK:STDOUT:   %T.loc4_26.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_26.2 (constants.%T)]
@@ -1317,7 +1276,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitNotDeducible.type: type = fn_type @ImplicitNotDeducible [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitNotDeducible: %ImplicitNotDeducible.type = struct_value () [template]
 // CHECK:STDOUT:   %CallImplicitNotDeducible.type: type = fn_type @CallImplicitNotDeducible [template]
 // CHECK:STDOUT:   %CallImplicitNotDeducible: %CallImplicitNotDeducible.type = struct_value () [template]
@@ -1391,7 +1349,6 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitNotDeducible.type: type = fn_type @ImplicitNotDeducible [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ImplicitNotDeducible: %ImplicitNotDeducible.type = struct_value () [template]
 // CHECK:STDOUT:   %CallImplicitNotDeducible.type: type = fn_type @CallImplicitNotDeducible [template]
 // CHECK:STDOUT:   %CallImplicitNotDeducible: %CallImplicitNotDeducible.type = struct_value () [template]

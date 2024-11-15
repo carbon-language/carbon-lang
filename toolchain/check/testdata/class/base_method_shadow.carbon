@@ -44,7 +44,6 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %B [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -52,8 +51,6 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.7: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: %.4} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.7 [template]
 // CHECK:STDOUT:   %.11: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %.12: type = ptr_type %C [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
@@ -65,8 +62,6 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.16: type = ptr_type %D [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
-// CHECK:STDOUT:   %.17: type = struct_type {.base: %.10} [template]
-// CHECK:STDOUT:   %.18: type = ptr_type %.13 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

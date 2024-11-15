@@ -41,7 +41,6 @@ fn F() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %Class = struct_value (%.6, %.7) [template]
@@ -53,7 +52,6 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,8 +91,6 @@ fn F() {
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param_patt: %.4);
 // CHECK:STDOUT:

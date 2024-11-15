@@ -28,7 +28,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value (%.3, %.4) [template]
@@ -41,8 +40,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,11 +75,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%s.param_patt: %.1);
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%cond.param_patt: bool) {
 // CHECK:STDOUT: !entry:

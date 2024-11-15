@@ -39,7 +39,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %.7: type = unbound_element_type %Derived, %Base [template]
@@ -48,8 +47,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.10: type = ptr_type %Derived [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.base: %.5} [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %.8 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -58,7 +55,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,8 +121,6 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   .base = %.loc22
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt: %.2]() {
 // CHECK:STDOUT: !entry:

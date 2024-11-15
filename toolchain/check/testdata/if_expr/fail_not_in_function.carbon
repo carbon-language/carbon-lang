@@ -41,18 +41,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %C, i32 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -62,8 +53,6 @@ class C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -87,10 +76,6 @@ class C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .n = <unexpected>.inst+54.loc37_8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

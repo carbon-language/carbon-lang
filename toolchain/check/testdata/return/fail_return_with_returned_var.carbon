@@ -36,7 +36,6 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -48,7 +47,6 @@ fn G() -> C {
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.7: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%.2, %.7) [template]
 // CHECK:STDOUT: }
@@ -59,7 +57,6 @@ fn G() -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -107,8 +104,6 @@ fn G() -> C {
 // CHECK:STDOUT:   .a = %.loc23_16
 // CHECK:STDOUT:   .b = %.loc23_28
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:

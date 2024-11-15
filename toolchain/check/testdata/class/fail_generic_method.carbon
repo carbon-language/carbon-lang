@@ -37,7 +37,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Class.1: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
@@ -59,7 +58,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -140,8 +138,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class.2)](%n.param_patt: @F.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: i32) {
 // CHECK:STDOUT:   %N.loc32_10.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N)]
 // CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
@@ -169,7 +165,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Class.%T.loc11_13.2) {
+// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
