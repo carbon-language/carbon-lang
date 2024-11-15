@@ -31,9 +31,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   }
 
   static constexpr llvm::StringLiteral TestFileName = "test.carbon";
-  llvm::vfs::InMemoryFileSystem fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs(
+      new llvm::vfs::InMemoryFileSystem);
   llvm::StringRef data_ref(reinterpret_cast<const char*>(data), size);
-  CARBON_CHECK(fs.addFile(
+  CARBON_CHECK(fs->addFile(
       TestFileName, /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));

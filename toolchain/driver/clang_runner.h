@@ -9,6 +9,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/install/install_paths.h"
 
 namespace Carbon {
@@ -42,6 +43,7 @@ class ClangRunner {
   // If `verbose` is passed as true, will enable verbose logging to the
   // `err_stream` both from the runner and Clang itself.
   ClangRunner(const InstallPaths* install_paths, llvm::StringRef target,
+              llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
               llvm::raw_ostream* vlog_stream = nullptr);
 
   // Run Clang with the provided arguments.
@@ -51,6 +53,7 @@ class ClangRunner {
   const InstallPaths* installation_;
 
   llvm::StringRef target_;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::raw_ostream* vlog_stream_;
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
