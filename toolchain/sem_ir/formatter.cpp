@@ -163,7 +163,7 @@ class FormatterImpl {
 
     if (auto& current_chunk = output_chunks_.back();
         !current_chunk.include_in_output) {
-     current_chunk.dependencies.push_back(chunk);
+      current_chunk.dependencies.push_back(chunk);
       return;
     }
 
