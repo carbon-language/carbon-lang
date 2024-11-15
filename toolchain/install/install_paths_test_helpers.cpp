@@ -12,7 +12,7 @@ namespace Carbon::Testing {
 // tests.
 auto AddPreludeFilesToVfs(
     InstallPaths install_paths,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> vfs) -> void {
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& vfs) -> void {
   // Load the prelude into the test VFS.
   auto real_fs = llvm::vfs::getRealFileSystem();
   auto prelude = install_paths.ReadPreludeManifest();
