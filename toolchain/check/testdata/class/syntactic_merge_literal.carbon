@@ -32,7 +32,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %a: i32 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: i32 = symbolic_binding_pattern a, 0 [symbolic]
@@ -56,7 +55,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -126,8 +124,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
 // CHECK:STDOUT:   %a.loc2_9.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc2_9.2 => constants.%a
@@ -147,7 +143,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %a: i32 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: i32 = symbolic_binding_pattern a, 0 [symbolic]
@@ -162,7 +157,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %b.patt: %C.3 = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %D.2: type = class_type @D, @D(%b) [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.4: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%b) [symbolic]
@@ -174,7 +168,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -250,8 +243,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     .Self = constants.%.5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
 // CHECK:STDOUT:   %a.loc2_9.2 => constants.%a

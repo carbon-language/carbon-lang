@@ -39,7 +39,6 @@ fn G() {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: i32 = int_value 100 [template]
 // CHECK:STDOUT:   %.5: type = array_type %.4, i32 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %.7: type = unbound_element_type %C, %.5 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.arr: %.5} [template]
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
@@ -48,14 +47,11 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.3: type = class_type @Wrap, @Wrap(i32) [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make, @Wrap(i32) [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.11: <specific function> = specific_function %Make.2, @Make(i32) [template]
 // CHECK:STDOUT:   %Wrap.4: type = class_type @Wrap, @Wrap(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make, @Wrap(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.12: <specific function> = specific_function %Make.3, @Make(%empty_tuple.type) [template]
-// CHECK:STDOUT:   %.13: type = struct_type {.arr: %.6} [template]
-// CHECK:STDOUT:   %.14: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %Wrap.5: type = class_type @Wrap, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.type.4: type = fn_type @Make, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.4: %Make.type.4 = struct_value () [template]
@@ -68,7 +64,6 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -149,8 +144,6 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.make_type_32.loc18_10: init type = call constants.%Int32() [template = i32]
@@ -214,7 +207,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc12_27.3 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(@Wrap.%T.loc11_12.2) {
+// CHECK:STDOUT: specific @Wrap(%T.loc11_12.2) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
 // CHECK:STDOUT: }
@@ -224,7 +217,7 @@ fn G() {
 // CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(@Make.%T) {
+// CHECK:STDOUT: specific @Make(%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

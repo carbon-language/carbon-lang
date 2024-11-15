@@ -25,7 +25,6 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [template]
 // CHECK:STDOUT:   %Self.2: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %ForwardDeclared.type, %F.type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @ForwardDeclared.%F.decl [template]

@@ -23,7 +23,6 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %.2: type = array_type %.1, %T [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
 // CHECK:STDOUT:   %array: %.2 = tuple_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

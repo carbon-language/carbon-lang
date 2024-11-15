@@ -20,35 +20,28 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %tuple.type.2 [template]
 // CHECK:STDOUT:   %.2: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.1: %tuple.type.2 = tuple_value (%.2, %.3) [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.c: i32, .b: i32, .a: i32} [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.b: i32, .a: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %struct.1: %.8 = struct_value (%.3, %.2, %.6) [template]
 // CHECK:STDOUT:   %struct.2: %.4 = struct_value (%.2, %.3, %.6) [template]
 // CHECK:STDOUT:   %.10: type = array_type %.2, i32 [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %.10 [template]
 // CHECK:STDOUT:   %.12: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.13: i32 = int_value 5 [template]
 // CHECK:STDOUT:   %.14: i32 = int_value 7 [template]
 // CHECK:STDOUT:   %.15: i32 = int_value 9 [template]
 // CHECK:STDOUT:   %tuple.type.4: type = tuple_type (i32, i32, i32, i32) [template]
-// CHECK:STDOUT:   %.16: type = ptr_type %tuple.type.4 [template]
 // CHECK:STDOUT:   %tuple.2: %tuple.type.4 = tuple_value (%.13, %.14, %.2, %.15) [template]
 // CHECK:STDOUT:   %array: %.10 = tuple_value (%.12) [template]
 // CHECK:STDOUT:   %.17: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.18: type = ptr_type %.17 [template]
 // CHECK:STDOUT:   %struct.3: %.17 = struct_value (%.6, %.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +51,6 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -107,8 +99,6 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %struct_access.var: ref %.10 = var struct_access
 // CHECK:STDOUT:   %struct_access: ref %.10 = bind_name struct_access, %struct_access.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -165,7 +165,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%T.loc19_22.2) {
+// CHECK:STDOUT: specific @.1(%T.loc19_22.2) {
 // CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -185,7 +185,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.3(@.3.%T.loc38_27.2) {
+// CHECK:STDOUT: specific @.3(%T.loc38_27.2) {
 // CHECK:STDOUT:   %T.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT:   %T.patt.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }

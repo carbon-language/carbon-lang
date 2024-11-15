@@ -66,16 +66,11 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%T, %U) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type.2 [symbolic]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%C, %D) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%.5, %.5) [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %tuple.type.4 [template]
 // CHECK:STDOUT:   %.7: <specific function> = specific_function %F, @F(%C, %D) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +191,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %.loc7_54.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc7_6.2, @F.%U.loc7_16.2) {
+// CHECK:STDOUT: specific @F(%T.loc7_6.2, %U.loc7_16.2) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %U.loc7_16.2 => constants.%U
@@ -219,7 +214,6 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
@@ -234,12 +228,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %A.patt: i32 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %B: i32 = bind_symbolic_name B, 1 [symbolic]
 // CHECK:STDOUT:   %B.patt: i32 = symbolic_binding_pattern B, 1 [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type.2 [template]
 // CHECK:STDOUT:   %tuple.1: %tuple.type.2 = tuple_value (%A, %B) [symbolic]
 // CHECK:STDOUT:   %HasPair.3: type = class_type @HasPair, @HasPair(%tuple.1) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.2: %tuple.type.2 = tuple_value (%.5, %.6) [template]
@@ -255,7 +247,6 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -353,8 +344,6 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%A.loc6_6.1: i32, %B.loc6_15.1: i32) {
 // CHECK:STDOUT:   %A.loc6_6.2: i32 = bind_symbolic_name A, 0 [symbolic = %A.loc6_6.2 (constants.%A)]
 // CHECK:STDOUT:   %A.patt.loc6_6.2: i32 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc6_6.2 (constants.%A.patt)]
@@ -439,14 +428,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%T, %T) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%C, %D) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%.3, %.3) [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %tuple.type.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

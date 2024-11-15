@@ -72,13 +72,11 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type %C [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.7: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,7 +176,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc6_37.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc6_6.2) {
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %.loc6_20.2 => constants.%.3
@@ -204,14 +202,12 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.3: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT:   %.6: type = const_type %C [template]
 // CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.9: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +311,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc6_43.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc6_6.2) {
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %.loc6_19.2 => constants.%.3
@@ -342,14 +338,12 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT:   %.5: type = const_type %C [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.8: <specific function> = specific_function %F, @F(%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -451,7 +445,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc6_37.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc6_6.2) {
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %.loc6_20.2 => constants.%.3
@@ -477,14 +471,12 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.3: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %.4: type = ptr_type %.3 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type %C [template]
 // CHECK:STDOUT:   %.7: type = const_type %C [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -584,7 +576,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %.loc6_43.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@F.%T.loc6_6.2) {
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %.loc6_19.2 => constants.%.3

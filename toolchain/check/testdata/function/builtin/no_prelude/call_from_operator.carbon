@@ -34,7 +34,6 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
@@ -109,7 +108,6 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
@@ -125,7 +123,6 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.6: <bound method> = bound_method %.2, %Op.1 [template]
 // CHECK:STDOUT:   %.7: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %.8: type = array_type %.7, i32 [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %.8 [template]
 // CHECK:STDOUT:   %.10: i32 = int_value 4 [template]
 // CHECK:STDOUT:   %.11: <bound method> = bound_method %.7, %Op.1 [template]
 // CHECK:STDOUT:   %.12: i32 = int_value 7 [template]
@@ -140,12 +137,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .Add = %import_ref.2
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//default, inst+5, loaded [template = constants.%Int32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Core//default, inst+9, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Core//default, inst+11, unloaded
 // CHECK:STDOUT:   %import_ref.4: %.4 = import_ref Core//default, inst+39, loaded [template = constants.%.5]
 // CHECK:STDOUT:   %import_ref.5: %Op.type.2 = import_ref Core//default, inst+34, loaded [template = constants.%Op.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

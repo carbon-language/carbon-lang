@@ -38,8 +38,6 @@ base class A {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
