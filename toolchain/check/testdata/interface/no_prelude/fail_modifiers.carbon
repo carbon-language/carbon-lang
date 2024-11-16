@@ -172,7 +172,7 @@ interface I {
 // CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc9_22.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc9_22.1: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc9_22.2: type = converted %Self.ref, %.loc9_22.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %self.param: @F.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param
@@ -220,7 +220,7 @@ interface I {
 // CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc8_24.1: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref, %.loc8_24.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %self.param: @F.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param

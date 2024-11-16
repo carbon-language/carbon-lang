@@ -122,13 +122,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param_patt: @F.1.%Self (%Self.1) = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_access_type %Self.ref.loc12_14 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %Self.ref.loc12_23: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_23.1: type = facet_type_access %Self.ref.loc12_23 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc12_23.1: type = facet_access_type %Self.ref.loc12_23 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_23.2: type = converted %Self.ref.loc12_23, %.loc12_23.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %Self.ref.loc12_32: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_32.1: type = facet_type_access %Self.ref.loc12_32 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc12_32.1: type = facet_access_type %Self.ref.loc12_32 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %Self.ref.loc12_32, %.loc12_32.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %self.param: @F.1.%Self (%Self.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.1.%Self (%Self.1) = bind_name self, %self.param
@@ -152,11 +152,11 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param_patt: @F.4.%tuple.type (%tuple.type.2) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc28_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc28_16.2: type = facet_type_access %Self.ref.loc28_12 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:     %.loc28_16.2: type = facet_access_type %Self.ref.loc28_12 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc28_16.3: type = converted %Self.ref.loc28_12, %.loc28_16.2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc28_16.4: type = ptr_type %Self.2 [symbolic = %.loc28_16.1 (constants.%.8)]
 // CHECK:STDOUT:     %Self.ref.loc28_24: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc28_24.1: type = facet_type_access %Self.ref.loc28_24 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:     %.loc28_24.1: type = facet_access_type %Self.ref.loc28_24 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc28_24.2: type = converted %Self.ref.loc28_24, %.loc28_24.1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:     %.loc28_35.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc28_35.2: type = converted %.loc28_35.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]

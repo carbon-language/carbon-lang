@@ -65,7 +65,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc21_32.1: type = facet_type_access %T.ref [symbolic = %T.loc21_14.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_32.2: type = converted %T.ref, %.loc21_32.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: %Interface.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]

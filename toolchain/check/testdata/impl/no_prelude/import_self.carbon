@@ -59,13 +59,13 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param_patt: @Op.%Self (%Self) = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc5_15.1: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc5_28.1: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc5_37.1: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %self.param: @Op.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @Op.%Self (%Self) = bind_name self, %self.param

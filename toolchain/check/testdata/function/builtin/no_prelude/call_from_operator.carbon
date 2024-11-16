@@ -198,13 +198,13 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param_patt: @Op.1.%Self (%Self.1) = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc8_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc8_15.1: type = facet_type_access %Self.ref.loc8_15 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc8_15.1: type = facet_access_type %Self.ref.loc8_15 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc8_15.2: type = converted %Self.ref.loc8_15, %.loc8_15.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %Self.ref.loc8_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc8_28.1: type = facet_type_access %Self.ref.loc8_28 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc8_28.1: type = facet_access_type %Self.ref.loc8_28 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc8_28.2: type = converted %Self.ref.loc8_28, %.loc8_28.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %Self.ref.loc8_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc8_37.1: type = facet_type_access %Self.ref.loc8_37 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:     %.loc8_37.1: type = facet_access_type %Self.ref.loc8_37 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %.loc8_37.2: type = converted %Self.ref.loc8_37, %.loc8_37.1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:     %self.param: @Op.1.%Self (%Self.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @Op.1.%Self (%Self.1) = bind_name self, %self.param
@@ -243,7 +243,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc12_20.1: @Convert.1.%As.type (%As.type.2) = specific_constant @As.%Self.1, @As(constants.%T) [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:       %Self.ref: @Convert.1.%As.type (%As.type.2) = name_ref Self, %.loc12_20.1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:       %.loc12_20.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:       %.loc12_20.2: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:       %.loc12_20.3: type = converted %Self.ref, %.loc12_20.2 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @As.%T.loc11_14.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Convert.1.%Self (%Self.2) = value_param runtime_param0
@@ -282,7 +282,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc16_20.1: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.2) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:       %Self.ref: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.2) = name_ref Self, %.loc16_20.1 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:       %.loc16_20.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:       %.loc16_20.2: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:       %.loc16_20.3: type = converted %Self.ref, %.loc16_20.2 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc15_22.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Convert.2.%Self (%Self.3) = value_param runtime_param0

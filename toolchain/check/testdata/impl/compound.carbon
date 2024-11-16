@@ -144,7 +144,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %self.param_patt: @G.1.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc13_14.1: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %Self.ref, %.loc13_14.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %self.param: @G.1.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%Self (%Self) = bind_name self, %self.param

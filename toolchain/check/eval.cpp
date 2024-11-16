@@ -1333,6 +1333,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::CompleteTypeWitness::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
+    case SemIR::FacetValue::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::FacetValue::type_inst_id,
+                                        &SemIR::FacetValue::witness_inst_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
@@ -1600,10 +1604,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::ValueOfInitializer typed_inst): {
       return eval_context.GetConstantValue(typed_inst.init_id);
     }
-    case CARBON_KIND(SemIR::FacetTypeAccess typed_inst): {
-      // TODO: Once we start tracking the witness in the facet value, remove it
+    case CARBON_KIND(SemIR::FacetAccessType typed_inst): {
+      // FIXME: Once we start tracking the witness in the facet value, remove it
       // here. For now, we model a facet value as just a type.
-      return eval_context.GetConstantValue(typed_inst.facet_id);
+      return eval_context.GetConstantValue(typed_inst.facet_value_inst_id);
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       Phase phase = Phase::Template;

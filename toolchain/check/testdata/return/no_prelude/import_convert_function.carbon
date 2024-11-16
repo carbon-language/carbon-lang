@@ -152,7 +152,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10_20.1: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.2) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.2) = name_ref Self, %.loc10_20.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %.loc10_20.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc10_20.2: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc10_20.3: type = converted %Self.ref, %.loc10_20.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc9_22.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Convert.1.%Self (%Self) = value_param runtime_param0

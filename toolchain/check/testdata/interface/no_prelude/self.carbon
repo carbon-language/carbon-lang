@@ -39,10 +39,10 @@ interface UseSelf {
 // CHECK:STDOUT:     %return.param_patt: @F.%Self (%Self) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_14.1: type = facet_type_access %Self.ref.loc12_14 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_14.1: type = facet_access_type %Self.ref.loc12_14 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %Self.ref.loc12_14, %.loc12_14.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc12_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_25.1: type = facet_type_access %Self.ref.loc12_25 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_25.1: type = facet_access_type %Self.ref.loc12_25 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_25.2: type = converted %Self.ref.loc12_25, %.loc12_25.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %self.param: @F.%Self (%Self) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param

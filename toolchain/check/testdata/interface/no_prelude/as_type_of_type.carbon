@@ -58,7 +58,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   fn(%T.param_patt: %Empty.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc14_10.1: type = facet_access_type %T.ref [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %x.var: ref @F.%T.loc13_6.2 (%T) = var x
 // CHECK:STDOUT:     %x: ref @F.%T.loc13_6.2 (%T) = bind_name x, %x.var

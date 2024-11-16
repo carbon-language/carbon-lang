@@ -59,7 +59,7 @@ class A {
 // CHECK:STDOUT:     %return.param_patt: @Make.1.%Self (%Self) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %.loc12_16.1: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %return.param: ref @Make.1.%Self (%Self) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Make.1.%Self (%Self) = return_slot %return.param

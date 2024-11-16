@@ -190,7 +190,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc6_15.1: @At.1.%IndexWith.type (%IndexWith.type.2) = specific_constant @IndexWith.%Self.1, @IndexWith(constants.%SubscriptType) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref: @At.1.%IndexWith.type (%IndexWith.type.2) = name_ref Self, %.loc6_15.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %.loc6_15.2: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc6_15.2: type = facet_access_type %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %.loc6_15.3: type = converted %Self.ref, %.loc6_15.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc5_26.1 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:       %.loc6_51.1: %empty_tuple.type = tuple_literal ()

@@ -408,11 +408,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: @F.13.%.loc188_52.1 (%.10) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc188_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_16.2: type = facet_type_access %Self.ref.loc188_12 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_16.2: type = facet_access_type %Self.ref.loc188_12 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_16.3: type = converted %Self.ref.loc188_12, %.loc188_16.2 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_16.4: type = ptr_type %Self.3 [symbolic = %.loc188_16.1 (constants.%.7)]
 // CHECK:STDOUT:     %Self.ref.loc188_24: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:     %.loc188_24.1: type = facet_type_access %Self.ref.loc188_24 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_24.1: type = facet_access_type %Self.ref.loc188_24 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_24.2: type = converted %Self.ref.loc188_24, %.loc188_24.1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc188_34.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -422,7 +422,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %.loc188_38.2: type = converted %.loc188_38.1, constants.%tuple.type.2 [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:     %Self.ref.loc188_45: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_51: Core.IntLiteral = int_value 4 [template = constants.%.9]
-// CHECK:STDOUT:     %.loc188_45.1: type = facet_type_access %Self.ref.loc188_45 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:     %.loc188_45.1: type = facet_access_type %Self.ref.loc188_45 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_45.2: type = converted %Self.ref.loc188_45, %.loc188_45.1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:     %.loc188_52.2: type = array_type %.loc188_51, %Self.3 [symbolic = %.loc188_52.1 (constants.%.10)]
 // CHECK:STDOUT:     %x.param: @F.13.%tuple.type (%tuple.type.2) = value_param runtime_param0
