@@ -492,6 +492,10 @@ class Context {
     return struct_type_fields_stack_;
   }
 
+  auto field_decls_stack() -> ArrayStack<SemIR::InstId>& {
+    return field_decls_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -648,9 +652,11 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
-  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
-  // object representations.
+  // The stack of StructTypeFields for in-progress StructTypeLiterals.
   ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
+
+  // The stack of FieldDecls for in-progress Class definitions.
+  ArrayStack<SemIR::InstId> field_decls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
