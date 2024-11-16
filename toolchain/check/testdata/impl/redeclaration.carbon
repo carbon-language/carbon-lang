@@ -26,11 +26,11 @@ impl i32 as I {}
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,17 +51,17 @@ impl i32 as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %.loc13_6.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_6.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc13_6.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc13_6.3: type = converted %int.make_type_signed.loc13, %.loc13_6.2 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_6.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_6.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_6.3: type = converted %int.make_type_signed.loc13, %.loc13_6.2 [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %.loc19_6.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc19_6.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc19_6.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:     %.loc19_6.3: type = converted %int.make_type_signed, %.loc19_6.2 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc19_6.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_6.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_6.3: type = converted %int.make_type_signed, %.loc19_6.2 [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -77,7 +77,7 @@ impl i32 as I {}
 // CHECK:STDOUT: impl @impl.1: %.loc13_6.3 as %I.ref.loc13;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc19_6.3 as %I.ref {
-// CHECK:STDOUT:   %.loc19_15: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_15: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc19_15
@@ -86,12 +86,12 @@ impl i32 as I {}
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %.loc16_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed.loc16: init type = call constants.%Int(%.loc16_8.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_8.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_8.3: type = converted %int.make_type_signed.loc16, %.loc16_8.2 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc16: init type = call constants.%Int(%.loc16_8.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc16_8.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc16_8.3: type = converted %int.make_type_signed.loc16, %.loc16_8.2 [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref.loc16: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X

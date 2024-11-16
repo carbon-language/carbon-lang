@@ -20,10 +20,10 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 6 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,14 +56,14 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_24: Core.IntLiteral = int_value 6 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_24: Core.IntLiteral = int_value 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc11) [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc11) [template = constants.%i32]
 // CHECK:STDOUT:   assign file.%x.var, %int.make_type_signed
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

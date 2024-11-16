@@ -43,8 +43,8 @@ class C {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: bool = bool_literal true [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,14 +66,14 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc23_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc23_8.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc23_8.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:   %.loc23_8.3: type = converted %int.make_type_signed, %.loc23_8.2 [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc23_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc23_8.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc23_8.3: type = converted %int.make_type_signed, %.loc23_8.2 [template = constants.%i32]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc37: bool = bool_literal true [template = constants.%.3]
+// CHECK:STDOUT:   %.loc37: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc37 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -83,7 +83,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23: bool = bool_literal true [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc23 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

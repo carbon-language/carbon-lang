@@ -32,7 +32,6 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
 // integer value, which is assumed to be unsigned.
 static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
-  // We rely on the lexer having normalized the `int_id` to a canonical width.
   return context.AddInst<SemIR::IntValue>(
       node_id, {.type_id = context.GetBuiltinType(
                     SemIR::BuiltinInstKind::IntLiteralType),

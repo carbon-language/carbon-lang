@@ -47,18 +47,18 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block25> [template = constants.%.4]
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block25> [template = constants.%.3]
 // CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+80.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1
@@ -73,13 +73,13 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc13_20.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc13_20.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_20.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_20.3: type = converted %int.make_type_signed, %.loc13_20.2 [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc13_20.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_20.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_20.3: type = converted %int.make_type_signed, %.loc13_20.2 [template = constants.%i32]
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_20.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc13_29: Core.IntLiteral = int_value 64 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13_29: Core.IntLiteral = int_value 64 [template = constants.%.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc13_29) [template = f64]
 // CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc13_24.2: type = converted %float.make_type, %.loc13_24.1 [template = f64]

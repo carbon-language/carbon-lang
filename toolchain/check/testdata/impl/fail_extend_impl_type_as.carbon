@@ -48,10 +48,10 @@ class E {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
 // CHECK:STDOUT: }
@@ -88,7 +88,7 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %.loc18_15.3 as %I.ref {
-// CHECK:STDOUT:   %.loc18_24: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_24: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc18_24
@@ -97,7 +97,7 @@ class E {
 // CHECK:STDOUT: impl @impl.2: %D.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: %Self.ref as %I.ref {
-// CHECK:STDOUT:   %.loc39: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc39: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc39
@@ -106,12 +106,12 @@ class E {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %.loc18_15.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc18_15.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc18_15.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:     %.loc18_15.3: type = converted %int.make_type_signed, %.loc18_15.2 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc18_15.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc18_15.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc18_15.3: type = converted %int.make_type_signed, %.loc18_15.2 [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -123,7 +123,7 @@ class E {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc30: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -135,7 +135,7 @@ class E {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc40: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E

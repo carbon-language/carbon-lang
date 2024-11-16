@@ -22,9 +22,9 @@ class C {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,14 +47,14 @@ class C {
 // CHECK:STDOUT: impl @impl: %Self.ref as @C.%.loc15_18.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15_18.1: type = value_of_initializer @impl.%int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_18.2: type = converted @impl.%int.make_type_signed, %.loc15_18.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_18.1: type = value_of_initializer @impl.%int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_18.2: type = converted @impl.%int.make_type_signed, %.loc15_18.1 [template = constants.%i32]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc15: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc15) [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc15) [template = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

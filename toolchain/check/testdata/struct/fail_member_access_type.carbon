@@ -26,7 +26,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -53,11 +53,11 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x.var: ref %.2 = var x
 // CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc15_8.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc15_8.1) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_8.2: type = value_of_initializer %int.make_type_signed [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_8.3: type = converted %int.make_type_signed, %.loc15_8.2 [template = constants.%.5]
-// CHECK:STDOUT:   %y.var: ref %.5 = var y
-// CHECK:STDOUT:   %y: ref %.5 = bind_name y, %y.var
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc15_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_8.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_8.3: type = converted %int.make_type_signed, %.loc15_8.2 [template = constants.%i32]
+// CHECK:STDOUT:   %y.var: ref %i32 = var y
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

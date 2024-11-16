@@ -84,8 +84,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %AdaptWithBase, %Base [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.3 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %AdaptWithBase, %Base [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,12 +116,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBase {
 // CHECK:STDOUT:   %.loc10_9: Core.IntLiteral = int_value 32 [template = constants.%.3]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_9) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_signed, %.loc10_12.1 [template = constants.%.4]
-// CHECK:STDOUT:   adapt_decl %.4
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_9) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc10_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_signed, %.loc10_12.1 [template = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc15: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.5 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
@@ -136,10 +136,10 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %AdaptWithField, %.2 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %AdaptWithField, %i32 [template]
 // CHECK:STDOUT:   %AdaptWithFields: type = class_type @AdaptWithFields [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %AdaptWithFields, %.2 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %AdaptWithFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,15 +163,15 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithField {
 // CHECK:STDOUT:   %.loc8_9: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%.loc8_9) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_12.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_12.2: type = converted %int.make_type_signed.loc8, %.loc8_12.1 [template = constants.%.2]
-// CHECK:STDOUT:   adapt_decl %.2
+// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%.loc8_9) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_12.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_12.2: type = converted %int.make_type_signed.loc8, %.loc8_12.1 [template = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32
 // CHECK:STDOUT:   %.loc13_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_10.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_10.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_10.3: type = converted %int.make_type_signed.loc13, %.loc13_10.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_8: %.3 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_10.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_10.3: type = converted %int.make_type_signed.loc13, %.loc13_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
@@ -180,25 +180,25 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithFields {
 // CHECK:STDOUT:   %.loc20_9: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%.loc20_9) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_12.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_12.2: type = converted %int.make_type_signed.loc20, %.loc20_12.1 [template = constants.%.2]
-// CHECK:STDOUT:   adapt_decl %.2
+// CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%.loc20_9) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc20_12.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc20_12.2: type = converted %int.make_type_signed.loc20, %.loc20_12.1 [template = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32
 // CHECK:STDOUT:   %.loc25_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc25: init type = call constants.%Int(%.loc25_10.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25_10.2: type = value_of_initializer %int.make_type_signed.loc25 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25_10.3: type = converted %int.make_type_signed.loc25, %.loc25_10.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25_8: %.4 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_signed.loc25: init type = call constants.%Int(%.loc25_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc25_10.2: type = value_of_initializer %int.make_type_signed.loc25 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc25_10.3: type = converted %int.make_type_signed.loc25, %.loc25_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc25_8: %.3 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %.loc26_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%.loc26_10.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc26_10.2: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc26_10.3: type = converted %int.make_type_signed.loc26, %.loc26_10.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc26_8: %.4 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%.loc26_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc26_10.2: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc26_10.3: type = converted %int.make_type_signed.loc26, %.loc26_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc26_8: %.3 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %.loc27_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc27: init type = call constants.%Int(%.loc27_10.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc27_10.2: type = value_of_initializer %int.make_type_signed.loc27 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc27_10.3: type = converted %int.make_type_signed.loc27, %.loc27_10.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc27_8: %.4 = field_decl c, element2 [template]
+// CHECK:STDOUT:   %int.make_type_signed.loc27: init type = call constants.%Int(%.loc27_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_10.2: type = value_of_initializer %int.make_type_signed.loc27 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_10.3: type = converted %int.make_type_signed.loc27, %.loc27_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_8: %.3 = field_decl c, element2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
@@ -218,8 +218,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = int_type signed, %.5 [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type %AdaptWithBaseAndFields, %.6 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.5 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -252,10 +252,10 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %.4 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   %.loc8_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc8_10.1) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc8_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%.6]
-// CHECK:STDOUT:   %.loc8_10.3: type = converted %int.make_type_signed, %.loc8_10.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc8_8: %.7 = field_decl n, element1 [template]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc8_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_10.3: type = converted %int.make_type_signed, %.loc8_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_8: %.6 = field_decl n, element1 [template]
 // CHECK:STDOUT:   %.loc15_10: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1

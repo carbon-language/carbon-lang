@@ -30,12 +30,12 @@ fn F() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -55,20 +55,20 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %a.patt: %.2 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.2 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc11_9.1) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc11_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:     %.loc11_9.3: type = converted %int.make_type_signed, %.loc11_9.2 [template = constants.%.2]
-// CHECK:STDOUT:     %a.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %.2 = bind_name a, %a.param
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc11_9.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_9.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_9.3: type = converted %int.make_type_signed, %.loc11_9.2 [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: %.2) {
+// CHECK:STDOUT: fn @G(%a.param_patt: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -76,8 +76,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc23_5.1: f64 = float_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc23_5.2: %.2 = converted %.loc23_5.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc23_5.1: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc23_5.2: %i32 = converted %.loc23_5.1, <error> [template = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

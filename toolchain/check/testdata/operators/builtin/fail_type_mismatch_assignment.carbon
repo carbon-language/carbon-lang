@@ -27,16 +27,16 @@ fn Main() {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%.2) [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.25: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.26: <bound method> = bound_method %.3, %Convert.14 [template]
-// CHECK:STDOUT:   %.27: <specific function> = specific_function %.26, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.28: %.2 = int_value 3 [template]
-// CHECK:STDOUT:   %.29: f64 = float_literal 5.6000000000000005 [template]
+// CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.23: <bound method> = bound_method %.2, %Convert.14 [template]
+// CHECK:STDOUT:   %.24: <specific function> = specific_function %.23, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.25: %i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.26: f64 = float_literal 5.6000000000000005 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -60,21 +60,21 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc12_10.1) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_10.3: type = converted %int.make_type_signed, %.loc12_10.2 [template = constants.%.2]
-// CHECK:STDOUT:   %a.var: ref %.2 = var a
-// CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 3 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.26]
-// CHECK:STDOUT:   %.loc12_17.3: <specific function> = specific_function %.loc12_17.2, @Convert.2(constants.%.1) [template = constants.%.27]
-// CHECK:STDOUT:   %int.convert_checked: init %.2 = call %.loc12_17.3(%.loc12_16) [template = constants.%.28]
-// CHECK:STDOUT:   %.loc12_17.4: init %.2 = converted %.loc12_16, %int.convert_checked [template = constants.%.28]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc12_10.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_10.3: type = converted %int.make_type_signed, %.loc12_10.2 [template = constants.%i32]
+// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc12_17.3: <specific function> = specific_function %.loc12_17.2, @Convert.2(constants.%.1) [template = constants.%.24]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc12_17.3(%.loc12_16) [template = constants.%.25]
+// CHECK:STDOUT:   %.loc12_17.4: init %i32 = converted %.loc12_16, %int.convert_checked [template = constants.%.25]
 // CHECK:STDOUT:   assign %a.var, %.loc12_17.4
-// CHECK:STDOUT:   %a.ref: ref %.2 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc19_5: %.2 = converted %.loc19_7, <error> [template = <error>]
+// CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc19_5: %i32 = converted %.loc19_7, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

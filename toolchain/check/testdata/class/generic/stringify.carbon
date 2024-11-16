@@ -128,10 +128,10 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = int_type signed, %.4 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.a: %.5} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [template]
-// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.3, %.7) [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.3, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,12 +173,12 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %.loc18_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.3) [template = constants.%Inner.3]
 // CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc18_18 [template = constants.%Inner.3]
 // CHECK:STDOUT:   %.loc18_30.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc18_30.1) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_30.3: type = converted %int.make_type_signed, %.loc18_30.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_33: type = struct_type {.a: %.5} [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_34: type = ptr_type %.6 [template = constants.%.7]
-// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.3, constants.%.7) [template = constants.%Inner.4]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc18_30.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_30.3: type = converted %int.make_type_signed, %.loc18_30.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_33: type = struct_type {.a: %i32} [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18_34: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.3, constants.%.6) [template = constants.%Inner.4]
 // CHECK:STDOUT:   %w.var: ref %Inner.4 = var w
 // CHECK:STDOUT:   %w: ref %Inner.4 = bind_name w, %w.var
 // CHECK:STDOUT: }
@@ -253,9 +253,9 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Inner => constants.%Inner.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%.3, constants.%.7) {
-// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.7
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.7
+// CHECK:STDOUT: specific @Inner(constants.%.3, constants.%.6) {
+// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.6
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

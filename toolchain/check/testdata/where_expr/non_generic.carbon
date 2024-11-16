@@ -24,7 +24,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.3 [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
@@ -55,7 +55,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc14_33: Core.IntLiteral = int_value 32 [template = constants.%.3]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc14_33) [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc14_33) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_equivalent %T.ref, %int.make_type_signed
 // CHECK:STDOUT:     }
