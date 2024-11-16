@@ -300,8 +300,8 @@ static auto BuildFunctionDecl(Context& context,
         !function_info.param_patterns_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
-        return_type_id != context.GetInt32Type() &&
-            return_type_id != context.GetTupleType({}))) {
+         return_type_id != context.GetInt32Type() &&
+         return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "invalid signature for `Main.Run` function; expected "
                         "`fn ()` or `fn () -> i32`");
