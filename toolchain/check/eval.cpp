@@ -1057,10 +1057,6 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
           SemIR::InstId::BuiltinIntLiteralType);
     }
 
-    case SemIR::BuiltinFunctionKind::IntMakeType32: {
-      return context.constant_values().Get(SemIR::InstId::BuiltinIntType);
-    }
-
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
       return MakeIntTypeResult(context, loc, SemIR::IntKind::Signed, arg_ids[0],
                                phase);

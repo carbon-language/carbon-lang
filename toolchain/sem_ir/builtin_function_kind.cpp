@@ -83,9 +83,6 @@ struct AnyInt {
                                                           type_id)) {
       return true;
     }
-    if (BuiltinType<InstId::BuiltinIntType>::Check(sem_ir, state, type_id)) {
-      return true;
-    }
     return sem_ir.types().Is<IntType>(type_id);
   }
 };
@@ -179,11 +176,6 @@ constexpr BuiltinInfo PrintInt = {"print.int",
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
-
-// Returns the `i32` type. Doesn't take a bit size because we need an integer
-// type as a basis for that.
-constexpr BuiltinInfo IntMakeType32 = {"int.make_type_32",
-                                       ValidateSignature<auto()->Type>};
 
 // Returns the `iN` type.
 // TODO: Should we use a more specific type as the type of the bit width?

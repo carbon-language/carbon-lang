@@ -1004,7 +1004,6 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
       case SemIR::BuiltinInstKind::IntLiteralType:
-      case SemIR::BuiltinInstKind::IntType:
       case SemIR::BuiltinInstKind::FloatType:
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
@@ -1366,6 +1365,17 @@ auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,
                                SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
       *this, FacetTypeFromInterface(interface_id, specific_id).facet_type_id);
+}
+
+auto Context::GetInt32Type() -> SemIR::TypeId {
+  auto bit_width_const_id = TryEvalInst(
+      *this, SemIR::InstId::Invalid,
+      SemIR::IntValue{
+          .type_id = GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType),
+          .int_id = ints().AddUnsigned(llvm::APInt(64, 32))});
+  return GetCompleteTypeImpl<SemIR::IntType>(
+      *this, SemIR::IntKind::Signed,
+      constant_values().GetInstId(bit_width_const_id));
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

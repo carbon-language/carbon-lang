@@ -133,8 +133,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_loc_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+          context, index_loc_id, index_inst_id, context.GetInt32Type());
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {

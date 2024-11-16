@@ -21,13 +21,15 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: --- fail_deref_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -40,22 +42,24 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:     .n2 = @__global_init.%n2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int.make_type_32.loc15: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_32.loc15 [template = i32]
-// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_32.loc15, %.loc15_8.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc19_9.1: type = value_of_initializer %int.make_type_32.loc19 [template = i32]
-// CHECK:STDOUT:   %.loc19_9.2: type = converted %int.make_type_32.loc19, %.loc19_9.1 [template = i32]
+// CHECK:STDOUT:   %.loc15_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%.loc15_8.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_8.2: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_8.3: type = converted %int.make_type_signed.loc15, %.loc15_8.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc19: init type = call constants.%Int(%.loc19_9.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_9.2: type = value_of_initializer %int.make_type_signed.loc19 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19_9.3: type = converted %int.make_type_signed.loc19, %.loc19_9.2 [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc15: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15: ref <error> = deref <error>
-// CHECK:STDOUT:   %n: i32 = bind_name n, <error>
+// CHECK:STDOUT:   %n: %.2 = bind_name n, <error>
 // CHECK:STDOUT:   %undeclared.ref.loc19: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc19: ref <error> = deref <error>
-// CHECK:STDOUT:   %n2: i32 = bind_name n2, <error>
+// CHECK:STDOUT:   %n2: %.2 = bind_name n2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

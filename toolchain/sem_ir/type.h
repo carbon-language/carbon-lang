@@ -105,8 +105,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // compute this information.
   auto IsSignedInt(TypeId int_type_id) const -> bool {
     auto inst_id = GetInstId(int_type_id);
-    if (inst_id == InstId::BuiltinIntType ||
-        inst_id == InstId::BuiltinIntLiteralType) {
+    if (inst_id == InstId::BuiltinIntLiteralType) {
       return true;
     }
     auto int_type = insts_->TryGetAs<IntType>(inst_id);

@@ -101,17 +101,19 @@ class StructAdapter {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %SomeClass, i32 [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %SomeClass, %.2 [template]
 // CHECK:STDOUT:   %StaticMemberFunction.type: type = fn_type @StaticMemberFunction [template]
 // CHECK:STDOUT:   %StaticMemberFunction: %StaticMemberFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %AdapterMethod.type: type = fn_type @AdapterMethod [template]
 // CHECK:STDOUT:   %AdapterMethod: %AdapterMethod.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %SomeClass [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.a: %.2, .b: %.2} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %SomeClass [template]
 // CHECK:STDOUT:   %TestStaticMemberFunction.type: type = fn_type @TestStaticMemberFunction [template]
 // CHECK:STDOUT:   %TestStaticMemberFunction: %TestStaticMemberFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdapterMethod.type: type = fn_type @TestAdapterMethod [template]
@@ -120,7 +122,7 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -159,7 +161,7 @@ class StructAdapter {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %SomeClass [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %SomeClass [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -167,14 +169,16 @@ class StructAdapter {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
-// CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_32.loc7, %.loc7_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc7_8: %.1 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_8: %.1 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc7_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%.loc7_10.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_10.2: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_10.3: type = converted %int.make_type_signed.loc7, %.loc7_10.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_8: %.3 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc8_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%.loc8_10.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_10.2: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_10.3: type = converted %int.make_type_signed.loc8, %.loc8_10.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_8: %.3 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
@@ -184,7 +188,7 @@ class StructAdapter {
 // CHECK:STDOUT:     %self.param: %SomeClassAdapter = value_param runtime_param0
 // CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -300,20 +304,22 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %SomeClass, i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %SomeClass, %.2 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.a: %.2, .b: %.2} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %SomeClass [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %SomeClass [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -333,30 +339,33 @@ class StructAdapter {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_32, %.loc13_30.1 [template = i32]
+// CHECK:STDOUT:     %.loc13_30.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc13_30.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc13_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
+// CHECK:STDOUT:     %.loc13_30.3: type = converted %int.make_type_signed, %.loc13_30.2 [template = constants.%.2]
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
 // CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
-// CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_32.loc5, %.loc5_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
-// CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_32.loc6, %.loc6_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_8: %.1 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%.loc5_10.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_10.2: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_10.3: type = converted %int.make_type_signed.loc5, %.loc5_10.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_8: %.3 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc6_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%.loc6_10.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_10.2: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_10.3: type = converted %int.make_type_signed.loc6, %.loc6_10.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_8: %.3 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.4 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -367,19 +376,19 @@ class StructAdapter {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %SomeClass [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %SomeClass [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> i32 {
+// CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> %.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
+// CHECK:STDOUT:   %b.ref: %.3 = name_ref b, @SomeClass.%.loc6_8 [template = @SomeClass.%.loc6_8]
 // CHECK:STDOUT:   %.loc21_11.1: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21_11.2: i32 = class_element_access <error>, element1 [template = <error>]
+// CHECK:STDOUT:   %.loc21_11.2: %.2 = class_element_access <error>, element1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -387,15 +396,17 @@ class StructAdapter {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: %.2, .b: %.2} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -411,15 +422,17 @@ class StructAdapter {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @StructAdapter {
-// CHECK:STDOUT:   %int.make_type_32.loc8_21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer %int.make_type_32.loc8_21 [template = i32]
-// CHECK:STDOUT:   %.loc8_21.2: type = converted %int.make_type_32.loc8_21, %.loc8_21.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc8_30: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_30.1: type = value_of_initializer %int.make_type_32.loc8_30 [template = i32]
-// CHECK:STDOUT:   %.loc8_30.2: type = converted %int.make_type_32.loc8_30, %.loc8_30.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_33: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
-// CHECK:STDOUT:   adapt_decl %.1
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_21.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc8_21: init type = call constants.%Int(%.loc8_21.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_21.2: type = value_of_initializer %int.make_type_signed.loc8_21 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_21.3: type = converted %int.make_type_signed.loc8_21, %.loc8_21.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_30.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc8_30: init type = call constants.%Int(%.loc8_30.1) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_30.2: type = value_of_initializer %int.make_type_signed.loc8_30 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_30.3: type = converted %int.make_type_signed.loc8_30, %.loc8_30.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_33: type = struct_type {.a: %.2, .b: %.2} [template = constants.%.3]
+// CHECK:STDOUT:   adapt_decl %.3
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.3 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter

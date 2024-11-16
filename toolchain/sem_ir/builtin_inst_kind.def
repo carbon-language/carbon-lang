@@ -58,14 +58,11 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType, "auto")
 // The type of bool literals and branch conditions, bool.
 CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType, "bool")
 
-// An arbitrary-precision integer type. This will eventually be used in the
-// types of integer literals and as the parameter type of `Core.Int` and
-// `Core.Float`. This type only provides compile-time operations, and is
-// represented as an empty type at runtime.
+// An arbitrary-precision integer type, which is used as the type of integer
+// literals and as the parameter type of `Core.Int` and `Core.Float`. This type
+// only provides compile-time operations, and is represented as an empty type at
+// runtime.
 CARBON_SEM_IR_BUILTIN_INST_KIND(IntLiteralType, "Core.IntLiteral")
-
-// The type of integer values and integer literals, currently always i32.
-CARBON_SEM_IR_BUILTIN_INST_KIND(IntType, "i32")
 
 // The type of floating point values and real literals, currently always f64.
 CARBON_SEM_IR_BUILTIN_INST_KIND(FloatType, "f64")

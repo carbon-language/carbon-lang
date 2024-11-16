@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
 
@@ -66,6 +67,15 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           }
           case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
             os << builtin_inst.builtin_inst_kind.label();
+            break;
+          }
+          case CARBON_KIND(SemIR::IntType int_type): {
+            os << (int_type.int_kind == SemIR::IntKind::Signed ? "i" : "u")
+               << sem_ir().ints().Get(
+                      sem_ir()
+                          .insts()
+                          .GetAs<SemIR::IntValue>(int_type.bit_width_id)
+                          .int_id);
             break;
           }
           default:

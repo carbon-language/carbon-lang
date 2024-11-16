@@ -4,7 +4,7 @@
 
 package Core library "prelude/types/i32";
 
-// For Int32():
+// For Int():
 import library "prelude/types";
 import library "prelude/operators";
 

@@ -41,24 +41,24 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @struct.2.loc19_16, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !12
-// CHECK:STDOUT:   call void @_CF.Main.45(ptr %c.var), !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.46(ptr %d.var), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main.46(ptr %c.var), !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main.47(ptr %d.var), !dbg !14
 // CHECK:STDOUT:   %.loc24_5 = load i32, ptr %n.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @_CF.Main.47(i32 %.loc24_5), !dbg !16
-// CHECK:STDOUT:   call void @_CF.Main.48(%type zeroinitializer), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Main.48(i32 %.loc24_5), !dbg !16
+// CHECK:STDOUT:   call void @_CF.Main.49(%type zeroinitializer), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.45(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main.46(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.47(i32)
+// CHECK:STDOUT: declare void @_CF.Main.47(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.48(%type)
+// CHECK:STDOUT: declare void @_CF.Main.48(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CF.Main.49(%type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }

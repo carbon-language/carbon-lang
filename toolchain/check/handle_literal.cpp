@@ -134,14 +134,6 @@ auto HandleParseNode(Context& context, Parse::IntTypeLiteralId node_id)
     -> bool {
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  // Special case: `i32` has a custom builtin for now.
-  // TODO: Remove this special case.
-  if (context.ints().Get(size_id) == 32) {
-    auto fn_inst_id = context.LookupNameInCore(node_id, "Int32");
-    auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
-    context.node_stack().Push(node_id, type_inst_id);
-    return true;
-  }
   return HandleIntOrUnsignedIntTypeLiteral(context, node_id,
                                            SemIR::IntKind::Signed, size_id);
 }

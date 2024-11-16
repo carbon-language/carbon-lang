@@ -40,8 +40,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT: --- fail_left_where_not_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -53,7 +55,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .Bool = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -70,9 +72,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %T.patt.loc8_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<invalid> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:     %.loc8_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_10.1) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %int.make_type_signed, %.loc8_10.2 [template = constants.%.2]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]

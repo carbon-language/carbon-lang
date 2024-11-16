@@ -88,9 +88,6 @@ class File : public Printable<File> {
   // compute this information.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
     auto inst_id = types().GetInstId(int_type_id);
-    if (inst_id == InstId::BuiltinIntType) {
-      return {.is_signed = true, .bit_width = ints().Lookup(32)};
-    }
     if (inst_id == InstId::BuiltinIntLiteralType) {
       return {.is_signed = true, .bit_width = IntId::Invalid};
     }
