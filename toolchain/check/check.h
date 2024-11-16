@@ -6,7 +6,8 @@
 #define CARBON_TOOLCHAIN_CHECK_CHECK_H_
 
 #include "common/ostream.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/timings.h"
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -19,6 +20,7 @@ namespace Carbon::Check {
 // Checking information that's tracked per file.
 struct Unit {
   SharedValueStores* value_stores;
+  std::optional<Timings>* timings;
   const Lex::TokenizedBuffer* tokens;
   const Parse::Tree* parse_tree;
   DiagnosticConsumer* consumer;

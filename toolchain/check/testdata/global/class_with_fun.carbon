@@ -22,22 +22,14 @@ var a: A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %ret_a.type: type = fn_type @ret_a [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %ret_a: %ret_a.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,9 +42,13 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [template = constants.%ret_a] {} {
+// CHECK:STDOUT:   %ret_a.decl: %ret_a.type = fn_decl @ret_a [template = constants.%ret_a] {
+// CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %return: ref %A = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a

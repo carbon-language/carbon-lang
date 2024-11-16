@@ -11,20 +11,20 @@
 class C {}
 
 alias a = C;
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: var a: C = {};
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias a = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
 alias b = C;
@@ -35,8 +35,6 @@ alias b = C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

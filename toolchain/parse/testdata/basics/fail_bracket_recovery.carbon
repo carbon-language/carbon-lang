@@ -10,20 +10,20 @@
 
 // This is a valid parse tree even though the lex errors.
 fn F() {
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:11: error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:11: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: ([i32; 3) = (0, 1, 2);
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
   var x: ([i32; 3) = (0, 1, 2);
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:15: error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+11]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+7]]:26: error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+7]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+3]]:27: error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+3]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
   // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
   // CHECK:STDERR:                           ^
   var x: {.y: (} = {.y = ((};
@@ -63,7 +63,7 @@ fn F() {
 // CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'StructTypeField', text: ':', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'StructTypeLiteralField', text: ':', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'StructTypeLiteral', text: '}', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
@@ -74,7 +74,7 @@ fn F() {
 // CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
 // CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructField', text: '=', subtree_size: 7},
+// CHECK:STDOUT:           {kind: 'StructLiteralField', text: '=', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 21},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 46},

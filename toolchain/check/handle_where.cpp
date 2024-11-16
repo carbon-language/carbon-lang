@@ -16,7 +16,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (!context.IsFacetType(self_type_id)) {
+  if (self_type_id != SemIR::TypeId::Error &&
+      !context.IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
@@ -34,7 +35,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // the `value_id` on the `BindSymbolicName`.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
-       .parent_scope_id = context.decl_name_stack().PeekParentScopeId(),
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .bind_index = context.scope_stack().AddCompileTimeBinding()});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
@@ -78,7 +79,8 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
     -> bool {
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
-  // TODO: type check lhs and rhs are comparable
+  // TODO: Type check lhs and rhs are comparable.
+  // TODO: Require that at least one side uses a designator.
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
@@ -103,6 +105,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
     rhs_as_type.inst_id = SemIR::InstId::BuiltinError;
   }
+  // TODO: Require that at least one side uses a designator.
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(

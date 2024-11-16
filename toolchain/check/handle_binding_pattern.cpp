@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/return.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -14,7 +15,8 @@ namespace Carbon::Check {
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     bool is_generic) -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id).type_id;
+  auto [cast_type_inst_id, cast_type_id] =
+      ExprAsType(context, type_node, parsed_type_id);
 
   // TODO: Handle `_` bindings.
 
@@ -91,6 +93,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             CompileTimeBindingInVarDecl, Error,
             "`var` declaration cannot declare a compile-time binding");
         context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
+        // Prevent lambda helpers from creating a compile time binding.
+        needs_compile_time_binding = false;
       }
       auto binding_id =
           is_generic
@@ -99,16 +103,24 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
       // A `var` declaration at class scope introduces a field.
       auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
-      cast_type_id = context.AsCompleteType(cast_type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                          "{0} has incomplete type `{1}`", llvm::StringLiteral,
-                          SemIR::TypeId);
-        return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
-                                       parent_class_decl
-                                           ? llvm::StringLiteral("Field")
-                                           : llvm::StringLiteral("Variable"),
-                                       cast_type_id);
-      });
+      cast_type_id = context.AsCompleteType(
+          cast_type_id,
+          [&] {
+            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
+                              "{0:field|variable} has incomplete type {1}",
+                              BoolAsSelect, SemIR::TypeId);
+            return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
+                                           parent_class_decl.has_value(),
+                                           cast_type_id);
+          },
+          [&] {
+            CARBON_DIAGNOSTIC(AbstractTypeInVarDecl, Error,
+                              "{0:field|variable} has abstract type {1}",
+                              BoolAsSelect, SemIR::TypeId);
+            return context.emitter().Build(type_node, AbstractTypeInVarDecl,
+                                           parent_class_decl.has_value(),
+                                           cast_type_id);
+          });
       if (parent_class_decl) {
         CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer,
                      "`returned var` at class scope");
@@ -119,15 +131,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             binding_id,
             {.type_id = field_type_id,
              .name_id = name_id,
-             .index = SemIR::ElementIndex(context.args_type_info_stack()
-                                              .PeekCurrentBlockContents()
-                                              .size())});
+             .index = SemIR::ElementIndex(
+                 context.struct_type_fields_stack().PeekArray().size())});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddInstId(
-            context.AddInstInNoBlock<SemIR::StructTypeField>(
-                binding_id,
-                {.name_id = name_id, .field_type_id = cast_type_id}));
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_id = cast_type_id});
         context.node_stack().Push(node_id, field_id);
         break;
       }
@@ -158,27 +167,82 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
-      auto param_id = context.AddInst<SemIR::Param>(
-          name_node, {.type_id = cast_type_id,
-                      .name_id = name_id,
-                      .runtime_index = SemIR::RuntimeParamIndex::Invalid});
-      auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
-      push_bind_name(bind_id);
-      // TODO: Bindings should come into scope immediately in other contexts
-      // too.
-      context.AddNameToLookup(name_id, bind_id);
-      auto entity_name_id =
-          context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
-      if (is_generic) {
-        context.AddPatternInst<SemIR::SymbolicBindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
-      } else {
-        context.AddPatternInst<SemIR::BindingPattern>(
-            name_node,
-            {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+      auto param_pattern_id = SemIR::InstId::Invalid;
+      bool had_error = false;
+      switch (context.decl_introducer_state_stack().innermost().kind) {
+        case Lex::TokenKind::Fn: {
+          if (context_node_kind == Parse::NodeKind::ImplicitParamListStart &&
+              !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+            CARBON_DIAGNOSTIC(
+                ImplictParamMustBeConstant, Error,
+                "implicit parameters of functions must be constant or `self`");
+            context.emitter().Emit(node_id, ImplictParamMustBeConstant);
+            had_error = true;
+          }
+          break;
+        }
+        case Lex::TokenKind::Class:
+        case Lex::TokenKind::Impl:
+        case Lex::TokenKind::Interface: {
+          if (name_id == SemIR::NameId::SelfValue) {
+            CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
+                              "`self` parameter only allowed on functions");
+            context.emitter().Emit(node_id, SelfParameterNotAllowed);
+            had_error = true;
+          } else if (!is_generic) {
+            CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                              "parameters of generic types must be constant");
+            context.emitter().Emit(node_id, GenericParamMustBeConstant);
+            had_error = true;
+          }
+          break;
+        }
+        default:
+          break;
       }
-      // TODO: use the pattern insts to generate the pattern-match insts
+      if (had_error) {
+        context.AddNameToLookup(name_id, SemIR::InstId::BuiltinError);
+        // Replace the parameter with an invalid instruction so that we don't
+        // try constructing a generic based on it.
+        param_pattern_id = SemIR::InstId::BuiltinError;
+      } else {
+        auto bind_id = context.AddInstInNoBlock(
+            make_bind_name(cast_type_id, SemIR::InstId::Invalid));
+        if (needs_compile_time_binding) {
+          context.scope_stack().PushCompileTimeBinding(bind_id);
+        }
+        // TODO: Bindings should come into scope immediately in other contexts
+        // too.
+        context.AddNameToLookup(name_id, bind_id);
+        auto entity_name_id =
+            context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
+        bool inserted = context.bind_name_cache()
+                            .Insert(entity_name_id, bind_id)
+                            .is_inserted();
+        CARBON_CHECK(inserted);
+        auto pattern_inst_id = SemIR::InstId::Invalid;
+        if (is_generic) {
+          pattern_inst_id =
+              context.AddPatternInst<SemIR::SymbolicBindingPattern>(
+                  name_node,
+                  {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+        } else {
+          pattern_inst_id = context.AddPatternInst<SemIR::BindingPattern>(
+              name_node,
+              {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+        }
+        param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
+            node_id,
+            {
+                .type_id = context.insts().Get(pattern_inst_id).type_id(),
+                .subpattern_id = pattern_inst_id,
+                .runtime_index = is_generic ? SemIR::RuntimeParamIndex::Invalid
+                                            : SemIR::RuntimeParamIndex::Unknown,
+            });
+      }
+      context.node_stack().Push(node_id, param_pattern_id);
+
+      // TODO: Use the pattern insts to generate the pattern-match insts
       // at the end of the full pattern, instead of eagerly generating them
       // here.
       break;
@@ -187,10 +251,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case Parse::NodeKind::LetIntroducer: {
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                          "`let` binding has incomplete type `{0}`",
-                          SemIR::TypeId);
+                          "`let` binding has incomplete type {0}",
+                          InstIdAsType);
         return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
-                                       cast_type_id);
+                                       cast_type_inst_id);
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
@@ -219,12 +283,20 @@ auto HandleParseNode(Context& context,
   bool is_generic = true;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
-    auto scope_inst = context.insts().Get(context.scope_stack().PeekInstId());
-    if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-        !scope_inst.Is<SemIR::FunctionDecl>()) {
-      context.TODO(node_id,
-                   "`let` compile time binding outside function or interface");
-      is_generic = false;
+    // Disallow `let` outside of function and interface definitions.
+    // TODO: Find a less brittle way of doing this. An invalid scope_inst_id
+    // can represent a block scope, but is also used for other kinds of scopes
+    // that aren't necessarily part of an interface or function decl.
+    auto scope_inst_id = context.scope_stack().PeekInstId();
+    if (scope_inst_id.is_valid()) {
+      auto scope_inst = context.insts().Get(scope_inst_id);
+      if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
+          !scope_inst.Is<SemIR::FunctionDecl>()) {
+        context.TODO(
+            node_id,
+            "`let` compile time binding outside function or interface");
+        is_generic = false;
+      }
     }
   }
 
@@ -232,21 +304,28 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
-  auto self_param_id = context.node_stack().PopPattern();
-  if (auto self_param =
-          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
-      self_param &&
-      context.entity_names().Get(self_param->entity_name_id).name_id ==
-          SemIR::NameId::SelfValue) {
-    // TODO: The type of an `addr_pattern` should probably be the non-pointer
-    // type, because that's the type that the pattern matches.
-    context.AddInstAndPush<SemIR::AddrPattern>(
-        node_id, {.type_id = self_param->type_id, .inner_id = self_param_id});
+  auto param_pattern_id = context.node_stack().PopPattern();
+  if (SemIR::Function::GetNameFromPatternId(
+          context.sem_ir(), param_pattern_id) == SemIR::NameId::SelfValue) {
+    auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
+        context.insts().Get(param_pattern_id).type_id());
+    if (pointer_type) {
+      auto addr_pattern_id = context.AddPatternInst<SemIR::AddrPattern>(
+          node_id,
+          {.type_id = SemIR::TypeId::AutoType, .inner_id = param_pattern_id});
+      context.node_stack().Push(node_id, addr_pattern_id);
+    } else {
+      CARBON_DIAGNOSTIC(
+          AddrOnNonPointerType, Error,
+          "`addr` can only be applied to a binding with a pointer type");
+      context.emitter().Emit(node_id, AddrOnNonPointerType);
+      context.node_stack().Push(node_id, param_pattern_id);
+    }
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter");
     context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
-    context.node_stack().Push(node_id, self_param_id);
+    context.node_stack().Push(node_id, param_pattern_id);
   }
   return true;
 }

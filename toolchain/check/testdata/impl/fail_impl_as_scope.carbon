@@ -12,7 +12,7 @@ interface Simple {
   fn F();
 }
 
-// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: error: `impl as` can only be used in a class
+// CHECK:STDERR: fail_impl_as_scope.carbon:[[@LINE+3]]:6: error: `impl as` can only be used in a class [ImplAsOutsideClass]
 // CHECK:STDERR: impl as Simple {
 // CHECK:STDERR:      ^~
 impl as Simple {
@@ -22,28 +22,21 @@ impl as Simple {
 // CHECK:STDOUT: --- fail_impl_as_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Simple.type: type = interface_type @Simple [template]
+// CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [template]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %Simple.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Simple.%F.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %Simple.type, %F.type.1 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,7 +56,7 @@ impl as Simple {
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -73,7 +66,7 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl

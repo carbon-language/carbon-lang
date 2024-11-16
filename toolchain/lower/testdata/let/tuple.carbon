@@ -24,13 +24,13 @@ fn F() -> i32 {
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %.loc12_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc12_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %.loc12_36.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !8
+// CHECK:STDOUT:   %.loc12_36.5.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc12_36.10.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc12_36.15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.1.loc12_37, i64 12, i1 false), !dbg !9
 // CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc13_28.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc13_28.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc13_28.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc13_28.10.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.2.loc13_29, i64 8, i1 false), !dbg !12
 // CHECK:STDOUT:   %.loc14_43.1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc14_43.2 = load i32, ptr %.loc14_43.1.tuple.elem, align 4, !dbg !13

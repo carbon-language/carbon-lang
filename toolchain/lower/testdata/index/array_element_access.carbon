@@ -26,16 +26,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CA.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc10_36.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %.loc10_36.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc10_36.10.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.loc10_37, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CB.Main(ptr sret([2 x i32]) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_34.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc12_34.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   %.loc12_34.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc12_34.12.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @array.loc12_35, i64 8, i1 false), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }

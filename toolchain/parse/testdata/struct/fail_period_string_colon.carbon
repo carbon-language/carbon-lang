@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_period_string_colon.carbon
 
-// CHECK:STDERR: fail_period_string_colon.carbon:[[@LINE+3]]:10: error: expected identifier after `.`
+// CHECK:STDERR: fail_period_string_colon.carbon:[[@LINE+3]]:10: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR: var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDERR:          ^~~~~~~
 var x: {."hello": i32, .y: i32} = {};
@@ -23,11 +23,11 @@ var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
-// CHECK:STDOUT:           {kind: 'StructComma', text: ','},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'y'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeField', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

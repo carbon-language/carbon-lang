@@ -26,11 +26,11 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+7]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+7]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR: extern library default fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extern fn F();
@@ -39,7 +39,6 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,12 +55,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//extern_library, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,12 +75,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//extern_library, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -105,9 +105,9 @@ class ConstantValueStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "symbolic_constants_"),
-                  symbolic_constants_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "symbolic_constants_"),
+                      symbolic_constants_);
   }
 
   // Returns the constant values mapping as an ArrayRef whose keys are
@@ -143,7 +143,7 @@ class ConstantValueStore {
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  explicit ConstantStore(File& sem_ir) : sem_ir_(sem_ir) {}
+  explicit ConstantStore(File* sem_ir) : sem_ir_(sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.
@@ -155,8 +155,8 @@ class ConstantStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "map_"), map_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "constants_"), constants_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "map_"), map_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
   }
 
   // Returns a copy of the constant IDs as a vector, in an arbitrary but
@@ -166,7 +166,7 @@ class ConstantStore {
   auto size() const -> int { return constants_.size(); }
 
  private:
-  File& sem_ir_;
+  File* const sem_ir_;
   Map<Inst, ConstantId> map_;
   llvm::SmallVector<InstId, 0> constants_;
 };

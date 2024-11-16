@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   A->foo;
   // CHECK:STDERR:   ^
   A->foo;
@@ -24,20 +24,13 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -5,6 +5,8 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_TYPE_UTILS_H_
 #define CARBON_EXPLORER_INTERPRETER_TYPE_UTILS_H_
 
+#include <cstddef>
+
 #include "explorer/base/nonnull.h"
 
 namespace Carbon {

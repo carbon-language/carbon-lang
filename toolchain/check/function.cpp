@@ -34,7 +34,7 @@ auto CheckFunctionTypeMatches(Context& context,
                                                   prev_return_type_id)) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
-        "function redeclaration differs because return type is `{0}`",
+        "function redeclaration differs because return type is {0}",
         SemIR::TypeId);
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
@@ -48,7 +48,7 @@ auto CheckFunctionTypeMatches(Context& context,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
-                        "previously declared with return type `{0}`",
+                        "previously declared with return type {0}",
                         SemIR::TypeId);
       diag.Note(prev_function.latest_decl_id(),
                 FunctionRedeclReturnTypePrevious, prev_return_type_id);
@@ -77,16 +77,22 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
   if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "function returns incomplete type `{0}`",
-                        SemIR::TypeId);
+                        "function returns incomplete type {0}", SemIR::TypeId);
       return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
+                                     return_info.type_id);
+    };
+    auto diagnose_abstract_return_type = [&] {
+      CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
+                        "function returns abstract type {0}", SemIR::TypeId);
+      return context.emitter().Build(loc, AbstractTypeInFunctionReturnType,
                                      return_info.type_id);
     };
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
     if (context.TryToCompleteType(return_info.type_id,
-                                  diagnose_incomplete_return_type)) {
+                                  diagnose_incomplete_return_type,
+                                  diagnose_abstract_return_type)) {
       return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
                                                        function, specific_id);
     }

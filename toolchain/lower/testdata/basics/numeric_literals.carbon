@@ -36,10 +36,10 @@ fn F() {
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ints.var = alloca [4 x i32], align 4, !dbg !7
-// CHECK:STDOUT:   %.loc19_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc19_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %.loc19_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 2, !dbg !8
-// CHECK:STDOUT:   %.loc19_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 3, !dbg !8
+// CHECK:STDOUT:   %.loc19_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc19_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc19_3.18.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 2, !dbg !8
+// CHECK:STDOUT:   %.loc19_3.24.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 3, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.1.loc19_4, i64 16, i1 false), !dbg !9
 // CHECK:STDOUT:   %floats.var = alloca [6 x double], align 8, !dbg !10
 // CHECK:STDOUT:   %.loc27_3.3.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 0, !dbg !11

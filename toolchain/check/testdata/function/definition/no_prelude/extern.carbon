@@ -38,10 +38,10 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,10 +52,10 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F();
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -66,18 +66,18 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: note: previously declared here
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -88,10 +88,10 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F() {}
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -105,7 +105,7 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+3]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
 // CHECK:STDERR: extern fn F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 extern fn F() {}
@@ -114,7 +114,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -134,7 +133,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,7 +153,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,12 +169,10 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//split_library, inst+1, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -198,7 +193,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,7 +213,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,7 +233,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -262,7 +254,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -289,7 +280,6 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -52,7 +52,7 @@ class C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -66,7 +66,7 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: class D;
 // CHECK:STDERR: ^~~~~~~~
 class D;
@@ -95,7 +95,6 @@ class D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -186,7 +185,6 @@ class D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

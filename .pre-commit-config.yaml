@@ -213,6 +213,7 @@ repos:
           (?x)^(
               .bazelversion|
               .github/pull_request_template.md|
+              .python-version|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|

@@ -39,7 +39,7 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error: name `F` not found
+  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error: name `F` not found [NameNotFound]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~
   a.F();
@@ -50,14 +50,12 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %SomeClass, i32 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %SomeClass, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.3 [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %SomeClass [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %SomeClass [template]
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,15 +63,8 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,12 +84,12 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
 // CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_32.loc5, %.loc5_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
 // CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_32.loc6, %.loc6_10.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_8: %.2 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_8: %.1 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -109,7 +100,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %SomeClass [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %SomeClass [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -122,28 +113,24 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %int.make_type_32.loc14_23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc14_23.1: type = value_of_initializer %int.make_type_32.loc14_23 [template = i32]
 // CHECK:STDOUT:   %.loc14_23.2: type = converted %int.make_type_32.loc14_23, %.loc14_23.1 [template = i32]
-// CHECK:STDOUT:   %.loc14_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.3]
-// CHECK:STDOUT:   adapt_decl %.3
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
+// CHECK:STDOUT:   adapt_decl %.2
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapted: type = class_type @Adapted [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AdaptNotExtend: type = class_type @AdaptNotExtend [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %Adapted [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %Adapted [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -151,13 +138,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,16 +154,17 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [template = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
-// CHECK:STDOUT:     %a.param: %AdaptNotExtend = param a, runtime_param0
+// CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param runtime_param0
 // CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapted
@@ -192,7 +174,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: class @AdaptNotExtend {
 // CHECK:STDOUT:   %Adapted.ref: type = name_ref Adapted, file.%Adapted.decl [template = constants.%Adapted]
 // CHECK:STDOUT:   adapt_decl %Adapted
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %Adapted [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %Adapted [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptNotExtend
@@ -200,7 +182,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a: %AdaptNotExtend) {
+// CHECK:STDOUT: fn @F.2(%a.param_patt: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]

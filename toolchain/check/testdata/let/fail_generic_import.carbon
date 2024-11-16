@@ -12,7 +12,7 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface`
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let T:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~
 // CHECK:STDERR:
@@ -23,7 +23,7 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR:        ^
 let a: T = 0;
@@ -32,7 +32,6 @@ let a: T = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,15 +39,8 @@ let a: T = 0;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,8 +50,6 @@ let a: T = 0;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -73,20 +63,14 @@ let a: T = 0;
 // CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, inst+3, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,7 +88,7 @@ let a: T = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8: Core.IntLiteral = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

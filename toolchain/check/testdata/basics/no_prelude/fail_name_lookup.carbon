@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/fail_name_lookup.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: error: name `x` not found
+  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: error: name `x` not found [NameNotFound]
   // CHECK:STDERR:   x;
   // CHECK:STDERR:   ^
   x;
@@ -19,7 +19,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

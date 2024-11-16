@@ -10,20 +10,20 @@
 
 interface Undefined;
 
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined`
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined` [QualifiedDeclInUndefinedInterfaceScope]
 // CHECK:STDERR: fn Undefined.F();
 // CHECK:STDERR:    ^~~~~~~~~
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here
+// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface Undefined;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined`
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   Undefined.G();
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface Undefined;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -31,19 +31,19 @@ fn Test() {
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined`
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
   // CHECK:STDERR: interface BeingDefined {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: name `T` not found
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: name `T` not found [NameNotFound]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn H() -> BeingDefined.T;
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+3]]:6: error: name `BeingDefined` not found
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+3]]:6: error: name `BeingDefined` not found [NameNotFound]
   // CHECK:STDERR:   fn BeingDefined.I();
   // CHECK:STDERR:      ^~~~~~~~~~~~
   fn BeingDefined.I();
@@ -52,20 +52,19 @@ interface BeingDefined {
 // CHECK:STDOUT: --- fail_lookup_undefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Undefined.type: type = interface_type @Undefined [template]
+// CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [template]
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: %.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %BeingDefined.type: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [template]
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %BeingDefined.type, %H.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @BeingDefined.%H.decl [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %BeingDefined.type, %H.type [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @BeingDefined.%H.decl [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.5: %.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.4: %.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,7 +74,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%Undefined.type] {} {}
-// CHECK:STDOUT:   %.decl: %.type.1 = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl: %.type.1 = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {} {}
 // CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [template = constants.%BeingDefined.type] {} {}
 // CHECK:STDOUT: }
@@ -84,13 +83,17 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc45: %.3 = assoc_entity element0, %H.decl [template = constants.%.4]
-// CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.5] {} {}
+// CHECK:STDOUT:   %.loc45: %.2 = assoc_entity element0, %H.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.decl: %.type.2 = fn_decl @.2 [template = constants.%.4] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

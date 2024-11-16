@@ -81,18 +81,18 @@ jobs:
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c opt --remote_download_toplevel \
             --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
-            //toolchain/install:prefix_root/bin/carbon \
+            //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz_rule \
             //toolchain/install:carbon_toolchain_tar_gz_test
 
       - name: Extract the release version
         run: |
           # Make sure we can run the toolchain to get the version.
-          ./bazel-bin/toolchain/install/prefix_root/bin/carbon version
+          ./bazel-bin/toolchain/install/run_carbon version
 
           # Now stash it in a variable and export it.
           VERSION=$( \
-            ./bazel-bin/toolchain/install/prefix_root/bin/carbon version \
+            ./bazel-bin/toolchain/install/run_carbon version \
             | cut -d' ' -f5 | cut -d'+' -f1)
           echo "release_version=$VERSION" >> $GITHUB_ENV
 

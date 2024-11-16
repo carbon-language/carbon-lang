@@ -5,7 +5,25 @@
 """Rules for constructing install information."""
 
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
-load("symlink_helpers.bzl", "symlink_file", "symlink_filegroup")
+load("symlink_helpers.bzl", "busybox_wrapper", "symlink_file", "symlink_filegroup")
+
+def install_busybox_wrapper(name, busybox, busybox_args = []):
+    """Adds a busybox wrapper for install.
+
+    Used in the `install_dirs` dict.
+
+    Args:
+      name: The filename to use.
+      busybox: A relative path for the busybox.
+      busybox_args: Arguments needed to simulate busybox when a symlink isn't
+        actually used.
+    """
+    return {
+        "busybox": busybox,
+        "busybox_args": busybox_args,
+        "is_driver": True,
+        "name": name,
+    }
 
 def install_filegroup(name, filegroup_target):
     """Adds a filegroup for install.
@@ -104,6 +122,19 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     attributes = pkg_attributes(mode = mode),
                     renames = {entry["target"]: path},
                 )
+            elif "busybox" in entry:
+                busybox_wrapper(
+                    name = prefixed_path,
+                    symlink = entry["busybox"],
+                    busybox_args = entry["busybox_args"],
+                )
+
+                # For the distributed package, we retain relative symlinks.
+                pkg_mklink(
+                    name = pkg_path,
+                    link_name = path,
+                    target = entry["busybox"],
+                )
             elif "filegroup" in entry:
                 symlink_filegroup(
                     name = prefixed_path,
@@ -117,10 +148,23 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                 )
             elif "symlink" in entry:
                 symlink_to = "{0}/{1}/{2}".format(prefix, dir, entry["symlink"])
+
+                # For bazel, we need to resolve relative symlinks.
+                if "../" in symlink_to:
+                    parts = symlink_to.split("/")
+                    result = []
+                    for part in parts:
+                        if part == "..":
+                            result = result[:-1]
+                        else:
+                            result.append(part)
+                    symlink_to = "/".join(result)
                 symlink_file(
                     name = prefixed_path,
-                    symlink_label = symlink_to,
+                    symlink_binary = symlink_to,
                 )
+
+                # For the distributed package, we retain relative symlinks.
                 pkg_mklink(
                     name = pkg_path,
                     link_name = path,

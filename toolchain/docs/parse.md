@@ -156,7 +156,7 @@ have two children: the lhs and rhs expressions. Many nodes have a child count of
 
 Because the tree structure is always valid, these are treated as contracts. Some
 nodes exist only to be used to construct valid tree structures for invalid
-input, such as `StructFieldUnknown`.
+input, such as `InvalidParse`.
 
 Although each subtree's size is also tracked as part of the node, we're
 currently trying to avoid relying on it and may eliminate it if it turns out to
@@ -596,7 +596,7 @@ declaration or statement.
 
 ### Something required in context
 
-FIXME
+TODO
 
 Example: name after introducer
 [parse/handle_decl_name_and_params.cpp](/toolchain/parse/handle_decl_name_and_params.cpp)
@@ -796,7 +796,7 @@ deal with the `as` that follows when the type expression is present.
 
 ### Operators
 
-FIXME
+TODO
 
 An independent description of our approach:
 ["Better operator precedence" on scattered-thoughts.net](https://www.scattered-thoughts.net/writing/better-operator-precedence/)

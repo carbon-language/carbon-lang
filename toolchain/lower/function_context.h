@@ -33,7 +33,7 @@ class FunctionContext {
       -> bool;
 
   // Builds LLVM IR for the sequence of instructions in `block_id`.
-  auto LowerBlock(SemIR::InstBlockId block_id) -> void;
+  auto LowerBlockContents(SemIR::InstBlockId block_id) -> void;
 
   // Builds LLVM IR for the specified instruction.
   auto LowerInst(SemIR::InstId inst_id) -> void;
@@ -70,6 +70,12 @@ class FunctionContext {
   // Gets a callable's function.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
     return file_context_->GetFunction(function_id);
+  }
+
+  // Gets or creates a callable's function.
+  auto GetOrCreateFunction(SemIR::FunctionId function_id,
+                           SemIR::SpecificId specific_id) -> llvm::Function* {
+    return file_context_->GetOrCreateFunction(function_id, specific_id);
   }
 
   // Returns a lowered type for the given type_id.

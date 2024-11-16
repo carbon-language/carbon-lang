@@ -6,6 +6,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 #define CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 
+#include "toolchain/base/value_ids.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
 

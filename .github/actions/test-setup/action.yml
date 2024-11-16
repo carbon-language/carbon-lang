@@ -1,0 +1,125 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Test setup
+
+inputs:
+  matrix_runner:
+    required: true
+  base_sha:
+    required: true
+  remote_cache_key:
+    required: true
+  targets_file:
+    required: true
+
+outputs:
+  has_code:
+    value: ${{ steps.filter.outputs.has_code}}
+
+runs:
+  using: composite
+  steps:
+    # Tests should only run on applicable paths, but we still need to have an
+    # action run for the merge queue. We filter steps based on the paths here,
+    # and condition steps on the output.
+    - id: filter
+      uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      with:
+        filters: |
+          has_code:
+            - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
+
+    # Disable uploads when the remote cache is read-only.
+    - name: Set up remote cache access (read-only)
+      if:
+        steps.filter.outputs.has_code == 'true' && github.event_name ==
+        'pull_request'
+      shell: bash
+      run: |
+        echo "remote_cache_upload=--remote_upload_local_results=false" \
+            >> $GITHUB_ENV
+
+    # Provide a cache key when the remote cache is read-write.
+    - name: Set up remote cache access (read-write)
+      if:
+        steps.filter.outputs.has_code == 'true' && github.event_name !=
+        'pull_request'
+      shell: bash
+      env:
+        REMOTE_CACHE_KEY: ${{ inputs.remote_cache_key }}
+      run: |
+        echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+        echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+            >> $GITHUB_ENV
+
+    - uses: ./.github/actions/build-setup-common
+      if: steps.filter.outputs.has_code == 'true'
+      with:
+        matrix_runner: ${{ inputs.matrix_runner }}
+        remote_cache_upload: ${{ env.remote_cache_upload }}
+
+    # Just for visibility, print space before and after the build.
+    - name: Disk space before build
+      if: steps.filter.outputs.has_code == 'true'
+      shell: bash
+      run: df -h
+
+    - name: Verify MODULE.bazel.lock
+      if: steps.filter.outputs.has_code == 'true'
+      shell: bash
+      run: |
+        exit_code=0
+        ./scripts/run_bazel.py \
+          --attempts=5 \
+          mod deps --lockfile_mode=error || exit_code=$?
+        if (( $exit_code != 0 )); then
+          ./scripts/run_bazel.py \
+            --attempts=5 \
+            mod deps --lockfile_mode=update
+          echo "MODULE.bazel.lock is out of date! Use below file for update."
+          echo "Platforms may require merging output, for example by applying"
+          echo "an update, re-running triggers, and applying the next update."
+          echo "============================================================"
+          cat MODULE.bazel.lock
+          echo "============================================================"
+          exit 1
+        fi
+
+    # Build and run all targets on branch pushes to ensure we always have a
+    # clean tree. We don't expect this to be an interactive path and so don't
+    # optimize the latency of this step.
+    - name: Compute impacted pull request targets (for push)
+      if: steps.filter.outputs.has_code == 'true' && github.event_name == 'push'
+      shell: bash
+      env:
+        TARGETS_FILE: ${{ inputs.targets_file }}
+      run: |
+        echo "//..." >$TARGETS_FILE
+
+    # Compute the set of possible rules impacted by this change using
+    # Bazel-based diffing. This lets PRs and the merge queue have a much more
+    # efficient test CI action by avoiding even enumerating (and downloading)
+    # all of the unaffected Bazel targets.
+    - name: Compute impacted pull request targets
+      if: steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+      shell: bash
+      env:
+        # Compute the base SHA from the different event structures.
+        GIT_BASE_SHA: ${{ inputs.base_sha }}
+        TARGETS_FILE: ${{ inputs.targets_file }}
+      run: |
+        # First fetch the relevant base into the git repository.
+        git fetch --depth=1 origin $GIT_BASE_SHA
+
+        # Do a retried query to try to download things for target-determinator.
+        ./scripts/run_bazel.py --attempts=5 cquery //... > /dev/null
+
+        # Then use `target-determinator` as wrapped by our script.
+        ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE
+
+        # Bazel requires a test target to run the test command. There may be
+        # no targets or there may only be non-test targets that we want to
+        # build, so simply inject an explicit no-op test target.
+        echo "//scripts:no_op_test" >> $TARGETS_FILE

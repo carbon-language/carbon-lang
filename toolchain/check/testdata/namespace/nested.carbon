@@ -22,7 +22,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Wiz.type: type = fn_type @Wiz [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Wiz: %Wiz.type = struct_value () [template]
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [template]
 // CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [template]
@@ -31,13 +31,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +62,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%Bar [template = file.%Bar]
 // CHECK:STDOUT:   %Wiz.ref: %Wiz.type = name_ref Wiz, file.%Wiz.decl [template = constants.%Wiz]
-// CHECK:STDOUT:   %Wiz.call: init %.1 = call %Wiz.ref()
+// CHECK:STDOUT:   %Wiz.call: init %empty_tuple.type = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

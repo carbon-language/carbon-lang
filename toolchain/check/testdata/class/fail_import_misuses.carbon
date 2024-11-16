@@ -23,22 +23,22 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `class Empty` is redundant
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `class Empty` is redundant [RedeclRedundant]
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: a.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: Variable has incomplete type `Incomplete`
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: variable has incomplete type `Incomplete` [IncompleteTypeInVarDecl]
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import
-// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here
+// CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
+// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 var a: Incomplete;
@@ -55,13 +55,7 @@ var a: Incomplete;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,13 +94,7 @@ var a: Incomplete;
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+8, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT: }

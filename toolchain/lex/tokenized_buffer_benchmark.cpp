@@ -12,7 +12,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "testing/base/source_gen.h"
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
@@ -219,7 +219,7 @@ class LexerBenchHelper {
   auto DiagnoseErrors() -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
-    StreamDiagnosticConsumer consumer(out);
+    StreamDiagnosticConsumer consumer(out, /*include_diagnostic_kind=*/false);
     auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),

@@ -10,7 +10,7 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR: package Main;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -18,7 +18,7 @@ package Main;
 
 // --- fail_main_impl.carbon
 
-// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:6: error: `Main//default` must omit `package` declaration
+// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:6: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR: impl package Main;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -27,7 +27,7 @@ impl package Main;
 // --- fail_raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration
+// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR: package r#Main;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -35,7 +35,7 @@ package r#Main;
 
 // --- fail_main_lib.carbon
 
-// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+3]]:1: error: use `library` declaration in `Main` package libraries
+// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+3]]:1: error: use `library` declaration in `Main` package libraries [ExplicitMainLibrary]
 // CHECK:STDERR: package Main library "main_lib";
 // CHECK:STDERR: ^~~~~~~
 package Main library "[[@TEST_NAME]]";
@@ -45,13 +45,7 @@ package Main library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,13 +61,7 @@ package Main library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,13 +77,7 @@ package Main library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,13 +93,7 @@ package Main library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

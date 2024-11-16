@@ -13,6 +13,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/testing/compile_helper.h"
 
 namespace Carbon::Parse {
 
@@ -21,16 +22,17 @@ namespace Carbon::Parse {
 class TypedNodesTestPeer {
  public:
   template <typename T>
-  static auto VerifyExtractAs(const TreeAndSubtrees* tree, NodeId node_id,
+  static auto VerifyExtractAs(const TreeAndSubtrees& tree, NodeId node_id,
                               ErrorBuilder* trace) -> std::optional<T> {
-    return tree->VerifyExtractAs<T>(node_id, trace);
+    return tree.VerifyExtractAs<T>(node_id, trace);
   }
 
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
   // `Verify` testable.
-  static auto SetNodeKind(Tree* tree, NodeId node_id, NodeKind kind) -> void {
-    tree->SetNodeKindForTesting(node_id, kind);
+  static auto SetNodeKind(const Tree& tree, NodeId node_id, NodeKind kind)
+      -> void {
+    const_cast<Tree&>(tree).SetNodeKindForTesting(node_id, kind);
   }
 };
 
@@ -44,137 +46,104 @@ namespace {
 
 class TypedNodeTest : public ::testing::Test {
  protected:
-  auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
-    CARBON_CHECK(fs_.addFile("test.carbon", /*ModificationTime=*/0,
-                             llvm::MemoryBuffer::getMemBuffer(t)));
-    source_storage_.push_front(
-        std::move(*SourceBuffer::MakeFromFile(fs_, "test.carbon", consumer_)));
-    return source_storage_.front();
-  }
+  using Peer = TypedNodesTestPeer;
 
-  auto GetTokenizedBuffer(llvm::StringRef t) -> Lex::TokenizedBuffer& {
-    token_storage_.push_front(
-        Lex::Lex(value_stores_, GetSourceBuffer(t), consumer_));
-    return token_storage_.front();
-  }
-
-  auto GetTree(llvm::StringRef t) -> TreeAndSubtrees& {
-    tree_storage_.push_front(Parse(GetTokenizedBuffer(t), consumer_,
-                                   /*vlog_stream=*/nullptr));
-    tree_and_subtrees_storage_.push_front(
-        TreeAndSubtrees(token_storage_.front(), tree_storage_.front()));
-    return tree_and_subtrees_storage_.front();
-  }
-
-  auto GetTokenizedBufferAndTree(llvm::StringRef t)
-      -> std::pair<Lex::TokenizedBuffer*, TreeAndSubtrees*> {
-    auto* tree = &GetTree(t);
-    return {&token_storage_.front(), tree};
-  }
-
-  SharedValueStores value_stores_;
-  llvm::vfs::InMemoryFileSystem fs_;
-  std::forward_list<SourceBuffer> source_storage_;
-  std::forward_list<Lex::TokenizedBuffer> token_storage_;
-  std::forward_list<Tree> tree_storage_;
-  std::forward_list<TreeAndSubtrees> tree_and_subtrees_storage_;
-  DiagnosticConsumer& consumer_ = ConsoleDiagnosticConsumer();
+  Testing::CompileHelper compile_helper_;
 };
 
 TEST_F(TypedNodeTest, Empty) {
-  auto* tree = &GetTree("");
-  auto file = tree->ExtractFile();
+  auto& tree = compile_helper_.GetTreeAndSubtrees("");
+  auto file = tree.ExtractFile();
 
-  EXPECT_TRUE(tree->tree().IsValid(file.start));
-  EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
-  EXPECT_TRUE(tree->Extract(file.start).has_value());
+  EXPECT_TRUE(tree.tree().IsValid(file.start));
+  EXPECT_TRUE(tree.ExtractAs<FileStart>(file.start).has_value());
+  EXPECT_TRUE(tree.Extract(file.start).has_value());
 
-  EXPECT_TRUE(tree->tree().IsValid(file.end));
-  EXPECT_TRUE(tree->ExtractAs<FileEnd>(file.end).has_value());
-  EXPECT_TRUE(tree->Extract(file.end).has_value());
+  EXPECT_TRUE(tree.tree().IsValid(file.end));
+  EXPECT_TRUE(tree.ExtractAs<FileEnd>(file.end).has_value());
+  EXPECT_TRUE(tree.Extract(file.end).has_value());
 
-  EXPECT_FALSE(tree->tree().IsValid<FileEnd>(file.start));
-  EXPECT_FALSE(tree->ExtractAs<FileEnd>(file.start).has_value());
+  EXPECT_FALSE(tree.tree().IsValid<FileEnd>(file.start));
+  EXPECT_FALSE(tree.ExtractAs<FileEnd>(file.start).has_value());
 }
 
 TEST_F(TypedNodeTest, Function) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     fn F() {}
     virtual fn G() -> i32;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 2);
 
-  auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
+  auto f_fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
-  auto f_sig = tree->Extract(f_fn->signature);
+  auto f_sig = tree.Extract(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.has_value());
   EXPECT_TRUE(f_sig->modifiers.empty());
 
-  auto g_fn = tree->ExtractAs<FunctionDecl>(file.decls[1]);
+  auto g_fn = tree.ExtractAs<FunctionDecl>(file.decls[1]);
   ASSERT_TRUE(g_fn.has_value());
   EXPECT_TRUE(g_fn->return_type.has_value());
   EXPECT_FALSE(g_fn->modifiers.empty());
 }
 
 TEST_F(TypedNodeTest, ModifierOrder) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     private abstract virtual default interface I;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto decl = tree->ExtractAs<InterfaceDecl>(file.decls[0]);
+  auto decl = tree.ExtractAs<InterfaceDecl>(file.decls[0]);
   ASSERT_TRUE(decl.has_value());
   ASSERT_EQ(decl->modifiers.size(), 4);
   // Note that the order here matches the source order, but is reversed from
   // sibling iteration order.
-  ASSERT_TRUE(tree->ExtractAs<PrivateModifier>(decl->modifiers[0]).has_value());
-  ASSERT_TRUE(
-      tree->ExtractAs<AbstractModifier>(decl->modifiers[1]).has_value());
-  ASSERT_TRUE(tree->ExtractAs<VirtualModifier>(decl->modifiers[2]).has_value());
-  ASSERT_TRUE(tree->ExtractAs<DefaultModifier>(decl->modifiers[3]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<PrivateModifier>(decl->modifiers[0]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<AbstractModifier>(decl->modifiers[1]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<VirtualModifier>(decl->modifiers[2]).has_value());
+  ASSERT_TRUE(tree.ExtractAs<DefaultModifier>(decl->modifiers[3]).has_value());
 }
 
 TEST_F(TypedNodeTest, For) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     fn F(arr: [i32; 5]) {
       for (var v: i32 in arr) {
         Print(v);
       }
     }
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
-  auto fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
+  auto fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(fn.has_value());
   ASSERT_EQ(fn->body.size(), 1);
-  auto for_stmt = tree->ExtractAs<ForStatement>(fn->body[0]);
+  auto for_stmt = tree.ExtractAs<ForStatement>(fn->body[0]);
   ASSERT_TRUE(for_stmt.has_value());
-  auto for_header = tree->Extract(for_stmt->header);
+  auto for_header = tree.Extract(for_stmt->header);
   ASSERT_TRUE(for_header.has_value());
-  auto for_var = tree->Extract(for_header->var);
+  auto for_var = tree.Extract(for_header->var);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding = tree->ExtractAs<BindingPattern>(for_var->pattern);
+  auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var->pattern);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name = tree->ExtractAs<IdentifierName>(for_var_binding->name);
+  auto for_var_name = tree.ExtractAs<IdentifierName>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 
 TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     impl library default;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto library = TypedNodesTestPeer::VerifyExtractAs<LibraryDecl>(
-      tree, file.decls[0], &trace);
+  auto library =
+      Peer::VerifyExtractAs<LibraryDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -191,15 +160,14 @@ Aggregate [^:]*: success
 }
 
 TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     var x: bool;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
-      tree, file.decls[0], &trace);
+  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace);
   ASSERT_TRUE(var.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -223,15 +191,14 @@ Aggregate [^:]*: success
 }
 
 TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     var x: i32 = p->q.r;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace1;
-  auto var = TypedNodesTestPeer::VerifyExtractAs<VariableDecl>(
-      tree, file.decls[0], &trace1);
+  auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace1);
   ASSERT_TRUE(var.has_value());
   Error err1 = trace1;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -256,7 +223,7 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto value = TypedNodesTestPeer::VerifyExtractAs<MemberAccessExpr>(
+  auto value = Peer::VerifyExtractAs<MemberAccessExpr>(
       tree, var->initializer->value, &trace2);
   ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
@@ -270,15 +237,15 @@ Aggregate [^:]*: success
 }
 
 TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     private abstract class N.C(T:! type);
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto class_decl = TypedNodesTestPeer::VerifyExtractAs<ClassDecl>(
-      tree, file.decls[0], &trace);
+  auto class_decl =
+      Peer::VerifyExtractAs<ClassDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(class_decl.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
@@ -310,50 +277,50 @@ Aggregate [^:]*: success
 }
 
 TEST_F(TypedNodeTest, Token) {
-  auto [tokens, tree] = GetTokenizedBufferAndTree(R"carbon(
+  auto [tokens, tree] =
+      compile_helper_.GetTokenizedBufferWithTreeAndSubtrees(R"carbon(
     var n: i32 = 0;
   )carbon");
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto n_var = tree->ExtractAs<VariableDecl>(file.decls[0]);
+  auto n_var = tree.ExtractAs<VariableDecl>(file.decls[0]);
   ASSERT_TRUE(n_var.has_value());
-  EXPECT_EQ(tokens->GetKind(n_var->token), Lex::TokenKind::Semi);
+  EXPECT_EQ(tokens.GetKind(n_var->token), Lex::TokenKind::Semi);
 
-  auto n_intro = tree->ExtractAs<VariableIntroducer>(n_var->introducer);
+  auto n_intro = tree.ExtractAs<VariableIntroducer>(n_var->introducer);
   ASSERT_TRUE(n_intro.has_value());
-  EXPECT_EQ(tokens->GetKind(n_intro->token), Lex::TokenKind::Var);
+  EXPECT_EQ(tokens.GetKind(n_intro->token), Lex::TokenKind::Var);
 
-  auto n_patt = tree->ExtractAs<BindingPattern>(n_var->pattern);
+  auto n_patt = tree.ExtractAs<BindingPattern>(n_var->pattern);
   ASSERT_TRUE(n_patt.has_value());
-  EXPECT_EQ(tokens->GetKind(n_patt->token), Lex::TokenKind::Colon);
+  EXPECT_EQ(tokens.GetKind(n_patt->token), Lex::TokenKind::Colon);
 }
 
 TEST_F(TypedNodeTest, VerifyInvalid) {
-  auto* tree = &GetTree(R"carbon(
+  auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
     fn F() -> i32 { return 0; }
   )carbon");
 
-  auto file = tree->ExtractFile();
+  auto file = tree.ExtractFile();
   ASSERT_EQ(file.decls.size(), 1);
 
-  auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
+  auto f_fn = tree.ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
-  auto f_sig = tree->ExtractAs<FunctionDefinitionStart>(f_fn->signature);
+  auto f_sig = tree.ExtractAs<FunctionDefinitionStart>(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
-  auto f_intro = tree->ExtractAs<FunctionIntroducer>(f_sig->introducer);
+  auto f_intro = tree.ExtractAs<FunctionIntroducer>(f_sig->introducer);
   ASSERT_TRUE(f_intro.has_value());
 
   // Change the kind of the introducer and check we get a good trace log.
-  TypedNodesTestPeer::SetNodeKind(&tree_storage_.front(), f_sig->introducer,
-                                  NodeKind::ClassIntroducer);
+  Peer::SetNodeKind(tree.tree(), f_sig->introducer, NodeKind::ClassIntroducer);
 
   // The introducer should not extract as a FunctionIntroducer any more because
   // the kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionIntroducer>(
+    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionIntroducer>(
         tree, f_sig->introducer, &trace));
 
     Error err = trace;
@@ -366,8 +333,8 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // token kind is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<ClassIntroducer>(
-        tree, f_sig->introducer, &trace));
+    EXPECT_FALSE(Peer::VerifyExtractAs<ClassIntroducer>(tree, f_sig->introducer,
+                                                        &trace));
 
     Error err = trace;
     EXPECT_THAT(err.message(),
@@ -379,7 +346,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
   // kind for the introducer is wrong.
   {
     ErrorBuilder trace;
-    EXPECT_FALSE(TypedNodesTestPeer::VerifyExtractAs<FunctionDefinitionStart>(
+    EXPECT_FALSE(Peer::VerifyExtractAs<FunctionDefinitionStart>(
         tree, f_fn->signature, &trace));
 
     Error err = trace;

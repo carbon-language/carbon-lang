@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/base/value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"

@@ -12,10 +12,10 @@ interface I {}
 
 impl i32 as I {}
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `impl i32 as I`
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `impl i32 as I` [ImplRedefinition]
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl i32 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 impl i32 as I {}
@@ -23,27 +23,18 @@ impl i32 as I {}
 // CHECK:STDOUT: --- fail_redefinition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,8 +68,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc13_6.2 as %I.ref.loc13 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst+18.loc13_15
+// CHECK:STDOUT:   witness = <unexpected>.inst+20.loc13_15
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

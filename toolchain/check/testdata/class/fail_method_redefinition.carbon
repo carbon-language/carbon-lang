@@ -10,10 +10,10 @@
 
 class Class {
   fn F() {}
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: error: redefinition of `fn F`
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: error: redefinition of `fn F` [RedeclRedef]
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: note: previously defined here
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: note: previously defined here [RedeclPrevDef]
   // CHECK:STDERR:   fn F() {}
   // CHECK:STDERR:   ^~~~~~~~
   fn F() {}
@@ -24,22 +24,15 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,7 +48,7 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %F.decl.loc19: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

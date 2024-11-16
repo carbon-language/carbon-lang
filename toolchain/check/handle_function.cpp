@@ -44,9 +44,13 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
-  // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush<SemIR::VarStorage>(
-      node_id, {.type_id = type_id, .name_id = SemIR::NameId::ReturnSlot});
+  auto return_slot_id = context.AddPatternInst<SemIR::ReturnSlotPattern>(
+      node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+  auto param_pattern_id = context.AddPatternInst<SemIR::OutParamPattern>(
+      node_id, {.type_id = type_id,
+                .subpattern_id = return_slot_id,
+                .runtime_index = SemIR::RuntimeParamIndex::Unknown});
+  context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }
 
@@ -65,33 +69,6 @@ static auto DiagnoseModifiers(Context& context, DeclIntroducerState& introducer,
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_inst);
-}
-
-// Checks that the parameter lists specified in a function declaration are
-// valid for a function declaration, and numbers the parameters.
-static auto CheckFunctionSignature(Context& context,
-                                   const NameComponent& name_and_params)
-    -> void {
-  RequireGenericOrSelfImplicitFunctionParams(
-      context, name_and_params.implicit_params_id);
-  SemIR::RuntimeParamIndex next_index(0);
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
-           context.inst_blocks().GetOrEmpty(name_and_params.implicit_params_id),
-           context.inst_blocks().GetOrEmpty(name_and_params.params_id))) {
-    // Find the parameter in the pattern.
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_id);
-
-    // If this is a runtime parameter, number it.
-    if (param_info.bind_name &&
-        param_info.bind_name->kind == SemIR::BindName::Kind) {
-      param_info.inst.runtime_index = next_index;
-      context.ReplaceInstBeforeConstantUse(param_info.inst_id, param_info.inst);
-      ++next_index.index;
-    }
-  }
-
-  // TODO: Also assign a parameter index to the return storage, if present.
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -124,7 +101,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
-    prev_function.return_storage_id = new_function.return_storage_id;
+    prev_function.return_slot_id = new_function.return_slot_id;
   }
   if ((prev_import_ir_id.is_valid() && !new_is_import)) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,
@@ -197,21 +174,20 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_storage_id = SemIR::InstId::Invalid;
-  if (auto [return_node, maybe_return_storage_id] =
+  auto return_slot_pattern_id = SemIR::InstId::Invalid;
+  if (auto [return_node, maybe_return_slot_pattern_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      maybe_return_storage_id) {
-    return_storage_id = *maybe_return_storage_id;
+      maybe_return_slot_pattern_id) {
+    return_slot_pattern_id = *maybe_return_slot_pattern_id;
   }
 
-  auto name = PopNameComponent(context);
+  auto name = PopNameComponent(context, return_slot_pattern_id);
   if (!name.params_id.is_valid()) {
+    CARBON_CHECK(!name.param_patterns_id.is_valid());
     context.TODO(node_id, "function with positional parameters");
     name.params_id = SemIR::InstBlockId::Empty;
+    name.param_patterns_id = SemIR::InstBlockId::Empty;
   }
-
-  // Check that the function signature is valid and number the parameters.
-  CheckFunctionSignature(context, name);
 
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
@@ -234,6 +210,15 @@ static auto BuildFunctionDecl(Context& context,
           .Case(KeywordModifierSet::Impl,
                 SemIR::Function::VirtualModifier::Impl)
           .Default(SemIR::Function::VirtualModifier::None);
+  if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
+      parent_scope_inst) {
+    if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
+      auto& class_info = context.classes().Get(class_decl->class_id);
+      CARBON_CHECK(virtual_modifier != SemIR::Function::VirtualModifier::Impl ||
+                   class_info.is_dynamic);
+      class_info.is_dynamic = true;
+    }
+  }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
@@ -253,7 +238,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library)},
-                      {.return_storage_id = return_storage_id,
+                      {.return_slot_pattern_id = name.return_slot_pattern_id,
+                       .return_slot_id = name.return_slot_id,
                        .virtual_modifier = virtual_modifier}};
   if (is_definition) {
     function_info.definition_id = decl_id;
@@ -310,9 +296,9 @@ static auto BuildFunctionDecl(Context& context,
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     auto return_type_id = function_info.GetDeclaredReturnType(context.sem_ir());
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (function_info.implicit_param_refs_id.is_valid() ||
-        !function_info.param_refs_id.is_valid() ||
-        !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
+    if (function_info.implicit_param_patterns_id.is_valid() ||
+        !function_info.param_patterns_id.is_valid() ||
+        !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
@@ -353,13 +339,16 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.
-  CheckFunctionReturnType(context, function.return_storage_id, function,
+  CheckFunctionReturnType(context, function.return_slot_id, function,
                           SemIR::SpecificId::Invalid);
 
   // Check the parameter types are complete.
   for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
+    if (param_ref_id == SemIR::InstId::BuiltinError) {
+      continue;
+    }
     auto param_info =
         SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
@@ -367,11 +356,11 @@ static auto HandleFunctionDefinitionAfterSignature(
     context.TryToCompleteType(param_info.inst.type_id, [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
-          "parameter has incomplete type `{0}` in function definition",
-          SemIR::TypeId);
+          "parameter has incomplete type {0} in function definition",
+          TypeOfInstId);
       return context.emitter().Build(param_info.inst_id,
                                      IncompleteTypeInFunctionParam,
-                                     param_info.inst.type_id);
+                                     param_info.inst_id);
     });
   }
 
@@ -415,7 +404,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (context.is_current_position_reachable()) {
-    if (context.functions().Get(function_id).return_storage_id.is_valid()) {
+    if (context.functions().Get(function_id).return_slot_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
@@ -477,12 +466,14 @@ static auto IsValidBuiltinDeclaration(Context& context,
     -> bool {
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_refs =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().GetOrEmpty(function.param_refs_id);
-  param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
-  for (auto param_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
+  auto param_patterns =
+      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
+  param_type_ids.reserve(implicit_param_patterns.size() +
+                         param_patterns.size());
+  for (auto param_id : llvm::concat<const SemIR::InstId>(
+           implicit_param_patterns, param_patterns)) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());
@@ -511,6 +502,9 @@ auto HandleParseNode(Context& context,
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
+      // Build an empty generic definition if this is a generic builtin.
+      StartGenericDefinition(context);
+      FinishGenericDefinition(context, function.generic_id);
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
                         "invalid signature for builtin function \"{0}\"",

@@ -48,11 +48,11 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+8]]:8: error: Variable has incomplete type `C`
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+8]]:8: error: variable has incomplete type `C` [IncompleteTypeInVarDecl]
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: other_extern.carbon:4:1: note: class was forward declared here
+// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: other_extern.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -62,18 +62,18 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+8]]:1: in import
-// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: in import
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: note: in name lookup for `C`
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
@@ -83,18 +83,18 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import
-// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "other_define";
 import Other library "other_conflict";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: note: in name lookup for `C`
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 var c: Other.C = {};
@@ -110,13 +110,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -145,13 +139,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -170,20 +158,13 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -206,22 +187,13 @@ var c: Other.C = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
@@ -269,13 +241,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref
@@ -312,22 +278,13 @@ var c: Other.C = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
@@ -336,7 +293,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_extern, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -372,22 +328,13 @@ var c: Other.C = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
@@ -396,7 +343,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, inst+3, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_conflict, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

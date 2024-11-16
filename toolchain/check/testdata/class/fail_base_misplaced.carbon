@@ -10,18 +10,18 @@
 
 base class B {}
 
-// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: error: `base` declaration outside class
+// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+4]]:1: error: `base` declaration outside class [ClassSpecificDeclOutsideClass]
 // CHECK:STDERR: extend base: B;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 extend base: B;
 
 fn F() {
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+7]]:3: error: expected expression
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+7]]:3: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: semantics TODO: `HandleInvalidParse`
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend base: B;
@@ -33,9 +33,6 @@ fn F() {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

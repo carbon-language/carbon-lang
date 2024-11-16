@@ -25,10 +25,10 @@ var x: () = F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -39,10 +39,10 @@ extern fn F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -53,22 +53,37 @@ fn F();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `fn` declaration that is a member
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: error: `extern` not allowed on `fn` declaration that is a member
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extern fn G[self: Self]();
 }
+
+// --- fail_extern_library_in_importer.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "basic";
+
+// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+7]]:1: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
+// CHECK:STDERR: extern library "basic" fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: basic.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+extern library "basic" fn F();
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,7 +99,7 @@ class C {
 // CHECK:STDOUT: --- basic_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -99,10 +114,10 @@ class C {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -110,7 +125,7 @@ class C {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -119,7 +134,6 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,7 +151,6 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,12 +169,11 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -175,12 +187,13 @@ class C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.param: %C = param self, runtime_param0
+// CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -190,5 +203,25 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self: %C]();
+// CHECK:STDOUT: fn @G[%self.param_patt: %C]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_extern_library_in_importer.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = invalid
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:

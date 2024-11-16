@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -33,24 +34,29 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   auto [element_type_node_id, element_type_inst_id] =
       context.node_stack().PopExprWithNodeId();
 
-  // The array bound must be a constant.
+  auto element_type_id =
+      ExprAsType(context, element_type_node_id, element_type_inst_id).type_id;
+
+  // The array bound must be a constant. Diagnose this prior to conversion
+  // because conversion to `IntLiteral` will produce a generic "non-constant
+  // call to compile-time-only function" error.
   //
   // TODO: Should we support runtime-phase bounds in cases such as:
   //   comptime fn F(n: i32) -> type { return [i32; n]; }
-  auto bound_inst = context.constant_values().Get(bound_inst_id);
-  if (!bound_inst.is_constant()) {
+  if (!context.constant_values().Get(bound_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
     context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
 
+  bound_inst_id = ConvertToValueOfType(
+      context, context.insts().GetLocId(bound_inst_id), bound_inst_id,
+      context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
   context.AddInstAndPush<SemIR::ArrayType>(
       node_id, {.type_id = SemIR::TypeId::TypeType,
                 .bound_id = bound_inst_id,
-                .element_type_id = ExprAsType(context, element_type_node_id,
-                                              element_type_inst_id)
-                                       .type_id});
+                .element_type_id = element_type_id});
   return true;
 }
 

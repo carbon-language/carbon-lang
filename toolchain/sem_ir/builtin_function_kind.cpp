@@ -79,7 +79,10 @@ using Bool = BuiltinType<InstId::BuiltinBoolType>;
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    // TODO: Support Core.BigInt once it exists.
+    if (BuiltinType<InstId::BuiltinIntLiteralType>::Check(sem_ir, state,
+                                                          type_id)) {
+      return true;
+    }
     if (BuiltinType<InstId::BuiltinIntType>::Check(sem_ir, state, type_id)) {
       return true;
     }
@@ -173,6 +176,10 @@ constexpr BuiltinInfo None = {"", nullptr};
 constexpr BuiltinInfo PrintInt = {"print.int",
                                   ValidateSignature<auto(AnyInt)->NoReturn>};
 
+// Returns the `Core.IntLiteral` type.
+constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
+                                            ValidateSignature<auto()->Type>};
+
 // Returns the `i32` type. Doesn't take a bit size because we need an integer
 // type as a basis for that.
 constexpr BuiltinInfo IntMakeType32 = {"int.make_type_32",
@@ -194,6 +201,10 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 // Returns the `bool` type.
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
+
+// Converts between integer types, with a diagnostic if the value doesn't fit.
+constexpr BuiltinInfo IntConvertChecked = {
+    "int.convert_checked", ValidateSignature<auto(AnyInt)->AnyInt>};
 
 // "int.snegate": integer negation.
 constexpr BuiltinInfo IntSNegate = {"int.snegate",
@@ -364,6 +375,10 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 #include "toolchain/sem_ir/builtin_function_kind.def"
   };
   return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
+}
+
+auto BuiltinFunctionKind::IsCompTimeOnly() const -> bool {
+  return *this == BuiltinFunctionKind::IntConvertChecked;
 }
 
 }  // namespace Carbon::SemIR

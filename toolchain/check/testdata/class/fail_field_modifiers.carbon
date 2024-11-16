@@ -10,25 +10,25 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `var` declaration
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:   default var j: i32;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `var` declaration
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:   final var k: i32;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `let` declaration outside of an interface
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:   default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed on `let` declaration outside of an interface
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:   final let m: i32 = 1;
   // CHECK:STDERR:   ^~~~~
   final let m: i32 = 1;
@@ -39,28 +39,29 @@ class Class {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, i32 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.j: i32, .k: i32} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, i32 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
+// CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
+// CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.2, %Convert.15 [template]
+// CHECK:STDOUT:   %.28: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.29, %Convert.15 [template]
+// CHECK:STDOUT:   %.31: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.32: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.33: <witness> = complete_type_witness %.32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,22 +77,32 @@ class Class {
 // CHECK:STDOUT:   %int.make_type_32.loc17: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc17_18.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
 // CHECK:STDOUT:   %.loc17_18.2: type = converted %int.make_type_32.loc17, %.loc17_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc17_16: %.2 = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc17_16: %.1 = field_decl j, element0 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc23: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_16.1: type = value_of_initializer %int.make_type_32.loc23 [template = i32]
 // CHECK:STDOUT:   %.loc23_16.2: type = converted %int.make_type_32.loc23, %.loc23_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc23_14: %.2 = field_decl k, element1 [template]
+// CHECK:STDOUT:   %.loc23_14: %.1 = field_decl k, element1 [template]
 // CHECK:STDOUT:   %int.make_type_32.loc29: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc29_18.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]
 // CHECK:STDOUT:   %.loc29_18.2: type = converted %int.make_type_32.loc29, %.loc29_18.1 [template = i32]
-// CHECK:STDOUT:   %.loc29_24: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_24
+// CHECK:STDOUT:   %.loc29_24: Core.IntLiteral = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc29_25.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc29_25.2: <bound method> = bound_method %.loc29_24, %.loc29_25.1 [template = constants.%.27]
+// CHECK:STDOUT:   %int.convert_checked.loc29: init i32 = call %.loc29_25.2(%.loc29_24) [template = constants.%.28]
+// CHECK:STDOUT:   %.loc29_25.3: i32 = value_of_initializer %int.convert_checked.loc29 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc29_25.4: i32 = converted %.loc29_24, %.loc29_25.3 [template = constants.%.28]
+// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc29_25.4
 // CHECK:STDOUT:   %int.make_type_32.loc34: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_16.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
 // CHECK:STDOUT:   %.loc34_16.2: type = converted %int.make_type_32.loc34, %.loc34_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc34_22: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_22
-// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc34_22: Core.IntLiteral = int_value 1 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc34_23.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc34_23.2: <bound method> = bound_method %.loc34_22, %.loc34_23.1 [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked.loc34: init i32 = call %.loc34_23.2(%.loc34_22) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc34_23.3: i32 = value_of_initializer %int.convert_checked.loc34 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc34_23.4: i32 = converted %.loc34_22, %.loc34_23.3 [template = constants.%.31]
+// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc34_23.4
+// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.32 [template = constants.%.33]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -100,6 +111,4 @@ class Class {
 // CHECK:STDOUT:   .l = %l
 // CHECK:STDOUT:   .m = %m
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

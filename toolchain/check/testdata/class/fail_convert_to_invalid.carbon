@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/fail_convert_to_invalid.carbon
 
 class C {
-  // CHECK:STDERR: fail_convert_to_invalid.carbon:[[@LINE+3]]:10: error: name `NoSuchType` not found
+  // CHECK:STDERR: fail_convert_to_invalid.carbon:[[@LINE+3]]:10: error: name `NoSuchType` not found [NameNotFound]
   // CHECK:STDERR:   var a: NoSuchType;
   // CHECK:STDERR:          ^~~~~~~~~~
   var a: NoSuchType;
@@ -24,22 +24,15 @@ fn Make() -> C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 123 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 123 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,9 +44,13 @@ fn Make() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,8 +66,8 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_16: i32 = int_literal 123 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc19_19: %.3 = struct_literal (%.loc19_16)
+// CHECK:STDOUT:   %.loc19_16: Core.IntLiteral = int_value 123 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_19: %.2 = struct_literal (%.loc19_16)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

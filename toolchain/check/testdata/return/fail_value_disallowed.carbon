@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_value_disallowed.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:3: error: no return expression should be provided in this context
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:3: error: no return expression should be provided in this context [ReturnStatementDisallowExpr]
   // CHECK:STDERR:   return 0;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: note: there was no return type provided
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR: fn Main() {
   // CHECK:STDERR: ^~~~~~~~~~~
   return 0;
@@ -22,21 +22,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,7 +44,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18: Core.IntLiteral = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

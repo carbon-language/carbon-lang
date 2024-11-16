@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_bool_value.carbon
 
-// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference
+// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias a = false;
 // CHECK:STDERR:           ^~~~~
 alias a = false;
@@ -19,7 +19,6 @@ let a_test: bool = a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -27,15 +26,8 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,8 +43,6 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc15_13.2: type = converted %bool.make_type, %.loc15_13.1 [template = bool]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -12,22 +12,22 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var a_ref: x;
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
 var a_ref: x;
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var b_ref: {.a = x};
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
 var b_ref: {.a = x};
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var c_ref: (x,);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
 var d_ref: x*;
@@ -48,13 +48,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,27 +82,19 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref Implicit//default, inst+5, loaded
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+10, loaded
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+14, loaded
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+18, loaded
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+9, loaded
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+17, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,8 +133,6 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %d.var: ref i32 = var d
 // CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -25,12 +25,12 @@ fn NS() {}
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import
-// CHECK:STDERR: fn.carbon:4:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:4:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS() {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 import library "namespace";
@@ -42,20 +42,13 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,20 +73,13 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,7 +101,6 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,17 +110,9 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Foo = %import_ref.2
 // CHECK:STDOUT:     .Bar = file.%Bar.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref Example//namespace, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Example//fn, inst+3, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_var_in_type.carbon
 
 var x: type = i32;
-// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression
+// CHECK:STDERR: fail_var_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 fn Six() -> x { return 6; }
@@ -18,26 +18,18 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -49,18 +41,20 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x
 // CHECK:STDOUT:     %.loc15_13: type = bind_value %x.ref
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_24: i32 = int_literal 6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_24: Core.IntLiteral = int_value 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

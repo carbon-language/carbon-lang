@@ -95,6 +95,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
+    case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeType32:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
@@ -285,6 +286,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[1])));
       return;
     }
+
+    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+      // TODO: Check this statically.
+      CARBON_CHECK(builtin_kind.IsCompTimeOnly());
+      CARBON_FATAL("Missing constant value for call to comptime-only function");
+    }
   }
 
   CARBON_FATAL("Unsupported builtin call.");
@@ -308,7 +315,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto* callee = context.GetFunction(callee_function.function_id);
+  auto* callee = context.GetOrCreateFunction(
+      callee_function.function_id, callee_function.resolved_specific_id);
 
   std::vector<llvm::Value*> args;
 

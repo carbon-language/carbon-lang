@@ -10,11 +10,11 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+7]]:1: error: semantics TODO: `impl of interface with associated constant`
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+7]]:1: error: semantics TODO: `impl of interface with associated constant` [SemanticsTodo]
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:22: error: semantics TODO: `unimplemented access to facet member`
+// CHECK:STDERR: fail_todo_impl_assoc_const.carbon:[[@LINE+3]]:22: error: semantics TODO: `unimplemented access to facet member` [SemanticsTodo]
 // CHECK:STDERR: impl bool as I where .T = bool {}
 // CHECK:STDERR:                      ^~
 impl bool as I where .T = bool {}
@@ -22,29 +22,22 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: --- fail_todo_impl_assoc_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,24 +46,24 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type.1] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %bool.make_type.loc20_6: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc20_6.1: type = value_of_initializer %bool.make_type.loc20_6 [template = bool]
 // CHECK:STDOUT:     %.loc20_6.2: type = converted %bool.make_type.loc20_6, %.loc20_6.1 [template = bool]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
+// CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %bool.make_type.loc20_27: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc20_16: type = where_expr %.Self [template = constants.%I.type] {
+// CHECK:STDOUT:     %.loc20_16: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_rewrite <error>, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc11: %.1 = assoc_entity element0, %T [template = constants.%.2]
 // CHECK:STDOUT:
@@ -84,6 +77,4 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:

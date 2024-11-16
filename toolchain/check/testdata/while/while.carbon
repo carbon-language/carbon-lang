@@ -26,7 +26,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Cond.type: type = fn_type @Cond [template]
 // CHECK:STDOUT:   %Cond: %Cond.type = struct_value () [template]
@@ -44,15 +44,8 @@ fn While() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+2, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -65,19 +58,21 @@ fn While() {
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Cond.decl: %Cond.type = fn_decl @Cond [template = constants.%Cond] {} {
+// CHECK:STDOUT:   %Cond.decl: %Cond.type = fn_decl @Cond [template = constants.%Cond] {
+// CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %bool.make_type, %.loc11_14.1 [template = bool]
-// CHECK:STDOUT:     %return: ref bool = var <return slot>
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Cond() -> bool;
 // CHECK:STDOUT:
@@ -90,7 +85,7 @@ fn While() {
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
@@ -102,12 +97,12 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %G.call: init %.1 = call %G.ref()
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
-// CHECK:STDOUT:   %H.call: init %.1 = call %H.ref()
+// CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

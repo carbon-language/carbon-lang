@@ -12,7 +12,7 @@
 
 package A;
 
-// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -22,7 +22,7 @@ import B;
 
 package B;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: import C;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -32,7 +32,7 @@ import C;
 
 package C;
 
-// CHECK:STDERR: fail_c.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR: fail_c.carbon:[[@LINE+4]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: import A;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -40,7 +40,7 @@ import A;
 
 // --- fail_c.impl.carbon
 
-// CHECK:STDERR: fail_c.impl.carbon:[[@LINE+4]]:6: error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR: fail_c.impl.carbon:[[@LINE+4]]:6: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: impl package C;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -50,7 +50,7 @@ impl package C;
 
 package CycleChild;
 
-// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+3]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+3]]:1: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 import B;
@@ -60,13 +60,7 @@ import B;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [template] {
 // CHECK:STDOUT:     has_error
@@ -87,13 +81,7 @@ import B;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: <namespace> = namespace file.%C.import, [template] {
 // CHECK:STDOUT:     has_error
@@ -114,13 +102,7 @@ import B;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [template] {
 // CHECK:STDOUT:     has_error
@@ -141,13 +123,7 @@ import B;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,13 +141,7 @@ import B;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [template] {
 // CHECK:STDOUT:     has_error

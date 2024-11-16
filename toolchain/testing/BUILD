@@ -3,27 +3,59 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "all_testdata",
+    data = [
+        "//toolchain/check:testdata",
+        "//toolchain/codegen:testdata",
+        "//toolchain/diagnostics:testdata",
+        "//toolchain/driver:testdata",
+        "//toolchain/format:testdata",
+        "//toolchain/lex:testdata",
+        "//toolchain/lower:testdata",
+        "//toolchain/parse:testdata",
+    ],
+)
+
+cc_library(
+    name = "compile_helper",
+    testonly = 1,
+    srcs = ["compile_helper.cpp"],
+    hdrs = ["compile_helper.h"],
+    deps = [
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex",
+        "//toolchain/parse",
+        "//toolchain/parse:tree",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "coverage_helper",
+    testonly = 1,
+    hdrs = ["coverage_helper.h"],
+    deps = [
+        "//common:set",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+        "@re2",
+    ],
+)
 
 file_test(
     name = "file_test",
     size = "small",
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
-    data = cc_env_data(),
     env = cc_env(),
-    tests = [
-        "//toolchain/check:testdata",
-        "//toolchain/codegen:testdata",
-        "//toolchain/diagnostics:testdata",
-        "//toolchain/driver:testdata",
-        "//toolchain/lex:testdata",
-        "//toolchain/lower:testdata",
-        "//toolchain/parse:testdata",
-    ],
+    tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",
         "//common:error",

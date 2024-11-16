@@ -24,9 +24,13 @@ contributions.
     -   [Optional tools](#optional-tools)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
+    -   [`bazel clean`](#bazel-clean)
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
+    -   [Disabling split debug info](#disabling-split-debug-info)
+    -   [Debugging other build modes](#debugging-other-build-modes)
     -   [Debugging on MacOS](#debugging-on-macos)
 
 <!-- tocstop -->
@@ -55,6 +59,7 @@ sudo apt install \
   libc++-dev \
   libc++abi-dev \
   lld \
+  lldb \
   python3 \
   pipx
 
@@ -90,7 +95,8 @@ sudo apt install \
   clang-16 \
   libc++-16-dev \
   libc++abi-16-dev \
-  lld-16
+  lld-16 \
+  lldb-16
 
 # In your Carbon checkout, tell Bazel where to find `clang`. You can also
 # export this path as the `CC` environment variable, or add it directly to
@@ -162,10 +168,8 @@ These tools are essential for work on Carbon.
             outdated, and not be upgraded.
 -   Main tools
     -   [Bazel](https://www.bazel.build/)
-        -   NOTE: See [the bazelisk config](/.bazeliskrc) for a supported
-            version.
-    -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html)
-        (for macOS): Handles Bazel versions.
+        -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
+            Downloads and runs the [configured Bazel version](/.bazeliskrc).
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
         -   NOTE: Most LLVM 14+ installs should build Carbon. If you're having
             issues, see
@@ -250,6 +254,12 @@ work reliably include:
 
 ## Troubleshooting build issues
 
+### `bazel clean`
+
+Changes to packages installed on your system may not be noticed by `bazel`. This
+includes things such as changing LLVM versions, or installing libc++. Running
+`bazel clean` should force cached state to be rebuilt.
+
 ### Old LLVM versions
 
 Many build issues result from the particular options `clang` and `llvm` have
@@ -261,8 +271,7 @@ System installs of macOS typically won't work, for example being an old LLVM
 version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
 Homebrew for this reason.
 
-It may be necessary to run `bazel clean` after updating versions in order to
-clean up cached state.
+Run [`bazel clean`](#bazel-clean) when changing the installed LLVM version.
 
 ### Asking for help
 
@@ -275,7 +284,7 @@ echo $CC
 which clang
 which clang-16
 clang --version
-grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolchain/clang_detected_variables.bzl
+grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/_main\~clang_toolchain_extension\~bazel_cc_toolchain/clang_detected_variables.bzl
 
 # If on macOS:
 brew --prefix llvm
@@ -293,14 +302,32 @@ example:
 bazel build -c dbg //toolchain
 ```
 
-Then debugging works with GDB:
+Then debugging works with LLDB:
 
 ```shell
-gdb bazel-bin/toolchain/install/prefix_root/bin/carbon
+lldb bazel-bin/toolchain/install/prefix_root/lib/carbon/carbon-busybox
 ```
 
-Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or
-newer is required. If you see an error like this:
+Any installed version of LLDB at least as recent as the installed Clang used for
+building should work.
+
+### Debugging with GDB instead of LLDB
+
+If you prefer using GDB, you may want to pass some extra flags to the build:
+
+```shell
+bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain
+```
+
+Or you can add them to your `user.bazelrc`, they are designed to be safe to pass
+at all times and only have effect when building with debug information:
+
+```shell
+echo "build --features=-lldb_flags --features=gdb_flags" >> user.bazelrc
+```
+
+Note that on Linux we use Split DWARF and DWARF v5 debug symbols, which means
+that GDB version 10.1 or newer is required. If you see an error like this:
 
 ```shell
 Dwarf Error: DW_FORM_strx1 found in non-DWO CU
@@ -308,6 +335,19 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
+
+### Disabling split debug info
+
+Our build uses split debug info by default on Linux to improve build and
+debugger performance and reduce the size impact of debug information which can
+be extremely large. If you encounter problems, you can disable it by passing
+`--fission=no` to Bazel.
+
+### Debugging other build modes
+
+If you have an issue that only reproduces with another build mode, you can still
+enable debug information in that mode by passing `--feature=debug_info_flags` to
+Bazel.
 
 ### Debugging on MacOS
 

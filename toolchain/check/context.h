@@ -82,7 +82,11 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+    inst_block_stack_.AddInstId(inst_id);
+    return inst_id;
+  }
 
   // Convenience for AddInst with typed nodes.
   template <typename InstT, typename LocT>
@@ -106,13 +110,29 @@ class Context {
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+    CARBON_VLOG("AddInst: {0}\n", loc_id_and_inst.inst);
+    FinishInst(inst_id, loc_id_and_inst.inst);
+    return inst_id;
+  }
 
   // Convenience for AddInstInNoBlock with typed nodes.
   template <typename InstT, typename LocT>
   auto AddInstInNoBlock(LocT loc, InstT inst)
       -> decltype(AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst))) {
     return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
+  }
+
+  // If the instruction has an implicit location and a constant value, returns
+  // the constant value's instruction ID. Otherwise, same as AddInst.
+  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for GetOrAddInst with typed nodes.
+  template <typename InstT, typename LocT>
+  auto GetOrAddInst(LocT loc, InstT inst)
+      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
   }
 
   // Adds an instruction to the current block, returning the produced ID. The
@@ -128,7 +148,11 @@ class Context {
 
   // Adds an instruction to the current pattern block, returning the produced
   // ID.
-  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
+    auto inst_id = AddInstInNoBlock(loc_id_and_inst);
+    pattern_block_stack_.AddInstId(inst_id);
+    return inst_id;
+  }
 
   // Convenience for AddPatternInst with typed nodes.
   template <typename InstT>
@@ -139,7 +163,11 @@ class Context {
   }
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
+  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId {
+    auto const_id = constants().GetOrAdd(inst, is_symbolic);
+    CARBON_VLOG("AddConstant: {0}\n", inst);
+    return const_id;
+  }
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
@@ -197,10 +225,19 @@ class Context {
                               const SemIR::NameScope& scope)
       -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
-  // Performs a qualified name lookup in a specified scope and in scopes that
-  // it extends, returning the referenced instruction.
+  // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
+  // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
+  // still updates `*scopes` and returns `true`.
+  auto AppendLookupScopesForConstant(SemIRLoc loc,
+                                     SemIR::ConstantId base_const_id,
+                                     llvm::SmallVector<LookupScope>* scopes)
+      -> bool;
+
+  // Performs a qualified name lookup in a specified scopes and in scopes that
+  // they extend, returning the referenced instruction.
   auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                           LookupScope scope, bool required = true,
+                           llvm::ArrayRef<LookupScope> lookup_scopes,
+                           bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
@@ -216,6 +253,10 @@ class Context {
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
+      -> void;
+
+  // Adds a note to a diagnostic explaining that a class is abstract.
+  auto NoteAbstractClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
   // Adds a note to a diagnostic explaining that an interface is not defined.
@@ -301,9 +342,10 @@ class Context {
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
-  auto TryToCompleteType(
-      SemIR::TypeId type_id,
-      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
+  auto TryToCompleteType(SemIR::TypeId type_id,
+                         BuildDiagnosticFn diagnoser = nullptr,
+                         BuildDiagnosticFn abstract_diagnoser = nullptr)
+      -> bool;
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -311,24 +353,31 @@ class Context {
   //
   // This is the same as `TryToCompleteType` except for interfaces, which are
   // complete before they are fully defined.
-  auto TryToDefineType(
-      SemIR::TypeId type_id,
-      std::optional<BuildDiagnosticFn> diagnoser = std::nullopt) -> bool;
+  auto TryToDefineType(SemIR::TypeId type_id,
+                       BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
-  // TryToCompleteType.
-  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser)
+  // TryToCompleteType. `diagnoser` must not be null.
+  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser,
+                      BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> SemIR::TypeId {
-    return TryToCompleteType(type_id, diagnoser) ? type_id
-                                                 : SemIR::TypeId::Error;
+    return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
+               ? type_id
+               : SemIR::TypeId::Error;
   }
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
     return type_id == SemIR::TypeId::TypeType ||
-           types().Is<SemIR::InterfaceType>(type_id);
+           types().Is<SemIR::FacetType>(type_id);
   }
+
+  // Create a FacetType typed instruction object consisting of a single
+  // interface.
+  auto FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                              SemIR::SpecificId specific_id)
+      -> SemIR::FacetType;
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
@@ -357,12 +406,15 @@ class Context {
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
+  // Gets the facet type corresponding to a particular interface.
+  auto GetInterfaceType(SemIR::InterfaceId interface_id,
+                        SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
-  // Returns a struct type with the given fields, which should be a block of
-  // `StructTypeField`s.
-  auto GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+  // Returns a struct type with the given fields.
+  auto GetStructType(SemIR::StructTypeFieldsId fields_id) -> SemIR::TypeId;
 
   // Returns a tuple type with the given element types.
   auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
@@ -433,6 +485,10 @@ class Context {
     return args_type_info_stack_;
   }
 
+  auto struct_type_fields_stack() -> ArrayStack<SemIR::StructTypeField>& {
+    return struct_type_fields_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -461,13 +517,13 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  auto identifiers() -> CanonicalValueStore<IdentifierId>& {
+  auto identifiers() -> SharedValueStores::IdentifierStore& {
     return sem_ir().identifiers();
   }
-  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
-  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
-  auto string_literal_values() -> CanonicalValueStore<StringLiteralValueId>& {
+  auto ints() -> SharedValueStores::IntStore& { return sem_ir().ints(); }
+  auto reals() -> SharedValueStores::RealStore& { return sem_ir().reals(); }
+  auto floats() -> SharedValueStores::FloatStore& { return sem_ir().floats(); }
+  auto string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return sem_ir().string_literal_values();
   }
   auto entity_names() -> SemIR::EntityNameStore& {
@@ -479,6 +535,9 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
+  }
+  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+    return sem_ir().facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
@@ -492,6 +551,9 @@ class Context {
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
+  }
+  auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
+    return sem_ir().struct_type_fields();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
@@ -516,6 +578,10 @@ class Context {
 
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
+  }
+
+  auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
+    return bind_name_cache_;
   }
 
  private:
@@ -579,6 +645,10 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
+  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
+  // object representations.
+  ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
+
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
@@ -628,6 +698,11 @@ class Context {
   // instructions and needs to be visible in textual IR.
   // FinalizeImportRefBlock() will produce an inst block for them.
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
+
+  // Cache of allocated AnyBindName insts, keyed by the entity names they refer
+  // to. These are allocated while generating the pattern IR, but are emitted
+  // later as part of the pattern-match IR.
+  Map<SemIR::EntityNameId, SemIR::InstId> bind_name_cache_;
 };
 
 }  // namespace Carbon::Check

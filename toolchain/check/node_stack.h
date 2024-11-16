@@ -11,7 +11,6 @@
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
-#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -335,8 +334,7 @@ class NodeStack {
   }
 
   // Prints the stack for a stack dump.
-  auto PrintForStackDump(SemIR::Formatter& formatter, int indent,
-                         llvm::raw_ostream& output) const -> void;
+  auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void;
 
   auto empty() const -> bool { return stack_.empty(); }
   auto size() const -> size_t { return stack_.size(); }
@@ -423,8 +421,7 @@ class NodeStack {
         case Parse::NodeKind::ReturnType:
         case Parse::NodeKind::ShortCircuitOperandAnd:
         case Parse::NodeKind::ShortCircuitOperandOr:
-        case Parse::NodeKind::StructField:
-        case Parse::NodeKind::StructTypeField:
+        case Parse::NodeKind::StructLiteralField:
         case Parse::NodeKind::WhereOperand:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
@@ -465,6 +462,7 @@ class NodeStack {
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
         case Parse::NodeKind::StructLiteralStart:
+        case Parse::NodeKind::StructTypeLiteralField:
         case Parse::NodeKind::StructTypeLiteralStart:
         case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
@@ -631,8 +629,9 @@ class NodeStack {
         case Parse::NodeKind::ShortCircuitOperatorOr:
         case Parse::NodeKind::StringLiteral:
         case Parse::NodeKind::StringTypeLiteral:
-        case Parse::NodeKind::StructComma:
+        case Parse::NodeKind::StructLiteralComma:
         case Parse::NodeKind::StructFieldDesignator:
+        case Parse::NodeKind::StructTypeLiteralComma:
         case Parse::NodeKind::StructLiteral:
         case Parse::NodeKind::StructTypeLiteral:
         case Parse::NodeKind::Template:

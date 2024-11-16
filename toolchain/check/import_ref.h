@@ -42,8 +42,12 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
 // ImportRefLoaded for use.
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;
 
-// Load all impls declared in IRs imported into this context.
-auto ImportImpls(Context& context) -> void;
+// Load all impls declared in the api file corresponding to this impl file.
+auto ImportImplsFromApiFile(Context& context) -> void;
+
+// Load a specific impl declared in an imported IR.
+auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
+                SemIR::ImplId impl_id) -> void;
 
 }  // namespace Carbon::Check
 

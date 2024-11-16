@@ -415,7 +415,7 @@ process entries from the node stack until it finds that solo parse node from
 `ReturnStatementStart` that indicates it is done.
 
 Another pattern that arises is state is set up by an introducer node, updated by
-its siblings, and then consumed by the bracketing parent node. FIXME: example
+its siblings, and then consumed by the bracketing parent node. TODO: example
 
 ### Node stack
 

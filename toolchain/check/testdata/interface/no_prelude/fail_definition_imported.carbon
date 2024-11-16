@@ -19,11 +19,11 @@ interface I;
 library "[[@TEST_NAME]]";
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: interface I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: a.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: a.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
 interface I {}
@@ -31,7 +31,7 @@ interface I {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,8 +46,8 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = interface_type @I [template]
-// CHECK:STDOUT:   %.type: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

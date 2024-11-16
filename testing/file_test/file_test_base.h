@@ -151,6 +151,9 @@ class FileTestBase : public testing::Test {
     // The location of the autoupdate marker, for autoupdated files.
     std::optional<int> autoupdate_line_number;
 
+    // Whether there should be an AUTOUPDATE-SPLIT.
+    bool autoupdate_split = false;
+
     // Whether to capture stderr and stdout that would head to console,
     // generated from SET-CAPTURE-CONSOLE-OUTPUT.
     bool capture_console_output = false;

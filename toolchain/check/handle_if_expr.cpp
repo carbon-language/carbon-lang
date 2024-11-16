@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -30,12 +31,27 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   return true;
 }
 
+// If the operand is an `IntLiteral`, convert it to a suitably-sized `Int` type.
+// TODO: For now we always pick `i32`.
+static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
+                                      SemIR::InstId operand_id)
+    -> SemIR::InstId {
+  if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
+      SemIR::InstId::BuiltinIntLiteralType) {
+    operand_id = ConvertToValueOfType(
+        context, node_id, operand_id,
+        context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+  }
+  return operand_id;
+}
+
 auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
   auto then_value_id = context.node_stack().PopExpr();
   auto else_block_id = context.node_stack().Peek<Parse::NodeKind::IfExprIf>();
 
   // Convert the first operand to a value.
   then_value_id = ConvertToValueExpr(context, then_value_id);
+  then_value_id = DecayIntLiteralToSizedInt(context, node_id, then_value_id);
 
   // Start emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);

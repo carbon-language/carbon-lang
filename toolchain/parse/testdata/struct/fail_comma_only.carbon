@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_comma_only.carbon
 
-// CHECK:STDERR: fail_comma_only.carbon:[[@LINE+3]]:9: error: expected `.field: field_type` or `.field = value`
+// CHECK:STDERR: fail_comma_only.carbon:[[@LINE+3]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: {,} = {};
 // CHECK:STDERR:         ^
 var x: {,} = {};
@@ -20,7 +20,7 @@ var x: {,} = {};
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
-// CHECK:STDOUT:           {kind: 'StructComma', text: ','},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

@@ -9,16 +9,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error: name `undeclared` not found
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   &undeclared;
   // CHECK:STDERR:    ^~~~~~~~~~
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:3: error: cannot take the address of non-reference expression
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: error: name `undeclared` not found
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:      ^~~~~~~~~~
   &(&undeclared);
@@ -28,20 +28,13 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

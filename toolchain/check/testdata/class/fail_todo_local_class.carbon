@@ -11,11 +11,11 @@
 // TODO: Support parsing classes at function scope.
 class A {
   fn F() {
-    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+7]]:5: error: expected expression
+    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+7]]:5: error: expected expression [ExpectedExpr]
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleInvalidParse`
+    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     class B {
@@ -31,17 +31,16 @@ class A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A

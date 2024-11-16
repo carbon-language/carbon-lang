@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_error_in_type.carbon
 
-// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+3]]:13: error: name `x` not found
+// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+3]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: fn Six() -> x;
 // CHECK:STDERR:             ^
 fn Six() -> x;
@@ -17,20 +17,13 @@ fn Six() -> x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,9 +33,13 @@ fn Six() -> x;
 // CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {} {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [template = constants.%Six] {
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     %return: ref <error> = var <return slot>
+// CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

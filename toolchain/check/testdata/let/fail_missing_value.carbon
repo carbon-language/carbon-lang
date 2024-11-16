@@ -8,14 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: error: expected `=`; `let` declaration must have an initializer
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
 // CHECK:STDERR: let n: i32;
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: error: expected `=`; `let` declaration must have an initializer
+  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let n: i32;
   // CHECK:STDERR:             ^
   let n: i32;
@@ -25,7 +25,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -35,15 +34,8 @@ fn F() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,8 +51,6 @@ fn F() {
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:

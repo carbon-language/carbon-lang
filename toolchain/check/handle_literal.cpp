@@ -5,6 +5,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -27,31 +28,19 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
-// Forms an IntLiteral instruction with type `i32` for a given literal integer
-// value, which is assumed to be unsigned.
-static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
+// Forms an IntValue instruction with type `IntLiteral` for a given literal
+// integer value, which is assumed to be unsigned.
+static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
-  auto val = context.ints().Get(int_id);
-  if (val.getActiveBits() > 31) {
-    CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
-                      "integer literal with value {0} does not fit in i32",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, IntLiteralTooLargeForI32,
-                           llvm::APSInt(val, /*isUnsigned=*/true));
-    return SemIR::InstId::BuiltinError;
-  }
-  // Literals are always represented as unsigned, so zero-extend if needed.
-  auto i32_val = val.zextOrTrunc(32);
-  return context.AddInst<SemIR::IntLiteral>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-       .int_id = context.ints().Add(i32_val)});
+  // We rely on the lexer having normalized the `int_id` to a canonical width.
+  return context.AddInst<SemIR::IntValue>(
+      node_id, {.type_id = context.GetBuiltinType(
+                    SemIR::BuiltinInstKind::IntLiteralType),
+                .int_id = int_id});
 }
 
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
-  // Convert the literal to i32.
-  // TODO: Form an integer literal value and a corresponding type here instead.
-  auto int_literal_id = MakeI32Literal(
+  auto int_literal_id = MakeIntLiteral(
       context, node_id,
       context.tokens().GetIntLiteral(context.parse_tree().node_token(node_id)));
   context.node_stack().Push(node_id, int_literal_id);
@@ -127,13 +116,13 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
   if (!(context.ints().Get(size_id) & 3).isZero()) {
     CARBON_DIAGNOSTIC(IntWidthNotMultipleOf8, Error,
                       "bit width of integer type literal must be a multiple of "
-                      "8; use `Core.{0}({1})` instead",
-                      std::string, llvm::APSInt);
+                      "8; use `Core.{0:Int|UInt}({1})` instead",
+                      BoolAsSelect, llvm::APSInt);
     context.emitter().Emit(
-        node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",
+        node_id, IntWidthNotMultipleOf8, int_kind.is_signed(),
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
-  auto width_id = MakeI32Literal(context, node_id, size_id);
+  auto width_id = MakeIntLiteral(context, node_id, size_id);
   auto fn_inst_id = context.LookupNameInCore(
       node_id, int_kind == SemIR::IntKind::Signed ? "Int" : "UInt");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
@@ -174,7 +163,7 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
   }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto width_id = MakeI32Literal(context, node_id, size_id);
+  auto width_id = MakeIntLiteral(context, node_id, size_id);
   auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
   context.node_stack().Push(node_id, type_inst_id);

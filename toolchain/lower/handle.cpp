@@ -24,11 +24,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::AddrPattern /*inst*/) -> void {
-  CARBON_FATAL("`addr` should be lowered by `BuildFunctionDefinition`");
-}
-
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
@@ -183,8 +178,21 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::Param /*inst*/) -> void {
-  CARBON_FATAL("Parameters should be lowered by `BuildFunctionDefinition`");
+                SemIR::OutParam /*inst*/) -> void {
+  // Parameters are lowered by `BuildFunctionDefinition`.
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::ValueParam /*inst*/) -> void {
+  // Parameters are lowered by `BuildFunctionDefinition`.
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::ReturnSlot inst) -> void {
+  if (SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
+      SemIR::InitRepr::InPlace) {
+    context.SetLocal(inst_id, context.GetValue(inst.storage_id));
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -214,9 +222,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::SpecificFunction /*inst*/) -> void {
+  // Nothing to do. This value should never be consumed.
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
-  context.LowerBlock(inst.block_id);
+  context.LowerBlockContents(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 

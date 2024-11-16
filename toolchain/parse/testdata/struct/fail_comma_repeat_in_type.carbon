@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_comma_repeat_in_type.carbon
 
-// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: error: expected `.field: field_type`
+// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: error: expected `.field: field_type` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: {.a: i32,,} = {};
 // CHECK:STDERR:                 ^
 var x: {.a: i32,,} = {};
@@ -22,10 +22,10 @@ var x: {.a: i32,,} = {};
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeField', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructComma', text: ','},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
-// CHECK:STDOUT:           {kind: 'StructComma', text: ','},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

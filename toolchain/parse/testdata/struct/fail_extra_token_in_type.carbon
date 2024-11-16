@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_extra_token_in_type.carbon
 
-// CHECK:STDERR: fail_extra_token_in_type.carbon:[[@LINE+3]]:17: error: expected `,` or `}`
+// CHECK:STDERR: fail_extra_token_in_type.carbon:[[@LINE+3]]:17: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR: var x: {.a: i32 banana} = {.a = 0};
 // CHECK:STDERR:                 ^~~~~~
 var x: {.a: i32 banana} = {.a = 0};
@@ -22,7 +22,7 @@ var x: {.a: i32 banana} = {.a = 0};
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeField', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
@@ -30,7 +30,7 @@ var x: {.a: i32 banana} = {.a = 0};
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:         {kind: 'StructField', text: '=', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

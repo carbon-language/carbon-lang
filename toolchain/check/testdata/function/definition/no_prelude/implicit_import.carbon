@@ -30,11 +30,11 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -50,11 +50,11 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn A() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -70,11 +70,11 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant [RedeclRedundant]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -90,11 +90,11 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `fn A`
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `fn A` [RedeclRedef]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -111,11 +111,11 @@ alias B = A;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn B() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = A;
 // CHECK:STDERR:       ^
 fn B() {}
@@ -124,7 +124,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,12 +140,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//basic, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -167,7 +164,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -184,12 +180,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_api, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -210,7 +204,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,12 +220,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -253,7 +244,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -273,12 +263,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//redecl_after_def, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -296,7 +284,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,12 +303,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//redef_after_def, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -342,7 +327,6 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -362,10 +346,9 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -380,7 +363,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

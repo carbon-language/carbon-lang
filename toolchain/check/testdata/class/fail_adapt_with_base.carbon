@@ -10,10 +10,10 @@
 class Simple {};
 base class AdaptWithVirtual {
   virtual fn F();
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+6]]:3: error: adapter with virtual function
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+6]]:3: error: adapter with virtual function [AdaptWithVirtual]
   // CHECK:STDERR:   adapt Simple;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here [AdaptWithVirtualHere]
   // CHECK:STDERR:   virtual fn F();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   adapt Simple;
@@ -27,21 +27,13 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %AdaptWithVirtual: type = class_type @AdaptWithVirtual [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

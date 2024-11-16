@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_type_and_value.carbon
 
-// CHECK:STDERR: fail_mix_type_and_value.carbon:[[@LINE+3]]:21: error: expected `.field: field_type`
+// CHECK:STDERR: fail_mix_type_and_value.carbon:[[@LINE+3]]:21: error: expected `.field: field_type` [ExpectedStructLiteralField]
 // CHECK:STDERR: var x: {.a: i32, .b = 0} = {};
 // CHECK:STDERR:                     ^
 var x: {.a: i32, .b = 0} = {};
@@ -22,8 +22,8 @@ var x: {.a: i32, .b = 0} = {};
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeField', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructComma', text: ','},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'StructTypeLiteralComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '.', has_error: yes},

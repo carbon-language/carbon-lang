@@ -35,7 +35,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:11: error: name `A` not found
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:11: error: name `A` not found [NameNotFound]
 // CHECK:STDERR: var inst: A = {};
 // CHECK:STDERR:           ^
 // CHECK:STDERR:
@@ -47,7 +47,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11: error: name `A` not found
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11: error: name `A` not found [NameNotFound]
 // CHECK:STDERR: var inst: Test.A = {};
 // CHECK:STDERR:           ^~~~~~
 var inst: Test.A = {};
@@ -82,9 +82,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/no_prelude/fail_redef.carbon
 
 fn F() {}
-// CHECK:STDERR: fail_redef.carbon:[[@LINE+6]]:1: error: redefinition of `fn F`
+// CHECK:STDERR: fail_redef.carbon:[[@LINE+6]]:1: error: redefinition of `fn F` [RedeclRedef]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: note: previously defined here
+// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 fn F() {}
@@ -21,7 +21,6 @@ fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

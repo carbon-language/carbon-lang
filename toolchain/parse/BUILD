@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/manifest:defs.bzl", "manifest")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -10,6 +11,11 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "testdata",
     data = glob(["testdata/**/*.carbon"]),
+)
+
+manifest(
+    name = "testdata.txt",
+    srcs = [":testdata"],
 )
 
 cc_library(
@@ -45,6 +51,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "@googletest//:gtest",
     ],
 )
@@ -61,6 +68,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
@@ -86,8 +94,9 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
-        "//toolchain/base:value_store",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
@@ -118,6 +127,7 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//common:struct_reflection",
+        "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -134,11 +144,12 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "//toolchain/base:value_store",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/testing:compile_helper",
         "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -154,7 +165,7 @@ cc_fuzz_test(
         ":parse",
         "//common:check",
         "//testing/fuzzing:libfuzzer_header",
-        "//toolchain/base:value_store",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
@@ -191,6 +202,24 @@ cc_test(
         ":precedence",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "coverage_test",
+    size = "small",
+    srcs = ["coverage_test.cpp"],
+    args = ["--testdata_manifest=$(location :testdata.txt)"],
+    data = [
+        ":testdata",
+        ":testdata.txt",
+    ],
+    deps = [
+        ":node_kind",
+        "//testing/base:gtest_main",
+        "//toolchain/testing:coverage_helper",
+        "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest",
     ],
 )

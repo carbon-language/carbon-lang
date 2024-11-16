@@ -25,21 +25,19 @@ class A {
 // CHECK:STDOUT: --- self_in_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %DefaultConstructible.type: type = interface_type @DefaultConstructible [template]
+// CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [template]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Make.2) [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %.4 [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,13 +54,17 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
+// CHECK:STDOUT:     %return.patt: @Make.1.%Self (%Self) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Make.1.%Self (%Self) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %Self.ref, %.loc12_16.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %return: ref @Make.1.%Self (%Self) = var <return slot>
+// CHECK:STDOUT:     %return.param: ref @Make.1.%Self (%Self) = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref @Make.1.%Self (%Self) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %Make.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %Make.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -71,11 +73,15 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %DefaultConstructible.ref {
-// CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {} {
+// CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %return: ref %C = var <return slot>
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
@@ -83,7 +89,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -94,7 +100,7 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [template = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -108,7 +114,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_33.1: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc21_33.1: %.3 = struct_literal ()
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc21_34 to %return

@@ -50,20 +50,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,7 +81,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B1.type: type = fn_type @B1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %B1: %B1.type = struct_value () [template]
 // CHECK:STDOUT:   %B2.type: type = fn_type @B2 [template]
 // CHECK:STDOUT:   %B2: %B2.type = struct_value () [template]
@@ -97,13 +89,7 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +125,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
@@ -164,13 +150,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref Example//b, inst+10, loaded [template = constants.%B2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -201,16 +181,16 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.2 [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init %.1 = call %A.ref()
+// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %B1.ref: %B1.type = name_ref B1, imports.%import_ref.3 [template = constants.%B1]
-// CHECK:STDOUT:   %B1.call: init %.1 = call %B1.ref()
+// CHECK:STDOUT:   %B1.call: init %empty_tuple.type = call %B1.ref()
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %B2.ref: %B2.type = name_ref B2, imports.%import_ref.4 [template = constants.%B2]
-// CHECK:STDOUT:   %B2.call: init %.1 = call %B2.ref()
+// CHECK:STDOUT:   %B2.call: init %empty_tuple.type = call %B2.ref()
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %C.call: init %.1 = call %C.ref()
+// CHECK:STDOUT:   %C.call: init %empty_tuple.type = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

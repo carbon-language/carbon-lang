@@ -42,10 +42,16 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
-        auto interface_type = insts().GetAs<SemIR::InterfaceType>(
+        auto facet_type = insts().GetAs<SemIR::FacetType>(
             constant_values().GetConstantInstId(impl.constraint_id));
+        const auto& facet_type_info =
+            sem_ir().facet_types().Get(facet_type.facet_type_id);
+        auto interface_type = facet_type_info.TryAsSingleInterface();
+        CARBON_CHECK(interface_type,
+                     "Mangling of an impl of something other than a single "
+                     "interface is not yet supported.");
         const auto& interface =
-            sem_ir().interfaces().Get(interface_type.interface_id);
+            sem_ir().interfaces().Get(interface_type->interface_id);
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
@@ -97,11 +103,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   }
 }
 
-auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
-  // FIXME: Add support for generic entities.
-
+auto Mangler::Mangle(SemIR::FunctionId function_id,
+                     SemIR::SpecificId specific_id) -> std::string {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
+    CARBON_CHECK(!specific_id.is_valid(), "entry point should not be generic");
     return "main";
   }
   std::string result;
@@ -111,6 +117,12 @@ auto Mangler::Mangle(SemIR::FunctionId function_id) -> std::string {
   os << names().GetAsStringIfIdentifier(function.name_id);
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
+
+  // TODO: Add proper support for generic entities. The ID we emit here will not
+  // be consistent across object files.
+  if (specific_id.is_valid()) {
+    os << "." << specific_id.index;
+  }
 
   return os.str();
 }

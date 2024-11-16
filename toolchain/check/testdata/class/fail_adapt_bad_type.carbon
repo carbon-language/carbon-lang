@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 class Incomplete;
 
 class AdaptIncomplete {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: adapted type `Incomplete` is an incomplete type
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:3: error: adapted type `Incomplete` is an incomplete type [IncompleteTypeInAdaptDecl]
   // CHECK:STDERR:   adapt Incomplete;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
   adapt Incomplete;
@@ -34,13 +34,7 @@ class AdaptIncomplete {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

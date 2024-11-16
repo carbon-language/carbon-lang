@@ -30,15 +30,15 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+12]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+12]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -54,11 +54,11 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 extern fn A();
@@ -67,7 +67,6 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,12 +83,10 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//basic, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -110,7 +107,6 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,12 +123,10 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_api, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -150,7 +144,6 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,12 +160,10 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Main//extern_impl, inst+1, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

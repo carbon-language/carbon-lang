@@ -48,7 +48,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:13: error: name `Def` not found
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:13: error: name `Def` not found [NameNotFound]
 // CHECK:STDERR: var f: () = Def();
 // CHECK:STDERR:             ^~~
 // CHECK:STDERR:
@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: name `Def` not found
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: name `Def` not found [NameNotFound]
 // CHECK:STDERR: var f: () = Test.Def();
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
@@ -78,7 +78,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found [NameNotFound]
 // CHECK:STDERR: var f: () = ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found [NameNotFound]
 // CHECK:STDERR: var f: () = Test.ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -110,7 +110,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:13: error: name `Forward` not found
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:13: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: var f: () = Forward();
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: name `Forward` not found
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: var f: () = Test.Forward();
 // CHECK:STDERR:             ^~~~~~~~~~~~
 var f: () = Test.Forward();
@@ -139,20 +139,13 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = fn_type @Def [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Def: %Def.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,20 +167,13 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = fn_type @ForwardWithDef [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %ForwardWithDef: %ForwardWithDef.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,20 +196,13 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Forward.type: type = fn_type @Forward [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Forward: %Forward.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,7 +220,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Def.type: type = fn_type @Def [template]
 // CHECK:STDOUT:   %Def: %Def.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -250,13 +229,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, inst+3, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,10 +242,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def();
@@ -280,7 +253,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Def.ref: %Def.type = name_ref Def, imports.%import_ref [template = constants.%Def]
-// CHECK:STDOUT:   %Def.call: init %.1 = call %Def.ref()
+// CHECK:STDOUT:   %Def.call: init %empty_tuple.type = call %Def.ref()
 // CHECK:STDOUT:   assign file.%f.var, %Def.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -288,19 +261,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_local_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,10 +278,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -327,19 +294,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_other_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
 // CHECK:STDOUT:     import Test//def
@@ -354,10 +315,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -371,7 +332,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- forward_with_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %ForwardWithDef.type: type = fn_type @ForwardWithDef [template]
 // CHECK:STDOUT:   %ForwardWithDef: %ForwardWithDef.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -380,13 +341,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, inst+3, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,10 +354,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef();
@@ -410,7 +365,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ForwardWithDef.ref: %ForwardWithDef.type = name_ref ForwardWithDef, imports.%import_ref [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %ForwardWithDef.call: init %.1 = call %ForwardWithDef.ref()
+// CHECK:STDOUT:   %ForwardWithDef.call: init %empty_tuple.type = call %ForwardWithDef.ref()
 // CHECK:STDOUT:   assign file.%f.var, %ForwardWithDef.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -418,19 +373,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_local_forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -441,10 +390,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -457,19 +406,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_other_forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
 // CHECK:STDOUT:     import Test//forward_with_def
@@ -484,10 +427,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -501,7 +444,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- forward.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Forward.type: type = fn_type @Forward [template]
 // CHECK:STDOUT:   %Forward: %Forward.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -510,13 +453,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, inst+3, loaded [template = constants.%Forward]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,10 +466,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc4_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -544,7 +481,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Forward.ref: %Forward.type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
-// CHECK:STDOUT:   %Forward.call: init %.1 = call %Forward.ref()
+// CHECK:STDOUT:   %Forward.call: init %empty_tuple.type = call %Forward.ref()
 // CHECK:STDOUT:   assign file.%f.var, %Forward.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -552,19 +489,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_local_forward.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -575,10 +506,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc10_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -591,19 +522,13 @@ private fn Redecl() {}
 // CHECK:STDOUT: --- fail_other_forward.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [template] {
 // CHECK:STDOUT:     import Test//forward
@@ -618,10 +543,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc9_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %.loc9_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -636,20 +561,13 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Redecl.type: type = fn_type @Redecl [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Redecl: %Redecl.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

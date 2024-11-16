@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_break_continue.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop
+  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
   // CHECK:STDERR:   continue;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop
+  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
   // CHECK:STDERR:   break;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
@@ -23,12 +23,12 @@ fn While() {
     continue;
     break;
   }
-  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop
+  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
   // CHECK:STDERR:   continue;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: error: `break` can only be used in a loop
+  // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
   // CHECK:STDERR:   break;
   // CHECK:STDERR:   ^~~~~
   break;
@@ -38,21 +38,13 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %While.type: type = fn_type @While [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %While: %While.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

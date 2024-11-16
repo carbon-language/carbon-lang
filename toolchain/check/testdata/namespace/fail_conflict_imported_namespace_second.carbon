@@ -20,21 +20,21 @@ package Example;
 
 import library "fn";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import
-// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-15]]:1: in import
-// CHECK:STDERR: fn.carbon:4:1: note: referenced non-scope entity declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-15]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 fn NS.Foo();
@@ -43,20 +43,13 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,23 +68,16 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref: %NS.type = import_ref Example//fn, inst+3, loaded [template = constants.%NS]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,7 +89,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %.loc14: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();

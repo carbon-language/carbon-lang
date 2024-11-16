@@ -11,7 +11,7 @@
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: error: tuple element index `0` is past the end of type `()`
+  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+3]]:3: error: tuple element index `0` is past the end of type `()` [TupleIndexOutOfBounds]
   // CHECK:STDERR:   F().0;
   // CHECK:STDERR:   ^~~~~
   F().0;
@@ -21,23 +21,17 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,10 +54,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %F.call: init %.1 = call %F.ref()
-// CHECK:STDOUT:   %.loc17_7: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_4.1: ref %.1 = temporary_storage
-// CHECK:STDOUT:   %.loc17_4.2: ref %.1 = temporary %.loc17_4.1, %F.call
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   %.loc17_7: Core.IntLiteral = int_value 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_4.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc17_4.2: ref %empty_tuple.type = temporary %.loc17_4.1, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

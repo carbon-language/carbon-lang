@@ -26,20 +26,13 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -49,8 +42,12 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {} {
-// CHECK:STDOUT:     %return: ref type = var <return slot>
+// CHECK:STDOUT:   %Bool.decl: %Bool.type = fn_decl @Bool [template = constants.%Bool] {
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,22 +57,15 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, inst+4, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, inst+7, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +89,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%b.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -30,11 +30,11 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -50,11 +50,11 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `class C`
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `class C` [RedeclRedef]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -71,11 +71,11 @@ alias B = C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class B {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import [InImport]
+// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = C;
 // CHECK:STDERR:       ^
 class B {}
@@ -104,7 +104,6 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//basic, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -149,12 +148,9 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redecl_after_def, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//redecl_after_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

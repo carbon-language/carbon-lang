@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env", "cc_env_data")
-load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/manifest:defs.bzl", "manifest")
+load("install_filegroups.bzl", "install_busybox_wrapper", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 load("run_tool.bzl", "run_tool")
 
@@ -70,6 +71,46 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "busybox_info",
+    hdrs = ["busybox_info.h"],
+    deps = [
+        "//common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "busybox_info_test",
+    srcs = ["busybox_info_test.cpp"],
+    deps = [
+        ":busybox_info",
+        "//common:check",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+# This target doesn't include prelude libraries. To get a target that has the
+# prelude available, use //toolchain.
+cc_binary(
+    name = "carbon-busybox",
+    srcs = ["busybox_main.cpp"],
+    env = cc_env(),
+    deps = [
+        ":busybox_info",
+        ":install_paths",
+        "//common:all_llvm_targets",
+        "//common:bazel_working_dir",
+        "//common:error",
+        "//common:exe_path",
+        "//common:init_llvm",
+        "//common:version_stamp",
+        "//toolchain/driver",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 lld_aliases = [
     "ld.lld",
     "ld64.lld",
@@ -88,15 +129,19 @@ lld_aliases = [
 # based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
-        install_target(
+        install_busybox_wrapper(
             "carbon",
-            "//toolchain/driver:carbon",
-            executable = True,
-            is_driver = True,
+            "../lib/carbon/carbon-busybox",
         ),
     ],
     "lib/carbon": [
         install_target("carbon_install.txt", "carbon_install.txt"),
+        install_target(
+            "carbon-busybox",
+            ":carbon-busybox",
+            executable = True,
+            is_driver = True,
+        ),
         install_filegroup("core", "//core:prelude"),
     ],
     "lib/carbon/llvm/bin": [
@@ -104,6 +149,14 @@ install_dirs = {
             "lld",
             "@llvm-project//lld:lld",
             executable = True,
+        ),
+        install_busybox_wrapper(
+            "clang",
+            "../../carbon-busybox",
+            [
+                "clang",
+                "--",
+            ],
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
 }
@@ -116,6 +169,11 @@ make_install_filegroups(
     prefix = "prefix_root",
 )
 
+manifest(
+    name = "install_data_manifest.txt",
+    srcs = [":install_data"],
+)
+
 pkg_naming_variables(
     name = "packaging_variables",
 )
@@ -123,26 +181,23 @@ pkg_naming_variables(
 # We build both a compressed and uncompressed tar file with the same code here.
 # This lets us use the tar file in testing as it is fast to create, but ship the
 # compressed version as a release.
+#
+# For manual tests, the tar rules are `carbon_toolchain_tar_rule` and
+# `carbon_toolchain_tar_gz_rule`.
 pkg_tar_and_test(
     srcs = [":pkg_data"],
+    install_data_manifest = ":install_data_manifest.txt",
     name_base = "carbon_toolchain",
     package_dir = "carbon_toolchain-$(version)",
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-    test_data = [
-        ":install_data",
-    ],
-    # TODO: This is used to make sure that tar files are in install_data (one
-    # direction). Replace with a check that the files in install_data and tar
-    # match (bidirectional).
-    test_install_marker = "prefix_root/lib/carbon/carbon_install.txt",
 )
 
 # Support `bazel run` on specific binaries.
 run_tool(
     name = "run_carbon",
-    data = [":install_data"] + cc_env_data(),
+    data = [":install_data"],
     env = cc_env(),
     tool = "prefix_root/bin/carbon",
 )

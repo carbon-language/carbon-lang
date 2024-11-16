@@ -24,11 +24,11 @@ import library "namespace";
 // imported declaration.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import [InImport]
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -38,11 +38,11 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]
+// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS();
@@ -52,13 +52,7 @@ fn NS();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,10 +69,9 @@ fn NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: %.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.3: %.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.2: %.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -86,13 +79,7 @@ fn NS();
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,9 +91,9 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.3] {} {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

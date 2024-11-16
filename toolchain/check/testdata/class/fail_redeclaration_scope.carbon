@@ -19,7 +19,7 @@ class X {
 class A { class B; }
 
 class Y {
-  // CHECK:STDERR: fail_redeclaration_scope.carbon:[[@LINE+3]]:9: error: name `A` not found
+  // CHECK:STDERR: fail_redeclaration_scope.carbon:[[@LINE+3]]:9: error: name `A` not found [NameNotFound]
   // CHECK:STDERR:   class A.B {}
   // CHECK:STDERR:         ^
   class A.B {}
@@ -42,13 +42,7 @@ class Y {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

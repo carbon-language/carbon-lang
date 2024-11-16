@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_bad_run_2.carbon
 
-// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32`
+// CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32` [InvalidMainRunSignature]
 // CHECK:STDERR: fn Run(n: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 fn Run(n: i32) {}
@@ -17,7 +17,6 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
@@ -27,15 +26,8 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int32 = %import_ref
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+4, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,18 +38,17 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     %n.patt: i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:     %.loc14_11.2: type = converted %int.make_type_32, %.loc14_11.1 [template = i32]
-// CHECK:STDOUT:     %n.param: i32 = param n, runtime_param0
+// CHECK:STDOUT:     %n.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n: i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run(%n: i32) {
+// CHECK:STDOUT: fn @Run(%n.param_patt: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

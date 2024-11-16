@@ -16,19 +16,19 @@ namespace Nested;
 // --- fail_conflict.carbon
 
 import Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Other;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 namespace Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:10: error: imported packages cannot be used for declarations
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
 // CHECK:STDERR: fn Other.Nested.F();
 // CHECK:STDERR:          ^~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1: in import
-// CHECK:STDERR: fn.carbon:3:1: note: package imported here
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1: in import [InImport]
+// CHECK:STDERR: fn.carbon:3:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: namespace Nested;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 fn Other.Nested.F();
@@ -38,13 +38,7 @@ fn Other.Nested.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,20 +55,13 @@ fn Other.Nested.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
 // CHECK:STDOUT:     .Nested = %Nested

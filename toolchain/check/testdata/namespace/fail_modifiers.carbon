@@ -8,48 +8,48 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+33]]:1: error: `private` not allowed on `namespace` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+33]]:1: error: `private` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+29]]:9: error: `extern` not allowed on `namespace` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+29]]:9: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:         ^~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:16: error: `abstract` not allowed on `namespace` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:16: error: `abstract` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:25: error: `base` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:25: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                         ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:16: note: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:16: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:30: error: `default` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:30: error: `default` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                              ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:16: note: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:16: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:38: error: `final` not allowed on declaration with `abstract`
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:38: error: `final` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                                      ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:16: note: `abstract` previously appeared here
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:16: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: private extern abstract base default final namespace A;
 // CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
 private extern abstract base default final namespace A;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `namespace` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: impl namespace B;
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 impl namespace B;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `namespace` declaration
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: extern namespace C;
 // CHECK:STDERR: ^~~~~~
 extern namespace C;
@@ -59,13 +59,7 @@ extern namespace C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/operators
-// CHECK:STDOUT:     import Core//prelude/types
-// CHECK:STDOUT:     import Core//prelude/operators/arithmetic
-// CHECK:STDOUT:     import Core//prelude/operators/as
-// CHECK:STDOUT:     import Core//prelude/operators/bitwise
-// CHECK:STDOUT:     import Core//prelude/operators/comparison
-// CHECK:STDOUT:     import Core//prelude/types/bool
+// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
