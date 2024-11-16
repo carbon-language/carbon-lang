@@ -1605,8 +1605,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return eval_context.GetConstantValue(typed_inst.init_id);
     }
     case CARBON_KIND(SemIR::FacetAccessType typed_inst): {
-      // FIXME: Once we start tracking the witness in the facet value, remove it
-      // here. For now, we model a facet value as just a type.
+      // TODO: Once we start producing non-symbolic facet values, we need to
+      // remove the witness here. For now, we model a facet value as just a
+      // type.
       return eval_context.GetConstantValue(typed_inst.facet_value_inst_id);
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
