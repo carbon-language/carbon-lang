@@ -143,6 +143,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   %.loc36_22: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc36_32: Core.IntLiteral = int_value 2 [template = constants.%.3]
+// CHECK:STDOUT:   %def.ref: <error> = name_ref def, <error> [template = <error>]
 // CHECK:STDOUT:   %w: i32 = bind_name w, <error>
 // CHECK:STDOUT:   %.loc45_26: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc45_34: Core.IntLiteral = int_value 2 [template = constants.%.3]

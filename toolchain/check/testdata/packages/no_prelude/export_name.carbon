@@ -818,6 +818,7 @@ private export C;
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %Local: <error> = bind_alias Local, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <error> = name_ref NS, <error> [template = <error>]
+// CHECK:STDOUT:   %NSC.ref: <error> = name_ref NSC, <error> [template = <error>]
 // CHECK:STDOUT:   %NSLocal: <error> = bind_alias NSLocal, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

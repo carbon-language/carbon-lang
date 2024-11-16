@@ -481,6 +481,12 @@ auto Context::AppendLookupScopesForConstant(
     }
     return true;
   }
+  if (base_const_id == SemIR::ConstantId::Error) {
+    // Lookup into this scope should fail without producing an error.
+    scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::Invalid,
+                                  .specific_id = SemIR::SpecificId::Invalid});
+    return true;
+  }
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
   // `(i32*).X` should fail because there's no name `X` in `i32*`, not because

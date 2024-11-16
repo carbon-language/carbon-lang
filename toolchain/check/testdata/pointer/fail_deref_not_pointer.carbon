@@ -85,6 +85,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16
 // CHECK:STDOUT:   %n.ref.loc21: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc21: ref <error> = deref %n.ref.loc21
+// CHECK:STDOUT:   %foo.ref.loc21: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc26_5.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple.loc26: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_5.2: %empty_tuple.type = converted %.loc26_5.1, %empty_tuple.loc26 [template = constants.%empty_tuple]
@@ -93,6 +94,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %empty_tuple.loc31: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc31_4.2: %empty_tuple.type = converted %.loc31_4.1, %empty_tuple.loc31 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc31_5: ref <error> = deref %.loc31_4.2
+// CHECK:STDOUT:   %foo.ref.loc31: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc36_5.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %struct.loc36: %.1 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc36_5.2: %.1 = converted %.loc36_5.1, %struct.loc36 [template = constants.%struct]
@@ -101,6 +103,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %struct.loc40: %.1 = struct_value () [template = constants.%struct]
 // CHECK:STDOUT:   %.loc40_4.2: %.1 = converted %.loc40_4.1, %struct.loc40 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc40_5: ref <error> = deref %.loc40_4.2
+// CHECK:STDOUT:   %foo.ref.loc40: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

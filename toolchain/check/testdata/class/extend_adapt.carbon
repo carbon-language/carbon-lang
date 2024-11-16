@@ -85,15 +85,56 @@ fn F(a: SomeClassAdapter) -> i32 {
   return a.b;
 }
 
-// --- fail_todo_adapt_non_class.carbon
+// --- fail_todo_adapt_struct.carbon
 
 library "[[@TEST_NAME]]";
 
 class StructAdapter {
-  // CHECK:STDERR: fail_todo_adapt_non_class.carbon:[[@LINE+3]]:3: error: semantics TODO: `extending non-class type` [SemanticsTodo]
-  // CHECK:STDERR:   extend adapt {.a: i32, .b: i32};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   extend adapt {.a: i32, .b: i32};
+}
+
+fn F(a: StructAdapter) -> i32 {
+  // TODO: This should be allowed.
+  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+4]]:10: error: name `b` not found [NameNotFound]
+  // CHECK:STDERR:   return a.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  return a.b;
+}
+
+// --- fail_todo_adapt_tuple.carbon
+
+library "[[@TEST_NAME]]";
+
+class TupleAdapter {
+  extend adapt (i32, i32);
+}
+
+fn F(a: TupleAdapter) -> i32 {
+  // TODO: This should be allowed.
+  // CHECK:STDERR: fail_todo_adapt_tuple.carbon:[[@LINE+4]]:10: error: type `TupleAdapter` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+  // CHECK:STDERR:   return a.1;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  return a.1;
+}
+
+// --- fail_adapt_builtin.carbon
+
+library "[[@TEST_NAME]]";
+
+fn MakeInt(N: Core.IntLiteral()) -> type = "int.make_type_signed";
+
+class IntAdapter {
+  extend adapt MakeInt(32);
+}
+
+fn F(a: IntAdapter) -> i32 {
+  // Builtin types have no member names.
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10: error: name `foo` not found [NameNotFound]
+  // CHECK:STDERR:   return a.foo;
+  // CHECK:STDERR:          ^~~~~
+  return a.foo;
 }
 
 // CHECK:STDOUT: --- basic.carbon
@@ -383,7 +424,7 @@ class StructAdapter {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_adapt_non_class.carbon
+// CHECK:STDOUT: --- fail_todo_adapt_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [template]
@@ -391,6 +432,8 @@ class StructAdapter {
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -405,24 +448,210 @@ class StructAdapter {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .StructAdapter = %StructAdapter.decl
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %StructAdapter.decl: type = class_decl @StructAdapter [template = constants.%StructAdapter] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: %StructAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %StructAdapter = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %StructAdapter.ref: type = name_ref StructAdapter, file.%StructAdapter.decl [template = constants.%StructAdapter]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_27.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc8_27.2: type = converted %int.make_type_32, %.loc8_27.1 [template = i32]
+// CHECK:STDOUT:     %a.param: %StructAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %StructAdapter = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @StructAdapter {
-// CHECK:STDOUT:   %int.make_type_32.loc8_21: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer %int.make_type_32.loc8_21 [template = i32]
-// CHECK:STDOUT:   %.loc8_21.2: type = converted %int.make_type_32.loc8_21, %.loc8_21.1 [template = i32]
-// CHECK:STDOUT:   %int.make_type_32.loc8_30: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_30.1: type = value_of_initializer %int.make_type_32.loc8_30 [template = i32]
-// CHECK:STDOUT:   %.loc8_30.2: type = converted %int.make_type_32.loc8_30, %.loc8_30.1 [template = i32]
-// CHECK:STDOUT:   %.loc8_33: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_32.loc5_21: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc5_21.1: type = value_of_initializer %int.make_type_32.loc5_21 [template = i32]
+// CHECK:STDOUT:   %.loc5_21.2: type = converted %int.make_type_32.loc5_21, %.loc5_21.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc5_30: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc5_30.1: type = value_of_initializer %int.make_type_32.loc5_30 [template = i32]
+// CHECK:STDOUT:   %.loc5_30.2: type = converted %int.make_type_32.loc5_30, %.loc5_30.1 [template = i32]
+// CHECK:STDOUT:   %.loc5_33: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
-// CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   extend %.loc5_33
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a.param_patt: %StructAdapter) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %StructAdapter = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [template = <error>]
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %TupleAdapter: type = class_type @TupleAdapter [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %tuple.type.2 [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .TupleAdapter = %TupleAdapter.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %TupleAdapter.decl: type = class_decl @TupleAdapter [template = constants.%TupleAdapter] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: %TupleAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %TupleAdapter = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %TupleAdapter.ref: type = name_ref TupleAdapter, file.%TupleAdapter.decl [template = constants.%TupleAdapter]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc8_26.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc8_26.2: type = converted %int.make_type_32, %.loc8_26.1 [template = i32]
+// CHECK:STDOUT:     %a.param: %TupleAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %TupleAdapter = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @TupleAdapter {
+// CHECK:STDOUT:   %int.make_type_32.loc5_17: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc5_22: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:   %.loc5_25: %tuple.type.1 = tuple_literal (%int.make_type_32.loc5_17, %int.make_type_32.loc5_22)
+// CHECK:STDOUT:   %.loc5_26.1: type = value_of_initializer %int.make_type_32.loc5_17 [template = i32]
+// CHECK:STDOUT:   %.loc5_26.2: type = converted %int.make_type_32.loc5_17, %.loc5_26.1 [template = i32]
+// CHECK:STDOUT:   %.loc5_26.3: type = value_of_initializer %int.make_type_32.loc5_22 [template = i32]
+// CHECK:STDOUT:   %.loc5_26.4: type = converted %int.make_type_32.loc5_22, %.loc5_26.3 [template = i32]
+// CHECK:STDOUT:   %.loc5_26.5: type = converted %.loc5_25, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   adapt_decl %tuple.type.2
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %tuple.type.2 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%TupleAdapter
+// CHECK:STDOUT:   extend %.loc5_26.5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a.param_patt: %TupleAdapter) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %TupleAdapter = name_ref a, %a
+// CHECK:STDOUT:   %.loc14: Core.IntLiteral = int_value 1 [template = constants.%.3]
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_adapt_builtin.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %MakeInt.type: type = fn_type @MakeInt [template]
+// CHECK:STDOUT:   %MakeInt: %MakeInt.type = struct_value () [template]
+// CHECK:STDOUT:   %IntAdapter: type = class_type @IntAdapter [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .IntLiteral = %import_ref.1
+// CHECK:STDOUT:     .Int32 = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types, inst+7, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .MakeInt = %MakeInt.decl
+// CHECK:STDOUT:     .IntAdapter = %IntAdapter.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %MakeInt.decl: %MakeInt.type = fn_decl @MakeInt [template = constants.%MakeInt] {
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = binding_pattern N
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_31.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_31.2: type = converted %int_literal.make_type, %.loc4_31.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
+// CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IntAdapter.decl: type = class_decl @IntAdapter [template = constants.%IntAdapter] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: %IntAdapter = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %IntAdapter = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %IntAdapter.ref: type = name_ref IntAdapter, file.%IntAdapter.decl [template = constants.%IntAdapter]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
+// CHECK:STDOUT:     %.loc10_24.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc10_24.2: type = converted %int.make_type_32, %.loc10_24.1 [template = i32]
+// CHECK:STDOUT:     %a.param: %IntAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %a: %IntAdapter = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @IntAdapter {
+// CHECK:STDOUT:   %MakeInt.ref: %MakeInt.type = name_ref MakeInt, file.%MakeInt.decl [template = constants.%MakeInt]
+// CHECK:STDOUT:   %.loc7_24: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %MakeInt.ref(%.loc7_24) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_27.1: type = value_of_initializer %int.make_type_signed [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_27.2: type = converted %int.make_type_signed, %.loc7_27.1 [template = constants.%.2]
+// CHECK:STDOUT:   adapt_decl %.2
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%IntAdapter
+// CHECK:STDOUT:   extend %.loc7_27.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeInt(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a.param_patt: %IntAdapter) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %IntAdapter = name_ref a, %a
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
