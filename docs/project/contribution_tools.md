@@ -110,7 +110,7 @@ echo "build --repo_env=CC=$(readlink -f $(which clang-16))" >> user.bazelrc
 ### macOS
 
 ```shell
-# Install Hombrew.
+# Install Homebrew.
 /bin/bash -c "$(curl -fsSL \
   https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 

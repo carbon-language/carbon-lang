@@ -48,7 +48,7 @@ class TypeEnum {
     requires(K != RawEnumType::Invalid)
   using TypeFor = __type_pack_element<static_cast<size_t>(K), Types...>;
 
-  // Workarond for Clang bug https://github.com/llvm/llvm-project/issues/85461
+  // Workaround for Clang bug https://github.com/llvm/llvm-project/issues/85461
   template <RawEnumType Value>
   static constexpr auto FromRaw = TypeEnum(Value);
 
