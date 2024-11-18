@@ -28,14 +28,12 @@ struct ParameterBlocks {
 // between the two: pattern insts that are descendants of a `ParamPattern`
 // are matched by the callee, and pattern insts that have a `ParamPattern`
 // as a descendant are matched by the caller.
-//
-// See EntityWithParamsBase::call_params for a discussion of "call parameters"
 
 // Emits the pattern-match IR for the declaration of a parameterized entity with
 // the given implicit and explicit parameter patterns, and the given return slot
 // pattern (any of which may be invalid if not applicable). This IR performs the
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
-// matching them against the corresponding call parameters (see
+// matching them against the corresponding `Call` parameters (see
 // entity_with_params_base.h for the definition of that term).
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
