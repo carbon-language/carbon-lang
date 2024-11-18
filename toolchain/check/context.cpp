@@ -1372,7 +1372,7 @@ auto Context::GetInt32Type() -> SemIR::TypeId {
       *this, SemIR::InstId::Invalid,
       SemIR::IntValue{
           .type_id = GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType),
-          .int_id = ints().AddUnsigned(llvm::APInt(64, 32))});
+          .int_id = ints().Add(32)});
   return GetCompleteTypeImpl<SemIR::IntType>(
       *this, SemIR::IntKind::Signed,
       constant_values().GetInstId(bit_width_const_id));
