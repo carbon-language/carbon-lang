@@ -1852,7 +1852,7 @@ class IntWrapper {
       return left.x - right.x;
     }
   }
-  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+  impl as Comparable = ComparableFromDifference(IntWrapper);
 }
 ```
 
