@@ -1361,12 +1361,6 @@ auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
       *this, interface_id, enclosing_specific_id);
 }
 
-auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,
-                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::FacetType>(
-      *this, FacetTypeFromInterface(interface_id, specific_id).facet_type_id);
-}
-
 auto Context::GetInt32Type() -> SemIR::TypeId {
   auto bit_width_const_id = TryEvalInst(
       *this, SemIR::InstId::Invalid,
@@ -1376,6 +1370,12 @@ auto Context::GetInt32Type() -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::IntType>(
       *this, SemIR::IntKind::Signed,
       constant_values().GetInstId(bit_width_const_id));
+}
+
+auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,
+                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetType>(
+      *this, FacetTypeFromInterface(interface_id, specific_id).facet_type_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

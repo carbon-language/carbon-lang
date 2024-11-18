@@ -406,12 +406,12 @@ class Context {
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
+  // Returns the type `i32`.
+  auto GetInt32Type() -> SemIR::TypeId;
+
   // Gets the facet type corresponding to a particular interface.
   auto GetInterfaceType(SemIR::InterfaceId interface_id,
                         SemIR::SpecificId specific_id) -> SemIR::TypeId;
-
-  // Returns the type `i32`.
-  auto GetInt32Type() -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
