@@ -2164,7 +2164,7 @@ specifying the values of associated facets, as in:
 ```carbon
 impl VeryLongTypeName as Add
     // `Self` here means `VeryLongTypeName`
-    where .Result == Self {
+    where .Result = Self {
   ...
 }
 ```
