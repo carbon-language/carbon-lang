@@ -74,8 +74,12 @@ cc_binary(
 
 sh_test(
     name = "compile_benchmark_test",
-    srcs = ["compile_benchmark_test.sh"],
-    data = [":compile_benchmark"],
+    srcs = [":compile_benchmark"],
+    args = [
+        "--benchmark_min_time=1x",
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=/256$$",
+    ],
 )
 
 cc_library(
