@@ -78,7 +78,8 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
     size -= arg_length;
   }
 
-  llvm::vfs::InMemoryFileSystem fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
   TestRawOstream error_stream;
   llvm::raw_null_ostream dest;
   Driver d(fs, install_paths, dest, error_stream);

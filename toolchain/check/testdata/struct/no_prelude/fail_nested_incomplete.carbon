@@ -50,7 +50,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, file.%s
-// CHECK:STDOUT:   %.loc21: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: <error> = addr_of %a.ref [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -57,6 +57,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:   %.loc22_9.2: type = value_of_initializer %int.make_type_signed.loc22 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc22_9.3: type = converted %int.make_type_signed.loc22, %.loc22_9.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc22_12: ref <error> = deref %.loc22_9.3
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   %p2.var: ref <error> = var p2
 // CHECK:STDOUT:   %p2: ref <error> = bind_name p2, %p2.var
 // CHECK:STDOUT: }

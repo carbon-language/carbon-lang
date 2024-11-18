@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 2c9f875913ee60ca25ce70243dc24d5b6415598c # frozen: v4.6.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -45,7 +45,7 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 3702ba224ecffbcec30af640c149f231d90aebdb # frozen: 24.4.2
+    rev: 1b2427a2b785cc4aac97c19bb4b9a0de063f9547 # frozen: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -131,11 +131,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: 7d37d9032d0d161634be4554273c30efd4dea0b3 # frozen: 7.0.0
+    rev: e43806be3607110919eff72939fda031776e885a # frozen: 7.1.1
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'e5ea6670624c24f8321f6328ef3176dbba76db46' # frozen: v1.10.0
+    rev: 'f56614daa94d5cd733d3b7004c5df9caad267b4a' # frozen: v1.13.0
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -157,7 +157,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: 6e41aba91fb32e9feb741a6258eefeb9c6e4a482 # frozen: v2.2.6
+    rev: 193cd7d27cd571f79358af09a8fb8997e54f8fff # frozen: v2.3.0
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']

@@ -123,7 +123,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   class KeyContext;
 
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(std::size_t size)
+  auto AllocateUninitialized(size_t size)
       -> llvm::MutableArrayRef<ElementType> {
     // We're not going to run a destructor, so ensure that's OK.
     static_assert(std::is_trivially_destructible_v<ElementType>);

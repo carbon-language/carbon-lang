@@ -53,6 +53,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc18: ref <error> = deref <error>
 // CHECK:STDOUT:   %A.ref.loc22: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc22: ref <error> = deref <error>
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

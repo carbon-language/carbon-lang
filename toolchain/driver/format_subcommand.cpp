@@ -74,7 +74,8 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
     // TODO: Consider refactoring this for sharing with compile.
     // TODO: Decide what to do with `-` when there are multiple arguments.
-    auto source = SourceBuffer::MakeFromFileOrStdin(driver_env.fs, f, consumer);
+    auto source =
+        SourceBuffer::MakeFromFileOrStdin(*driver_env.fs, f, consumer);
     if (!source) {
       mark_per_file_error();
       continue;

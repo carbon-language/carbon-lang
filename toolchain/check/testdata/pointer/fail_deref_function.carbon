@@ -49,6 +49,7 @@ fn A() {
 // CHECK:STDOUT:   %.loc16: ref <error> = deref <error>
 // CHECK:STDOUT:   %A.ref.loc20: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc20: ref <error> = deref <error>
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

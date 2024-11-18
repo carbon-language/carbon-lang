@@ -405,26 +405,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extended_scope_inst_id = SemIR::InstId::Invalid;
-    if (adapted_type_id == SemIR::TypeId::Error) {
-      // Recover by not extending any scope. We instead set has_error to true
-      // below.
-    } else if (auto* adapted_class_info =
-                   TryGetAsClass(context, adapted_type_id)) {
-      extended_scope_inst_id = adapted_inst_id;
-      CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
-                   "Complete class should have a scope");
-    } else {
-      // TODO: Accept any type that has a scope.
-      context.TODO(node_id, "extending non-class type");
-    }
-
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (extended_scope_inst_id.is_valid()) {
-      class_scope.extended_scopes.push_back(extended_scope_inst_id);
-    } else {
-      class_scope.has_error = true;
-    }
+    class_scope.extended_scopes.push_back(adapted_inst_id);
   }
   return true;
 }

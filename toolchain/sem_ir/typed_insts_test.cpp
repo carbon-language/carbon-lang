@@ -95,7 +95,7 @@ TEST(TypedInstTest, RoundTrip) {
 #include "toolchain/sem_ir/inst_kind.def"
 }
 
-auto StructLayoutHelper(void* typed_inst, std::size_t typed_inst_size,
+auto StructLayoutHelper(void* typed_inst, size_t typed_inst_size,
                         bool has_type_id) -> void {
   // Check that the memory representation of the typed instruction is what we
   // expect.

@@ -387,7 +387,7 @@ class NextDeferredDefinitionCache {
   // be encountered.
   auto SkipTo(Parse::DeferredDefinitionIndex next_index) -> void {
     index_ = next_index;
-    if (static_cast<std::size_t>(index_.index) ==
+    if (static_cast<size_t>(index_.index) ==
         tree_->deferred_definitions().size()) {
       start_id_ = Parse::NodeId::Invalid;
     } else {
