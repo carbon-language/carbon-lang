@@ -1022,7 +1022,7 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepr(std::size_t num_elements,
+  auto BuildStructOrTupleValueRepr(size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
                                    bool same_as_object_rep) const
       -> SemIR::ValueRepr {

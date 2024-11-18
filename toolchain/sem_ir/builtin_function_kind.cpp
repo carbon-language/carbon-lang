@@ -137,7 +137,7 @@ static auto ValidateSignature(const File& sem_ir,
   }
 
   // Argument types must match.
-  if (![&]<std::size_t... Indexes>(std::index_sequence<Indexes...>) {
+  if (![&]<size_t... Indexes>(std::index_sequence<Indexes...>) {
         return ((SignatureTraits::template arg_t<Indexes>::Check(
                     sem_ir, state, arg_types[Indexes])) &&
                 ...);

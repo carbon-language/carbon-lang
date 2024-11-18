@@ -16,8 +16,8 @@ namespace Carbon::SemIR {
 template <typename... Types>
 class TypeEnum {
  public:
-  static constexpr std::size_t NumTypes = sizeof...(Types);
-  static constexpr std::size_t NumValues = NumTypes + 2;
+  static constexpr size_t NumTypes = sizeof...(Types);
+  static constexpr size_t NumValues = NumTypes + 2;
 
   static_assert(NumValues <= 256, "Too many types for raw enum.");
 
@@ -87,8 +87,8 @@ class TypeEnum {
 
   // Returns a value that can be used as an array index. Returned value will be
   // < NumValues.
-  constexpr auto ToIndex() const -> std::size_t {
-    return static_cast<std::size_t>(value_);
+  constexpr auto ToIndex() const -> size_t {
+    return static_cast<size_t>(value_);
   }
 
   // Returns whether this is a valid value, not `Invalid`.

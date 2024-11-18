@@ -147,7 +147,7 @@ template <typename AccessInstT, typename InstBlockT>
 static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId aggregate_id,
                                   SemIR::TypeId elem_type_id, InstBlockT& block,
-                                  std::size_t i) {
+                                  size_t i) {
   if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
@@ -183,7 +183,7 @@ static auto ConvertAggregateElement(
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
-    SemIR::TypeId target_elem_type, PendingBlock* target_block, std::size_t i) {
+    SemIR::TypeId target_elem_type, PendingBlock* target_block, size_t i) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.

@@ -14,8 +14,7 @@
 namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
-extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
-                                      std::size_t size) {
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   // Ignore large inputs.
   // TODO: Investigate replacement with an error limit. Content with errors on
   // escaped quotes (`\"` repeated) have O(M * N) behavior for M errors in a
