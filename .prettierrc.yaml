@@ -9,6 +9,6 @@ tabWidth: 2
 trailingComma: 'es5'
 useTabs: false
 overrides:
-  - files: '*.md'
+  - files: '**/*.md'
     options:
       tabWidth: 4
