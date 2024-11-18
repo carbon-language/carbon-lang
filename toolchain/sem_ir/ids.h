@@ -276,7 +276,7 @@ constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
 // arguments passed to them at runtime. In a `call` instruction, a runtime
 // argument will have the position in the argument list corresponding to its
 // runtime parameter index.
-// TODO: Rename this to CallParamIndex, for consistency with the "call
+// TODO: Rename this to CallParamIndex, for consistency with the "`Call`
 // parameters" terminology in EntityWithParamsBase.
 struct RuntimeParamIndex : public IndexBase,
                            public Printable<RuntimeParamIndex> {

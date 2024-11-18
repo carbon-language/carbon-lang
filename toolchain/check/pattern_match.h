@@ -11,13 +11,13 @@
 namespace Carbon::Check {
 
 // The outputs of CalleePatternMatch.
-// TODO: rename or remove this struct.
+// TODO: Rename or remove this struct.
 struct ParameterBlocks {
   // The call parameters of the function.
   SemIR::InstBlockId call_params_id;
 
   // The return slot.
-  // TODO: drop this and just use the last element of above?
+  // TODO: Drop this and just use the last element of above?
   SemIR::InstId return_slot_id;
 };
 

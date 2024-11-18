@@ -112,7 +112,7 @@ struct EntityWithParamsBase {
   // the function's return type declaration). This is not populated on imported
   // functions, because it is relevant only for a function definition.
   //
-  // TODO: can this be moved to `Function`, since it is not applicable to other
+  // TODO: Can this be moved to `Function`, since it is not applicable to other
   // kinds of entities?
   InstBlockId call_params_id;
   // True if declarations are `extern`.
