@@ -40,8 +40,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   static const InstId Invalid;
 
 // Builtin inst IDs.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  static const InstId Builtin##Name;
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/inst_kind.def"
 
   // The namespace for a `package` expression.
@@ -83,8 +82,8 @@ struct InstId : public IdBase, public Printable<InstId> {
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  constexpr InstId InstId::Builtin##Name =         \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
+  constexpr InstId InstId::Builtin##Name =    \
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/inst_kind.def"
 
