@@ -1307,34 +1307,34 @@ class ImportRefResolver {
     return ResolveAsUntyped(inst);
   }
 
-  auto GetLocal(SemIR::TypeId type_id) -> SemIR::ConstantId {
-    return GetLocalConstantId(type_id);
+  auto GetLocal(SemIR::TypeId* type_id) -> SemIR::ConstantId {
+    return GetLocalConstantId(*type_id);
   }
-  auto SetValue(SemIR::TypeId& type_id, SemIR::ConstantId type_const_id)
+  auto SetValue(SemIR::TypeId* type_id, SemIR::ConstantId type_const_id)
       -> void {
-    type_id = context_.GetTypeIdForTypeConstant(type_const_id);
+    *type_id = context_.GetTypeIdForTypeConstant(type_const_id);
   }
 
-  auto GetLocal(SemIR::InstId inst_id) -> SemIR::InstId {
-    return GetLocalConstantInstId(inst_id);
+  auto GetLocal(SemIR::InstId* inst_id) -> SemIR::InstId {
+    return GetLocalConstantInstId(*inst_id);
   }
-  auto SetValue(SemIR::InstId& inst_id, SemIR::InstId local_inst_id) -> void {
-    inst_id = local_inst_id;
+  auto SetValue(SemIR::InstId* inst_id, SemIR::InstId local_inst_id) -> void {
+    *inst_id = local_inst_id;
   }
 
   struct NoLocalData {};
 
-  auto GetLocal(SemIR::NameId /*name_id*/) -> NoLocalData { return {}; }
-  auto SetValue(SemIR::NameId& name_id, NoLocalData) -> void {
-    name_id = GetLocalNameId(name_id);
+  auto GetLocal(SemIR::NameId* /*name_id*/) -> NoLocalData { return {}; }
+  auto SetValue(SemIR::NameId* name_id, NoLocalData) -> void {
+    *name_id = GetLocalNameId(*name_id);
   }
 
-  auto GetLocal(IntId /*int_id*/) -> NoLocalData { return {}; }
-  auto SetValue(IntId& int_id, NoLocalData) -> void {
+  auto GetLocal(IntId* /*int_id*/) -> NoLocalData { return {}; }
+  auto SetValue(IntId* int_id, NoLocalData) -> void {
     // We can directly reuse the value IDs across file IRs. Otherwise, we need
     // to add a new canonical int in this IR.
-    if (!int_id.is_value()) {
-      int_id = context_.ints().AddSigned(import_ir_.ints().Get(int_id));
+    if (!int_id->is_value()) {
+      *int_id = context_.ints().AddSigned(import_ir_.ints().Get(*int_id));
     }
   }
 
@@ -1350,61 +1350,62 @@ class ImportRefResolver {
     *field.field = GetLocalCanonicalInstBlockId(*field.field, contents);
   }
 
-  auto GetLocal(SemIR::ClassId class_id) -> SemIR::InstId {
+  auto GetLocal(SemIR::ClassId* class_id) -> SemIR::InstId {
     return GetLocalConstantInstId(
-        import_ir_.classes().Get(class_id).first_owning_decl_id);
+        import_ir_.classes().Get(*class_id).first_owning_decl_id);
   }
-  auto SetValue(SemIR::ClassId& class_id, SemIR::InstId class_const_inst_id)
+  auto SetValue(SemIR::ClassId* class_id, SemIR::InstId class_const_inst_id)
       -> void {
     auto class_const_inst = context_.insts().Get(class_const_inst_id);
     if (auto class_type = class_const_inst.TryAs<SemIR::ClassType>()) {
-      class_id = class_type->class_id;
+      *class_id = class_type->class_id;
     } else {
-      class_id = context_.types()
-                     .GetAs<SemIR::GenericClassType>(class_const_inst.type_id())
-                     .class_id;
+      *class_id =
+          context_.types()
+              .GetAs<SemIR::GenericClassType>(class_const_inst.type_id())
+              .class_id;
     }
   }
 
-  auto GetLocal(SemIR::FunctionId function_id) -> SemIR::InstId {
+  auto GetLocal(SemIR::FunctionId* function_id) -> SemIR::InstId {
     return GetLocalConstantInstId(
-        import_ir_.functions().Get(function_id).first_decl_id());
+        import_ir_.functions().Get(*function_id).first_decl_id());
   }
-  auto SetValue(SemIR::FunctionId& function_id,
+  auto SetValue(SemIR::FunctionId* function_id,
                 SemIR::InstId function_const_inst_id) -> void {
     auto function_type_id =
         context_.insts().Get(function_const_inst_id).type_id();
-    function_id = context_.types()
-                      .GetAs<SemIR::FunctionType>(function_type_id)
-                      .function_id;
+    *function_id = context_.types()
+                       .GetAs<SemIR::FunctionType>(function_type_id)
+                       .function_id;
   }
 
-  auto GetLocal(SemIR::InterfaceId interface_id) -> SemIR::InstId {
+  auto GetLocal(SemIR::InterfaceId* interface_id) -> SemIR::InstId {
     return GetLocalConstantInstId(
-        import_ir_.interfaces().Get(interface_id).first_owning_decl_id);
+        import_ir_.interfaces().Get(*interface_id).first_owning_decl_id);
   }
-  auto SetValue(SemIR::InterfaceId& interface_id,
+  auto SetValue(SemIR::InterfaceId* interface_id,
                 SemIR::InstId interface_const_inst_id) -> void {
     auto interface_const_inst = context_.insts().Get(interface_const_inst_id);
     if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
-      interface_id = context_.facet_types()
-                         .Get(facet_type->facet_type_id)
-                         .impls_constraints.front()
-                         .interface_id;
+      *interface_id = context_.facet_types()
+                          .Get(facet_type->facet_type_id)
+                          .impls_constraints.front()
+                          .interface_id;
     } else {
-      interface_id = context_.types()
-                         .GetAs<SemIR::GenericInterfaceType>(
-                             interface_const_inst.type_id())
-                         .interface_id;
+      *interface_id = context_.types()
+                          .GetAs<SemIR::GenericInterfaceType>(
+                              interface_const_inst.type_id())
+                          .interface_id;
     }
   }
 
-  auto GetLocal(SemIR::SpecificId specific_id) -> SpecificData {
-    return GetLocalSpecificData(specific_id);
+  auto GetLocal(SemIR::SpecificId* specific_id) -> SpecificData {
+    return GetLocalSpecificData(*specific_id);
   }
-  auto SetValue(SemIR::SpecificId& specific_id,
+  auto SetValue(SemIR::SpecificId* specific_id,
                 const SpecificData& specific_data) -> void {
-    specific_id = GetOrAddLocalSpecific(specific_id, specific_data);
+    *specific_id = GetOrAddLocalSpecific(*specific_id, specific_data);
   }
 
   // A field that should be imported by adding an `import_ref`.
@@ -1421,56 +1422,81 @@ class ImportRefResolver {
   }
 
   // Import an instruction by mapping its fields to their local values.
-  template <typename... FieldTypes>
-  auto ImportInstFields(FieldTypes&&... fields) {
-    [&](auto... local_values) {
-      if (!HasNewWork()) {
-        (SetValue(std::forward<FieldTypes>(fields), local_values), ...);
-      }
-    }(GetLocal(fields)...);
+  template <typename FieldType1>
+  auto ImportInstFields(FieldType1 field1) {
+    auto local_value1 = GetLocal(field1);
+    if (HasNewWork()) {
+      return;
+    }
+    SetValue(field1, local_value1);
+  }
+
+  template <typename FieldType1, typename FieldType2>
+  auto ImportInstFields(FieldType1 field1, FieldType2 field2) {
+    auto local_value1 = GetLocal(field1);
+    auto local_value2 = GetLocal(field2);
+    if (HasNewWork()) {
+      return;
+    }
+    SetValue(field1, local_value1);
+    SetValue(field2, local_value2);
+  }
+
+  template <typename FieldType1, typename FieldType2, typename FieldType3>
+  auto ImportInstFields(FieldType1 field1, FieldType2 field2,
+                        FieldType3 field3) {
+    auto local_value1 = GetLocal(field1);
+    auto local_value2 = GetLocal(field2);
+    auto local_value3 = GetLocal(field3);
+    if (HasNewWork()) {
+      return;
+    }
+    SetValue(field1, local_value1);
+    SetValue(field2, local_value2);
+    SetValue(field3, local_value3);
   }
 
   // Resolve an instruction representing a constant by mapping its fields to
   // their local values and rebuilding a corresponding local constant.
   template <typename TypedInst, typename... FieldTypes>
-  auto TryResolveConstantByFields(TypedInst& inst, FieldTypes&&... fields)
+  auto TryResolveConstantByFields(TypedInst* inst, FieldTypes... fields)
       -> ResolveResult {
-    ImportInstFields(std::forward<FieldTypes>(fields)...);
+    ImportInstFields(fields...);
     if (HasNewWork()) {
       return Retry();
     }
-    return ResolveAs(inst);
+    return ResolveAs(*inst);
   }
 
   // Resolve an instruction representing a declaration by mapping its fields to
   // their local values and rebuilding a corresponding local instruction.
   template <typename TypedInst, typename... FieldTypes>
-  auto TryResolveDeclByFields(TypedInst& inst, SemIR::InstId import_inst_id,
-                              FieldTypes&&... fields) -> ResolveResult {
-    ImportInstFields(std::forward<FieldTypes>(fields)...);
+  auto TryResolveDeclByFields(TypedInst* inst, SemIR::InstId import_inst_id,
+                              FieldTypes... fields) -> ResolveResult {
+    ImportInstFields(fields...);
     if (HasNewWork()) {
       return Retry();
     }
-    auto decl_id = context_.AddInstInNoBlock(
-        context_.MakeImportedLocAndInst(AddImportIRInst(import_inst_id), inst));
+    auto decl_id = context_.AddInstInNoBlock(context_.MakeImportedLocAndInst(
+        AddImportIRInst(import_inst_id), *inst));
     return ResolveAsConstant(context_.constant_values().Get(decl_id));
   }
 
   auto TryResolveTypedInst(SemIR::AssociatedEntity inst) -> ResolveResult {
     return TryResolveConstantByFields(
-        inst, inst.type_id, FieldWithImportRef{.field = &inst.decl_id});
+        &inst, &inst.type_id, FieldWithImportRef{.field = &inst.decl_id});
   }
 
   auto TryResolveTypedInst(SemIR::AssociatedEntityType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.entity_type_id,
-                                      inst.interface_type_id);
+    return TryResolveConstantByFields(&inst, &inst.entity_type_id,
+                                      &inst.interface_type_id);
   }
 
   auto TryResolveTypedInst(SemIR::BaseDecl inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
-    return TryResolveDeclByFields(inst, import_inst_id, inst.type_id,
-                                  inst.base_type_id);
+    return TryResolveDeclByFields(&inst, import_inst_id, &inst.type_id,
+                                  &inst.base_type_id);
   }
 
   auto TryResolveTypedInst(SemIR::BindAlias inst) -> ResolveResult {
@@ -1670,18 +1696,18 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::ClassType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.class_id, inst.specific_id);
+    return TryResolveConstantByFields(&inst, &inst.class_id, &inst.specific_id);
   }
 
   auto TryResolveTypedInst(SemIR::CompleteTypeWitness inst) -> ResolveResult {
     CARBON_CHECK(import_ir_.types().GetInstId(inst.type_id) ==
                  SemIR::InstId::BuiltinWitnessType);
-    return TryResolveConstantByFields(inst, inst.object_repr_id);
+    return TryResolveConstantByFields(&inst, &inst.object_repr_id);
   }
 
   auto TryResolveTypedInst(SemIR::ConstType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.inner_id);
+    return TryResolveConstantByFields(&inst, &inst.inner_id);
   }
 
   auto TryResolveTypedInst(SemIR::ExportDecl inst) -> ResolveResult {
@@ -1691,8 +1717,8 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::FieldDecl inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
-    return TryResolveDeclByFields(inst, import_inst_id, inst.type_id,
-                                  inst.name_id);
+    return TryResolveDeclByFields(&inst, import_inst_id, &inst.type_id,
+                                  &inst.name_id);
   }
 
   // Make a declaration of a function. This is done as a separate step from
@@ -1809,19 +1835,20 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.function_id, inst.specific_id);
+    return TryResolveConstantByFields(&inst, &inst.function_id,
+                                      &inst.specific_id);
   }
 
   auto TryResolveTypedInst(SemIR::GenericClassType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.class_id,
-                                      inst.enclosing_specific_id);
+    return TryResolveConstantByFields(&inst, &inst.class_id,
+                                      &inst.enclosing_specific_id);
   }
 
   auto TryResolveTypedInst(SemIR::GenericInterfaceType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.interface_id,
-                                      inst.enclosing_specific_id);
+    return TryResolveConstantByFields(&inst, &inst.interface_id,
+                                      &inst.enclosing_specific_id);
   }
 
   // Make a declaration of an impl. This is done as a separate step from
@@ -2162,26 +2189,26 @@ class ImportRefResolver {
     CARBON_CHECK(import_ir_.types().GetInstId(inst.type_id) ==
                  SemIR::InstId::BuiltinWitnessType);
     return TryResolveConstantByFields(
-        inst, CanonicalInstBlock{.field = &inst.elements_id});
+        &inst, CanonicalInstBlock{.field = &inst.elements_id});
   }
 
   auto TryResolveTypedInst(SemIR::IntValue inst) -> ResolveResult {
-    return TryResolveConstantByFields(inst, inst.type_id, inst.int_id);
+    return TryResolveConstantByFields(&inst, &inst.type_id, &inst.int_id);
   }
 
   auto TryResolveTypedInst(SemIR::IntType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.bit_width_id);
+    return TryResolveConstantByFields(&inst, &inst.bit_width_id);
   }
 
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.pointee_id);
+    return TryResolveConstantByFields(&inst, &inst.pointee_id);
   }
 
   auto TryResolveTypedInst(SemIR::SpecificFunction inst) -> ResolveResult {
-    return TryResolveConstantByFields(inst, inst.type_id, inst.callee_id,
-                                      inst.specific_id);
+    return TryResolveConstantByFields(&inst, &inst.type_id, &inst.callee_id,
+                                      &inst.specific_id);
   }
 
   auto TryResolveTypedInst(SemIR::StructType inst) -> ResolveResult {
@@ -2213,7 +2240,7 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::StructValue inst) -> ResolveResult {
     return TryResolveConstantByFields(
-        inst, inst.type_id, CanonicalInstBlock{.field = &inst.elements_id});
+        &inst, &inst.type_id, CanonicalInstBlock{.field = &inst.elements_id});
   }
 
   auto TryResolveTypedInst(SemIR::TupleType inst) -> ResolveResult {
@@ -2242,13 +2269,13 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::TupleValue inst) -> ResolveResult {
     return TryResolveConstantByFields(
-        inst, inst.type_id, CanonicalInstBlock{.field = &inst.elements_id});
+        &inst, &inst.type_id, CanonicalInstBlock{.field = &inst.elements_id});
   }
 
   auto TryResolveTypedInst(SemIR::UnboundElementType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    return TryResolveConstantByFields(inst, inst.class_type_id,
-                                      inst.element_type_id);
+    return TryResolveConstantByFields(&inst, &inst.class_type_id,
+                                      &inst.element_type_id);
   }
 
   // Perform any work that we deferred until the end of the main Resolve loop.
