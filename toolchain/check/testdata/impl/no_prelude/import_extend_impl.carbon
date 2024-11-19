@@ -52,9 +52,10 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.3: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,7 +80,8 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc9: <witness> = interface_witness (%F.decl) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10: %I.type = facet_value constants.%C, constants.%C [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9: <witness> = interface_witness (%F.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -91,7 +93,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -110,7 +112,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT: specific @F.1(@impl.%.loc10) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_imported_class_extend_impl.carbon
 // CHECK:STDOUT:

@@ -28,9 +28,9 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.25: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.26: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.27: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -71,11 +71,11 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %.loc14_7.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_7.2: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc14_7.3: <bound method> = bound_method %.loc14_7.1, %.loc14_7.2 [template = constants.%.26]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc14_7.3(%.loc14_7.1) [template = constants.%.27]
-// CHECK:STDOUT:   %.loc14_7.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.27]
-// CHECK:STDOUT:   %.loc14_7.5: i32 = converted %.loc14_7.1, %.loc14_7.4 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc14_7.2: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc14_7.3: <bound method> = bound_method %.loc14_7.1, %.loc14_7.2 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc14_7.3(%.loc14_7.1) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc14_7.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
+// CHECK:STDOUT:   %.loc14_7.5: i32 = converted %.loc14_7.1, %.loc14_7.4 [template = constants.%.35]
 // CHECK:STDOUT:   %Foo.call: init %empty_tuple.type = call %Foo.ref(%.loc14_7.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

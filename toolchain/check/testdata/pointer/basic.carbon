@@ -26,10 +26,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.25: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.26: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.27: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.28: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.36: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,22 +67,22 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.26]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.2(%.loc12_16) [template = constants.%.27]
-// CHECK:STDOUT:   %.loc12_17.3: init i32 = converted %.loc12_16, %int.convert_checked [template = constants.%.27]
+// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.2(%.loc12_16) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc12_17.3: init i32 = converted %.loc12_16, %int.convert_checked [template = constants.%.35]
 // CHECK:STDOUT:   assign %n.var, %.loc12_17.3
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc13_13.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
 // CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_32.loc13, %.loc13_13.1 [template = i32]
-// CHECK:STDOUT:   %.loc13_13.3: type = ptr_type i32 [template = constants.%.28]
-// CHECK:STDOUT:   %p.var: ref %.28 = var p
-// CHECK:STDOUT:   %p: ref %.28 = bind_name p, %p.var
+// CHECK:STDOUT:   %.loc13_13.3: type = ptr_type i32 [template = constants.%.36]
+// CHECK:STDOUT:   %p.var: ref %.36 = var p
+// CHECK:STDOUT:   %p: ref %.36 = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_17: %.28 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_17: %.36 = addr_of %n.ref
 // CHECK:STDOUT:   assign %p.var, %.loc13_17
-// CHECK:STDOUT:   %p.ref: ref %.28 = name_ref p, %p
-// CHECK:STDOUT:   %.loc15_11: %.28 = bind_value %p.ref
+// CHECK:STDOUT:   %p.ref: ref %.36 = name_ref p, %p
+// CHECK:STDOUT:   %.loc15_11: %.36 = bind_value %p.ref
 // CHECK:STDOUT:   %.loc15_10.1: ref i32 = deref %.loc15_11
 // CHECK:STDOUT:   %.loc15_10.2: i32 = bind_value %.loc15_10.1
 // CHECK:STDOUT:   return %.loc15_10.2

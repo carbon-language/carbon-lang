@@ -575,9 +575,10 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
 
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
-           SemIR::GenericClassType, SemIR::GenericInterfaceType,
-           SemIR::UnboundElementType, SemIR::WhereExpr>())
+           SemIR::AssociatedEntityType, SemIR::FacetAccessType,
+           SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+           SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+           SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

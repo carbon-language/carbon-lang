@@ -550,7 +550,9 @@ struct ExportDecl {
 // pair of a type and a witness.
 struct FacetAccessType {
   static constexpr auto Kind = InstKind::FacetAccessType.Define<Parse::NodeId>(
-      {.ir_name = "facet_access_type"});
+      {.ir_name = "facet_access_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.

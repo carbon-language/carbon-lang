@@ -419,7 +419,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
-        out << "<cannot stringify " << step.inst_id << ">";
+        out << "<cannot stringify " << step.inst_id << " kind "
+            << untyped_inst.kind() << ">";
         break;
     }
   }

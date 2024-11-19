@@ -779,10 +779,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.30: <bound method> = bound_method %.3, %Convert.15 [template]
-// CHECK:STDOUT:   %.31: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %tuple: %tuple.type.4 = tuple_value (%.2, %.31) [template]
+// CHECK:STDOUT:   %.37: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.38: <bound method> = bound_method %.3, %Convert.15 [template]
+// CHECK:STDOUT:   %.39: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.4 = tuple_value (%.2, %.39) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -841,11 +841,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_18: Core.IntLiteral = int_value 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_19.1: %tuple.type.3 = tuple_literal (%.loc7_15, %.loc7_18)
 // CHECK:STDOUT:   %.loc7_3: <specific function> = specific_function %TupleParam.ref, @TupleParam(Core.IntLiteral) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_19.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc7_19.3: <bound method> = bound_method %.loc7_18, %.loc7_19.2 [template = constants.%.30]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc7_19.3(%.loc7_18) [template = constants.%.31]
-// CHECK:STDOUT:   %.loc7_19.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
-// CHECK:STDOUT:   %.loc7_19.5: i32 = converted %.loc7_18, %.loc7_19.4 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc7_19.2: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc7_19.3: <bound method> = bound_method %.loc7_18, %.loc7_19.2 [template = constants.%.38]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc7_19.3(%.loc7_18) [template = constants.%.39]
+// CHECK:STDOUT:   %.loc7_19.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.39]
+// CHECK:STDOUT:   %.loc7_19.5: i32 = converted %.loc7_18, %.loc7_19.4 [template = constants.%.39]
 // CHECK:STDOUT:   %tuple: %tuple.type.4 = tuple_value (%.loc7_15, %.loc7_19.5) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc7_19.6: %tuple.type.4 = converted %.loc7_19.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %TupleParam.call: init %empty_tuple.type = call %.loc7_3(%.loc7_19.6)
@@ -887,10 +887,10 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.32: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.33: <bound method> = bound_method %.4, %Convert.15 [template]
-// CHECK:STDOUT:   %.34: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %.6 = struct_value (%.3, %.34) [template]
+// CHECK:STDOUT:   %.40: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.41: <bound method> = bound_method %.4, %Convert.15 [template]
+// CHECK:STDOUT:   %.42: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %struct: %.6 = struct_value (%.3, %.42) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -948,11 +948,11 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc7_29: Core.IntLiteral = int_value 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_30.1: %.5 = struct_literal (%.loc7_21, %.loc7_29)
 // CHECK:STDOUT:   %.loc7_3: <specific function> = specific_function %StructParam.ref, @StructParam(Core.IntLiteral) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_30.2: %Convert.type.2 = interface_witness_access constants.%.32, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc7_30.3: <bound method> = bound_method %.loc7_29, %.loc7_30.2 [template = constants.%.33]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc7_30.3(%.loc7_29) [template = constants.%.34]
-// CHECK:STDOUT:   %.loc7_30.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.34]
-// CHECK:STDOUT:   %.loc7_30.5: i32 = converted %.loc7_29, %.loc7_30.4 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc7_30.2: %Convert.type.2 = interface_witness_access constants.%.40, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc7_30.3: <bound method> = bound_method %.loc7_29, %.loc7_30.2 [template = constants.%.41]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc7_30.3(%.loc7_29) [template = constants.%.42]
+// CHECK:STDOUT:   %.loc7_30.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.42]
+// CHECK:STDOUT:   %.loc7_30.5: i32 = converted %.loc7_29, %.loc7_30.4 [template = constants.%.42]
 // CHECK:STDOUT:   %struct: %.6 = struct_value (%.loc7_21, %.loc7_30.5) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc7_30.6: %.6 = converted %.loc7_30.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %StructParam.call: init %empty_tuple.type = call %.loc7_3(%.loc7_30.6)

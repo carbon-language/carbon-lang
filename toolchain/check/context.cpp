@@ -1135,9 +1135,10 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::AssociatedEntityType, SemIR::FacetAccessType,
+             SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+             SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value

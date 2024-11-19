@@ -45,7 +45,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct: %.4 = struct_value (%.2, %.3) [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -115,7 +115,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %int.make_type_32.loc34_28: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc34_28.1: type = value_of_initializer %int.make_type_32.loc34_28 [template = i32]
 // CHECK:STDOUT:   %.loc34_28.2: type = converted %int.make_type_32.loc34_28, %.loc34_28.1 [template = i32]
-// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.8]
+// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.10]
 // CHECK:STDOUT:   %.loc34_33: Core.IntLiteral = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return

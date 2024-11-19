@@ -24,10 +24,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.25: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.26: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.27: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.28: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.36: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,15 +65,15 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.26]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.2(%.loc12_16) [template = constants.%.27]
-// CHECK:STDOUT:   %.loc12_17.3: init i32 = converted %.loc12_16, %int.convert_checked [template = constants.%.27]
+// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %.loc12_16, %.loc12_17.1 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.2(%.loc12_16) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc12_17.3: init i32 = converted %.loc12_16, %int.convert_checked [template = constants.%.35]
 // CHECK:STDOUT:   assign %n.var, %.loc12_17.3
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_13: %.28 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_13: %.36 = addr_of %n.ref
 // CHECK:STDOUT:   %.loc13_12: ref i32 = deref %.loc13_13
-// CHECK:STDOUT:   %.loc13_11: %.28 = addr_of %.loc13_12
+// CHECK:STDOUT:   %.loc13_11: %.36 = addr_of %.loc13_12
 // CHECK:STDOUT:   %.loc13_10.1: ref i32 = deref %.loc13_11
 // CHECK:STDOUT:   %.loc13_10.2: i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2
