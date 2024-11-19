@@ -1075,7 +1075,8 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
       if (!ValidateFloatBitWidth(context, loc, arg_ids[0])) {
         return SemIR::ConstantId::Error;
       }
-      return context.constant_values().Get(SemIR::InstId::BuiltinFloatType);
+      return context.constant_values().Get(
+          SemIR::InstId::BuiltinLegacyFloatType);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {

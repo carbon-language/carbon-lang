@@ -64,8 +64,10 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType, "bool")
 // runtime.
 CARBON_SEM_IR_BUILTIN_INST_KIND(IntLiteralType, "Core.IntLiteral")
 
-// The type of floating point values and real literals, currently always f64.
-CARBON_SEM_IR_BUILTIN_INST_KIND(FloatType, "f64")
+// The legacy float type. This is currently used for real literals, and is
+// treated as f64. It's separate from `FloatType`, and should change to mirror
+// integers, likely replacing this with a `FloatLiteralType`.
+CARBON_SEM_IR_BUILTIN_INST_KIND(LegacyFloatType, "f64")
 
 // The type of string values and String literals.
 CARBON_SEM_IR_BUILTIN_INST_KIND(StringType, "String")

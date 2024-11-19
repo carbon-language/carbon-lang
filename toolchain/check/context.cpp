@@ -1010,7 +1010,7 @@ class TypeCompleter {
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
       case SemIR::BuiltinInstKind::IntLiteralType:
-      case SemIR::BuiltinInstKind::FloatType:
+      case SemIR::BuiltinInstKind::LegacyFloatType:
       case SemIR::BuiltinInstKind::NamespaceType:
       case SemIR::BuiltinInstKind::BoundMethodType:
       case SemIR::BuiltinInstKind::WitnessType:

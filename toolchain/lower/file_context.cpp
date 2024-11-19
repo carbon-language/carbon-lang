@@ -478,7 +478,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
       return nullptr;
     case SemIR::BuiltinInstKind::TypeType:
       return context.GetTypeType();
-    case SemIR::BuiltinInstKind::FloatType:
+    case SemIR::BuiltinInstKind::LegacyFloatType:
       return llvm::Type::getDoubleTy(context.llvm_context());
     case SemIR::BuiltinInstKind::BoolType:
       // TODO: We may want to have different representations for `bool`

@@ -37,7 +37,7 @@
 // CHECK:STDOUT:     instAutoType:    {kind: BuiltinInst, arg0: AutoType, type: typeTypeType}
 // CHECK:STDOUT:     instBoolType:    {kind: BuiltinInst, arg0: BoolType, type: typeTypeType}
 // CHECK:STDOUT:     instIntLiteralType: {kind: BuiltinInst, arg0: IntLiteralType, type: typeTypeType}
-// CHECK:STDOUT:     instFloatType:   {kind: BuiltinInst, arg0: FloatType, type: typeTypeType}
+// CHECK:STDOUT:     instLegacyFloatType: {kind: BuiltinInst, arg0: LegacyFloatType, type: typeTypeType}
 // CHECK:STDOUT:     instStringType:  {kind: BuiltinInst, arg0: StringType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: BuiltinInst, arg0: BoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instSpecificFunctionType: {kind: BuiltinInst, arg0: SpecificFunctionType, type: typeTypeType}
@@ -51,7 +51,7 @@
 // CHECK:STDOUT:     instAutoType:    templateConstant(instAutoType)
 // CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
 // CHECK:STDOUT:     instIntLiteralType: templateConstant(instIntLiteralType)
-// CHECK:STDOUT:     instFloatType:   templateConstant(instFloatType)
+// CHECK:STDOUT:     instLegacyFloatType: templateConstant(instLegacyFloatType)
 // CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
 // CHECK:STDOUT:     instBoundMethodType: templateConstant(instBoundMethodType)
 // CHECK:STDOUT:     instSpecificFunctionType: templateConstant(instSpecificFunctionType)

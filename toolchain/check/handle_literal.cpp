@@ -84,9 +84,9 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
   context.AddInstAndPush<SemIR::FloatLiteral>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::FloatType),
-       .float_id = float_id});
+      node_id, {.type_id = context.GetBuiltinType(
+                    SemIR::BuiltinInstKind::LegacyFloatType),
+                .float_id = float_id});
   return true;
 }
 

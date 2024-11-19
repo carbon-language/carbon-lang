@@ -91,7 +91,8 @@ struct AnyInt {
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<InstId::BuiltinFloatType>::Check(sem_ir, state, type_id)) {
+    if (BuiltinType<InstId::BuiltinLegacyFloatType>::Check(sem_ir, state,
+                                                           type_id)) {
       return true;
     }
     return sem_ir.types().Is<FloatType>(type_id);
