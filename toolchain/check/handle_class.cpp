@@ -569,7 +569,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptWithBaseHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   if (auto fields = context.struct_type_fields().Get(fields_id);
@@ -584,7 +584,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(first_field_inst_id, AdaptWithFieldHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
@@ -601,7 +601,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
             .Build(class_info.adapt_id, AdaptWithVirtual)
             .Note(inst_id, AdaptWithVirtualHere)
             .Emit();
-        return SemIR::InstId::BuiltinError;
+        return SemIR::InstId::BuiltinErrorInst;
       }
     }
   }

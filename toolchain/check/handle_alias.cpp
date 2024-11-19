@@ -62,7 +62,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
                       "alias initializer must be a name reference");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
     alias_type_id = SemIR::TypeId::Error;
-    alias_value_id = SemIR::InstId::BuiltinError;
+    alias_value_id = SemIR::InstId::BuiltinErrorInst;
   }
   auto alias_id = context.AddInst<SemIR::BindAlias>(
       name_context.loc_id, {.type_id = alias_type_id,

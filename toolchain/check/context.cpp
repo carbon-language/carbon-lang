@@ -60,7 +60,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
+      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinErrorInst),
       SemIR::TypeId::Error);
   type_ids_for_type_constants_.Insert(
       SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
@@ -345,7 +345,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   return {.specific_id = SemIR::SpecificId::Invalid,
-          .inst_id = SemIR::InstId::BuiltinError};
+          .inst_id = SemIR::InstId::BuiltinErrorInst};
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
@@ -571,7 +571,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
       emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
-              .inst_id = SemIR::InstId::BuiltinError};
+              .inst_id = SemIR::InstId::BuiltinErrorInst};
     }
 
     result.inst_id = scope_result_id;
@@ -597,7 +597,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     }
 
     return {.specific_id = SemIR::SpecificId::Invalid,
-            .inst_id = SemIR::InstId::BuiltinError};
+            .inst_id = SemIR::InstId::BuiltinErrorInst};
   }
 
   return result;
@@ -639,7 +639,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
     -> SemIR::InstId {
   auto core_package_id = GetCorePackage(*this, loc);
   if (!core_package_id.is_valid()) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
@@ -651,7 +651,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
     emitter_->Emit(loc, CoreNameNotFound, name_id);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Look through import_refs and aliases.
@@ -1006,7 +1006,7 @@ class TypeCompleter {
     switch (builtin.builtin_inst_kind) {
       case SemIR::BuiltinInstKind::TypeType:
       case SemIR::BuiltinInstKind::AutoType:
-      case SemIR::BuiltinInstKind::Error:
+      case SemIR::BuiltinInstKind::ErrorInst:
       case SemIR::BuiltinInstKind::Invalid:
       case SemIR::BuiltinInstKind::BoolType:
       case SemIR::BuiltinInstKind::IntLiteralType:

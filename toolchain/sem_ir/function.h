@@ -88,7 +88,7 @@ struct Function : public EntityWithParamsBase,
       -> ParamPatternInfo;
 
   // Gets the name from the name binding instruction, or invalid if this pattern
-  // has been replaced with BuiltinError.
+  // has been replaced with BuiltinErrorInst.
   static auto GetNameFromPatternId(const File& sem_ir, InstId param_pattern_id)
       -> SemIR::NameId;
 

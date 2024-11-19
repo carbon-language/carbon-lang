@@ -39,8 +39,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `operand.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
                                                  op_fn, missing_impl_diagnoser);
-  if (bound_op_id == SemIR::InstId::BuiltinError) {
-    return SemIR::InstId::BuiltinError;
+  if (bound_op_id == SemIR::InstId::BuiltinErrorInst) {
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Form `bound_op()`.
@@ -57,8 +57,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `lhs.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn,
                                                  missing_impl_diagnoser);
-  if (bound_op_id == SemIR::InstId::BuiltinError) {
-    return SemIR::InstId::BuiltinError;
+  if (bound_op_id == SemIR::InstId::BuiltinErrorInst) {
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Form `bound_op(rhs)`.

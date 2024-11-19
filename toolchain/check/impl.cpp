@@ -78,7 +78,7 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
 // Checks that `impl_function_id` is a valid implementation of the function
 // described in the interface as `interface_function_id`. Returns the value to
 // put into the corresponding slot in the witness table, which can be
-// `BuiltinError` if the function is not usable.
+// `BuiltinErrorInst` if the function is not usable.
 static auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id) -> SemIR::InstId {
@@ -95,7 +95,7 @@ static auto CheckAssociatedFunctionImplementation(
                            interface_function_type.function_id);
     builder.Emit();
 
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Map from the specific for the function type to the specific for the
@@ -117,7 +117,7 @@ static auto CheckAssociatedFunctionImplementation(
           context.functions().Get(interface_function_type.function_id),
           interface_function_specific_id,
           /*check_syntax=*/false)) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   return impl_decl_id;
 }
@@ -138,7 +138,7 @@ static auto BuildInterfaceWitness(
         return context.emitter().Build(
             impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
       })) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
@@ -159,7 +159,7 @@ static auto BuildInterfaceWitness(
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::TypeId::Error) {
-          return SemIR::InstId::BuiltinError;
+          return SemIR::InstId::BuiltinErrorInst;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
@@ -184,7 +184,7 @@ static auto BuildInterfaceWitness(
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 
-          table.push_back(SemIR::InstId::BuiltinError);
+          table.push_back(SemIR::InstId::BuiltinErrorInst);
         }
         break;
       }
@@ -192,11 +192,11 @@ static auto BuildInterfaceWitness(
         // TODO: Check we have a value for this constant in the constraint.
         context.TODO(impl.definition_id,
                      "impl of interface with associated constant");
-        return SemIR::InstId::BuiltinError;
+        return SemIR::InstId::BuiltinErrorInst;
       default:
-        CARBON_CHECK(decl_id == SemIR::InstId::BuiltinError,
+        CARBON_CHECK(decl_id == SemIR::InstId::BuiltinErrorInst,
                      "Unexpected kind of associated entity {0}", decl);
-        table.push_back(SemIR::InstId::BuiltinError);
+        table.push_back(SemIR::InstId::BuiltinErrorInst);
         break;
     }
   }
@@ -215,13 +215,13 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
 
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
   if (facet_type_id == SemIR::TypeId::Error) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
     context.emitter().Emit(impl.definition_id, ImplAsNonFacetType);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   const SemIR::FacetTypeInfo& facet_type_info =
       context.facet_types().Get(facet_type->facet_type_id);
@@ -229,7 +229,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   auto interface = facet_type_info.TryAsSingleInterface();
   if (!interface) {
     context.TODO(impl.definition_id, "impl as not 1 interface");
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;

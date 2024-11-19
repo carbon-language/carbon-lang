@@ -212,7 +212,7 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 constexpr ConstantId ConstantId::Error =
-    ConstantId::ForTemplateConstant(InstId::BuiltinError);
+    ConstantId::ForTemplateConstant(InstId::BuiltinErrorInst);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
 // The ID of a EntityName.

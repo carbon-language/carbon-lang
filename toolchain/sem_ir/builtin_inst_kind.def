@@ -44,7 +44,7 @@ CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType, "type")
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-CARBON_SEM_IR_BUILTIN_INST_KIND(Error, "<error>")
+CARBON_SEM_IR_BUILTIN_INST_KIND(ErrorInst, "<error>")
 
 // Used for the type of patterns that do not match a fixed type.
 CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType, "auto")

@@ -43,11 +43,11 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                \
-  insts_.AddInNoBlock(LocIdAndInst::NoLoc<BuiltinInst>(           \
-      {.type_id = BuiltinInstKind::Name == BuiltinInstKind::Error \
-                      ? TypeId::Error                             \
-                      : TypeId::TypeType,                         \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                    \
+  insts_.AddInNoBlock(LocIdAndInst::NoLoc<BuiltinInst>(               \
+      {.type_id = BuiltinInstKind::Name == BuiltinInstKind::ErrorInst \
+                      ? TypeId::Error                                 \
+                      : TypeId::TypeType,                             \
        .builtin_inst_kind = BuiltinInstKind::Name}));
 #include "toolchain/sem_ir/builtin_inst_kind.def"
   CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
@@ -288,7 +288,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         return value_category;
 
       case CARBON_KIND(BuiltinInst inst): {
-        if (inst.builtin_inst_kind == BuiltinInstKind::Error) {
+        if (inst.builtin_inst_kind == BuiltinInstKind::ErrorInst) {
           return ExprCategory::Error;
         }
         return value_category;

@@ -345,7 +345,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
            context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
            context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
-    if (param_ref_id == SemIR::InstId::BuiltinError) {
+    if (param_ref_id == SemIR::InstId::BuiltinErrorInst) {
       continue;
     }
     auto param_info =

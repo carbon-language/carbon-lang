@@ -33,7 +33,7 @@
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: BuiltinInst, arg0: TypeType, type: typeTypeType}
-// CHECK:STDOUT:     instError:       {kind: BuiltinInst, arg0: Error, type: typeError}
+// CHECK:STDOUT:     instErrorInst:   {kind: BuiltinInst, arg0: ErrorInst, type: typeError}
 // CHECK:STDOUT:     instAutoType:    {kind: BuiltinInst, arg0: AutoType, type: typeTypeType}
 // CHECK:STDOUT:     instBoolType:    {kind: BuiltinInst, arg0: BoolType, type: typeTypeType}
 // CHECK:STDOUT:     instIntLiteralType: {kind: BuiltinInst, arg0: IntLiteralType, type: typeTypeType}
@@ -47,7 +47,7 @@
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)
-// CHECK:STDOUT:     instError:       templateConstant(instError)
+// CHECK:STDOUT:     instErrorInst:   templateConstant(instErrorInst)
 // CHECK:STDOUT:     instAutoType:    templateConstant(instAutoType)
 // CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
 // CHECK:STDOUT:     instIntLiteralType: templateConstant(instIntLiteralType)

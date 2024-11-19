@@ -242,7 +242,7 @@ class Context {
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
-  // BuiltinError if not found.
+  // BuiltinErrorInst if not found.
   auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.

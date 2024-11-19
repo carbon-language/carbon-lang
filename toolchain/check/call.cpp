@@ -94,7 +94,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                           EntityKind::GenericClass, enclosing_specific_id,
                           /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   return context.GetOrAddInst<SemIR::ClassType>(
       loc_id, {.type_id = SemIR::TypeId::TypeType,
@@ -114,7 +114,7 @@ static auto PerformCallToGenericInterface(
                           EntityKind::GenericInterface, enclosing_specific_id,
                           /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   return context.GetOrAddInst(loc_id, context.FacetTypeFromInterface(
                                           interface_id, *callee_specific_id));
@@ -144,7 +144,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                             "value of type {0} is not callable", TypeOfInstId);
           context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
         }
-        return SemIR::InstId::BuiltinError;
+        return SemIR::InstId::BuiltinErrorInst;
       }
     }
   }
@@ -156,7 +156,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       EntityKind::Function, callee_function.enclosing_specific_id,
       callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
   if (callee_specific_id->is_valid()) {
     callee_id = context.GetOrAddInst(

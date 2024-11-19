@@ -993,7 +993,7 @@ class ImportRefResolver {
         break;
       }
       default: {
-        if (const_inst_id == SemIR::InstId::BuiltinError) {
+        if (const_inst_id == SemIR::InstId::BuiltinErrorInst) {
           return SemIR::NameScopeId::Invalid;
         }
         break;
