@@ -1402,7 +1402,18 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
-    case SemIR::BuiltinInst::Kind:
+    case SemIR::AutoType::Kind:
+    case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
+    case SemIR::ErrorInst::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::LegacyFloatType::Kind:
+    case SemIR::NamespaceType::Kind:
+    case SemIR::SpecificFunctionType::Kind:
+    case SemIR::StringType::Kind:
+    case SemIR::TypeType::Kind:
+    case SemIR::VtableType::Kind:
+    case SemIR::WitnessType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 

@@ -1000,31 +1000,24 @@ class TypeCompleter {
     return value_rep;
   }
 
-  auto BuildValueReprForInst(SemIR::TypeId type_id,
-                             SemIR::BuiltinInst builtin) const
+  template <typename InstT>
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+             SemIR::ErrorInst, SemIR::IntLiteralType, SemIR::LegacyFloatType,
+             SemIR::NamespaceType, SemIR::SpecificFunctionType, SemIR::TypeType,
+             SemIR::VtableType, SemIR::WitnessType>())
+  auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
-    switch (builtin.builtin_inst_kind) {
-      case SemIR::BuiltinInstKind::TypeType:
-      case SemIR::BuiltinInstKind::AutoType:
-      case SemIR::BuiltinInstKind::ErrorInst:
-      case SemIR::BuiltinInstKind::Invalid:
-      case SemIR::BuiltinInstKind::BoolType:
-      case SemIR::BuiltinInstKind::IntLiteralType:
-      case SemIR::BuiltinInstKind::LegacyFloatType:
-      case SemIR::BuiltinInstKind::NamespaceType:
-      case SemIR::BuiltinInstKind::BoundMethodType:
-      case SemIR::BuiltinInstKind::WitnessType:
-      case SemIR::BuiltinInstKind::SpecificFunctionType:
-      case SemIR::BuiltinInstKind::VtableType:
-        return MakeCopyValueRepr(type_id);
+    return MakeCopyValueRepr(type_id);
+  }
 
-      case SemIR::BuiltinInstKind::StringType:
-        // TODO: Decide on string value semantics. This should probably be a
-        // custom value representation carrying a pointer and size or
-        // similar.
-        return MakePointerValueRepr(type_id);
-    }
-    llvm_unreachable("All builtin kinds were handled above");
+  auto BuildValueReprForInst(SemIR::TypeId type_id,
+                             SemIR::StringType /*inst*/) const
+      -> SemIR::ValueRepr {
+    // TODO: Decide on string value semantics. This should probably be a
+    // custom value representation carrying a pointer and size or
+    // similar.
+    return MakePointerValueRepr(type_id);
   }
 
   auto BuildStructOrTupleValueRepr(size_t num_elements,
@@ -1340,7 +1333,6 @@ auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id,
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
-  CARBON_CHECK(kind != SemIR::BuiltinInstKind::Invalid);
   auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);

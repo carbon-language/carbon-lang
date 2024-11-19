@@ -45,6 +45,20 @@
 
 namespace Carbon::SemIR {
 
+// A builtin instruction, corresponding to instructions like
+// InstId::BuiltinTypeType.
+//
+// Builtins don't have a parse node associated with them.
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, Label)                          \
+  struct Name {                                                               \
+    static constexpr auto Kind = InstKind::Name.Define<Parse::InvalidNodeId>( \
+        {.ir_name = Label,                                                    \
+         .is_type = InstIsType::Always,                                       \
+         .constant_kind = InstConstantKind::Always});                         \
+    TypeId type_id;                                                           \
+  };
+#include "toolchain/sem_ir/inst_kind.def"
+
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
@@ -399,20 +413,6 @@ struct BranchWithArg {
   // Branches don't produce a value, so have no type.
   InstBlockId target_id;
   InstId arg_id;
-};
-
-// A builtin instruction, corresponding to instructions like
-// InstId::BuiltinTypeType.
-struct BuiltinInst {
-  // Builtins don't have a parse node associated with them.
-  static constexpr auto Kind =
-      InstKind::BuiltinInst.Define<Parse::InvalidNodeId>(
-          {.ir_name = "builtin",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  BuiltinInstKind builtin_inst_kind;
 };
 
 // An abstract `callee(args)` call, where the callee may be a function, but

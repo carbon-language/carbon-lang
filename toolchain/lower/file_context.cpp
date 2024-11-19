@@ -460,46 +460,6 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       llvm::DISubprogram::SPFlagDefinition);
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
-    -> llvm::Type* {
-  return llvm::ArrayType::get(
-      context.GetType(inst.element_type_id),
-      context.sem_ir().GetArrayBoundValue(inst.bound_id));
-}
-
-static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
-    -> llvm::Type* {
-  switch (inst.builtin_inst_kind) {
-    case SemIR::BuiltinInstKind::Invalid:
-    case SemIR::BuiltinInstKind::AutoType:
-      CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
-    case SemIR::BuiltinInstKind::ErrorInst:
-      // This is a complete type but uses of it should never be lowered.
-      return nullptr;
-    case SemIR::BuiltinInstKind::TypeType:
-      return context.GetTypeType();
-    case SemIR::BuiltinInstKind::LegacyFloatType:
-      return llvm::Type::getDoubleTy(context.llvm_context());
-    case SemIR::BuiltinInstKind::BoolType:
-      // TODO: We may want to have different representations for `bool`
-      // storage
-      // (`i8`) versus for `bool` values (`i1`).
-      return llvm::Type::getInt1Ty(context.llvm_context());
-    case SemIR::BuiltinInstKind::SpecificFunctionType:
-    case SemIR::BuiltinInstKind::StringType:
-      // TODO: Decide how we want to represent `StringType`.
-      return llvm::PointerType::get(context.llvm_context(), 0);
-    case SemIR::BuiltinInstKind::BoundMethodType:
-    case SemIR::BuiltinInstKind::IntLiteralType:
-    case SemIR::BuiltinInstKind::NamespaceType:
-    case SemIR::BuiltinInstKind::WitnessType:
-      // Return an empty struct as a placeholder.
-      return llvm::StructType::get(context.llvm_context());
-    case SemIR::BuiltinInstKind::VtableType:
-      return llvm::Type::getVoidTy(context.llvm_context());
-  }
-}
-
 // BuildTypeForInst is used to construct types for FileContext::BuildType below.
 // Implementations return the LLVM type for the instruction. This first overload
 // is the fallback handler for non-type instructions.
@@ -508,6 +468,25 @@ template <typename InstT>
 static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
     -> llvm::Type* {
   CARBON_FATAL("Cannot use inst as type: {0}", inst);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
+    -> llvm::Type* {
+  return llvm::ArrayType::get(
+      context.GetType(inst.element_type_id),
+      context.sem_ir().GetArrayBoundValue(inst.bound_id));
+}
+
+static auto BuildTypeForInst(FileContext& /*context*/, SemIR::AutoType inst)
+    -> llvm::Type* {
+  CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
+    -> llvm::Type* {
+  // TODO: We may want to have different representations for `bool` storage
+  // (`i8`) versus for `bool` values (`i1`).
+  return llvm::Type::getInt1Ty(context.llvm_context());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
@@ -524,6 +503,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
   return context.GetType(inst.inner_id);
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::ErrorInst /*inst*/) -> llvm::Type* {
+  // This is a complete type but uses of it should never be lowered.
+  return nullptr;
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
     -> llvm::Type* {
   // TODO: Handle different sizes.
@@ -538,6 +523,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
   return llvm::IntegerType::get(
       context.llvm_context(),
       context.sem_ir().ints().Get(width->int_id).getZExtValue());
+}
+
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::LegacyFloatType /*inst*/) -> llvm::Type* {
+  return llvm::Type::getDoubleTy(context.llvm_context());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
@@ -569,6 +559,35 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
     subtypes.push_back(context.GetType(element_id));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
+    -> llvm::Type* {
+  return context.GetTypeType();
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
+    -> llvm::Type* {
+  return llvm::Type::getVoidTy(context.llvm_context());
+}
+
+template <typename InstT>
+  requires(InstT::Kind.template IsAnyOf<SemIR::SpecificFunctionType,
+                                        SemIR::StringType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // TODO: Decide how we want to represent `StringType`.
+  return llvm::PointerType::get(context.llvm_context(), 0);
+}
+
+template <typename InstT>
+  requires(InstT::Kind
+               .template IsAnyOf<SemIR::BoundMethodType, SemIR::IntLiteralType,
+                                 SemIR::NamespaceType, SemIR::WitnessType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // Return an empty struct as a placeholder.
+  return llvm::StructType::get(context.llvm_context());
 }
 
 template <typename InstT>

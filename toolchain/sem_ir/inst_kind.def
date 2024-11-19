@@ -10,10 +10,83 @@
 // This macro should be defined before including this header:
 // - CARBON_SEM_IR_INST_KIND(Name)
 //   Invoked for each kind of semantic instruction.
+//
+// Temporarily, we have CARBON_SEM_IR_BUILTIN_INST_KIND too:
+//
+// - CARBON_SEM_IR_BUILTIN_INST_KIND(Name, Label)
+//   Defines a non-Invalid builtin type. The label is used for stringifying
+//   types. Falls back to CARBON_SEM_IR_INST_KIND if not defined.
+//
+// TODO: Merge builtin instructions into the standard CARBON_SEM_IR_INST_KIND,
+// tracking the "builtin" annotation separately. This approach is used for
+// legacy compatibility.
+
+// If CARBON_SEM_IR_BUILTIN_INST_KIND is missing, default to
+// CARBON_SEM_IR_INST_KIND. However, if it's provided, make
+// CARBON_SEM_IR_INST_KIND optional. Per the above TODO, this is temporary.
+#ifndef CARBON_SEM_IR_BUILTIN_INST_KIND
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) CARBON_SEM_IR_INST_KIND(Name)
+#else
+#ifndef CARBON_SEM_IR_INST_KIND
+#define CARBON_SEM_IR_INST_KIND(Name)
+#endif
+#endif
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
 #endif
+
+// Tracks expressions which are valid as types.
+// This has a deliberately self-referential type.
+CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType, "type")
+
+// Used when a semantic error has been detected, and a SemIR InstId is still
+// required. For example, when there is a type checking issue, this will be used
+// in the type_id. It's typically used as a cue that semantic checking doesn't
+// need to issue further diagnostics.
+CARBON_SEM_IR_BUILTIN_INST_KIND(ErrorInst, "<error>")
+
+// Used for the type of patterns that do not match a fixed type.
+CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType, "auto")
+
+// -----------------------------------------------------------------------------
+// TODO: Below CARBON_SEM_IR_BUILTIN_INST_KIND types are all placeholders. While
+// the above may last, the below are expected to need to change in order to
+// better reflect Carbon's design. Keeping distinct placeholders can help find
+// usages for later fixes.
+// -----------------------------------------------------------------------------
+
+// The type of bool literals and branch conditions, bool.
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType, "bool")
+
+// An arbitrary-precision integer type, which is used as the type of integer
+// literals and as the parameter type of `Core.Int` and `Core.Float`. This type
+// only provides compile-time operations, and is represented as an empty type at
+// runtime.
+CARBON_SEM_IR_BUILTIN_INST_KIND(IntLiteralType, "Core.IntLiteral")
+
+// The legacy float type. This is currently used for real literals, and is
+// treated as f64. It's separate from `FloatType`, and should change to mirror
+// integers, likely replacing this with a `FloatLiteralType`.
+CARBON_SEM_IR_BUILTIN_INST_KIND(LegacyFloatType, "f64")
+
+// The type of string values and String literals.
+CARBON_SEM_IR_BUILTIN_INST_KIND(StringType, "String")
+
+// The type of bound method values.
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoundMethodType, "<bound method>")
+
+// The type of specific functions.
+CARBON_SEM_IR_BUILTIN_INST_KIND(SpecificFunctionType, "<specific function>")
+
+// The type of namespace and imported package names.
+CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType, "<namespace>")
+
+// The type of witnesses.
+CARBON_SEM_IR_BUILTIN_INST_KIND(WitnessType, "<witness>")
+
+// The type of virtual function tables
+CARBON_SEM_IR_BUILTIN_INST_KIND(VtableType, "<vtable>")
 
 // For each instruction kind declared here there is a matching definition in
 // `typed_insts.h`.
@@ -41,7 +114,6 @@ CARBON_SEM_IR_INST_KIND(BoundMethod)
 CARBON_SEM_IR_INST_KIND(Branch)
 CARBON_SEM_IR_INST_KIND(BranchIf)
 CARBON_SEM_IR_INST_KIND(BranchWithArg)
-CARBON_SEM_IR_INST_KIND(BuiltinInst)
 CARBON_SEM_IR_INST_KIND(Call)
 CARBON_SEM_IR_INST_KIND(ClassDecl)
 CARBON_SEM_IR_INST_KIND(ClassElementAccess)
@@ -109,3 +181,4 @@ CARBON_SEM_IR_INST_KIND(VarStorage)
 CARBON_SEM_IR_INST_KIND(WhereExpr)
 
 #undef CARBON_SEM_IR_INST_KIND
+#undef CARBON_SEM_IR_BUILTIN_INST_KIND

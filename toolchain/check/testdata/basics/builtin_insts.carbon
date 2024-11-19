@@ -32,18 +32,18 @@
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instTypeType:    {kind: BuiltinInst, arg0: TypeType, type: typeTypeType}
-// CHECK:STDOUT:     instErrorInst:   {kind: BuiltinInst, arg0: ErrorInst, type: typeError}
-// CHECK:STDOUT:     instAutoType:    {kind: BuiltinInst, arg0: AutoType, type: typeTypeType}
-// CHECK:STDOUT:     instBoolType:    {kind: BuiltinInst, arg0: BoolType, type: typeTypeType}
-// CHECK:STDOUT:     instIntLiteralType: {kind: BuiltinInst, arg0: IntLiteralType, type: typeTypeType}
-// CHECK:STDOUT:     instLegacyFloatType: {kind: BuiltinInst, arg0: LegacyFloatType, type: typeTypeType}
-// CHECK:STDOUT:     instStringType:  {kind: BuiltinInst, arg0: StringType, type: typeTypeType}
-// CHECK:STDOUT:     instBoundMethodType: {kind: BuiltinInst, arg0: BoundMethodType, type: typeTypeType}
-// CHECK:STDOUT:     instSpecificFunctionType: {kind: BuiltinInst, arg0: SpecificFunctionType, type: typeTypeType}
-// CHECK:STDOUT:     instNamespaceType: {kind: BuiltinInst, arg0: NamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     instWitnessType: {kind: BuiltinInst, arg0: WitnessType, type: typeTypeType}
-// CHECK:STDOUT:     instVtableType:  {kind: BuiltinInst, arg0: VtableType, type: typeTypeType}
+// CHECK:STDOUT:     instTypeType:    {kind: TypeType, type: typeTypeType}
+// CHECK:STDOUT:     instErrorInst:   {kind: ErrorInst, type: typeError}
+// CHECK:STDOUT:     instAutoType:    {kind: AutoType, type: typeTypeType}
+// CHECK:STDOUT:     instBoolType:    {kind: BoolType, type: typeTypeType}
+// CHECK:STDOUT:     instIntLiteralType: {kind: IntLiteralType, type: typeTypeType}
+// CHECK:STDOUT:     instLegacyFloatType: {kind: LegacyFloatType, type: typeTypeType}
+// CHECK:STDOUT:     instStringType:  {kind: StringType, type: typeTypeType}
+// CHECK:STDOUT:     instBoundMethodType: {kind: BoundMethodType, type: typeTypeType}
+// CHECK:STDOUT:     instSpecificFunctionType: {kind: SpecificFunctionType, type: typeTypeType}
+// CHECK:STDOUT:     instNamespaceType: {kind: NamespaceType, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: WitnessType, type: typeTypeType}
+// CHECK:STDOUT:     instVtableType:  {kind: VtableType, type: typeTypeType}
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)

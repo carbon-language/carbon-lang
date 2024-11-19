@@ -44,12 +44,11 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                    \
-  insts_.AddInNoBlock(LocIdAndInst::NoLoc<BuiltinInst>(               \
+  insts_.AddInNoBlock(LocIdAndInst::NoLoc<Name>(                      \
       {.type_id = BuiltinInstKind::Name == BuiltinInstKind::ErrorInst \
                       ? TypeId::Error                                 \
-                      : TypeId::TypeType,                             \
-       .builtin_inst_kind = BuiltinInstKind::Name}));
-#include "toolchain/sem_ir/builtin_inst_kind.def"
+                      : TypeId::TypeType}));
+#include "toolchain/sem_ir/inst_kind.def"
   CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
                "Builtins should produce {0} insts, actual: {1}",
                BuiltinInstKind::ValidCount, insts_.size());
@@ -249,11 +248,14 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case AssociatedEntityType::Kind:
+      case AutoType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
+      case BoolType::Kind:
       case BoundMethod::Kind:
+      case BoundMethodType::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
@@ -266,33 +268,37 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
       case ImportDecl::Kind:
+      case IntLiteralType::Kind:
+      case IntType::Kind:
+      case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case IntValue::Kind:
-      case IntType::Kind:
+      case LegacyFloatType::Kind:
+      case NamespaceType::Kind:
       case PointerType::Kind:
       case SpecificFunction::Kind:
+      case SpecificFunctionType::Kind:
       case StringLiteral::Kind:
-      case StructValue::Kind:
+      case StringType::Kind:
       case StructType::Kind:
+      case StructValue::Kind:
       case SymbolicBindingPattern::Kind:
-      case TupleValue::Kind:
       case TupleType::Kind:
+      case TupleValue::Kind:
+      case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
+      case VtableType::Kind:
       case WhereExpr::Kind:
+      case WitnessType::Kind:
         return value_category;
 
-      case CARBON_KIND(BuiltinInst inst): {
-        if (inst.builtin_inst_kind == BuiltinInstKind::ErrorInst) {
-          return ExprCategory::Error;
-        }
-        return value_category;
-      }
+      case ErrorInst::Kind:
+        return ExprCategory::Error;
 
       case CARBON_KIND(BindName inst): {
         // TODO: Don't rely on value_id for expression category, since it may
