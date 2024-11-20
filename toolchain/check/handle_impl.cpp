@@ -206,6 +206,8 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
 
   if (implicit_param_patterns_id) {
+    // Emit the `forall` match. This shouldn't produce any `Call` params,
+    // because `impl`s are never actually called at runtime.
     auto parameter_blocks =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
