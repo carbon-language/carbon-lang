@@ -51,9 +51,9 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -98,11 +98,11 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_27: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc4_28.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc4_28.2: <bound method> = bound_method %.loc4_27, %.loc4_28.1 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc4_28.2(%.loc4_27) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc4_28.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
-// CHECK:STDOUT:   %.loc4_28.4: i32 = converted %.loc4_27, %.loc4_28.3 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc4_28.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_28.2: <bound method> = bound_method %.loc4_27, %.loc4_28.1 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc4_28.2(%.loc4_27) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc4_28.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc4_28.4: i32 = converted %.loc4_27, %.loc4_28.3 [template = constants.%.37]
 // CHECK:STDOUT:   return %.loc4_28.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

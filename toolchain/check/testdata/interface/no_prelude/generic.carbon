@@ -89,7 +89,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %WithAssocFn.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @WithAssocFn.%F.decl [template]
-// CHECK:STDOUT:   %.8: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.2) = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.8: %WithAssocFn.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %struct: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N, 1 [symbolic]
@@ -238,7 +238,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.2) = facet_value constants.%C, constants.%C [template = constants.%.8]
+// CHECK:STDOUT:   %.loc16: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.2) = facet_value constants.%C, constants.%C [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

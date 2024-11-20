@@ -94,10 +94,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 64 [template]
-// CHECK:STDOUT:   %.36: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 64 [template]
+// CHECK:STDOUT:   %.38: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
 // CHECK:STDOUT:   %GetFloat.type: type = fn_type @GetFloat [template]
@@ -125,11 +125,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %.loc6_14.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_14.2: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc6_14.3: <bound method> = bound_method %.loc6_14.1, %.loc6_14.2 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc6_14.3(%.loc6_14.1) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc6_14.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
-// CHECK:STDOUT:   %.loc6_14.5: i32 = converted %.loc6_14.1, %.loc6_14.4 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc6_14.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc6_14.3: <bound method> = bound_method %.loc6_14.1, %.loc6_14.2 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc6_14.3(%.loc6_14.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc6_14.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc6_14.5: i32 = converted %.loc6_14.1, %.loc6_14.4 [template = constants.%.37]
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc6_14.5) [template = f64]
 // CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1 [template = f64]
@@ -165,7 +165,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: f64 = float_literal 0 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc6: f64 = float_literal 0 [template = constants.%.38]
 // CHECK:STDOUT:   assign file.%f.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -179,14 +179,14 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 32 [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 32 [template]
 // CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.36: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %.37: <bound method> = bound_method %.36, %Convert.15 [template]
-// CHECK:STDOUT:   %.38: i32 = int_value 64 [template]
+// CHECK:STDOUT:   %.38: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.39: <bound method> = bound_method %.38, %Convert.15 [template]
+// CHECK:STDOUT:   %.40: i32 = int_value 64 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -211,11 +211,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Float.ref.loc10: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %.loc10_26.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_26.2: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc10_26.3: <bound method> = bound_method %.loc10_26.1, %.loc10_26.2 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc10_26.3(%.loc10_26.1) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc10_26.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
-// CHECK:STDOUT:   %.loc10_26.5: i32 = converted %.loc10_26.1, %.loc10_26.4 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc10_26.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc10_26.3: <bound method> = bound_method %.loc10_26.1, %.loc10_26.2 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc10_26.3(%.loc10_26.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc10_26.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc10_26.5: i32 = converted %.loc10_26.1, %.loc10_26.4 [template = constants.%.37]
 // CHECK:STDOUT:   %float.make_type.loc10: init type = call %Float.ref.loc10(%.loc10_26.5) [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.1: type = value_of_initializer %float.make_type.loc10 [template = <error>]
 // CHECK:STDOUT:   %.loc10_28.2: type = converted %float.make_type.loc10, %.loc10_28.1 [template = <error>]
@@ -240,11 +240,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_21: Core.IntLiteral = int_value 64 [template = constants.%.36]
-// CHECK:STDOUT:   %.loc12_23.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_23.2: <bound method> = bound_method %.loc12_21, %.loc12_23.1 [template = constants.%.37]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_23.2(%.loc12_21) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc12_23.3: init i32 = converted %.loc12_21, %int.convert_checked [template = constants.%.38]
+// CHECK:STDOUT:   %.loc12_21: Core.IntLiteral = int_value 64 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc12_23.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc12_23.2: <bound method> = bound_method %.loc12_21, %.loc12_23.1 [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_23.2(%.loc12_21) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc12_23.3: init i32 = converted %.loc12_21, %int.convert_checked [template = constants.%.40]
 // CHECK:STDOUT:   assign file.%dyn_size.var, %.loc12_23.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

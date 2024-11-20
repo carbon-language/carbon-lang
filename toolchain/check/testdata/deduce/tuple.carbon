@@ -238,16 +238,16 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.38: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.39: <bound method> = bound_method %.5, %Convert.15 [template]
-// CHECK:STDOUT:   %.40: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.41: <bound method> = bound_method %.6, %Convert.15 [template]
-// CHECK:STDOUT:   %.42: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %tuple.2: %tuple.type.2 = tuple_value (%.40, %.42) [template]
+// CHECK:STDOUT:   %.40: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.41: <bound method> = bound_method %.5, %Convert.15 [template]
+// CHECK:STDOUT:   %.42: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.43: <bound method> = bound_method %.6, %Convert.15 [template]
+// CHECK:STDOUT:   %.44: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %tuple.2: %tuple.type.2 = tuple_value (%.42, %.44) [template]
 // CHECK:STDOUT:   %HasPair.4: type = class_type @HasPair, @HasPair(%tuple.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.43: <specific function> = specific_function %F, @F(%.40, %.42) [template]
+// CHECK:STDOUT:   %.45: <specific function> = specific_function %F, @F(%.42, %.44) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -327,16 +327,16 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc8_18: Core.IntLiteral = int_value 1 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc8_21: Core.IntLiteral = int_value 2 [template = constants.%.6]
 // CHECK:STDOUT:     %.loc8_22.1: %tuple.type.3 = tuple_literal (%.loc8_18, %.loc8_21)
-// CHECK:STDOUT:     %.loc8_22.2: %Convert.type.2 = interface_witness_access constants.%.38, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:     %.loc8_22.3: <bound method> = bound_method %.loc8_18, %.loc8_22.2 [template = constants.%.39]
-// CHECK:STDOUT:     %int.convert_checked.loc8_22.1: init i32 = call %.loc8_22.3(%.loc8_18) [template = constants.%.40]
-// CHECK:STDOUT:     %.loc8_22.4: i32 = value_of_initializer %int.convert_checked.loc8_22.1 [template = constants.%.40]
-// CHECK:STDOUT:     %.loc8_22.5: i32 = converted %.loc8_18, %.loc8_22.4 [template = constants.%.40]
-// CHECK:STDOUT:     %.loc8_22.6: %Convert.type.2 = interface_witness_access constants.%.38, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:     %.loc8_22.7: <bound method> = bound_method %.loc8_21, %.loc8_22.6 [template = constants.%.41]
-// CHECK:STDOUT:     %int.convert_checked.loc8_22.2: init i32 = call %.loc8_22.7(%.loc8_21) [template = constants.%.42]
-// CHECK:STDOUT:     %.loc8_22.8: i32 = value_of_initializer %int.convert_checked.loc8_22.2 [template = constants.%.42]
-// CHECK:STDOUT:     %.loc8_22.9: i32 = converted %.loc8_21, %.loc8_22.8 [template = constants.%.42]
+// CHECK:STDOUT:     %.loc8_22.2: %Convert.type.2 = interface_witness_access constants.%.40, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:     %.loc8_22.3: <bound method> = bound_method %.loc8_18, %.loc8_22.2 [template = constants.%.41]
+// CHECK:STDOUT:     %int.convert_checked.loc8_22.1: init i32 = call %.loc8_22.3(%.loc8_18) [template = constants.%.42]
+// CHECK:STDOUT:     %.loc8_22.4: i32 = value_of_initializer %int.convert_checked.loc8_22.1 [template = constants.%.42]
+// CHECK:STDOUT:     %.loc8_22.5: i32 = converted %.loc8_18, %.loc8_22.4 [template = constants.%.42]
+// CHECK:STDOUT:     %.loc8_22.6: %Convert.type.2 = interface_witness_access constants.%.40, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:     %.loc8_22.7: <bound method> = bound_method %.loc8_21, %.loc8_22.6 [template = constants.%.43]
+// CHECK:STDOUT:     %int.convert_checked.loc8_22.2: init i32 = call %.loc8_22.7(%.loc8_21) [template = constants.%.44]
+// CHECK:STDOUT:     %.loc8_22.8: i32 = value_of_initializer %int.convert_checked.loc8_22.2 [template = constants.%.44]
+// CHECK:STDOUT:     %.loc8_22.9: i32 = converted %.loc8_21, %.loc8_22.8 [template = constants.%.44]
 // CHECK:STDOUT:     %tuple: %tuple.type.2 = tuple_value (%.loc8_22.5, %.loc8_22.9) [template = constants.%tuple.2]
 // CHECK:STDOUT:     %.loc8_16: %tuple.type.2 = converted %.loc8_22.1, %tuple [template = constants.%tuple.2]
 // CHECK:STDOUT:     %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.2) [template = constants.%HasPair.4]
@@ -385,7 +385,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %h.ref: %HasPair.4 = name_ref h, %h
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.40, constants.%.42) [template = constants.%.43]
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.42, constants.%.44) [template = constants.%.45]
 // CHECK:STDOUT:   %F.call: init i32 = call %.loc9_10(%h.ref)
 // CHECK:STDOUT:   %.loc9_14.1: i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc9_14.2: i32 = converted %F.call, %.loc9_14.1
@@ -425,11 +425,11 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%.40, constants.%.42) {
-// CHECK:STDOUT:   %A.loc6_6.2 => constants.%.40
-// CHECK:STDOUT:   %A.patt.loc6_6.2 => constants.%.40
-// CHECK:STDOUT:   %B.loc6_15.2 => constants.%.42
-// CHECK:STDOUT:   %B.patt.loc6_15.2 => constants.%.42
+// CHECK:STDOUT: specific @F(constants.%.42, constants.%.44) {
+// CHECK:STDOUT:   %A.loc6_6.2 => constants.%.42
+// CHECK:STDOUT:   %A.patt.loc6_6.2 => constants.%.42
+// CHECK:STDOUT:   %B.loc6_15.2 => constants.%.44
+// CHECK:STDOUT:   %B.patt.loc6_15.2 => constants.%.44
 // CHECK:STDOUT:   %tuple.loc6_40.2 => constants.%tuple.2
 // CHECK:STDOUT:   %HasPair.loc6_34.2 => constants.%HasPair.4
 // CHECK:STDOUT:

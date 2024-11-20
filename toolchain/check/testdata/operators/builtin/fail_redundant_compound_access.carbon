@@ -34,14 +34,14 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.36: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.37: <bound method> = bound_method %.36, %Convert.15 [template]
-// CHECK:STDOUT:   %.38: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.38: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %.39: <bound method> = bound_method %.38, %Convert.15 [template]
+// CHECK:STDOUT:   %.40: i32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,11 +76,11 @@ fn Main() {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_24: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_25.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc11_25.2: <bound method> = bound_method %.loc11_24, %.loc11_25.1 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_25.2(%.loc11_24) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_25.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_25.4: i32 = converted %.loc11_24, %.loc11_25.3 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_25.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc11_25.2: <bound method> = bound_method %.loc11_24, %.loc11_25.1 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_25.2(%.loc11_24) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc11_25.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc11_25.4: i32 = converted %.loc11_24, %.loc11_25.3 [template = constants.%.37]
 // CHECK:STDOUT:   return %.loc11_25.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,11 +91,11 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_32, %.loc14_10.1 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc14_16: Core.IntLiteral = int_value 3 [template = constants.%.36]
-// CHECK:STDOUT:   %.loc14_17.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc14_17.2: <bound method> = bound_method %.loc14_16, %.loc14_17.1 [template = constants.%.37]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc14_17.2(%.loc14_16) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc14_17.3: init i32 = converted %.loc14_16, %int.convert_checked [template = constants.%.38]
+// CHECK:STDOUT:   %.loc14_16: Core.IntLiteral = int_value 3 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc14_17.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc14_17.2: <bound method> = bound_method %.loc14_16, %.loc14_17.1 [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc14_17.2(%.loc14_16) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc14_17.3: init i32 = converted %.loc14_16, %int.convert_checked [template = constants.%.40]
 // CHECK:STDOUT:   assign %a.var, %.loc14_17.3
 // CHECK:STDOUT:   %a.ref.loc19_3: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref i32 = name_ref a, %a

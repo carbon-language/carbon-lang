@@ -49,13 +49,13 @@ fn Test() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.1, @ImplicitAs(%X) [template]
-// CHECK:STDOUT:   %.10: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [template]
+// CHECK:STDOUT:   %.10: %ImplicitAs.type.2 = facet_value i32, i32 [symbolic]
 // CHECK:STDOUT:   %.11: <witness> = interface_witness (%Convert.2) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <@ImplicitAs, @ImplicitAs(i32)> [template]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
-// CHECK:STDOUT:   %.15: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %X, %X [template]
+// CHECK:STDOUT:   %.15: %ImplicitAs.type.2 = facet_value %X, %X [symbolic]
 // CHECK:STDOUT:   %.16: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %Sink_i32.type: type = fn_type @Sink_i32 [template]
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [template]
@@ -69,7 +69,7 @@ fn Test() {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %.18: <specific function> = specific_function %Source, @Source(%X) [template]
-// CHECK:STDOUT:   %.44: <specific function> = specific_function %Source, @Source(i32) [template]
+// CHECK:STDOUT:   %.46: <specific function> = specific_function %Source, @Source(i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -160,7 +160,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc16: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [symbolic = constants.%.10]
 // CHECK:STDOUT:   %.loc15_32: <witness> = interface_witness (%Convert.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -184,7 +184,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%X, constants.%X [template = constants.%.15]
+// CHECK:STDOUT:   %.loc20: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%X, constants.%X [symbolic = constants.%.15]
 // CHECK:STDOUT:   %.loc19_32: <witness> = interface_witness (%Convert.decl) [template = constants.%.16]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -268,7 +268,7 @@ fn Test() {
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc31_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc31_16.2: type = converted %int.make_type_32, %.loc31_16.1 [template = i32]
-// CHECK:STDOUT:   %.loc31_10: <specific function> = specific_function %Source.ref.loc31, @Source(i32) [template = constants.%.44]
+// CHECK:STDOUT:   %.loc31_10: <specific function> = specific_function %Source.ref.loc31, @Source(i32) [template = constants.%.46]
 // CHECK:STDOUT:   %Source.call.loc31: init i32 = call %.loc31_10()
 // CHECK:STDOUT:   %.loc31_16.3: %Convert.type.3 = interface_witness_access constants.%.11, element0 [template = constants.%Convert.2]
 // CHECK:STDOUT:   %.loc31_16.4: <bound method> = bound_method %Source.call.loc31, %.loc31_16.3
@@ -309,6 +309,6 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc27_35.2 => constants.%.44
+// CHECK:STDOUT:   %.loc27_35.2 => constants.%.46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

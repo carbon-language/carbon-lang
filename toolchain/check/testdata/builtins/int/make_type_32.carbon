@@ -62,9 +62,9 @@ var i: Int() = 0;
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.34: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.35: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -97,10 +97,10 @@ var i: Int() = 0;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_16: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_17.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc6_17.2: <bound method> = bound_method %.loc6_16, %.loc6_17.1 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc6_17.2(%.loc6_16) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc6_17.3: init i32 = converted %.loc6_16, %int.convert_checked [template = constants.%.35]
+// CHECK:STDOUT:   %.loc6_17.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc6_17.2: <bound method> = bound_method %.loc6_16, %.loc6_17.1 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc6_17.2(%.loc6_16) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc6_17.3: init i32 = converted %.loc6_16, %int.convert_checked [template = constants.%.37]
 // CHECK:STDOUT:   assign file.%i.var, %.loc6_17.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

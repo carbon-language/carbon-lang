@@ -43,14 +43,14 @@ fn Run() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.36: <bound method> = bound_method %.3, %Convert.15 [template]
-// CHECK:STDOUT:   %.37: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.37: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.38: <bound method> = bound_method %.3, %Convert.15 [template]
+// CHECK:STDOUT:   %.39: i32 = int_value 1 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.38: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.39: <bound method> = bound_method %.38, %Convert.15 [template]
-// CHECK:STDOUT:   %.40: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.40: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.41: <bound method> = bound_method %.40, %Convert.15 [template]
+// CHECK:STDOUT:   %.42: i32 = int_value 2 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -118,11 +118,11 @@ fn Run() {
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_12: Core.IntLiteral = int_value 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc13_13.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc13_13.2: <bound method> = bound_method %.loc13_12, %.loc13_13.1 [template = constants.%.36]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc13_13.2(%.loc13_12) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc13_13.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
-// CHECK:STDOUT:   %.loc13_13.4: i32 = converted %.loc13_12, %.loc13_13.3 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc13_13.1: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc13_13.2: <bound method> = bound_method %.loc13_12, %.loc13_13.1 [template = constants.%.38]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc13_13.2(%.loc13_12) [template = constants.%.39]
+// CHECK:STDOUT:   %.loc13_13.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.39]
+// CHECK:STDOUT:   %.loc13_13.4: i32 = converted %.loc13_12, %.loc13_13.3 [template = constants.%.39]
 // CHECK:STDOUT:   return %.loc13_13.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,12 +137,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_10: Core.IntLiteral = int_value 2 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc22_11.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc22_11.2: <bound method> = bound_method %.loc22_10, %.loc22_11.1 [template = constants.%.39]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc22_11.2(%.loc22_10) [template = constants.%.40]
-// CHECK:STDOUT:   %.loc22_11.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.40]
-// CHECK:STDOUT:   %.loc22_11.4: i32 = converted %.loc22_10, %.loc22_11.3 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc22_10: Core.IntLiteral = int_value 2 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc22_11.1: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc22_11.2: <bound method> = bound_method %.loc22_10, %.loc22_11.1 [template = constants.%.41]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc22_11.2(%.loc22_10) [template = constants.%.42]
+// CHECK:STDOUT:   %.loc22_11.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.42]
+// CHECK:STDOUT:   %.loc22_11.4: i32 = converted %.loc22_10, %.loc22_11.3 [template = constants.%.42]
 // CHECK:STDOUT:   return %.loc22_11.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

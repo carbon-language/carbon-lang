@@ -731,12 +731,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.36: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.37: <bound method> = bound_method %.4, %Convert.15 [template]
-// CHECK:STDOUT:   %.38: i32 = int_value 0 [template]
-// CHECK:STDOUT:   %WithNontype.3: type = class_type @WithNontype, @WithNontype(%.38) [template]
+// CHECK:STDOUT:   %.38: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.39: <bound method> = bound_method %.4, %Convert.15 [template]
+// CHECK:STDOUT:   %.40: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %WithNontype.3: type = class_type @WithNontype, @WithNontype(%.40) [template]
 // CHECK:STDOUT:   %struct: %WithNontype.3 = struct_value () [template]
-// CHECK:STDOUT:   %.39: <specific function> = specific_function %F, @F(%.38) [template]
+// CHECK:STDOUT:   %.41: <specific function> = specific_function %F, @F(%.40) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -836,17 +836,17 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_13.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.1]
 // CHECK:STDOUT:   %.loc9_30: Core.IntLiteral = int_value 0 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_29.1: %Convert.type.2 = interface_witness_access constants.%.36, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc9_29.2: <bound method> = bound_method %.loc9_30, %.loc9_29.1 [template = constants.%.37]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc9_29.2(%.loc9_30) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc9_29.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.38]
-// CHECK:STDOUT:   %.loc9_29.4: i32 = converted %.loc9_30, %.loc9_29.3 [template = constants.%.38]
-// CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%.38) [template = constants.%WithNontype.3]
+// CHECK:STDOUT:   %.loc9_29.1: %Convert.type.2 = interface_witness_access constants.%.38, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc9_29.2: <bound method> = bound_method %.loc9_30, %.loc9_29.1 [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc9_29.2(%.loc9_30) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc9_29.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.40]
+// CHECK:STDOUT:   %.loc9_29.4: i32 = converted %.loc9_30, %.loc9_29.3 [template = constants.%.40]
+// CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%.40) [template = constants.%WithNontype.3]
 // CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.3 = temporary_storage
 // CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.3 = class_init (), %.loc9_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_13.4: ref %WithNontype.3 = temporary %.loc9_13.2, %.loc9_13.3
 // CHECK:STDOUT:   %.loc9_15.1: ref %WithNontype.3 = converted %.loc9_13.1, %.loc9_13.4
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.38) [template = constants.%.39]
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%.40) [template = constants.%.41]
 // CHECK:STDOUT:   %.loc9_15.2: %WithNontype.3 = bind_value %.loc9_15.1
 // CHECK:STDOUT:   %F.call: init i32 = call %.loc9_10(%.loc9_15.2)
 // CHECK:STDOUT:   %.loc9_33.1: i32 = value_of_initializer %F.call
@@ -872,16 +872,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %WithNontype.loc6_29.2 => constants.%WithNontype.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithNontype(constants.%.38) {
-// CHECK:STDOUT:   %N.loc4_19.2 => constants.%.38
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%.38
+// CHECK:STDOUT: specific @WithNontype(constants.%.40) {
+// CHECK:STDOUT:   %N.loc4_19.2 => constants.%.40
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%.40
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%.38) {
-// CHECK:STDOUT:   %N.loc6_6.2 => constants.%.38
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%.38
+// CHECK:STDOUT: specific @F(constants.%.40) {
+// CHECK:STDOUT:   %N.loc6_6.2 => constants.%.40
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%.40
 // CHECK:STDOUT:   %WithNontype.loc6_29.2 => constants.%WithNontype.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

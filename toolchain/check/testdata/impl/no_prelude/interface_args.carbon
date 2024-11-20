@@ -104,7 +104,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %Action.type.3, %Op.type.3 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @Action.%Op.decl [template]
-// CHECK:STDOUT:   %.7: @Action.%Action.type (%Action.type.2) = facet_value %A, %A [template]
+// CHECK:STDOUT:   %.7: %Action.type.2 = facet_value %A, %A [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%Op.2) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -170,7 +170,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {} {}
-// CHECK:STDOUT:   %.loc13: @Action.%Action.type (%Action.type.2) = facet_value constants.%A, constants.%A [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13: @Action.%Action.type (%Action.type.2) = facet_value constants.%A, constants.%A [symbolic = constants.%.7]
 // CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -590,7 +590,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %Factory.type.3, %Make.type.3 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @Factory.%Make.decl [template]
-// CHECK:STDOUT:   %.7: @Factory.%Factory.type (%Factory.type.2) = facet_value %A, %A [template]
+// CHECK:STDOUT:   %.7: %Factory.type.2 = facet_value %A, %A [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -657,7 +657,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: @Factory.%Factory.type (%Factory.type.2) = facet_value constants.%A, constants.%A [template = constants.%.7]
+// CHECK:STDOUT:   %.loc12: @Factory.%Factory.type (%Factory.type.2) = facet_value constants.%A, constants.%A [symbolic = constants.%.7]
 // CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%Make.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

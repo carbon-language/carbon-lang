@@ -25,27 +25,27 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.36: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.37: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.38: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %array.1: %.2 = tuple_value (%.38) [template]
-// CHECK:STDOUT:   %.39: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %.38: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.39: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.40: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %array.1: %.2 = tuple_value (%.40) [template]
+// CHECK:STDOUT:   %.41: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.40: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.41: type = array_type %.40, f64 [template]
-// CHECK:STDOUT:   %.43: f64 = float_literal 11.100000000000001 [template]
-// CHECK:STDOUT:   %.44: f64 = float_literal 2.2000000000000002 [template]
+// CHECK:STDOUT:   %.42: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.43: type = array_type %.42, f64 [template]
+// CHECK:STDOUT:   %.45: f64 = float_literal 11.100000000000001 [template]
+// CHECK:STDOUT:   %.46: f64 = float_literal 2.2000000000000002 [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (f64, f64) [template]
-// CHECK:STDOUT:   %array.2: %.41 = tuple_value (%.43, %.44) [template]
-// CHECK:STDOUT:   %.45: Core.IntLiteral = int_value 5 [template]
-// CHECK:STDOUT:   %.46: type = array_type %.45, %empty_tuple.type [template]
+// CHECK:STDOUT:   %array.2: %.43 = tuple_value (%.45, %.46) [template]
+// CHECK:STDOUT:   %.47: Core.IntLiteral = int_value 5 [template]
+// CHECK:STDOUT:   %.48: type = array_type %.47, %empty_tuple.type [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %.48: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.49: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.50: i32 = int_value 4 [template]
-// CHECK:STDOUT:   %array.3: %.46 = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple) [template]
+// CHECK:STDOUT:   %.50: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.51: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.52: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %array.3: %.48 = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,47 +73,47 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref %.2 = var a
 // CHECK:STDOUT:   %a: ref %.2 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc12_9.1: Core.IntLiteral = int_value 64 [template = constants.%.39]
+// CHECK:STDOUT:   %.loc12_9.1: Core.IntLiteral = int_value 64 [template = constants.%.41]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc12_9.1) [template = f64]
-// CHECK:STDOUT:   %.loc12_14: Core.IntLiteral = int_value 2 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc12_14: Core.IntLiteral = int_value 2 [template = constants.%.42]
 // CHECK:STDOUT:   %.loc12_9.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc12_9.3: type = converted %float.make_type, %.loc12_9.2 [template = f64]
-// CHECK:STDOUT:   %.loc12_15: type = array_type %.loc12_14, f64 [template = constants.%.41]
-// CHECK:STDOUT:   %b.var: ref %.41 = var b
-// CHECK:STDOUT:   %b: ref %.41 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc12_15: type = array_type %.loc12_14, f64 [template = constants.%.43]
+// CHECK:STDOUT:   %b.var: ref %.43 = var b
+// CHECK:STDOUT:   %b: ref %.43 = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc13_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc13_13: Core.IntLiteral = int_value 5 [template = constants.%.45]
+// CHECK:STDOUT:   %.loc13_13: Core.IntLiteral = int_value 5 [template = constants.%.47]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %.loc13_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc13_14: type = array_type %.loc13_13, %empty_tuple.type [template = constants.%.46]
-// CHECK:STDOUT:   %c.var: ref %.46 = var c
-// CHECK:STDOUT:   %c: ref %.46 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc13_14: type = array_type %.loc13_13, %empty_tuple.type [template = constants.%.48]
+// CHECK:STDOUT:   %c.var: ref %.48 = var c
+// CHECK:STDOUT:   %c: ref %.48 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_20: Core.IntLiteral = int_value 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_22.1: %tuple.type.1 = tuple_literal (%.loc11_20)
-// CHECK:STDOUT:   %.loc11_22.2: %Convert.type.2 = interface_witness_access constants.%.36, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc11_22.3: <bound method> = bound_method %.loc11_20, %.loc11_22.2 [template = constants.%.37]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_22.3(%.loc11_20) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc11_22.4: init i32 = converted %.loc11_20, %int.convert_checked [template = constants.%.38]
+// CHECK:STDOUT:   %.loc11_22.2: %Convert.type.2 = interface_witness_access constants.%.38, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc11_22.3: <bound method> = bound_method %.loc11_20, %.loc11_22.2 [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_22.3(%.loc11_20) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc11_22.4: init i32 = converted %.loc11_20, %int.convert_checked [template = constants.%.40]
 // CHECK:STDOUT:   %.loc11_22.5: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_22.6: ref i32 = array_index file.%a.var, %.loc11_22.5
-// CHECK:STDOUT:   %.loc11_22.7: init i32 = initialize_from %.loc11_22.4 to %.loc11_22.6 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc11_22.7: init i32 = initialize_from %.loc11_22.4 to %.loc11_22.6 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc11_22.8: init %.2 = array_init (%.loc11_22.7) to file.%a.var [template = constants.%array.1]
 // CHECK:STDOUT:   %.loc11_23: init %.2 = converted %.loc11_22.1, %.loc11_22.8 [template = constants.%array.1]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_23
-// CHECK:STDOUT:   %.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%.43]
-// CHECK:STDOUT:   %.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%.44]
+// CHECK:STDOUT:   %.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%.45]
+// CHECK:STDOUT:   %.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%.46]
 // CHECK:STDOUT:   %.loc12_30.1: %tuple.type.2 = tuple_literal (%.loc12_20, %.loc12_26)
 // CHECK:STDOUT:   %.loc12_30.2: i32 = int_value 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_30.3: ref f64 = array_index file.%b.var, %.loc12_30.2
-// CHECK:STDOUT:   %.loc12_30.4: init f64 = initialize_from %.loc12_20 to %.loc12_30.3 [template = constants.%.43]
-// CHECK:STDOUT:   %.loc12_30.5: i32 = int_value 1 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc12_30.4: init f64 = initialize_from %.loc12_20 to %.loc12_30.3 [template = constants.%.45]
+// CHECK:STDOUT:   %.loc12_30.5: i32 = int_value 1 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc12_30.6: ref f64 = array_index file.%b.var, %.loc12_30.5
-// CHECK:STDOUT:   %.loc12_30.7: init f64 = initialize_from %.loc12_26 to %.loc12_30.6 [template = constants.%.44]
-// CHECK:STDOUT:   %.loc12_30.8: init %.41 = array_init (%.loc12_30.4, %.loc12_30.7) to file.%b.var [template = constants.%array.2]
-// CHECK:STDOUT:   %.loc12_31: init %.41 = converted %.loc12_30.1, %.loc12_30.8 [template = constants.%array.2]
+// CHECK:STDOUT:   %.loc12_30.7: init f64 = initialize_from %.loc12_26 to %.loc12_30.6 [template = constants.%.46]
+// CHECK:STDOUT:   %.loc12_30.8: init %.43 = array_init (%.loc12_30.4, %.loc12_30.7) to file.%b.var [template = constants.%array.2]
+// CHECK:STDOUT:   %.loc12_31: init %.43 = converted %.loc12_30.1, %.loc12_30.8 [template = constants.%array.2]
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_31
 // CHECK:STDOUT:   %.loc13_20.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc13_24.1: %empty_tuple.type = tuple_literal ()
@@ -125,24 +125,24 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc13_38.3: ref %empty_tuple.type = array_index file.%c.var, %.loc13_38.2
 // CHECK:STDOUT:   %.loc13_20.2: init %empty_tuple.type = tuple_init () to %.loc13_38.3 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_38.4: init %empty_tuple.type = converted %.loc13_20.1, %.loc13_20.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_38.5: i32 = int_value 1 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc13_38.5: i32 = int_value 1 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc13_38.6: ref %empty_tuple.type = array_index file.%c.var, %.loc13_38.5
 // CHECK:STDOUT:   %.loc13_24.2: init %empty_tuple.type = tuple_init () to %.loc13_38.6 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_38.7: init %empty_tuple.type = converted %.loc13_24.1, %.loc13_24.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_38.8: i32 = int_value 2 [template = constants.%.48]
+// CHECK:STDOUT:   %.loc13_38.8: i32 = int_value 2 [template = constants.%.50]
 // CHECK:STDOUT:   %.loc13_38.9: ref %empty_tuple.type = array_index file.%c.var, %.loc13_38.8
 // CHECK:STDOUT:   %.loc13_28.2: init %empty_tuple.type = tuple_init () to %.loc13_38.9 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_38.10: init %empty_tuple.type = converted %.loc13_28.1, %.loc13_28.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_38.11: i32 = int_value 3 [template = constants.%.49]
+// CHECK:STDOUT:   %.loc13_38.11: i32 = int_value 3 [template = constants.%.51]
 // CHECK:STDOUT:   %.loc13_38.12: ref %empty_tuple.type = array_index file.%c.var, %.loc13_38.11
 // CHECK:STDOUT:   %.loc13_32.2: init %empty_tuple.type = tuple_init () to %.loc13_38.12 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_38.13: init %empty_tuple.type = converted %.loc13_32.1, %.loc13_32.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_38.14: i32 = int_value 4 [template = constants.%.50]
+// CHECK:STDOUT:   %.loc13_38.14: i32 = int_value 4 [template = constants.%.52]
 // CHECK:STDOUT:   %.loc13_38.15: ref %empty_tuple.type = array_index file.%c.var, %.loc13_38.14
 // CHECK:STDOUT:   %.loc13_36.2: init %empty_tuple.type = tuple_init () to %.loc13_38.15 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_38.16: init %empty_tuple.type = converted %.loc13_36.1, %.loc13_36.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_38.17: init %.46 = array_init (%.loc13_38.4, %.loc13_38.7, %.loc13_38.10, %.loc13_38.13, %.loc13_38.16) to file.%c.var [template = constants.%array.3]
-// CHECK:STDOUT:   %.loc13_39: init %.46 = converted %.loc13_38.1, %.loc13_38.17 [template = constants.%array.3]
+// CHECK:STDOUT:   %.loc13_38.17: init %.48 = array_init (%.loc13_38.4, %.loc13_38.7, %.loc13_38.10, %.loc13_38.13, %.loc13_38.16) to file.%c.var [template = constants.%array.3]
+// CHECK:STDOUT:   %.loc13_39: init %.48 = converted %.loc13_38.1, %.loc13_38.17 [template = constants.%array.3]
 // CHECK:STDOUT:   assign file.%c.var, %.loc13_39
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

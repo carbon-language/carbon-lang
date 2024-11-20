@@ -25,10 +25,10 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.36: <bound method> = bound_method %.2, %Convert.15 [template]
-// CHECK:STDOUT:   %.37: i32 = int_value 3 [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value (%.37) [template]
+// CHECK:STDOUT:   %.37: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.38: <bound method> = bound_method %.2, %Convert.15 [template]
+// CHECK:STDOUT:   %.39: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %struct: %.1 = struct_value (%.39) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -63,11 +63,11 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 3 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc12_17.1: %.3 = struct_literal (%.loc12_16)
-// CHECK:STDOUT:   %.loc12_17.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_17.3: <bound method> = bound_method %.loc12_16, %.loc12_17.2 [template = constants.%.36]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.3(%.loc12_16) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc12_17.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
-// CHECK:STDOUT:   %.loc12_17.5: i32 = converted %.loc12_16, %.loc12_17.4 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc12_17.2: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc12_17.3: <bound method> = bound_method %.loc12_16, %.loc12_17.2 [template = constants.%.38]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc12_17.3(%.loc12_16) [template = constants.%.39]
+// CHECK:STDOUT:   %.loc12_17.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.39]
+// CHECK:STDOUT:   %.loc12_17.5: i32 = converted %.loc12_16, %.loc12_17.4 [template = constants.%.39]
 // CHECK:STDOUT:   %struct: %.1 = struct_value (%.loc12_17.5) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_18: %.1 = converted %.loc12_17.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc12_18

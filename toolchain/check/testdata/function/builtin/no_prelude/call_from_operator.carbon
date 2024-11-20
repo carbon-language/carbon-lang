@@ -94,7 +94,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type %As.type.3, %Convert.type.4 [template]
 // CHECK:STDOUT:   %.13: %.12 = assoc_entity element0, @As.%Convert.decl [template]
-// CHECK:STDOUT:   %.14: @As.%As.type (%As.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template]
+// CHECK:STDOUT:   %.14: %As.type.2 = facet_value Core.IntLiteral, Core.IntLiteral [symbolic]
 // CHECK:STDOUT:   %.15: <witness> = interface_witness (%Convert.3) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(i32)> [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4 [template]
@@ -103,7 +103,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
 // CHECK:STDOUT:   %.16: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.6 [template]
 // CHECK:STDOUT:   %.17: %.16 = assoc_entity element0, @ImplicitAs.%Convert.decl [template]
-// CHECK:STDOUT:   %.18: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template]
+// CHECK:STDOUT:   %.18: %ImplicitAs.type.2 = facet_value Core.IntLiteral, Core.IntLiteral [symbolic]
 // CHECK:STDOUT:   %.19: <witness> = interface_witness (%Convert.5) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5 [template]
@@ -112,7 +112,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
 // CHECK:STDOUT:   %.20: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.8 [template]
 // CHECK:STDOUT:   %.21: %.20 = assoc_entity element0, @ImplicitAs.%Convert.decl [template]
-// CHECK:STDOUT:   %.22: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [template]
+// CHECK:STDOUT:   %.22: %ImplicitAs.type.2 = facet_value i32, i32 [symbolic]
 // CHECK:STDOUT:   %.23: <witness> = interface_witness (%Convert.7) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,7 +349,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24: @As.%As.type (%As.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template = constants.%.14]
+// CHECK:STDOUT:   %.loc24: @As.%As.type (%As.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.14]
 // CHECK:STDOUT:   %.loc23_30: <witness> = interface_witness (%Convert.decl) [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -373,7 +373,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template = constants.%.18]
+// CHECK:STDOUT:   %.loc28: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.18]
 // CHECK:STDOUT:   %.loc27_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.19]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -398,7 +398,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc32: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [template = constants.%.22]
+// CHECK:STDOUT:   %.loc32: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [symbolic = constants.%.22]
 // CHECK:STDOUT:   %.loc31_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.23]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

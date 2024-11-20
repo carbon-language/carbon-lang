@@ -88,7 +88,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.3 [template]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @ImplicitAs.%Convert.decl [template]
-// CHECK:STDOUT:   %.6: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template]
+// CHECK:STDOUT:   %.6: %ImplicitAs.type.2 = facet_value Core.IntLiteral, Core.IntLiteral [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%Convert.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,7 +187,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc13_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -305,7 +305,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %.19: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.5 [template]
 // CHECK:STDOUT:   %.20: %.19 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.21: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.3, %C.3 [template]
+// CHECK:STDOUT:   %.21: %ImplicitAs.type.2 = facet_value %C.3, %C.3 [symbolic]
 // CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %.24: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %.25: <bound method> = bound_method %.24, %Convert.3 [template]
@@ -313,7 +313,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%.26) [template]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.4 [template]
 // CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.27: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.4, %C.4 [template]
+// CHECK:STDOUT:   %.27: %ImplicitAs.type.2 = facet_value %C.4, %C.4 [symbolic]
 // CHECK:STDOUT:   %.28: <witness> = interface_witness (%Convert.6) [template]
 // CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %.30: <bound method> = bound_method %.29, %Convert.3 [template]
@@ -321,7 +321,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.5: type = class_type @C, @C(%.31) [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5 [template]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [template]
-// CHECK:STDOUT:   %.32: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.5, %C.5 [template]
+// CHECK:STDOUT:   %.32: %ImplicitAs.type.2 = facet_value %C.5, %C.5 [symbolic]
 // CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.7) [template]
 // CHECK:STDOUT:   %.34: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %.35: <bound method> = bound_method %.34, %Convert.3 [template]
@@ -329,7 +329,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.6: type = class_type @C, @C(%.36) [template]
 // CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.6 [template]
 // CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
-// CHECK:STDOUT:   %.37: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.6, %C.6 [template]
+// CHECK:STDOUT:   %.37: %ImplicitAs.type.2 = facet_value %C.6, %C.6 [symbolic]
 // CHECK:STDOUT:   %.38: <witness> = interface_witness (%Convert.8) [template]
 // CHECK:STDOUT:   %.39: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %.40: <bound method> = bound_method %.39, %Convert.3 [template]
@@ -337,7 +337,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.7: type = class_type @C, @C(%.41) [template]
 // CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.7 [template]
 // CHECK:STDOUT:   %Convert.9: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %.42: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.7, %C.7 [template]
+// CHECK:STDOUT:   %.42: %ImplicitAs.type.2 = facet_value %C.7, %C.7 [symbolic]
 // CHECK:STDOUT:   %.43: <witness> = interface_witness (%Convert.9) [template]
 // CHECK:STDOUT:   %.44: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %.45: <bound method> = bound_method %.44, %Convert.3 [template]
@@ -345,7 +345,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.8: type = class_type @C, @C(%.46) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.8 [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %.47: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.8, %C.8 [template]
+// CHECK:STDOUT:   %.47: %ImplicitAs.type.2 = facet_value %C.8, %C.8 [symbolic]
 // CHECK:STDOUT:   %.48: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %.49: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT:   %.50: <bound method> = bound_method %.49, %Convert.3 [template]
@@ -353,7 +353,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.9: type = class_type @C, @C(%.51) [template]
 // CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.9 [template]
 // CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
-// CHECK:STDOUT:   %.52: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.9, %C.9 [template]
+// CHECK:STDOUT:   %.52: %ImplicitAs.type.2 = facet_value %C.9, %C.9 [symbolic]
 // CHECK:STDOUT:   %.53: <witness> = interface_witness (%Convert.11) [template]
 // CHECK:STDOUT:   %.54: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %.55: <bound method> = bound_method %.54, %Convert.3 [template]
@@ -361,7 +361,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.10: type = class_type @C, @C(%.56) [template]
 // CHECK:STDOUT:   %Convert.type.12: type = fn_type @Convert.10 [template]
 // CHECK:STDOUT:   %Convert.12: %Convert.type.12 = struct_value () [template]
-// CHECK:STDOUT:   %.57: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value %C.10, %C.10 [template]
+// CHECK:STDOUT:   %.57: %ImplicitAs.type.2 = facet_value %C.10, %C.10 [symbolic]
 // CHECK:STDOUT:   %.58: <witness> = interface_witness (%Convert.12) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -561,7 +561,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.3, constants.%C.3 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc10_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.3, constants.%C.3 [symbolic = constants.%.21]
 // CHECK:STDOUT:   %.loc10_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.22]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -583,7 +583,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.4, constants.%C.4 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc11_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.4, constants.%C.4 [symbolic = constants.%.27]
 // CHECK:STDOUT:   %.loc11_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.28]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -605,7 +605,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.5, constants.%C.5 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc12_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.5, constants.%C.5 [symbolic = constants.%.32]
 // CHECK:STDOUT:   %.loc12_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.33]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -627,7 +627,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.6, constants.%C.6 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc13_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.6, constants.%C.6 [symbolic = constants.%.37]
 // CHECK:STDOUT:   %.loc13_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.38]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -649,7 +649,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.7, constants.%C.7 [template = constants.%.42]
+// CHECK:STDOUT:   %.loc14_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.7, constants.%C.7 [symbolic = constants.%.42]
 // CHECK:STDOUT:   %.loc14_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.43]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -671,7 +671,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.8, constants.%C.8 [template = constants.%.47]
+// CHECK:STDOUT:   %.loc15_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.8, constants.%C.8 [symbolic = constants.%.47]
 // CHECK:STDOUT:   %.loc15_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.48]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -693,7 +693,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.9, constants.%C.9 [template = constants.%.52]
+// CHECK:STDOUT:   %.loc16_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.9, constants.%C.9 [symbolic = constants.%.52]
 // CHECK:STDOUT:   %.loc16_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.53]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -715,7 +715,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.10, constants.%C.10 [template = constants.%.57]
+// CHECK:STDOUT:   %.loc17_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.10, constants.%C.10 [symbolic = constants.%.57]
 // CHECK:STDOUT:   %.loc17_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.58]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

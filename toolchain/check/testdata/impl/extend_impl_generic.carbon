@@ -74,7 +74,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: @HasF.%HasF.type (%HasF.type.2) = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.8: %HasF.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %.10: type = struct_type {} [template]
 // CHECK:STDOUT:   %.11: <witness> = complete_type_witness %.10 [template]
@@ -83,10 +83,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.46: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.47: <bound method> = bound_method %.13, %Convert.15 [template]
-// CHECK:STDOUT:   %.48: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %Param = struct_value (%.48) [template]
+// CHECK:STDOUT:   %.48: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.49: <bound method> = bound_method %.13, %Convert.15 [template]
+// CHECK:STDOUT:   %.50: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %struct: %Param = struct_value (%.50) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -168,7 +168,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %return.param: ref %Param = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Param = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: @HasF.%HasF.type (%HasF.type.2) = facet_value constants.%C, constants.%C [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14: @HasF.%HasF.type (%HasF.type.2) = facet_value constants.%C, constants.%C [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -212,12 +212,12 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_20: Core.IntLiteral = int_value 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc15_21.1: %.14 = struct_literal (%.loc15_20)
-// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.46, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.47]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc15_21.3(%.loc15_20) [template = constants.%.48]
-// CHECK:STDOUT:   %.loc15_21.4: init i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.48]
+// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.48, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.49]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc15_21.3(%.loc15_20) [template = constants.%.50]
+// CHECK:STDOUT:   %.loc15_21.4: init i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.50]
 // CHECK:STDOUT:   %.loc15_21.5: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc15_21.6: init i32 = initialize_from %.loc15_21.4 to %.loc15_21.5 [template = constants.%.48]
+// CHECK:STDOUT:   %.loc15_21.6: init i32 = initialize_from %.loc15_21.4 to %.loc15_21.5 [template = constants.%.50]
 // CHECK:STDOUT:   %.loc15_21.7: init %Param = class_init (%.loc15_21.6), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.7 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc15_22 to %return
@@ -315,11 +315,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.6: @I.%I.type (%I.type.2) = facet_value %X.2, %X.2 [symbolic]
+// CHECK:STDOUT:   %.6: %I.type.2 = facet_value %X.2, %X.2 [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {} [template]
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
-// CHECK:STDOUT:   %.10: @impl.%I.type.loc10 (%I.type.2) = facet_value %X.2, %X.2 [symbolic]
+// CHECK:STDOUT:   %.10: %I.type.3 = facet_value %X.2, %X.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

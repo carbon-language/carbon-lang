@@ -133,7 +133,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
 // CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @IndexWith.%At.decl [template]
-// CHECK:STDOUT:   %.6: @IndexWith.%IndexWith.type (%IndexWith.type.2) = facet_value %empty_tuple.type, %empty_tuple.type [template]
+// CHECK:STDOUT:   %.6: %IndexWith.type.2 = facet_value %empty_tuple.type, %empty_tuple.type [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%At.2) [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -234,7 +234,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: @IndexWith.%IndexWith.type (%IndexWith.type.2) = facet_value constants.%empty_tuple.type, constants.%empty_tuple.type [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10: @IndexWith.%IndexWith.type (%IndexWith.type.2) = facet_value constants.%empty_tuple.type, constants.%empty_tuple.type [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc9_31: <witness> = interface_witness (%At.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

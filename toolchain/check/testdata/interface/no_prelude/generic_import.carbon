@@ -120,7 +120,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.7: @AddWith.%AddWith.type (%AddWith.type.2) = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.7: %AddWith.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,7 +169,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc8: @AddWith.%AddWith.type (%AddWith.type.2) = facet_value constants.%C, constants.%C [template = constants.%.7]
+// CHECK:STDOUT:   %.loc8: @AddWith.%AddWith.type (%AddWith.type.2) = facet_value constants.%C, constants.%C [symbolic = constants.%.7]
 // CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
