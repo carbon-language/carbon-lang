@@ -13,7 +13,7 @@ namespace Carbon::Check {
 // The outputs of CalleePatternMatch.
 // TODO: Rename or remove this struct.
 struct ParameterBlocks {
-  // The call parameters of the function.
+  // The `Call` parameters of the function.
   SemIR::InstBlockId call_params_id;
 
   // The return slot.
