@@ -891,7 +891,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // converted to facet type F2 if T satisfies the requirements of F2.
     //
     // TODO: Support this conversion in general. For now we only support it in
-    // the case where F1 is an facet type and F2 is `type`.
+    // the case where F1 is a facet type and F2 is `type`.
     // TODO: Support converting tuple and struct values to facet types,
     // combining the above conversions and this one in a single conversion.
     if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {

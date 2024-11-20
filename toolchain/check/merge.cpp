@@ -237,7 +237,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
     CARBON_DIAGNOSTIC(
         RedeclParamDiffersType, Error,
-        "redeclaration differs at {0:implicit |}parameter {1} type {2} != {3}",
+        "type {3} of {0:implicit |}parameter {1} in redeclaration differs from previous parameter type {2}",
         BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
     context.emitter()
         .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
