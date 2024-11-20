@@ -2535,11 +2535,11 @@ facets. The constraint is that `X as type` must be the same as `Y as type`.
 
 A same-type constraint does not rewrite the type on the left-hand side to the
 right-hand side, and they are still treated as distinct types. A value of type
-`X` would need to be cast to `Y` in order to use the API of `Y`. So for
-constraint clauses that name a single facet type on the right-hand side, using a
-rewrite constraint is preferred. Note that switching between the two forms does
-not change which types satisfies the constraint, and so is a compatible change
-for callers.
+`X` [would need to be cast](#satisfying-both-facet-types) to `Y` in order to use
+the API of `Y`. So for constraint clauses that name a single facet type on the
+right-hand side, using a rewrite constraint is preferred. Note that switching
+between the two forms does not change which types satisfies the constraint, and
+so is a compatible change for callers.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
