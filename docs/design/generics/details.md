@@ -2507,22 +2507,19 @@ binary operator:
 
 And there are two positions that `where` can be written:
 
--   Attached to an `impl as` declaration, before the body of the impl. Here it
-    is used to assign a value to an
-    [associated constant](#associated-constants).
+-   At the end of an `impl as` declaration, before the body of the impl.
     ```
     impl Class as Interface where .A = i32 { ... }
     ```
--   Inside a type expression. Here it is used to constrain the possible values
-    of facets and/or their associated constants.
+-   Inside a type expression.
     ```
-    fn F[T: Interface where T.A impls OtherInterface](t: T) { ... }
+    fn F[T: Interface where .A impls OtherInterface](t: T) { ... }
     ```
 
 A rewrite constraint is written `where .A = B`, where `A` is the name of an
-associated constant which is rewritten to `B`. Any use of `.A` thereafter is the
-same as using `B`, including direct access to the API of `B`. It can be used in
-both positions, attached to an `impl as` declaration or in a type expression.
+[associated constant](#associated-constants) which is rewritten to `B`. Any use
+of `.A` thereafter is the same as using `B`, including direct access to the API
+of `B`.
 
 The "dot followed by the name of a member" construct, like `.A`, is called a
 _designator_. The name of the designator is looked up in the constraint, and
@@ -2534,8 +2531,7 @@ constraint.
 > constraint is satisfied.
 
 A same-type constraint is written `where X == Y`, where `X` and `Y` both name
-facets. The constraint is that `X as type` must be the same as `Y as type`. It
-can be used only in the type expression position.
+facets. The constraint is that `X as type` must be the same as `Y as type`.
 
 A same-type constraint does not rewrite the type on the left-hand side to the
 right-hand side, and they are still treated as distinct types. A value of type
@@ -2547,7 +2543,7 @@ for callers.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
-`C`. It can be used only in the type expression position.
+`C`.
 
 **References:** The definition of rewrite and same-type constraints were in
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
