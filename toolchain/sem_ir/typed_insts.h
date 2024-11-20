@@ -431,8 +431,7 @@ struct Call {
 
   TypeId type_id;
   InstId callee_id;
-  // The arguments block contains IDs for the arguments corresponding to each
-  // runtime parameter, in lexical order of the parameter declarations, followed
+  // Runtime arguments in lexical order of the parameter declarations, followed
   // by the argument for the return slot, if present.
   InstBlockId args_id;
 };
