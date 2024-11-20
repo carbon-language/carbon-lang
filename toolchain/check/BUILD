@@ -96,7 +96,11 @@ cc_library(
     name = "check",
     srcs = [
         "check.cpp",
+        "deferred_definition_worklist.cpp",
+        "deferred_definition_worklist.h",
         "handle.h",
+        "node_id_traversal.cpp",
+        "node_id_traversal.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
