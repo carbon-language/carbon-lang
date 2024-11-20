@@ -512,6 +512,15 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
+  if (!context.struct_type_fields_stack().PeekArray().empty()) {
+    CARBON_DIAGNOSTIC(BaseDeclAfterFieldDecl, Error,
+                      "`{0}` declaration appears after field declaration(s)",
+                      Lex::TokenKind);
+    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl,
+                           Lex::TokenKind::Base);
+    return true;
+  }
+
   auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // The `base` value in the class scope has an unbound element type. Instance
@@ -528,15 +537,6 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;
-  }
-
-  if (!context.struct_type_fields_stack().PeekArray().empty()) {
-    CARBON_DIAGNOSTIC(BaseDeclAfterFieldDecl, Error,
-                      "`{0}` declaration appears after field declaration(s)",
-                      Lex::TokenKind);
-    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl,
-                           Lex::TokenKind::Base);
-    return true;
   }
 
   // Add a corresponding field to the object representation of the class.

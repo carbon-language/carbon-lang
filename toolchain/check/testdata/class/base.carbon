@@ -229,9 +229,8 @@ class Derived {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.3 [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.d: %i32} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.d: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -267,8 +266,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc7_10.3: type = converted %int.make_type_signed, %.loc7_10.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_8: %.4 = field_decl d, element0 [template]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc12: %.6 = base_decl %Base, element1 [template]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
