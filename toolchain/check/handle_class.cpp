@@ -513,11 +513,10 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
 
   if (!context.struct_type_fields_stack().PeekArray().empty()) {
-    CARBON_DIAGNOSTIC(BaseDeclAfterFieldDecl, Error,
-                      "`{0}` declaration must come before field declarations",
-                      Lex::TokenKind);
-    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl,
-                           Lex::TokenKind::Base);
+    CARBON_DIAGNOSTIC(
+        BaseDeclAfterFieldDecl, Error,
+        "`base` declaration must appear before field declarations");
+    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl);
     return true;
   }
 
