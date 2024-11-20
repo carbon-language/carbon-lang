@@ -640,7 +640,7 @@ static auto AddStructTypeFields(
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     context.sem_ir().insts().Set(field_decl_id, field_decl);
-    if (!context.types().Is<SemIR::UnboundElementType>(field_decl.type_id)) {
+    if (field_decl.type_id == SemIR::TypeId::Error) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id, .type_id = SemIR::TypeId::Error});
       continue;
