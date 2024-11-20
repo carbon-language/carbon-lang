@@ -101,6 +101,9 @@ static auto IsEndOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
   }
 }
 
+// TODO: Investigate factoring out `IsStartOfDeferredDefinitionScope` and
+// `IsEndOfDeferredDefinitionScope` in order to make `NodeIdTraversal`
+// reusable.
 auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
   // When we reach the start of a deferred definition scope, add a task to the
   // worklist to check future skipped definitions in the new context.

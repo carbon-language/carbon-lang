@@ -22,6 +22,8 @@ DeferredDefinitionWorklist::DeferredDefinitionWorklist(
 auto DeferredDefinitionWorklist::SuspendFunctionAndPush(
     Context& context, Parse::DeferredDefinitionIndex index,
     Parse::FunctionDefinitionStartId node_id) -> void {
+  // TODO: Investigate factoring out `HandleFunctionDefinitionSuspend` to make
+  // `DeferredDefinitionWorklist` reusable.
   worklist_.push_back(CheckSkippedDefinition{
       index, HandleFunctionDefinitionSuspend(context, node_id)});
   CARBON_VLOG("{0}Push CheckSkippedDefinition {1}\n", VlogPrefix, index.index);
