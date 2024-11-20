@@ -513,6 +513,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
 
   if (!context.struct_type_fields_stack().PeekArray().empty()) {
+    // TODO: Add note that includes the first field location as an example.
     CARBON_DIAGNOSTIC(
         BaseDeclAfterFieldDecl, Error,
         "`base` declaration must appear before field declarations");
