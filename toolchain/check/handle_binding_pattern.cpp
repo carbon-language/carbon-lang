@@ -133,7 +133,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                          .index = SemIR::ElementIndex(-1)});
         context.field_decls_stack().AppendToTop(field_id);
 
-        // Add a corresponding field to the object representation of the class.
         context.node_stack().Push(node_id, field_id);
         break;
       }
