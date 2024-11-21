@@ -105,7 +105,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%C) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_imported_class_extend_impl.carbon
+// CHECK:STDOUT: --- use_imported_class_extend_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -172,14 +172,14 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc11: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc11: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc11: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc11: init %empty_tuple.type = call %.loc11()
+// CHECK:STDOUT:   %C.ref.loc7: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc7: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc7: init %empty_tuple.type = call %.loc7()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc15: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc15: init %empty_tuple.type = call %.loc15()
+// CHECK:STDOUT:   %F.ref.loc8: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc8: init %empty_tuple.type = call %.loc8()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
