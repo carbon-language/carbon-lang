@@ -634,7 +634,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
 }
 static auto AddStructTypeFields(
     Context& context,
-    llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields) {
+    llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields) -> SemIR::StructTypeFieldsId {
   for (auto field_decl_id : context.field_decls_stack().PeekArray()) {
     auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_decl_id);
     field_decl.index =
