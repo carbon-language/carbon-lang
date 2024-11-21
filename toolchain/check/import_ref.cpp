@@ -1070,6 +1070,10 @@ class ImportRefResolver {
                              .inst_id = ref_id,
                              .access_kind = entry.access_kind});
     }
+    for (auto scope_inst_id : import_scope.extended_scopes) {
+      new_scope.extended_scopes.push_back(AddImportRef(
+          context_, {.ir_id = import_ir_id_, .inst_id = scope_inst_id}));
+    }
   }
 
   // Given a block ID for a list of associated entities of a witness, returns a
@@ -1253,11 +1257,23 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::UnboundElementType inst): {
         return TryResolveTypedInst(inst);
       }
-      default:
-        context_.TODO(
-            SemIR::LocId(AddImportIRInst(inst_id)),
-            llvm::formatv("TryResolveInst on {0}", untyped_inst.kind()).str());
-        return {.const_id = SemIR::ConstantId::Error};
+      default: {
+        // This instruction might have a constant value of a different kind.
+        auto constant_inst_id =
+            import_ir_.constant_values().GetConstantInstId(inst_id);
+        if (constant_inst_id == inst_id) {
+          context_.TODO(
+              SemIR::LocId(AddImportIRInst(inst_id)),
+              llvm::formatv("TryResolveInst on {0}", untyped_inst.kind())
+                  .str());
+          return {.const_id = SemIR::ConstantId::Error};
+        }
+        // Try to resolve the constant value instead. Note that this can only
+        // retry once.
+        CARBON_DCHECK(import_ir_.constant_values().GetConstantInstId(
+                          constant_inst_id) == constant_inst_id);
+        return TryResolveInstCanonical(constant_inst_id, const_id);
+      }
     }
   }
 
@@ -1455,16 +1471,7 @@ class ImportRefResolver {
 
     if (import_class.base_id.is_valid()) {
       new_class.base_id = base_id;
-      // Add the base scope to extended scopes.
-      auto base_inst_id = context_.types().GetInstId(
-          context_.insts()
-              .GetAs<SemIR::BaseDecl>(new_class.base_id)
-              .base_type_id);
-      new_scope.extended_scopes.push_back(base_inst_id);
     }
-    // TODO: `extended_scopes` from `extend impl` are currently not imported.
-    // CARBON_CHECK(new_scope.extended_scopes.size() ==
-    //              import_scope.extended_scopes.size());
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst,
