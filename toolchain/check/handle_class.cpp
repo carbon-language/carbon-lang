@@ -532,7 +532,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   class_info.base_id = context.AddInst<SemIR::BaseDecl>(
       node_id, {.type_id = field_type_id,
                 .base_type_id = base_info.type_id,
-                .index = SemIR::ElementIndex(-1)});
+                .index = SemIR::ElementIndex::Invalid});
 
   if (base_info.type_id != SemIR::TypeId::Error) {
     auto base_class_info = context.classes().Get(
