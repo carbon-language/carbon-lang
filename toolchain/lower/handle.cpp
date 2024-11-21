@@ -253,4 +253,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                                                   /*ArraySize=*/nullptr));
 }
 
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::VptrInit inst) -> void {
+  (void)context;
+  (void)inst_id;
+  (void)inst;
+}
+
 }  // namespace Carbon::Lower

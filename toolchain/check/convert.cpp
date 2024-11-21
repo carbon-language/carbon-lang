@@ -462,7 +462,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
       // TODO: Initialize the vptr to point to a vtable.
-      new_block.Set(i, SemIR::ErrorInst::SingletonInstId);
+      new_block.Set(i, context.AddInst<SemIR::VptrInit>(value_loc_id, {}));
       continue;
     }
 

@@ -424,6 +424,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.class_type_id);
         break;
       }
+      case VptrInit::Kind: {
+        out << "<vptr init>";
+        break;
+      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
