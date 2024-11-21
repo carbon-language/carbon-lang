@@ -19,12 +19,15 @@
 
 namespace Carbon::SemIR {
 
-File::File(CheckIRId check_ir_id, IdentifierId package_id,
-           LibraryNameId library_id, SharedValueStores& value_stores,
-           std::string filename)
+File::File(CheckIRId check_ir_id,
+           const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
+           SharedValueStores& value_stores, std::string filename)
     : check_ir_id_(check_ir_id),
-      package_id_(package_id),
-      library_id_(library_id),
+      package_id_(packaging_decl ? packaging_decl->names.package_id
+                                 : IdentifierId::Invalid),
+      library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
+                                       packaging_decl->names.library_id)
+                                 : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       impls_(*this),

@@ -57,12 +57,11 @@ struct UnitInfo {
     llvm::SmallVector<Import> imports;
   };
 
-  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit,
-                    Parse::NodeLocConverter& converter)
+  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit)
       : check_ir_id(check_ir_id),
         unit(&unit),
         err_tracker(*unit.consumer),
-        emitter(converter, err_tracker) {}
+        emitter(*unit.node_converter, err_tracker) {}
 
   SemIR::CheckIRId check_ir_id;
   Unit* unit;
@@ -91,6 +90,9 @@ struct UnitInfo {
   // The corresponding `api` unit if this is an `impl` file. The entry should
   // also be in the corresponding `PackageImports`.
   UnitInfo* api_for_impl = nullptr;
+
+  // Whether the unit has been checked.
+  bool is_checked = false;
 };
 }  // namespace
 
@@ -101,7 +103,7 @@ static auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
                                  const UnitInfo::PackageImports& imports,
                                  bool is_local) -> void {
   for (const auto& import : imports.imports) {
-    const auto& direct_ir = **import.unit_info->unit->sem_ir;
+    const auto& direct_ir = *import.unit_info->unit->sem_ir;
     auto& index = ir_to_result_index[direct_ir.check_ir_id().index];
     if (index != -1) {
       // This should only happen when doing API imports for an implementation
@@ -339,10 +341,9 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
     auto import_decl_id = context.AddInst<SemIR::ImportDecl>(
         names.node_id,
         {.package_id = SemIR::NameId::ForIdentifier(names.package_id)});
-    SetApiImportIR(context,
-                   {.decl_id = import_decl_id,
-                    .is_export = false,
-                    .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
+    SetApiImportIR(context, {.decl_id = import_decl_id,
+                             .is_export = false,
+                             .sem_ir = unit_info.api_for_impl->unit->sem_ir});
   } else {
     SetApiImportIR(context,
                    {.decl_id = SemIR::InstId::Invalid, .sem_ir = nullptr});
@@ -360,7 +361,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   // Process the imports.
   if (unit_info.api_for_impl) {
     ImportApiFile(context, namespace_type_id,
-                  **unit_info.api_for_impl->unit->sem_ir);
+                  *unit_info.api_for_impl->unit->sem_ir);
   }
   ImportCurrentPackage(context, unit_info, total_ir_count, package_inst_id,
                        namespace_type_id);
@@ -477,27 +478,16 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 }
 
 // Produces and checks the IR for the provided Parse::Tree.
-static auto CheckParseTree(
-    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
-    UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
-    -> void {
+static auto CheckParseTree(UnitInfo& unit_info, int total_ir_count,
+                           llvm::raw_ostream* vlog_stream) -> void {
   Timings::ScopedTiming timing(unit_info.unit->timings, "check");
 
-  auto package_id = IdentifierId::Invalid;
-  auto library_id = StringLiteralValueId::Invalid;
-  if (const auto& packaging = unit_info.unit->parse_tree->packaging_decl()) {
-    package_id = packaging->names.package_id;
-    library_id = packaging->names.library_id;
-  }
-  unit_info.unit->sem_ir->emplace(
-      unit_info.check_ir_id, package_id,
-      SemIR::LibraryNameId::ForStringLiteralValueId(library_id),
-      *unit_info.unit->value_stores,
-      unit_info.unit->tokens->source().filename().str());
+  // We can safely mark this as checked at the start.
+  unit_info.is_checked = true;
 
-  SemIR::File& sem_ir = **unit_info.unit->sem_ir;
-  SemIRDiagnosticConverter converter(node_converters, &sem_ir);
-  Context::DiagnosticEmitter emitter(converter, unit_info.err_tracker);
+  SemIR::File& sem_ir = *unit_info.unit->sem_ir;
+  Context::DiagnosticEmitter emitter(*unit_info.unit->sem_ir_converter,
+                                     unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
                   unit_info.unit->get_parse_tree_and_subtrees, sem_ir,
                   vlog_stream);
@@ -514,7 +504,7 @@ static auto CheckParseTree(
   ImportImplsFromApiFile(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
-                      node_converters[unit_info.check_ir_id.index])) {
+                      *unit_info.unit->node_converter)) {
     context.sem_ir().set_has_errors(true);
     return;
   }
@@ -796,16 +786,14 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(
-    llvm::MutableArrayRef<Unit> units,
-    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
-    bool prelude_import, llvm::raw_ostream* vlog_stream) -> void {
+auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
+                     llvm::raw_ostream* vlog_stream) -> void {
   // UnitInfo is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitInfo, 0> unit_infos;
   unit_infos.reserve(units.size());
   for (auto [i, unit] : llvm::enumerate(units)) {
-    unit_infos.emplace_back(SemIR::CheckIRId(i), unit, node_converters[i]);
+    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
   }
 
   Map<ImportKey, UnitInfo*> api_map =
@@ -854,7 +842,7 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(node_converters, *unit_info, units.size(), vlog_stream);
+    CheckParseTree(*unit_info, units.size(), vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -875,7 +863,7 @@ auto CheckParseTrees(
         for (auto& package_imports : unit_info.package_imports) {
           for (auto* import_it = package_imports.imports.begin();
                import_it != package_imports.imports.end();) {
-            if (*import_it->unit_info->unit->sem_ir) {
+            if (import_it->unit_info->is_checked) {
               // The import is checked, so continue.
               ++import_it;
             } else {
@@ -901,7 +889,7 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(node_converters, unit_info, units.size(), vlog_stream);
+        CheckParseTree(unit_info, units.size(), vlog_stream);
       }
     }
   }
