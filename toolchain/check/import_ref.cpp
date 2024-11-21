@@ -1481,8 +1481,8 @@ class ImportRefResolver {
   auto AddClassDefinition(const SemIR::Class& import_class,
                           SemIR::Class& new_class,
                           SemIR::InstId complete_type_witness_id,
-                          SemIR::InstId base_id,
-                          SemIR::InstId adapt_id) -> void {
+                          SemIR::InstId base_id, SemIR::InstId adapt_id)
+      -> void {
     new_class.definition_id = new_class.first_owning_decl_id;
 
     new_class.complete_type_witness_id = complete_type_witness_id;

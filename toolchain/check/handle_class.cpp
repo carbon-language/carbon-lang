@@ -394,8 +394,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
       },
       [&] {
         CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
-                          "adapted type {0} is an abstract type",
-                          InstIdAsType);
+                          "adapted type {0} is an abstract type", InstIdAsType);
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_inst_id);
       });
