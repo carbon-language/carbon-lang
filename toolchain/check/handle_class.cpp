@@ -562,8 +562,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 // returns a corresponding complete type witness instruction.
 static auto CheckCompleteAdapterClassType(Context& context,
                                           Parse::NodeId node_id,
-                                          SemIR::ClassId class_id,
-                                          SemIR::StructTypeFieldsId fields_id)
+                                          SemIR::ClassId class_id)
     -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.is_valid()) {
@@ -576,17 +575,15 @@ static auto CheckCompleteAdapterClassType(Context& context,
     return SemIR::InstId::BuiltinErrorInst;
   }
 
-  if (auto fields = context.struct_type_fields().Get(fields_id);
-      !fields.empty()) {
-    auto [first_field_inst_id, _] = context.LookupNameInExactScope(
-        node_id, fields.front().name_id, class_info.scope_id,
-        context.name_scopes().Get(class_info.scope_id));
+  auto field_decls = context.field_decls_stack().PeekArray();
+  context.field_decls_stack().PopArray();
+  if (!field_decls.empty()) {
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
     CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
                       "first field declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
-        .Note(first_field_inst_id, AdaptWithFieldHere)
+        .Note(field_decls.front(), AdaptWithFieldHere)
         .Emit();
     return SemIR::InstId::BuiltinErrorInst;
   }
@@ -634,7 +631,8 @@ static auto CheckCompleteAdapterClassType(Context& context,
 }
 static auto AddStructTypeFields(
     Context& context,
-    llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields) -> SemIR::StructTypeFieldsId {
+    llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields)
+    -> SemIR::StructTypeFieldsId {
   for (auto field_decl_id : context.field_decls_stack().PeekArray()) {
     auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_decl_id);
     field_decl.index =
@@ -664,12 +662,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
                                    SemIR::ClassId class_id) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
   if (class_info.adapt_id.is_valid()) {
-    llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
-    struct_type_fields.reserve(context.field_decls_stack().PeekArray().size());
-
-    return CheckCompleteAdapterClassType(
-        context, node_id, class_id,
-        AddStructTypeFields(context, struct_type_fields));
+    return CheckCompleteAdapterClassType(context, node_id, class_id);
   }
 
   bool defining_vptr = class_info.is_dynamic;
