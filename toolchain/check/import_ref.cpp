@@ -1481,7 +1481,8 @@ class ImportRefResolver {
   auto AddClassDefinition(const SemIR::Class& import_class,
                           SemIR::Class& new_class,
                           SemIR::InstId complete_type_witness_id,
-                          SemIR::InstId base_id) -> void {
+                          SemIR::InstId base_id,
+                          SemIR::InstId adapt_id) -> void {
     new_class.definition_id = new_class.first_owning_decl_id;
 
     new_class.complete_type_witness_id = complete_type_witness_id;
@@ -1500,6 +1501,9 @@ class ImportRefResolver {
 
     if (import_class.base_id.is_valid()) {
       new_class.base_id = base_id;
+    }
+    if (import_class.adapt_id.is_valid()) {
+      new_class.adapt_id = adapt_id;
     }
   }
 
@@ -1561,6 +1565,9 @@ class ImportRefResolver {
     auto base_id = import_class.base_id.is_valid()
                        ? GetLocalConstantInstId(import_class.base_id)
                        : SemIR::InstId::Invalid;
+    auto adapt_id = import_class.adapt_id.is_valid()
+                        ? GetLocalConstantInstId(import_class.adapt_id)
+                        : SemIR::InstId::Invalid;
 
     if (HasNewWork()) {
       return Retry(class_const_id);
@@ -1580,7 +1587,7 @@ class ImportRefResolver {
 
     if (import_class.is_defined()) {
       AddClassDefinition(import_class, new_class, complete_type_witness_id,
-                         base_id);
+                         base_id, adapt_id);
     }
 
     return ResolveAsConstant(class_const_id);

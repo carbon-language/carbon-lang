@@ -947,7 +947,13 @@ class TypeCompleter {
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
-        Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        if (auto adapted_type_id =
+                class_info.GetAdaptedType(context_.sem_ir(), inst.specific_id);
+            adapted_type_id.is_valid()) {
+          Push(adapted_type_id);
+        } else {
+          Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        }
         break;
       }
       case CARBON_KIND(SemIR::ConstType inst): {
