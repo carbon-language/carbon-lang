@@ -2531,7 +2531,8 @@ constraint.
 > constraint is satisfied.
 
 A same-type constraint is written `where X == Y`, where `X` and `Y` both name
-facets. The constraint is that `X as type` must be the same as `Y as type`.
+facets. The constraint is that `X as type` must be the same as `Y as type`. It
+would normally only be used in the type expression position.
 
 A same-type constraint does not rewrite the type on the left-hand side to the
 right-hand side, and they are still treated as distinct types. A value of type
@@ -2543,7 +2544,7 @@ so is a compatible change for callers.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
-`C`.
+`C`. It would normally only be used in the type expression position.
 
 **References:** The definition of rewrite and same-type constraints were in
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
