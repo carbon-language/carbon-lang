@@ -134,7 +134,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %.5 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc16: %.5 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %.6 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.6 = value_param_pattern %self.patt, runtime_param0
@@ -156,7 +156,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21: %.11 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc21: %.11 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %self.patt: %.12 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %.12 = value_param_pattern %self.patt, runtime_param0
@@ -178,7 +178,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc26: %.15 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc26: %.15 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc27: <witness> = complete_type_witness %.13 [template = constants.%.14]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

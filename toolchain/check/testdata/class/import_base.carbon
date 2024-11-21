@@ -115,7 +115,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.6 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -167,7 +167,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+49, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.11
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -176,9 +176,9 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.6: %.40 = import_ref Main//a, inst+40, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+50, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//a, inst+51, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//a, inst+51, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -195,9 +195,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   .base = imports.%import_ref.9
-// CHECK:STDOUT:   extend imports.%import_ref.10
+// CHECK:STDOUT:   .Self = imports.%import_ref.9
+// CHECK:STDOUT:   .base = imports.%import_ref.10
+// CHECK:STDOUT:   extend imports.%import_ref.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

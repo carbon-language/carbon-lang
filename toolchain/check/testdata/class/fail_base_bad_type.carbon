@@ -847,7 +847,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
 // CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final.decl [template = constants.%Final]
-// CHECK:STDOUT:   %.loc11: %.6 = base_decl %Final, element0 [template]
+// CHECK:STDOUT:   %.loc11: %.6 = base_decl %Final.ref, element0 [template]
 // CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.7 [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

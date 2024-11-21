@@ -1359,10 +1359,15 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::BaseDecl inst, SemIR::InstId import_inst_id)
       -> ResolveResult {
     auto type_const_id = GetLocalConstantId(inst.type_id);
-    auto base_type_const_id = GetLocalConstantId(inst.base_type_id);
+    auto base_type_const_id = GetLocalConstantId(
+        import_ir_.constant_values().Get(inst.base_type_inst_id));
     if (HasNewWork()) {
       return Retry();
     }
+
+    auto base_type_inst_id = AddLoadedImportRef(
+        context_, {.ir_id = import_ir_id_, .inst_id = inst.base_type_inst_id},
+        SemIR::TypeId::TypeType, base_type_const_id);
 
     // Import the instruction in order to update contained base_type_id and
     // track the import location.
@@ -1370,8 +1375,7 @@ class ImportRefResolver {
         context_.MakeImportedLocAndInst<SemIR::BaseDecl>(
             AddImportIRInst(import_inst_id),
             {.type_id = context_.GetTypeIdForTypeConstant(type_const_id),
-             .base_type_id =
-                 context_.GetTypeIdForTypeConstant(base_type_const_id),
+             .base_type_inst_id = base_type_inst_id,
              .index = inst.index}));
     return ResolveAsConstant(context_.constant_values().Get(inst_id));
   }

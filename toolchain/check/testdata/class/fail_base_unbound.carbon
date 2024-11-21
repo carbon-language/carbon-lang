@@ -60,7 +60,7 @@ let b: B = C.base;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

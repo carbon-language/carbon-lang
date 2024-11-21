@@ -81,15 +81,19 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
 
     // If the `type_id` of `Self` does not match with the one we're currently
     // accessing, try checking if this class is of the parent type of `Self`.
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            self_class_info.base_id)) {
-      if (base_decl->base_type_id == class_info.self_type_id) {
+    if (auto base_type_id = self_class_info.GetBaseType(
+            context.sem_ir(), self_class_type->specific_id);
+        base_type_id.is_valid()) {
+      if (context.types().GetConstantId(base_type_id) == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       self_class_info.adapt_id)) {
-      if (adapt_decl->adapted_type_id == class_info.self_type_id) {
+      // TODO: Also check whether this base class has a base class of its own.
+    } else if (auto adapt_type_id = self_class_info.GetAdaptedType(
+                   context.sem_ir(), self_class_type->specific_id);
+               adapt_type_id.is_valid()) {
+      if (context.types().GetConstantId(adapt_type_id) == name_scope_const_id) {
+        // TODO: Should we be allowed to access protected fields of a type we
+        // are adapting? The design doesn't allow this.
         return SemIR::AccessKind::Protected;
       }
     }

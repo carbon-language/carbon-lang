@@ -77,6 +77,14 @@ struct Class : public EntityWithParamsBase,
     return complete_type_witness_id.is_valid();
   }
 
+  // Gets the type that this class type adapts. Returns Invalid if there is no
+  // such type, or if the class is not yet defined.
+  auto GetAdaptedType(const File& file, SpecificId specific_id) const -> TypeId;
+
+  // Gets the base class for this class type. Returns Invalid if there is no
+  // such type, or if the class is not yet defined.
+  auto GetBaseType(const File& file, SpecificId specific_id) const -> TypeId;
+
   // Gets the object representation for this class. Returns Invalid if the class
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;

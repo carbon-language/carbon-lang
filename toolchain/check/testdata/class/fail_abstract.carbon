@@ -492,7 +492,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc10_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -577,7 +577,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc10_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -669,7 +669,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc11_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc11_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]

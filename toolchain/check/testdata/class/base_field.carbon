@@ -112,7 +112,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc18: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.6 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %.loc20_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%.loc20_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.2: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]

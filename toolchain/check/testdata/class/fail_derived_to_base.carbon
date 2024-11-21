@@ -153,7 +153,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:   %.loc20: %.7 = base_decl %A2, element0 [template]
+// CHECK:STDOUT:   %.loc20: %.7 = base_decl %A2.ref, element0 [template]
 // CHECK:STDOUT:   %.loc21_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc21_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]

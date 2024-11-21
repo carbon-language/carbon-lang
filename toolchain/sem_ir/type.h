@@ -98,6 +98,9 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return complete_type_info_.Contains(type_id);
   }
 
+  // Removes any top-level `const` qualifiers from a type.
+  auto GetUnqualifiedType(TypeId type_id) const -> TypeId;
+
   // Determines whether the given type is a signed integer type. This includes
   // the case where the type is `Core.IntLiteral` or a class type whose object
   // representation is a signed integer type.

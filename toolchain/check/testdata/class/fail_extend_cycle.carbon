@@ -73,7 +73,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %.4 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc16: %.4 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -84,7 +84,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc27: %.8 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc27: %.8 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc31: <error> = field_decl c, element1 [template]
 // CHECK:STDOUT:   %.loc32: <witness> = complete_type_witness <error> [template = <error>]

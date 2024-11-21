@@ -17,6 +17,7 @@ auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {
 }
 
 auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
+  type_id = GetUnqualifiedType(type_id);
   auto class_type = TryGetAs<ClassType>(type_id);
   if (!class_type) {
     return type_id;
@@ -26,6 +27,13 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
     return TypeId::Invalid;
   }
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
+}
+
+auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
+  if (auto const_type = TryGetAs<ConstType>(type_id)) {
+    return const_type->inner_id;
+  }
+  return type_id;
 }
 
 auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {

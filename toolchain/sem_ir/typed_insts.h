@@ -65,7 +65,7 @@ struct AdaptDecl {
       {.ir_name = "adapt_decl", .is_lowered = false});
 
   // No type_id; this is not a value.
-  TypeId adapted_type_id;
+  InstId adapted_type_inst_id;
 };
 
 // Takes the address of a reference expression, such as for the `&` address-of
@@ -228,7 +228,7 @@ struct BaseDecl {
       {.ir_name = "base_decl", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  TypeId base_type_id;
+  InstId base_type_inst_id;
   ElementIndex index;
 };
 
