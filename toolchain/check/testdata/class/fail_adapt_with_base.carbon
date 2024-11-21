@@ -58,7 +58,7 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT: class @AdaptWithVirtual {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple]
-// CHECK:STDOUT:   adapt_decl %Simple.ref
+// CHECK:STDOUT:   adapt_decl %Simple.ref [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithVirtual

@@ -62,7 +62,9 @@ namespace Carbon::SemIR {
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
-      {.ir_name = "adapt_decl", .is_lowered = false});
+      {.ir_name = "adapt_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   // No type_id; this is not a value.
   InstId adapted_type_inst_id;
@@ -749,6 +751,8 @@ struct InterfaceWitness {
   static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
       {.ir_name = "interface_witness",
        .constant_kind = InstConstantKind::Conditional,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
        .is_lowered = false});
 
   // Always the builtin witness type.

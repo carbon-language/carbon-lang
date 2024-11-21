@@ -201,7 +201,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   adapt_decl %A.ref
+// CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -328,7 +328,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc5_9) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_12.2: type = converted %int.make_type_signed, %.loc5_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   adapt_decl %.loc5_12.2
+// CHECK:STDOUT:   adapt_decl %.loc5_12.2 [template]
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %i32 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -402,7 +402,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %.loc4_18: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc4_19: type = converted %.loc4_18, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   adapt_decl %.loc4_19
+// CHECK:STDOUT:   adapt_decl %.loc4_19 [template]
 // CHECK:STDOUT:   %.loc4_21: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -411,7 +411,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   adapt_decl %A.ref
+// CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -420,7 +420,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   adapt_decl %B.ref
+// CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -429,7 +429,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   adapt_decl %C.ref
+// CHECK:STDOUT:   adapt_decl %C.ref [template]
 // CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -522,7 +522,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   adapt_decl %A.ref
+// CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -643,7 +643,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   adapt_decl %A.ref
+// CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

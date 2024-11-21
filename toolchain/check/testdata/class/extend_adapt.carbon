@@ -200,7 +200,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
-// CHECK:STDOUT:   adapt_decl %SomeClass.ref
+// CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
 // CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -319,7 +319,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
-// CHECK:STDOUT:   adapt_decl %SomeClass.ref
+// CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
 // CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -413,7 +413,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
-// CHECK:STDOUT:   adapt_decl %SomeClass.ref
+// CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -488,7 +488,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc5_30.2: type = value_of_initializer %int.make_type_signed.loc5_30 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_30.3: type = converted %int.make_type_signed.loc5_30, %.loc5_30.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_33: type = struct_type {.a: %i32, .b: %i32} [template = constants.%.2]
-// CHECK:STDOUT:   adapt_decl %.loc5_33
+// CHECK:STDOUT:   adapt_decl %.loc5_33 [template]
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -564,7 +564,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc5_26.3: type = value_of_initializer %int.make_type_signed.loc5_22 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_26.4: type = converted %int.make_type_signed.loc5_22, %.loc5_26.3 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_26.5: type = converted %.loc5_25, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   adapt_decl %.loc5_26.5
+// CHECK:STDOUT:   adapt_decl %.loc5_26.5 [template]
 // CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %tuple.type.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -655,7 +655,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call %MakeInt.ref(%.loc7_24) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_27.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %int.make_type_signed, %.loc7_27.1 [template = constants.%i32]
-// CHECK:STDOUT:   adapt_decl %.loc7_27.2
+// CHECK:STDOUT:   adapt_decl %.loc7_27.2 [template]
 // CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %i32 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

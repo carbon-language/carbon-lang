@@ -102,7 +102,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
-// CHECK:STDOUT:   adapt_decl %SomeClass.ref
+// CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -119,7 +119,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   %.loc14_23.2: type = value_of_initializer %int.make_type_signed.loc14_23 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_23.3: type = converted %int.make_type_signed.loc14_23, %.loc14_23.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_26: type = struct_type {.a: %i32, .b: %i32} [template = constants.%.3]
-// CHECK:STDOUT:   adapt_decl %.loc14_26
+// CHECK:STDOUT:   adapt_decl %.loc14_26 [template]
 // CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -177,7 +177,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptNotExtend {
 // CHECK:STDOUT:   %Adapted.ref: type = name_ref Adapted, file.%Adapted.decl [template = constants.%Adapted]
-// CHECK:STDOUT:   adapt_decl %Adapted.ref
+// CHECK:STDOUT:   adapt_decl %Adapted.ref [template]
 // CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -99,28 +99,11 @@ static auto EmitAggregateConstant(ConstantContext& context,
   return ConstantType::get(llvm_type, elements);
 }
 
-// For each instruction InstT, there is a function below to convert it to an
-// `llvm::Constant*`:
+// For each instruction InstT that can be emitted as a constant, there is a
+// function below to convert it to an `llvm::Constant*`:
 //
 // auto EmitAsConstant(ConstantContext& context, SemIR::InstT inst)
 //     -> llvm::Constant*;
-
-template <typename InstT>
-  requires(InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
-           InstT::Kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly)
-static auto EmitAsConstant(ConstantContext& /*context*/, InstT inst)
-    -> llvm::Constant* {
-  CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
-}
-
-// For constants that are always of type `type`, produce the trivial runtime
-// representation of type `type`.
-template <typename InstT>
-  requires(InstT::Kind.is_type() == SemIR::InstIsType::Always)
-static auto EmitAsConstant(ConstantContext& context, InstT /*inst*/)
-    -> llvm::Constant* {
-  return context.GetTypeAsValue();
-}
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::StructValue inst)
     -> llvm::Constant* {
@@ -190,20 +173,6 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::FloatLiteral inst)
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
 }
 
-static auto EmitAsConstant(ConstantContext& context,
-                           SemIR::InterfaceWitness inst) -> llvm::Constant* {
-  // TODO: For dynamic dispatch, we might want to lower witness tables as
-  // constants.
-  return context.GetUnusedConstant(inst.type_id);
-}
-
-static auto EmitAsConstant(ConstantContext& /*context*/,
-                           SemIR::ImplDecl /*inst*/) -> llvm::Constant* {
-  // An ImplDecl isn't a value, so this constant value won't ever be used.
-  // It also doesn't even have a type, so we can't use GetUnusedConstant.
-  return nullptr;
-}
-
 static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
     -> llvm::Constant* {
   auto* type = context.GetType(inst.type_id);
@@ -240,6 +209,24 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   CARBON_FATAL("TODO: Add support: {0}", inst);
 }
 
+template <typename InstT>
+static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
+    -> llvm::Constant* {
+  if constexpr (InstT::Kind.constant_kind() == SemIR::InstConstantKind::Never ||
+                InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::SymbolicOnly) {
+    CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
+  } else if constexpr (!InstT::Kind.is_lowered()) {
+    // This instruction has a constant value, but that constant value will never
+    // be used by lowering.
+    return nullptr;
+  } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
+    return context.GetTypeAsValue();
+  } else {
+    return EmitAsConstant(context, inst);
+  }
+}
+
 auto LowerConstants(FileContext& file_context,
                     llvm::MutableArrayRef<llvm::Constant*> constants) -> void {
   ConstantContext context(file_context, constants);
@@ -267,10 +254,10 @@ auto LowerConstants(FileContext& file_context,
     }
     llvm::Constant* value = nullptr;
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(Name)            \
-  case CARBON_KIND(SemIR::Name const_inst): {    \
-    value = EmitAsConstant(context, const_inst); \
-    break;                                       \
+#define CARBON_SEM_IR_INST_KIND(Name)                 \
+  case CARBON_KIND(SemIR::Name const_inst): {         \
+    value = MaybeEmitAsConstant(context, const_inst); \
+    break;                                            \
   }
 #include "toolchain/sem_ir/inst_kind.def"
     }

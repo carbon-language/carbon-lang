@@ -1493,6 +1493,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // TODO: This doesn't properly handle redeclarations. Consider adding a
     // corresponding `Value` inst for each of these cases, or returning the
     // first declaration.
+    case SemIR::AdaptDecl::Kind:
     case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
@@ -1671,7 +1672,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     // These cases are either not expressions or not constant.
-    case SemIR::AdaptDecl::Kind:
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:

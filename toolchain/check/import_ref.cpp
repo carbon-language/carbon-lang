@@ -1163,6 +1163,9 @@ class ImportRefResolver {
 
     auto untyped_inst = import_ir_.insts().Get(inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
+      case CARBON_KIND(SemIR::AdaptDecl inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
       case CARBON_KIND(SemIR::AssociatedEntity inst): {
         return TryResolveTypedInst(inst);
       }
@@ -1323,6 +1326,27 @@ class ImportRefResolver {
     return ResolveAsUntyped(inst);
   }
 
+  auto TryResolveTypedInst(SemIR::AdaptDecl inst, SemIR::InstId import_inst_id)
+      -> ResolveResult {
+    auto adapted_type_const_id = GetLocalConstantId(
+        import_ir_.constant_values().Get(inst.adapted_type_inst_id));
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    auto adapted_type_inst_id = AddLoadedImportRef(
+        context_,
+        {.ir_id = import_ir_id_, .inst_id = inst.adapted_type_inst_id},
+        SemIR::TypeId::TypeType, adapted_type_const_id);
+
+    // Create a corresponding instruction to represent the declaration.
+    auto inst_id = context_.AddInstInNoBlock(
+        context_.MakeImportedLocAndInst<SemIR::AdaptDecl>(
+            AddImportIRInst(import_inst_id),
+            {.adapted_type_inst_id = adapted_type_inst_id}));
+    return ResolveAsConstant(context_.constant_values().Get(inst_id));
+  }
+
   auto TryResolveTypedInst(SemIR::AssociatedEntity inst) -> ResolveResult {
     auto type_const_id = GetLocalConstantId(inst.type_id);
     if (HasNewWork()) {
@@ -1369,8 +1393,7 @@ class ImportRefResolver {
         context_, {.ir_id = import_ir_id_, .inst_id = inst.base_type_inst_id},
         SemIR::TypeId::TypeType, base_type_const_id);
 
-    // Import the instruction in order to update contained base_type_id and
-    // track the import location.
+    // Create a corresponding instruction to represent the declaration.
     auto inst_id = context_.AddInstInNoBlock(
         context_.MakeImportedLocAndInst<SemIR::BaseDecl>(
             AddImportIRInst(import_inst_id),
