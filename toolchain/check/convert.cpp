@@ -183,15 +183,16 @@ static auto ConvertAggregateElement(
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
-    SemIR::TypeId target_elem_type, PendingBlock* target_block, size_t i) {
+    SemIR::TypeId target_elem_type, PendingBlock* target_block,
+    size_t src_field_index, size_t dest_field_index) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.
-  auto src_elem_id =
-      !src_literal_elems.empty()
-          ? src_literal_elems[i]
-          : MakeElementAccessInst<SourceAccessInstT>(context, loc_id, src_id,
-                                                     src_elem_type, context, i);
+  auto src_elem_id = !src_literal_elems.empty()
+                         ? src_literal_elems[src_field_index]
+                         : MakeElementAccessInst<SourceAccessInstT>(
+                               context, loc_id, src_id, src_elem_type, context,
+                               src_field_index);
 
   // If we're performing a conversion rather than an initialization, we won't
   // have or need a target.
@@ -204,7 +205,8 @@ static auto ConvertAggregateElement(
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
-      context, loc_id, target_id, target_elem_type, *target_block, i);
+      context, loc_id, target_id, target_elem_type, *target_block,
+      dest_field_index);
   return Convert(context, loc_id, src_elem_id, target);
 }
 
@@ -275,7 +277,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_id,
-            array_type.element_type_id, target_block, i);
+            array_type.element_type_id, target_block, i, i);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
@@ -356,7 +358,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
-            inner_kind, target.init_id, dest_type_id, target.init_block, i);
+            inner_kind, target.init_id, dest_type_id, target.init_block, i, i);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
@@ -496,7 +498,7 @@ static auto ConvertStructToStructOrClass(Context& context,
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_id, literal_elems,
             inner_kind, target.init_id, dest_field.type_id, target.init_block,
-            src_field_index);
+            src_field_index, src_field_index + dest_has_vptr);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
