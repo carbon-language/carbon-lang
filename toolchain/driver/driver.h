@@ -22,7 +22,8 @@ class Driver {
  public:
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::vfs::FileSystem& fs, const InstallPaths* installation,
+  Driver(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+         const InstallPaths* installation,
          llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
       : driver_env_{.fs = fs,

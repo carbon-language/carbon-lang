@@ -20,7 +20,7 @@ struct DriverResult {
 
   // Per-file success results. May be empty if files aren't individually
   // processed.
-  llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
+  llvm::SmallVector<std::pair<std::string, bool>> per_file_success = {};
 };
 
 // A subcommand for the driver.

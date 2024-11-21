@@ -297,12 +297,13 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
       DoArgReplacements(context.test_args, context.test_files));
 
   // Create the files in-memory.
-  llvm::vfs::InMemoryFileSystem fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
   for (const auto& test_file : context.test_files) {
-    if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
-                    llvm::MemoryBuffer::getMemBuffer(
-                        test_file.content, test_file.filename,
-                        /*RequiresNullTerminator=*/false))) {
+    if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
+                     llvm::MemoryBuffer::getMemBuffer(
+                         test_file.content, test_file.filename,
+                         /*RequiresNullTerminator=*/false))) {
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }

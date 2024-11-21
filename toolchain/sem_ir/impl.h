@@ -31,7 +31,7 @@ struct ImplFields {
 
   // The following members are set at the `}` of the impl definition.
 
-  // The witness for the impl. This can be `BuiltinError`.
+  // The witness for the impl. This can be `BuiltinErrorInst`.
   InstId witness_id = InstId::Invalid;
 };
 

@@ -395,6 +395,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       add_inst_name(
           (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
     };
+    auto add_int_or_float_type_name = [&](char type_literal_prefix,
+                                          SemIR::InstId bit_width_id) {
+      std::string name;
+      llvm::raw_string_ostream out(name);
+      out << type_literal_prefix;
+      if (auto bit_width = sem_ir_.insts().TryGetAs<IntValue>(bit_width_id)) {
+        out << sem_ir_.ints().Get(bit_width->int_id);
+      } else {
+        out << "N";
+      }
+      add_inst_name(std::move(name));
+    };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
       AddBlockLabel(scope_id, sem_ir_.insts().GetLocId(inst_id), *branch);
@@ -471,6 +483,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(FloatType inst): {
+        add_int_or_float_type_name('f', inst.bit_width_id);
+        continue;
+      }
       case CARBON_KIND(FunctionDecl inst): {
         const auto& function_info = sem_ir_.functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
@@ -531,6 +547,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id,
                             interface_info.pattern_block_id);
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
+        continue;
+      }
+      case CARBON_KIND(IntType inst): {
+        add_int_or_float_type_name(inst.int_kind == IntKind::Signed ? 'i' : 'u',
+                                   inst.bit_width_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {

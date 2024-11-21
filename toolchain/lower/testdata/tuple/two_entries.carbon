@@ -22,8 +22,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %.loc12_29.5.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc12_29.10.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc12_29.6.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc12_29.12.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc12_30, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8, !dbg !10
 // CHECK:STDOUT:   %.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !11

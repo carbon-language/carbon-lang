@@ -140,7 +140,7 @@ static auto PerformImplLookup(
     context.TODO(loc_id,
                  "Lookup of impl witness not yet supported except for a single "
                  "interface");
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto witness_id =
@@ -168,22 +168,22 @@ static auto PerformImplLookup(
                              interface_type_id,
                              context.GetTypeIdForTypeConstant(type_const_id));
     }
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.is_valid()) {
-    if (member_value_id != SemIR::InstId::BuiltinError) {
+    if (member_value_id != SemIR::InstId::BuiltinErrorInst) {
       context.TODO(member_id, "non-constant associated entity");
     }
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto assoc_entity =
       context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
   if (!assoc_entity) {
     context.TODO(member_id, "unexpected value for associated entity");
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // TODO: This produces the type of the associated entity with no value for
@@ -200,7 +200,7 @@ static auto PerformImplLookup(
 
 // Performs a member name lookup into the specified scope, including performing
 // impl lookup if necessary. If the scope is invalid, assume an error has
-// already been diagnosed, and return BuiltinError.
+// already been diagnosed, and return BuiltinErrorInst.
 static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
@@ -217,7 +217,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                                   /*required=*/true, access_info);
 
   if (!result.inst_id.is_valid()) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
@@ -355,7 +355,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_id);
       })) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Materialize a temporary for the base expression if necessary.
@@ -387,7 +387,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
                         SemIR::NameId);
       context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
                              name_id);
-      return SemIR::InstId::BuiltinError;
+      return SemIR::InstId::BuiltinErrorInst;
     }
 
     if (base_type_id != SemIR::TypeId::Error) {
@@ -396,7 +396,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
                         TypeOfInstId);
       context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
     }
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // Perform lookup into the base type.
@@ -461,7 +461,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
                       "tuples can be indexed that way",
                       TypeOfInstId);
     context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_inst_id);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   auto diag_non_constant_index = [&] {
@@ -469,7 +469,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
                       "tuple index must be a constant");
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because
   // the conversion will fail if the index is not constant.
@@ -484,7 +484,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
       context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ConstantId::Error) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   } else if (!index_const_id.is_template()) {
     return diag_non_constant_index();
   }
@@ -495,7 +495,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());
   if (!index_val) {
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.

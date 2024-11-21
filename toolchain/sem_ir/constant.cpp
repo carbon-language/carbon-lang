@@ -9,7 +9,6 @@
 namespace Carbon::SemIR {
 
 auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
-  CARBON_CHECK(!inst.Is<SemIR::BuiltinInst>());
   auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::Invalid;

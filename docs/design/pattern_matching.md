@@ -335,7 +335,8 @@ _pattern_ `=` _expression_ `;`.
 A tuple of patterns can be used as a pattern.
 
 -   _tuple-pattern_ ::= `(` [_expression_ `,`]\* _proper-pattern_ [`,`
-    _pattern_]\* `,`? `)`
+    _pattern_]\*
+    `,`? `)`
 -   _proper-pattern_ ::= _tuple-pattern_
 
 A _tuple-pattern_ containing no commas is treated as grouping parens: the
@@ -355,7 +356,8 @@ compares fields left-to-right.
 A struct can be matched with a struct pattern.
 
 -   _proper-pattern_ ::= `{` [_field-init_ `,`]\* _proper-field-pattern_ [`,`
-    _field-pattern_]\* `}`
+    _field-pattern_]\*
+    `}`
 -   _proper-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `}`
 -   _field-init_ ::= _designator_ `=` _expression_
 -   _proper-field-pattern_ ::= _designator_ `=` _proper-pattern_

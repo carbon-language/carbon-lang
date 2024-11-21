@@ -48,6 +48,9 @@ WarningsAsErrors: '*'
 #   explicit value.
 # - `readability-function-cognitive-complexity` warns too frequently.
 # - `readability-magic-numbers` warns in reasonably documented situations.
+# - `readability-redundant-member-init` warns on `= {}` which is also used to
+#   indicate which fields do not need to be explicitly initialized in aggregate
+#   initialization.
 # - `readability-suspicious-call-argument` warns when callers use similar names
 #   as different parameters.
 #
@@ -80,7 +83,7 @@ Checks:
   -readability-else-after-return, -readability-enum-initial-value,
   -readability-function-cognitive-complexity, -readability-identifier-length,
   -readability-implicit-bool-conversion, -readability-magic-numbers,
-  -readability-make-member-function-const,
+  -readability-make-member-function-const, -readability-redundant-member-init,
   -readability-static-definition-in-anonymous-namespace,
   -readability-suspicious-call-argument, -readability-use-anyofallof
 CheckOptions:

@@ -405,26 +405,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extended_scope_inst_id = SemIR::InstId::Invalid;
-    if (adapted_type_id == SemIR::TypeId::Error) {
-      // Recover by not extending any scope. We instead set has_error to true
-      // below.
-    } else if (auto* adapted_class_info =
-                   TryGetAsClass(context, adapted_type_id)) {
-      extended_scope_inst_id = adapted_inst_id;
-      CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
-                   "Complete class should have a scope");
-    } else {
-      // TODO: Accept any type that has a scope.
-      context.TODO(node_id, "extending non-class type");
-    }
-
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (extended_scope_inst_id.is_valid()) {
-      class_scope.extended_scopes.push_back(extended_scope_inst_id);
-    } else {
-      class_scope.has_error = true;
-    }
+    class_scope.extended_scopes.push_back(adapted_inst_id);
   }
   return true;
 }
@@ -530,6 +512,15 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
+  if (!context.struct_type_fields_stack().PeekArray().empty()) {
+    // TODO: Add note that includes the first field location as an example.
+    CARBON_DIAGNOSTIC(
+        BaseDeclAfterFieldDecl, Error,
+        "`base` declaration must appear before field declarations");
+    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl);
+    return true;
+  }
+
   auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // The `base` value in the class scope has an unbound element type. Instance
@@ -587,7 +578,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptWithBaseHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   if (auto fields = context.struct_type_fields().Get(fields_id);
@@ -602,7 +593,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(first_field_inst_id, AdaptWithFieldHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
@@ -619,7 +610,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
             .Build(class_info.adapt_id, AdaptWithVirtual)
             .Note(inst_id, AdaptWithVirtualHere)
             .Emit();
-        return SemIR::InstId::BuiltinError;
+        return SemIR::InstId::BuiltinErrorInst;
       }
     }
   }

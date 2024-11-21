@@ -166,8 +166,8 @@ class Inst : public Printable<Inst> {
     requires Internal::InstLikeType<TypedInst>
   auto As() const -> TypedInst {
     using Info = Internal::InstLikeTypeInfo<TypedInst>;
-    CARBON_CHECK(Is<TypedInst>(), "Casting inst of kind {0} to wrong kind {1}",
-                 kind(), Info::DebugName());
+    CARBON_CHECK(Is<TypedInst>(), "Casting inst {0} to wrong kind {1}", *this,
+                 Info::DebugName());
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
       if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), type_id_onwards...};

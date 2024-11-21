@@ -81,8 +81,10 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -91,7 +93,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+13, loaded
 // CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+17, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -112,26 +114,30 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc6_8.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
-// CHECK:STDOUT:   %.loc6_8.2: type = converted %int.make_type_32.loc6, %.loc6_8.1 [template = i32]
-// CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
-// CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
-// CHECK:STDOUT:   %b.var: ref i32 = var b
-// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc8_8.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
-// CHECK:STDOUT:   %.loc8_8.2: type = converted %int.make_type_32.loc8, %.loc8_8.1 [template = i32]
-// CHECK:STDOUT:   %c.var: ref i32 = var c
-// CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc9_8.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
-// CHECK:STDOUT:   %.loc9_8.2: type = converted %int.make_type_32.loc9, %.loc9_8.1 [template = i32]
-// CHECK:STDOUT:   %d.var: ref i32 = var d
-// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
+// CHECK:STDOUT:   %.loc6_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%.loc6_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc6_8.2: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc6_8.3: type = converted %int.make_type_signed.loc6, %.loc6_8.2 [template = constants.%i32]
+// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc7_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%.loc7_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_8.2: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_8.3: type = converted %int.make_type_signed.loc7, %.loc7_8.2 [template = constants.%i32]
+// CHECK:STDOUT:   %b.var: ref %i32 = var b
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc8_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%.loc8_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_8.2: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_8.3: type = converted %int.make_type_signed.loc8, %.loc8_8.2 [template = constants.%i32]
+// CHECK:STDOUT:   %c.var: ref %i32 = var c
+// CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc9_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc9: init type = call constants.%Int(%.loc9_8.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_8.2: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_8.3: type = converted %int.make_type_signed.loc9, %.loc9_8.2 [template = constants.%i32]
+// CHECK:STDOUT:   %d.var: ref %i32 = var d
+// CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

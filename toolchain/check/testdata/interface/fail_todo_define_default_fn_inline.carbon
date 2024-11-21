@@ -30,17 +30,19 @@ interface Interface {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Interface.type, %F.type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Interface.%F.decl [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.3 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %Interface.type, %G.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @Interface.%G.decl [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %Interface.type, %G.type [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element1, @Interface.%G.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -60,30 +62,33 @@ interface Interface {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %.loc16: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %a.patt: i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: i32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %b.patt: i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: i32 = value_param_pattern %b.patt, runtime_param1
-// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32.loc21_19: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_32.loc21_19 [template = i32]
-// CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_32.loc21_19, %.loc21_19.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc21_27: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_32.loc21_27 [template = i32]
-// CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_32.loc21_27, %.loc21_27.1 [template = i32]
-// CHECK:STDOUT:     %int.make_type_32.loc21_35: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_32.loc21_35 [template = i32]
-// CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_32.loc21_35, %.loc21_35.1 [template = i32]
-// CHECK:STDOUT:     %a.param: i32 = value_param runtime_param0
-// CHECK:STDOUT:     %a: i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: i32 = value_param runtime_param1
-// CHECK:STDOUT:     %b: i32 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:     %.loc21_19.1: Core.IntLiteral = int_value 32 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed.loc21_19: init type = call constants.%Int(%.loc21_19.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_19.2: type = value_of_initializer %int.make_type_signed.loc21_19 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_19.3: type = converted %int.make_type_signed.loc21_19, %.loc21_19.2 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_27.1: Core.IntLiteral = int_value 32 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed.loc21_27: init type = call constants.%Int(%.loc21_27.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_27.2: type = value_of_initializer %int.make_type_signed.loc21_27 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_27.3: type = converted %int.make_type_signed.loc21_27, %.loc21_27.2 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_35.1: Core.IntLiteral = int_value 32 [template = constants.%.3]
+// CHECK:STDOUT:     %int.make_type_signed.loc21_35: init type = call constants.%Int(%.loc21_35.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_35.2: type = value_of_initializer %int.make_type_signed.loc21_35 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_35.3: type = converted %int.make_type_signed.loc21_35, %.loc21_35.2 [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: %.3 = assoc_entity element1, %G.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.loc21: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -104,7 +109,7 @@ interface Interface {
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param_patt: i32, %b.param_patt: i32) -> i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

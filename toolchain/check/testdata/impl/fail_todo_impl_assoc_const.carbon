@@ -51,7 +51,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type.1] {} {}
-// CHECK:STDOUT:   impl_decl @impl.13 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
 // CHECK:STDOUT:     %bool.make_type.loc23_6: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc23_6.1: type = value_of_initializer %bool.make_type.loc23_6 [template = bool]
 // CHECK:STDOUT:     %.loc23_6.2: type = converted %bool.make_type.loc23_6, %.loc23_6.1 [template = bool]
@@ -78,7 +78,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.13: %.loc23_6.2 as %.loc23_16 {
+// CHECK:STDOUT: impl @impl.9: %.loc23_6.2 as %.loc23_16 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

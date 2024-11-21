@@ -293,9 +293,10 @@ If the resulting SemIR needs a new instruction:
         where types don't need to be distinct per-entity. This is rare, but
         used, for example, when an expression implicitly uses a value as part of
         SemIR evaluation or as part of desugaring. We have builtin types for
-        bound methods, namespaces, witnesses, among others. These are defined in
-        [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
-        To get a type id for one of these builtin types, use something like
+        bound methods, namespaces, witnesses, among others. These are
+        constructed as a special-case in
+        [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
+        one of these builtin types, use something like
         `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
 
         ```
@@ -334,7 +335,7 @@ need custom formatting, then a `FormatInstRHS` overload can be implemented
 instead.
 
 If the resulting SemIR needs a new built-in, add it to
-[`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
+[`File` construction](/toolchain/sem_ir/file.cpp).
 
 ### SemIR typed instruction metadata implementation
 

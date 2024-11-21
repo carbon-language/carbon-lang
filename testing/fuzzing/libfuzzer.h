@@ -14,8 +14,7 @@ namespace Carbon::Testing {
 // defining an undeclared extern function due to a Clang warning bug:
 // https://github.com/llvm/llvm-project/issues/94138
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
-extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
-                                      std::size_t size);
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size);
 
 // Optional API that can be implemented but isn't required. This allows fuzzers
 // to observe the `argv` during initialization.

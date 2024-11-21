@@ -322,7 +322,7 @@ auto DeductionContext::Deduce() -> bool {
       DiagnosticAnnotationScope annotate_diagnostics(&context().emitter(),
                                                      note_initializing_param);
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
-      if (arg_id == SemIR::InstId::BuiltinError) {
+      if (arg_id == SemIR::InstId::BuiltinErrorInst) {
         return false;
       }
     }

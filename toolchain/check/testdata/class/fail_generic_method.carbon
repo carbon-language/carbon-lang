@@ -44,17 +44,19 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [symbolic]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %N: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.4: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -73,17 +75,18 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.4] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc32_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc32_14.2: type = converted %int.make_type_32, %.loc32_14.1 [template = i32]
-// CHECK:STDOUT:     %N.param: i32 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc32_10.1: i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:     %.loc32_14.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc32_14.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc32_14.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc32_14.3: type = converted %int.make_type_signed, %.loc32_14.2 [template = constants.%i32]
+// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc32_10.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
@@ -138,9 +141,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class.2)](%n.param_patt: @F.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: i32) {
-// CHECK:STDOUT:   %N.loc32_10.2: i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt: i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
+// CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: %i32) {
+// CHECK:STDOUT:   %N.loc32_10.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
