@@ -1271,7 +1271,9 @@ class ImportRefResolver {
         // Try to resolve the constant value instead. Note that this can only
         // retry once.
         CARBON_DCHECK(import_ir_.constant_values().GetConstantInstId(
-                          constant_inst_id) == constant_inst_id);
+                          constant_inst_id) == constant_inst_id,
+                      "Constant value of constant instruction should refer to "
+                      "the same instruction");
         return TryResolveInstCanonical(constant_inst_id, const_id);
       }
     }
